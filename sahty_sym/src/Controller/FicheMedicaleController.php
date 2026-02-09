@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Form\FicheMedicaleType;
 use App\Entity\FicheMedicale;
 use App\Entity\Patient;
+use App\Entity\Medecin;
 use App\Entity\RendezVous;
 use App\Repository\FicheMedicaleRepository;
 use App\Repository\PatientRepository;
@@ -16,12 +17,11 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-
 #[Route('/fiche-medicale')]
 class FicheMedicaleController extends AbstractController
 {
     /**
-     * Page principale - Gère tout dans une page
+     * 📋 Page principale - Gère tout dans une page avec permissions
      */
     #[Route('/', name: 'app_fiche_medicale_index', methods: ['GET', 'POST'])]
     public function index(
@@ -31,7 +31,7 @@ class FicheMedicaleController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
-        // Déterminer les permissions de l'utilisateur
+        $user = $this->getUser();
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
         
@@ -40,13 +40,39 @@ class FicheMedicaleController extends AbstractController
         $fiche = null;
         $form = null;
         
-        // RECHERCHE PAR ID
+        // ✅ RÉCUPÉRATION DES FICHES SELON LE RÔLE (utilise le repository)
+        $fiches = $ficheMedicaleRepository->findByUserRole($user);
+        
+        // ============ RECHERCHE PAR ID ============
         if ($request->query->has('search_id')) {
             $searchId = $request->query->get('search_id');
             if (!empty($searchId)) {
                 $fiche = $ficheMedicaleRepository->find($searchId);
+                
+                // ✅ Vérifier les permissions d'accès
                 if ($fiche) {
-                    // Rediriger vers la vue de cette fiche
+                    if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                        $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
+                        return $this->redirectToRoute('app_fiche_medicale_index');
+                    }
+                    
+                    if ($isMedecin) {
+                        $hasAccess = $entityManager->getRepository(RendezVous::class)
+                            ->createQueryBuilder('r')
+                            ->where('r.medecin = :medecin')
+                            ->andWhere('r.patient = :patient')
+                            ->setParameter('medecin', $user)
+                            ->setParameter('patient', $fiche->getPatient())
+                            ->setMaxResults(1)
+                            ->getQuery()
+                            ->getOneOrNullResult();
+                        
+                        if (!$hasAccess) {
+                            $this->addFlash('error', '❌ Vous n\'avez pas accès à cette fiche (aucun RDV avec ce patient)');
+                            return $this->redirectToRoute('app_fiche_medicale_index');
+                        }
+                    }
+                    
                     return $this->redirectToRoute('app_fiche_medicale_index', ['view' => $fiche->getId()]);
                 } else {
                     $this->addFlash('error', '❌ Aucune fiche trouvée avec l\'ID: ' . $searchId);
@@ -54,57 +80,29 @@ class FicheMedicaleController extends AbstractController
             }
         }
         
-        // CRÉATION D'UNE NOUVELLE FICHE
+        // ============ CRÉATION D'UNE NOUVELLE FICHE (Patient uniquement) ============
         if ($request->query->has('new')) {
-            $mode = 'new';
-            $fiche = new FicheMedicale();
-            
-            // Si l'utilisateur est un patient, l'associer automatiquement
-            if ($isPatient && $this->getUser() instanceof Patient) {
-                $fiche->setPatient($this->getUser());
-            } else {
-                // Sinon, prendre le premier patient disponible (pour test)
-                $firstPatient = $patientRepository->findOneBy([], ['id' => 'ASC']);
-                if ($firstPatient) {
-                    $fiche->setPatient($firstPatient);
-                    $this->addFlash('info', '📋 Fiche associée au patient: ' . $firstPatient->getNom() . ' ' . $firstPatient->getPrenom());
-                } else {
-                    $this->addFlash('warning', '⚠️ Aucun patient trouvé dans la base. Veuillez d\'abord créer un patient.');
-                }
+            if (!$isPatient) {
+                $this->addFlash('error', '❌ Seuls les patients peuvent créer des fiches médicales');
+                return $this->redirectToRoute('app_fiche_medicale_index');
             }
             
-            $form = $this->createForm(FicheMedicaleType::class, $fiche);
+            $mode = 'new';
+            $fiche = new FicheMedicale();
+            $fiche->setPatient($user);
+            
+            $form = $this->createForm(FicheMedicaleType::class, $fiche, [
+                'is_medecin' => false
+            ]);
             $form->handleRequest($request);
             
             if ($form->isSubmitted() && $form->isValid()) {
-                // Vérifier qu'un patient est bien associé
-                if (!$fiche->getPatient()) {
-                    $this->addFlash('error', '❌ Aucun patient associé à cette fiche');
-                    return $this->redirectToRoute('app_fiche_medicale_index');
-                }
-                
-                // Définir la date de création et le statut par défaut
-                $fiche->setCreeLe(new \DateTime());
                 if (!$fiche->getStatut()) {
                     $fiche->setStatut('actif');
                 }
                 
-                // Calculer l'IMC si les données sont disponibles
-                if ($fiche->getTaille() && $fiche->getPoids()) {
-                    $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                    $fiche->setImc($imc);
-                    
-                    // Déterminer la catégorie IMC
-                    if ($imc < 18.5) {
-                        $fiche->setCategorieImc('Maigreur');
-                    } elseif ($imc < 25) {
-                        $fiche->setCategorieImc('Normal');
-                    } elseif ($imc < 30) {
-                        $fiche->setCategorieImc('Surpoids');
-                    } else {
-                        $fiche->setCategorieImc('Obésité');
-                    }
-                }
+                // Calculer l'IMC
+                $fiche->calculerImc();
                 
                 $entityManager->persist($fiche);
                 $entityManager->flush();
@@ -114,7 +112,7 @@ class FicheMedicaleController extends AbstractController
             }
         }
         
-        // AFFICHAGE DÉTAILLÉ D'UNE FICHE
+        // ============ AFFICHAGE DÉTAILLÉ D'UNE FICHE ============
         if ($request->query->has('view')) {
             $mode = 'view';
             $ficheId = $request->query->get('view');
@@ -125,24 +123,37 @@ class FicheMedicaleController extends AbstractController
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
             
-            // Calculer l'IMC si non calculé
-            if ($fiche->getTaille() && $fiche->getPoids() && !$fiche->getImc()) {
-                $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                $fiche->setImc($imc);
+            // ✅ Vérifier les permissions d'accès
+            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
+                return $this->redirectToRoute('app_fiche_medicale_index');
+            }
+            
+            if ($isMedecin) {
+                $hasAccess = $entityManager->getRepository(RendezVous::class)
+                    ->createQueryBuilder('r')
+                    ->where('r.medecin = :medecin')
+                    ->andWhere('r.patient = :patient')
+                    ->setParameter('medecin', $user)
+                    ->setParameter('patient', $fiche->getPatient())
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
                 
-                if ($imc < 18.5) {
-                    $fiche->setCategorieImc('Maigreur');
-                } elseif ($imc < 25) {
-                    $fiche->setCategorieImc('Normal');
-                } elseif ($imc < 30) {
-                    $fiche->setCategorieImc('Surpoids');
-                } else {
-                    $fiche->setCategorieImc('Obésité');
+                if (!$hasAccess) {
+                    $this->addFlash('error', '❌ Vous n\'avez pas accès à cette fiche (aucun RDV avec ce patient)');
+                    return $this->redirectToRoute('app_fiche_medicale_index');
                 }
+            }
+            
+            // Recalculer l'IMC si nécessaire
+            if (!$fiche->getImc() && $fiche->getTaille() && $fiche->getPoids()) {
+                $fiche->calculerImc();
+                $entityManager->flush();
             }
         }
         
-        // MODIFICATION D'UNE FICHE
+        // ============ MODIFICATION D'UNE FICHE ============
         if ($request->query->has('edit')) {
             $mode = 'edit';
             $ficheId = $request->query->get('edit');
@@ -153,35 +164,37 @@ class FicheMedicaleController extends AbstractController
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
             
-            // Vérifier les permissions
-            if ($isPatient && $fiche->getPatient()->getId() !== $this->getUser()->getId()) {
+            // ✅ Vérifier les permissions de modification
+            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
                 $this->addFlash('error', '❌ Vous ne pouvez modifier que vos propres fiches');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
             
-            $form = $this->createForm(FicheMedicaleType::class, $fiche);
+            if ($isMedecin) {
+                $hasAccess = $entityManager->getRepository(RendezVous::class)
+                    ->createQueryBuilder('r')
+                    ->where('r.medecin = :medecin')
+                    ->andWhere('r.patient = :patient')
+                    ->setParameter('medecin', $user)
+                    ->setParameter('patient', $fiche->getPatient())
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                
+                if (!$hasAccess) {
+                    $this->addFlash('error', '❌ Vous n\'avez pas accès à cette fiche (aucun RDV avec ce patient)');
+                    return $this->redirectToRoute('app_fiche_medicale_index');
+                }
+            }
+            
+            $form = $this->createForm(FicheMedicaleType::class, $fiche, [
+                'is_medecin' => $isMedecin
+            ]);
             $form->handleRequest($request);
             
             if ($form->isSubmitted() && $form->isValid()) {
-                // Mettre à jour la date de modification
-                $fiche->setModifieLe(new \DateTime());
-                $fiche->setStatut('modifié');
-                
                 // Recalculer l'IMC
-                if ($fiche->getTaille() && $fiche->getPoids()) {
-                    $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                    $fiche->setImc($imc);
-                    
-                    if ($imc < 18.5) {
-                        $fiche->setCategorieImc('Maigreur');
-                    } elseif ($imc < 25) {
-                        $fiche->setCategorieImc('Normal');
-                    } elseif ($imc < 30) {
-                        $fiche->setCategorieImc('Surpoids');
-                    } else {
-                        $fiche->setCategorieImc('Obésité');
-                    }
-                }
+                $fiche->calculerImc();
                 
                 $entityManager->flush();
                 $this->addFlash('success', '✅ Fiche médicale modifiée avec succès !');
@@ -189,15 +202,20 @@ class FicheMedicaleController extends AbstractController
             }
         }
         
-        // SUPPRESSION D'UNE FICHE
+        // ============ SUPPRESSION D'UNE FICHE ============
         if ($request->isMethod('POST') && $request->request->has('delete_id')) {
             $ficheId = $request->request->get('delete_id');
             $fiche = $ficheMedicaleRepository->find($ficheId);
             
             if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, $request->request->get('_token'))) {
-                // Vérifier les permissions
-                if ($isPatient && $fiche->getPatient()->getId() !== $this->getUser()->getId()) {
+                // ✅ Vérifier les permissions de suppression
+                if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
                     $this->addFlash('error', '❌ Vous ne pouvez supprimer que vos propres fiches');
+                    return $this->redirectToRoute('app_fiche_medicale_index');
+                }
+                
+                if ($isMedecin) {
+                    $this->addFlash('error', '❌ Les médecins ne peuvent pas supprimer les fiches médicales');
                     return $this->redirectToRoute('app_fiche_medicale_index');
                 }
                 
@@ -211,28 +229,11 @@ class FicheMedicaleController extends AbstractController
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
         
-        // Récupérer toutes les fiches pour la liste
-        if ($isPatient && $this->getUser() instanceof Patient) {
-            // Si c'est un patient, afficher seulement ses fiches
-            $fiches = $ficheMedicaleRepository->findBy(['patient' => $this->getUser()]);
-        } else {
-            // Sinon (médecin/admin), afficher toutes les fiches
-            $fiches = $ficheMedicaleRepository->findAll();
-        }
-        
-        // Recherche textuelle
+        // ✅ Recherche textuelle avec permissions (utilise le repository)
         if ($request->query->has('search')) {
             $searchTerm = $request->query->get('search');
             if (!empty($searchTerm)) {
-                $fiches = array_filter($fiches, function($fiche) use ($searchTerm) {
-                    $searchLower = strtolower($searchTerm);
-                    return 
-                        stripos($fiche->getPatient()->getNom(), $searchTerm) !== false ||
-                        stripos($fiche->getPatient()->getPrenom(), $searchTerm) !== false ||
-                        stripos((string)$fiche->getId(), $searchTerm) !== false ||
-                        stripos($fiche->getAntecedents() ?? '', $searchTerm) !== false ||
-                        stripos($fiche->getAllergies() ?? '', $searchTerm) !== false;
-                });
+                $fiches = $ficheMedicaleRepository->searchByText($searchTerm, $user);
             }
         }
         
@@ -252,37 +253,46 @@ class FicheMedicaleController extends AbstractController
     #[Route('/export-pdf/{id}', name: 'app_fiche_medicale_export_pdf', methods: ['GET'])]
     public function exportPdf(
         int $id,
-        FicheMedicaleRepository $ficheMedicaleRepository
-    ): Response
-    {
+        FicheMedicaleRepository $ficheMedicaleRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
         $fiche = $ficheMedicaleRepository->find($id);
+        $user = $this->getUser();
         
         if (!$fiche) {
             $this->addFlash('error', '❌ Fiche non trouvée !');
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
         
-        // Vérifier les permissions
+        // ✅ Vérifier les permissions
         $isPatient = $this->isGranted('ROLE_PATIENT');
-        if ($isPatient && $fiche->getPatient()->getId() !== $this->getUser()->getId()) {
+        $isMedecin = $this->isGranted('ROLE_MEDECIN');
+        
+        if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
             $this->addFlash('error', '❌ Accès non autorisé');
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
         
-        // Recalculer l'IMC si nécessaire
-        if ($fiche->getTaille() && $fiche->getPoids()) {
-            $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-            $fiche->setImc($imc);
+        if ($isMedecin) {
+            $hasAccess = $entityManager->getRepository(RendezVous::class)
+                ->createQueryBuilder('r')
+                ->where('r.medecin = :medecin')
+                ->andWhere('r.patient = :patient')
+                ->setParameter('medecin', $user)
+                ->setParameter('patient', $fiche->getPatient())
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
             
-            if ($imc < 18.5) {
-                $fiche->setCategorieImc('Maigreur');
-            } elseif ($imc < 25) {
-                $fiche->setCategorieImc('Normal');
-            } elseif ($imc < 30) {
-                $fiche->setCategorieImc('Surpoids');
-            } else {
-                $fiche->setCategorieImc('Obésité');
+            if (!$hasAccess) {
+                $this->addFlash('error', '❌ Accès non autorisé (aucun RDV avec ce patient)');
+                return $this->redirectToRoute('app_fiche_medicale_index');
             }
+        }
+        
+        // Recalculer l'IMC si nécessaire
+        if (!$fiche->getImc() && $fiche->getTaille() && $fiche->getPoids()) {
+            $fiche->calculerImc();
         }
         
         return $this->render('fiche_medicale/pdf_single.html.twig', [
@@ -295,17 +305,13 @@ class FicheMedicaleController extends AbstractController
      */
     #[Route('/export-all-pdf', name: 'app_fiche_medicale_export_all_pdf', methods: ['GET'])]
     public function exportAllPdf(
-        FicheMedicaleRepository $ficheMedicaleRepository
-    ): Response
-    {
-        $isPatient = $this->isGranted('ROLE_PATIENT');
+        FicheMedicaleRepository $ficheMedicaleRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $user = $this->getUser();
         
-        // Récupérer les fiches selon les permissions
-        if ($isPatient && $this->getUser() instanceof Patient) {
-            $fiches = $ficheMedicaleRepository->findBy(['patient' => $this->getUser()]);
-        } else {
-            $fiches = $ficheMedicaleRepository->findAll();
-        }
+        // ✅ Récupérer les fiches selon les permissions (utilise le repository)
+        $fiches = $ficheMedicaleRepository->findByUserRole($user);
         
         if (empty($fiches)) {
             $this->addFlash('error', '❌ Aucune fiche à exporter');
@@ -314,19 +320,8 @@ class FicheMedicaleController extends AbstractController
         
         // Calculer l'IMC pour toutes les fiches
         foreach ($fiches as $fiche) {
-            if ($fiche->getTaille() && $fiche->getPoids()) {
-                $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                $fiche->setImc($imc);
-                
-                if ($imc < 18.5) {
-                    $fiche->setCategorieImc('Maigreur');
-                } elseif ($imc < 25) {
-                    $fiche->setCategorieImc('Normal');
-                } elseif ($imc < 30) {
-                    $fiche->setCategorieImc('Surpoids');
-                } else {
-                    $fiche->setCategorieImc('Obésité');
-                }
+            if (!$fiche->getImc() && $fiche->getTaille() && $fiche->getPoids()) {
+                $fiche->calculerImc();
             }
         }
         
@@ -336,7 +331,53 @@ class FicheMedicaleController extends AbstractController
     }
     
     /**
-     * REDIRECTIONS pour les anciennes routes
+     * 🔍 AJAX SEARCH avec permissions - CORRIGÉ
+     */
+    /**
+ * 🔍 AJAX SEARCH avec permissions - CORRIGÉ
+ */
+#[Route('/search-ajax', name: 'app_fiche_medicale_search_ajax', methods: ['GET'])]
+public function searchAjax(
+    Request $request,
+    FicheMedicaleRepository $repository
+): JsonResponse {
+    $query = $request->query->get('q', '');
+    $user = $this->getUser();
+    
+    if (strlen($query) < 2) {
+        return $this->json([]);
+    }
+
+    try {
+        // ✅ Utilise la méthode du repository
+        $fiches = $repository->searchWithPermissions($query, $user);
+
+        $results = [];
+        foreach ($fiches as $fiche) {
+            $patient = $fiche->getPatient();
+            $results[] = [
+                'id' => $fiche->getId(),
+                'patient' => $patient ? $patient->getNom() . ' ' . $patient->getPrenom() : 'Patient inconnu',
+                'statut' => $fiche->getStatut() ?? 'Non défini',
+                'creeLe' => $fiche->getCreeLe() ? $fiche->getCreeLe()->format('d/m/Y') : '',
+                'imc' => $fiche->getImc() ? number_format($fiche->getImc(), 2) : null,
+                'categorieImc' => $fiche->getCategorieImc(),
+                'diagnostic' => $fiche->getDiagnostic() ? substr($fiche->getDiagnostic(), 0, 60) . '...' : '',
+            ];
+        }
+
+        return $this->json($results);
+    } catch (\Exception $e) {
+        return $this->json([
+            'error' => true,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    
+    /**
+     * ✅ REDIRECTIONS pour les anciennes routes
      */
     #[Route('/new', name: 'app_fiche_medicale_new', methods: ['GET', 'POST'])]
     public function newRedirect(): Response
@@ -344,20 +385,20 @@ class FicheMedicaleController extends AbstractController
         return $this->redirectToRoute('app_fiche_medicale_index', ['new' => true]);
     }
     
-    #[Route('/{id}', name: 'app_fiche_medicale_show', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_fiche_medicale_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function showRedirect($id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['view' => $id]);
     }
     
-    #[Route('/{id}/edit', name: 'app_fiche_medicale_edit', methods: ['GET', 'POST'])]
+    #[Route('/{id}/edit', name: 'app_fiche_medicale_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function editRedirect($id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['edit' => $id]);
     }
     
     /**
-     * Route pour créer une fiche avec un patient spécifique
+     * 📝 Route pour créer une fiche avec un patient spécifique
      */
     #[Route('/new-for-patient/{patientId}', name: 'app_fiche_medicale_new_for_patient', methods: ['GET', 'POST'])]
     public function newForPatient(
@@ -365,8 +406,7 @@ class FicheMedicaleController extends AbstractController
         Request $request,
         PatientRepository $patientRepository,
         EntityManagerInterface $entityManager
-    ): Response
-    {
+    ): Response {
         $patient = $patientRepository->find($patientId);
         
         if (!$patient) {
@@ -374,33 +414,28 @@ class FicheMedicaleController extends AbstractController
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
         
+        // Vérifier les permissions
+        $user = $this->getUser();
+        if ($user instanceof Patient && $user->getId() !== $patient->getId()) {
+            $this->addFlash('error', '❌ Vous ne pouvez créer une fiche que pour vous-même');
+            return $this->redirectToRoute('app_fiche_medicale_index');
+        }
+        
         $fiche = new FicheMedicale();
         $fiche->setPatient($patient);
         
-        $form = $this->createForm(FicheMedicaleType::class, $fiche);
+        $form = $this->createForm(FicheMedicaleType::class, $fiche, [
+            'is_medecin' => $this->isGranted('ROLE_MEDECIN')
+        ]);
         $form->handleRequest($request);
         
         if ($form->isSubmitted() && $form->isValid()) {
-            $fiche->setCreeLe(new \DateTime());
             if (!$fiche->getStatut()) {
                 $fiche->setStatut('actif');
             }
             
             // Calculer l'IMC
-            if ($fiche->getTaille() && $fiche->getPoids()) {
-                $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                $fiche->setImc($imc);
-                
-                if ($imc < 18.5) {
-                    $fiche->setCategorieImc('Maigreur');
-                } elseif ($imc < 25) {
-                    $fiche->setCategorieImc('Normal');
-                } elseif ($imc < 30) {
-                    $fiche->setCategorieImc('Surpoids');
-                } else {
-                    $fiche->setCategorieImc('Obésité');
-                }
-            }
+            $fiche->calculerImc();
             
             $entityManager->persist($fiche);
             $entityManager->flush();
@@ -420,7 +455,7 @@ class FicheMedicaleController extends AbstractController
     }
     
     /**
-     * Route pour créer une fiche depuis un rendez-vous
+     * 📝 Route pour créer une fiche depuis un rendez-vous
      */
     #[Route('/new-for-rdv/{rdvId}', name: 'app_fiche_medicale_new_for_rdv', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_PATIENT')]
@@ -428,8 +463,7 @@ class FicheMedicaleController extends AbstractController
         Request $request,
         int $rdvId,
         EntityManagerInterface $entityManager
-    ): Response
-    {
+    ): Response {
         // Récupérer le rendez-vous
         $rdv = $entityManager->getRepository(RendezVous::class)->find($rdvId);
         
@@ -454,31 +488,18 @@ class FicheMedicaleController extends AbstractController
         $fiche = new FicheMedicale();
         $fiche->setPatient($rdv->getPatient());
         
-        $form = $this->createForm(FicheMedicaleType::class, $fiche);
+        $form = $this->createForm(FicheMedicaleType::class, $fiche, [
+            'is_medecin' => false
+        ]);
         $form->handleRequest($request);
         
         if ($form->isSubmitted() && $form->isValid()) {
-            // Définir les valeurs par défaut
-            $fiche->setCreeLe(new \DateTime());
             if (!$fiche->getStatut()) {
                 $fiche->setStatut('actif');
             }
             
             // Calculer l'IMC
-            if ($fiche->getTaille() && $fiche->getPoids()) {
-                $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-                $fiche->setImc($imc);
-                
-                if ($imc < 18.5) {
-                    $fiche->setCategorieImc('Maigreur');
-                } elseif ($imc < 25) {
-                    $fiche->setCategorieImc('Normal');
-                } elseif ($imc < 30) {
-                    $fiche->setCategorieImc('Surpoids');
-                } else {
-                    $fiche->setCategorieImc('Obésité');
-                }
-            }
+            $fiche->calculerImc();
             
             // Associer la fiche au rendez-vous
             $rdv->setFicheMedicale($fiche);
@@ -502,102 +523,4 @@ class FicheMedicaleController extends AbstractController
             'rdv' => $rdv,
         ]);
     }
-
-    // src/Controller/FicheMedicaleController.php
-/**
- * ✏️ Modifier une fiche médicale
- */
-#[Route('/fiche-medicale/edit/{id}', name: 'app_fiche_medicale_edit', methods: ['GET', 'POST'])]
-#[IsGranted('ROLE_PATIENT')]
-public function edit(
-    int $id,
-    Request $request,
-    FicheMedicaleRepository $ficheRepository,
-    EntityManagerInterface $entityManager
-): Response {
-    $fiche = $ficheRepository->find($id);
-    
-    if (!$fiche) {
-        $this->addFlash('error', '❌ Fiche médicale introuvable');
-        return $this->redirectToRoute('app_fiche_medicale_index');
-    }
-    
-    // Vérifier que c'est le patient de la fiche
-    if ($fiche->getPatient()->getId() !== $this->getUser()->getId()) {
-        throw $this->createAccessDeniedException();
-    }
-    
-    $form = $this->createForm(FicheMedicaleType::class, $fiche);
-    $form->handleRequest($request);
-    
-    if ($form->isSubmitted() && $form->isValid()) {
-        // Sécurité : Empêcher les patients de modifier les champs médecin
-        if (!$this->isGranted('ROLE_MEDECIN')) {
-            $originalData = $entityManager->getUnitOfWork()->getOriginalEntityData($fiche);
-            $fiche->setDiagnostic($originalData['diagnostic'] ?? null);
-            $fiche->setTraitementPrescrit($originalData['traitementPrescrit'] ?? null);
-            $fiche->setObservations($originalData['observations'] ?? null);
-            $fiche->setStatut($originalData['statut'] ?? 'actif');
-        }
-        
-        // Recalculer l'IMC
-        if ($fiche->getTaille() && $fiche->getPoids()) {
-            $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
-            $fiche->setImc($imc);
-        }
-        
-        $fiche->setModifieLe(new \DateTime());
-        $entityManager->flush();
-        
-        $this->addFlash('success', '✅ Fiche médicale mise à jour !');
-        return $this->redirectToRoute('app_rdv_mes_rdv');
-    }
-    
-    return $this->render('fiche_medicale/index.html.twig', [
-        'fiches' => [],
-        'mode' => 'edit',
-        'fiche' => $fiche,
-        'form' => $form->createView(),
-    ]);
-}
-
-#[Route('/search-ajax', name: 'app_fiche_medicale_search_ajax', methods: ['GET'])]
-public function searchAjax(Request $request, FicheMedicaleRepository $repository): JsonResponse
-{
-    $query = $request->query->get('q', '');
-    
-    if (strlen($query) < 2) {
-        return $this->json([]);
-    }
-
-    $fiches = $repository->createQueryBuilder('f')
-        ->leftJoin('f.patient', 'p')
-        ->where('LOWER(p.nom) LIKE LOWER(:query)')
-        ->orWhere('LOWER(p.prenom) LIKE LOWER(:query)')
-        ->orWhere('LOWER(f.diagnostic) LIKE LOWER(:query)')
-        ->orWhere('LOWER(f.statut) LIKE LOWER(:query)')
-        ->orWhere('CAST(f.id AS string) LIKE :query')
-        ->setParameter('query', '%' . $query . '%')
-        ->setMaxResults(10)
-        ->getQuery()
-        ->getResult();
-
-    $results = [];
-    foreach ($fiches as $fiche) {
-        $patient = $fiche->getPatient();
-        $results[] = [
-            'id' => $fiche->getId(),
-            'patient' => $patient ? $patient->getNom() . ' ' . $patient->getPrenom() : 'Patient #' . $fiche->getId(),
-            'statut' => $fiche->getStatut(),
-            'creeLe' => $fiche->getCreeLe() ? $fiche->getCreeLe()->format('d/m/Y') : '',
-            'imc' => $fiche->getImc(),
-            'categorieImc' => $fiche->getCategorieImc(),
-        ];
-    }
-
-    return $this->json($results);
-}
-
- 
-
 }

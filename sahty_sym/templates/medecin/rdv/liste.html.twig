@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}MEDINOVA - Mes Rendez-vous{% endblock %}
+{% block title %}MEDINOVA - Mes Consultations{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -59,7 +59,7 @@
             overflow-x: hidden;
         }
 
-        /* Animated Geometric Background */
+        /* Animated Background */
         body::before {
             content: '';
             position: fixed;
@@ -116,7 +116,7 @@
             margin: 0 auto;
         }
 
-        /* ============ HEADER SECTION ============ */
+        /* ============ HEADER ============ */
         .page-header {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(30px) saturate(180%);
@@ -169,10 +169,6 @@
             z-index: 1;
         }
 
-        .header-title {
-            flex: 1;
-        }
-
         .header-title h1 {
             font-size: 3rem;
             font-weight: 900;
@@ -200,287 +196,108 @@
             font-weight: 500;
         }
 
-        /* ============ ALERT MESSAGES ============ */
-        .alert {
-            padding: 20px 28px;
-            border-radius: 20px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            font-weight: 600;
+        /* ============ FILTERS & SEARCH ============ */
+        .filters-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 35px;
             box-shadow: 
-                0 10px 35px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            animation: alertSlide 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            border-left: 5px solid;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
+                0 15px 45px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            animation: slideInUp 0.6s ease 0.2s both;
         }
 
-        .alert::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
-            pointer-events: none;
-        }
-
-        @keyframes alertSlide {
+        @keyframes slideInUp {
             from {
                 opacity: 0;
-                transform: translateX(-50px) scale(0.9);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
-                transform: translateX(0) scale(1);
+                transform: translateY(0);
             }
         }
 
-        .alert-success {
-            background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%);
-            color: var(--secondary-dark);
-            border-left-color: var(--success);
+        .filters-wrapper {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
-        .alert-danger, .alert-error {
-            background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
-            color: #8B2E2E;
-            border-left-color: var(--danger);
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
         }
 
-        .alert-info {
-            background: linear-gradient(135deg, var(--info-light) 0%, #B3E5FC 100%);
-            color: var(--primary-dark);
-            border-left-color: var(--info);
-        }
-
-        .alert i {
-            font-size: 1.6rem;
-            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
-        }
-
-        /* ============ BUTTONS ============ */
-        .btn {
-            padding: 16px 32px;
+        .search-box input {
+            width: 100%;
+            padding: 16px 50px 16px 22px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
             border-radius: 16px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
-        .btn::before {
-            content: '';
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(29, 93, 155, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .search-box i {
             position: absolute;
+            right: 22px;
             top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn i {
-            position: relative;
-            z-index: 1;
-            transition: transform 0.3s ease;
-        }
-
-        .btn:hover i {
-            transform: scale(1.2) rotate(5deg);
-        }
-
-        .btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            box-shadow: 
-                0 10px 30px rgba(29, 93, 155, 0.35),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 15px 40px rgba(29, 93, 155, 0.45),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
-
-        .btn-lg {
-            padding: 18px 45px;
-            font-size: 1.1rem;
-            border-radius: 18px;
-        }
-
-        /* ============ ICON BUTTONS ============ */
-        .btn-icon {
-            width: 48px;
-            height: 48px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-            text-decoration: none;
-        }
-
-        .btn-icon::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: translate(-50%, -50%);
-            transition: width 0.5s ease, height 0.5s ease;
-        }
-
-        .btn-icon:hover::before {
-            width: 100px;
-            height: 100px;
-        }
-
-        .btn-icon i {
-            position: relative;
-            z-index: 1;
-            transition: transform 0.3s ease;
-        }
-
-        .btn-icon:hover {
-            transform: translateY(-4px) scale(1.08);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-icon:hover i {
-            transform: scale(1.15) rotate(8deg);
-        }
-
-        .btn-icon-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.35);
-        }
-
-        .btn-icon-danger {
-            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
-            color: white;
-            box-shadow: 0 8px 25px rgba(193, 102, 107, 0.35);
-        }
-
-        .btn-icon-success {
-            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
-            color: white;
-            box-shadow: 0 8px 25px rgba(74, 124, 89, 0.35);
-        }
-
-        .btn-icon-info {
-            background: linear-gradient(135deg, var(--info) 0%, var(--accent) 100%);
-            color: white;
-            box-shadow: 0 8px 25px rgba(117, 194, 246, 0.35);
-        }
-
-        .btn-icon-warning {
-            background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
-            color: white;
-            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.35);
-        }
-
-        /* Tooltip */
-        .btn-icon[data-tooltip] {
-            position: relative;
-        }
-
-        .btn-icon[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: calc(100% + 12px);
-            left: 50%;
-            transform: translateX(-50%) translateY(-5px);
-            background: rgba(26, 35, 50, 0.95);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            white-space: nowrap;
-            opacity: 0;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.2rem;
             pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-            z-index: 1000;
         }
 
-        .btn-icon[data-tooltip]:hover::after {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        .filter-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
-        /* Icônes distinctes pour chaque action */
-        .btn-icon i.fa-calendar-edit {
-            /* Modifier RDV */
-            color: inherit;
+        .filter-btn {
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            background: white;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .btn-icon i.fa-file-medical-alt {
-            /* Créer fiche */
-            animation: pulse 2s ease-in-out infinite;
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(29, 93, 155, 0.2);
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
         }
 
-        .btn-icon i.fa-edit {
-            /* Modifier fiche */
-            color: inherit;
-        }
-
-        .btn-icon i.fa-eye {
-            /* Consulter */
-            color: inherit;
-        }
-
-        .btn-icon i.fa-file-medical {
-            /* Voir fiche */
-            color: inherit;
-        }
-
-        /* ============ STATS GRID ============ */
+        /* ============ STATS CARDS ============ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -531,28 +348,11 @@
             background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
         }
 
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(117, 194, 246, 0.2) 0%, transparent 70%);
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
         .stat-card:hover {
             transform: translateY(-10px) scale(1.02);
             box-shadow: 
                 0 25px 60px rgba(29, 93, 155, 0.18),
                 inset 0 1px 0 rgba(255, 255, 255, 1);
-        }
-
-        .stat-card:hover::after {
-            opacity: 0.5;
         }
 
         .stat-icon {
@@ -599,8 +399,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
         }
 
         .stat-card p {
@@ -609,11 +407,9 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             font-size: 0.85rem;
-            position: relative;
-            z-index: 1;
         }
 
-        /* ============ RDV GRID ============ */
+        /* ============ RDV CARDS ============ */
         .rdv-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -636,10 +432,6 @@
             animation-fill-mode: both;
         }
 
-        .rdv-card:nth-child(1) { animation-delay: 0.1s; }
-        .rdv-card:nth-child(2) { animation-delay: 0.2s; }
-        .rdv-card:nth-child(3) { animation-delay: 0.3s; }
-
         .rdv-card::before {
             content: '';
             position: absolute;
@@ -650,32 +442,11 @@
             background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
         }
 
-        /* RDV Annulé - Bordure rouge */
-        .rdv-card.rdv-annule::before {
-            background: linear-gradient(180deg, var(--danger) 0%, #B85860 100%);
-        }
-
-        .rdv-card::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(117, 194, 246, 0.15) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
         .rdv-card:hover {
             transform: translateY(-8px) scale(1.01);
             box-shadow: 
                 0 25px 70px rgba(29, 93, 155, 0.18),
                 inset 0 1px 0 rgba(255, 255, 255, 1);
-        }
-
-        .rdv-card:hover::after {
-            opacity: 0.6;
         }
 
         .rdv-header {
@@ -703,7 +474,6 @@
 
         .rdv-date i {
             color: var(--primary);
-            filter: drop-shadow(0 2px 5px rgba(29, 93, 155, 0.3));
         }
 
         .rdv-time {
@@ -744,7 +514,7 @@
             color: white;
         }
 
-        .rdv-doctor {
+        .patient-info {
             background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
             border: 2px solid rgba(117, 194, 246, 0.3);
             padding: 20px;
@@ -758,16 +528,16 @@
             z-index: 1;
         }
 
-        .rdv-doctor:hover {
+        .patient-info:hover {
             transform: scale(1.02);
             box-shadow: 0 8px 25px rgba(29, 93, 155, 0.15);
         }
 
-        .doctor-avatar {
+        .patient-avatar {
             width: 65px;
             height: 65px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -775,25 +545,32 @@
             font-weight: 800;
             color: white;
             flex-shrink: 0;
-            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+            box-shadow: 0 8px 25px rgba(48, 77, 48, 0.3);
             text-transform: uppercase;
         }
 
-        .doctor-info {
+        .patient-details {
             flex: 1;
         }
 
-        .doctor-name {
+        .patient-name {
             font-size: 1.2rem;
             font-weight: 800;
             color: var(--dark);
             margin-bottom: 6px;
         }
 
-        .doctor-specialty {
+        .patient-meta {
             font-size: 0.9rem;
-            color: var(--primary);
+            color: var(--dark-light);
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .patient-meta i {
+            color: var(--primary);
         }
 
         .rdv-reason {
@@ -831,6 +608,121 @@
             z-index: 1;
         }
 
+        /* ============ BUTTONS ============ */
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            text-decoration: none;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .btn-icon-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+        }
+
+        .btn-icon-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-icon-info {
+            background: linear-gradient(135deg, var(--info) 0%, var(--accent) 100%);
+            color: white;
+        }
+
+        /* Tooltip */
+        .btn-icon[data-tooltip] {
+            position: relative;
+        }
+
+        .btn-icon[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: rgba(26, 35, 50, 0.95);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+        }
+
+        .btn-icon[data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ============ ALERTS ============ */
+        .alert {
+            padding: 20px 28px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-weight: 600;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+            animation: alertSlide 0.5s ease;
+            border-left: 5px solid;
+        }
+
+        @keyframes alertSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%);
+            color: var(--secondary-dark);
+            border-left-color: var(--success);
+        }
+
+        .alert-danger, .alert-error {
+            background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
+            color: #8B2E2E;
+            border-left-color: var(--danger);
+        }
+
+        .alert i {
+            font-size: 1.6rem;
+        }
+
         /* ============ EMPTY STATE ============ */
         .empty-state {
             background: rgba(255, 255, 255, 0.95);
@@ -838,11 +730,8 @@
             border-radius: 30px;
             padding: 100px 50px;
             text-align: center;
-            box-shadow: 
-                0 25px 70px rgba(29, 93, 155, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            box-shadow: 0 25px 70px rgba(29, 93, 155, 0.15);
             border: 2px solid rgba(117, 194, 246, 0.2);
-            animation: fadeInUp 0.6s ease;
         }
 
         .empty-state-icon {
@@ -856,9 +745,7 @@
             justify-content: center;
             font-size: 4rem;
             color: var(--primary);
-            box-shadow: 
-                0 15px 40px rgba(29, 93, 155, 0.2),
-                inset 0 -5px 15px rgba(29, 93, 155, 0.1);
+            box-shadow: 0 15px 40px rgba(29, 93, 155, 0.2);
             animation: emptyIconFloat 3s ease-in-out infinite;
         }
 
@@ -877,10 +764,9 @@
         .empty-state p {
             color: var(--dark-light);
             font-size: 1.1rem;
-            margin-bottom: 30px;
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 968px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -890,12 +776,12 @@
                 grid-template-columns: 1fr;
             }
 
-            .page-header {
-                padding: 30px 25px;
+            .filters-wrapper {
+                flex-direction: column;
             }
 
-            .header-title h1 {
-                font-size: 2.2rem;
+            .search-box {
+                width: 100%;
             }
         }
 
@@ -904,28 +790,18 @@
                 padding: 20px 10px;
             }
 
-            .header-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .page-header {
+                padding: 35px 25px;
             }
 
             .header-title h1 {
-                font-size: 1.8rem;
-            }
-
-            .rdv-actions {
-                justify-content: center;
+                font-size: 2rem;
             }
         }
 
-        /* Scrollbar Styling */
+        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 12px;
-            height: 12px;
         }
 
         ::-webkit-scrollbar-track {
@@ -952,12 +828,9 @@
         <div class="page-header">
             <div class="header-content">
                 <div class="header-title">
-                    <h1><i class="fas fa-calendar-check"></i> Mes Rendez-vous</h1>
-                    <p>Gérez vos consultations médicales en toute simplicité</p>
+                    <h1><i class="fas fa-stethoscope"></i> Mes Consultations</h1>
+                    <p>Gérez vos rendez-vous et suivez vos patients</p>
                 </div>
-                <a href="{{ path('app_rdv_prendre') }}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus-circle"></i> <span>Nouveau rendez-vous</span>
-                </a>
             </div>
         </div>
 
@@ -976,12 +849,42 @@
             </div>
         {% endfor %}
 
-        {% for message in app.flashes('info') %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <span>{{ message }}</span>
-            </div>
-        {% endfor %}
+        <!-- Filters & Search -->
+        <div class="filters-section">
+            <form method="GET" action="{{ path('app_medecin_rdv_liste') }}" class="filters-wrapper" id="searchForm">
+                <div class="search-box">
+                    <input type="text" 
+                           name="search" 
+                           id="searchInput"
+                           placeholder="🔍 Rechercher un patient (nom, prénom, motif)..." 
+                           value="{{ search_term|default('') }}"
+                           autocomplete="off">
+                    <i class="fas fa-search"></i>
+                </div>
+                
+                {# Conserver le filtre de statut lors de la recherche #}
+                <input type="hidden" name="statut" value="{{ statut_filtre|default('tous') }}">
+                
+                <div class="filter-buttons">
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'tous', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('tous') == 'tous' ? 'active' : '' }}">
+                        <i class="fas fa-list"></i> Tous
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'en attente', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'en attente' ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> En attente
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'Confirmé', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'Confirmé' ? 'active' : '' }}">
+                        <i class="fas fa-check-circle"></i> Confirmés
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'Annulé', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'Annulé' ? 'active' : '' }}">
+                        <i class="fas fa-times-circle"></i> Annulés
+                    </a>
+                </div>
+            </form>
+        </div>
 
         {% if rendez_vous is not empty %}
             <!-- Statistics Cards -->
@@ -1019,7 +922,7 @@
             <!-- RDV Cards Grid -->
             <div class="rdv-grid">
                 {% for rdv in rendez_vous %}
-                    <div class="rdv-card {% if rdv.statut == 'Annulé' %}rdv-annule{% endif %}">
+                    <div class="rdv-card">
                         <div class="rdv-header">
                             <div class="rdv-date-time">
                                 <div class="rdv-date">
@@ -1031,18 +934,21 @@
                                     {{ rdv.heureRdv|date('H:i') }}
                                 </div>
                             </div>
-                            <span class="rdv-status status-{{ rdv.statut|lower|replace({' ': '-', 'é': 'e'}) }}">
+                            <span class="rdv-status status-{{ rdv.statut|lower|replace({' ': '-'}) }}">
                                 {{ rdv.statut }}
                             </span>
                         </div>
 
-                        <div class="rdv-doctor">
-                            <div class="doctor-avatar">
-                                {{ rdv.medecin.prenom|slice(0, 1) }}{{ rdv.medecin.nom|slice(0, 1) }}
+                        <div class="patient-info">
+                            <div class="patient-avatar">
+                                {{ rdv.patient.prenom|slice(0, 1) }}{{ rdv.patient.nom|slice(0, 1) }}
                             </div>
-                            <div class="doctor-info">
-                                <div class="doctor-name">Dr. {{ rdv.medecin.nom }} {{ rdv.medecin.prenom }}</div>
-                                <div class="doctor-specialty">{{ rdv.medecin.specialite|default('Médecin généraliste') }}</div>
+                            <div class="patient-details">
+                                <div class="patient-name">{{ rdv.patient.nom }} {{ rdv.patient.prenom }}</div>
+                                <div class="patient-meta">
+                                    <i class="fas fa-phone"></i>
+                                    {{ rdv.patient.telephone|default('Non renseigné') }}
+                                </div>
                             </div>
                         </div>
 
@@ -1054,56 +960,46 @@
                         {% endif %}
 
                         <div class="rdv-actions">
-                            {% if rdv.statut == 'Annulé' %}
-                                {# RDV Annulé : Seulement consulter #}
-                                <a href="{{ path('app_rdv_consulter', {id: rdv.id}) }}" 
-                                   class="btn-icon btn-icon-warning" 
-                                   data-tooltip="Consulter">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                
-                                {% if rdv.ficheMedicale %}
-                                    <a href="{{ path('app_fiche_medicale_show', {id: rdv.ficheMedicale.id}) }}" 
-                                       class="btn-icon btn-icon-primary" 
-                                       data-tooltip="Voir la fiche">
-                                        <i class="fas fa-file-medical"></i>
-                                    </a>
-                                {% endif %}
-                            {% else %}
-                                {# RDV Actif : Modifier RDV + Gérer fiche #}
-                                <a href="{{ path('app_rdv_modifier', {id: rdv.id}) }}" 
-                                   class="btn-icon btn-icon-primary" 
-                                   data-tooltip="Modifier RDV">
-                                    <i class="fas fa-calendar-edit"></i>
-                                </a>
-                                
-                                <form action="{{ path('app_rdv_annuler', {id: rdv.id}) }}" 
+                            {# Bouton Confirmer : uniquement si en attente #}
+                            {% if rdv.statut == 'en attente' %}
+                                <form action="{{ path('app_medecin_rdv_confirmer', {id: rdv.id}) }}" 
+                                      method="post" 
+                                      style="display:inline;">
+                                    <button type="submit" 
+                                            class="btn-icon btn-icon-success" 
+                                            data-tooltip="Confirmer">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {# Bouton Annuler : uniquement si pas déjà annulé #}
+                            {% if rdv.statut != 'Annulé' %}
+                                <form action="{{ path('app_medecin_rdv_annuler', {id: rdv.id}) }}" 
                                       method="post" 
                                       style="display:inline;"
                                       onsubmit="return confirm('⚠️ Voulez-vous vraiment annuler ce rendez-vous ?')">
                                     <button type="submit" 
                                             class="btn-icon btn-icon-danger" 
-                                            data-tooltip="Annuler RDV">
+                                            data-tooltip="Annuler">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
                                 
-                                {% if not rdv.ficheMedicale %}
-                                    {# Créer une fiche médicale #}
-                                    <a href="{{ path('app_fiche_medicale_new_for_rdv', {rdvId: rdv.id}) }}" 
-                                       class="btn-icon btn-icon-success" 
-                                       data-tooltip="Créer Fiche">
-                                        <i class="fas fa-file-medical-alt"></i>
-                                    </a>
-                                {% else %}
-                                    {# Modifier la fiche médicale existante #}
-                                    <a href="{{ path('app_fiche_medicale_edit', {id: rdv.ficheMedicale.id}) }}" 
-                                       class="btn-icon btn-icon-info" 
-                                       data-tooltip="Modifier Fiche">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                {% endif %}
+                                {# ✅ Bouton Fiche médicale : uniquement si RDV non annulé #}
+                                <a href="{{ path('app_medecin_fiche_medicale', {rdvId: rdv.id}) }}" 
+                                   class="btn-icon btn-icon-primary" 
+                                   data-tooltip="Fiche médicale">
+                                    <i class="fas fa-file-medical"></i>
+                                </a>
                             {% endif %}
+                            
+                            {# Bouton Détails : toujours visible #}
+                            <a href="{{ path('app_medecin_rdv_details', {id: rdv.id}) }}" 
+                               class="btn-icon btn-icon-info" 
+                               data-tooltip="Détails">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </div>
                     </div>
                 {% endfor %}
@@ -1114,28 +1010,63 @@
                 <div class="empty-state-icon">
                     <i class="fas fa-calendar-times"></i>
                 </div>
-                <h3>Aucun rendez-vous</h3>
-                <p>Vous n'avez aucun rendez-vous pour le moment</p>
-                <a href="{{ path('app_rdv_prendre') }}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus-circle"></i> <span>Prendre mon premier rendez-vous</span>
-                </a>
+                <h3>Aucun rendez-vous trouvé</h3>
+                <p>
+                    {% if search_term|default('') %}
+                        Aucun résultat pour "{{ search_term }}"
+                    {% else %}
+                        Vous n'avez aucun rendez-vous pour le moment
+                    {% endif %}
+                </p>
             </div>
         {% endif %}
     </div>
 </div>
 
 <script>
-    // Auto-dismiss alerts avec animation
+    // ✅ Auto-dismiss alerts
     document.querySelectorAll('.alert').forEach(alert => {
         setTimeout(() => {
-            alert.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+            alert.style.transition = 'all 0.5s ease';
             alert.style.opacity = '0';
-            alert.style.transform = 'translateX(100%) scale(0.8)';
+            alert.style.transform = 'translateX(100%)';
             setTimeout(() => alert.remove(), 500);
         }, 5000);
     });
 
-    // Compteur animé pour les statistiques
+    // ✅ Recherche en temps réel avec debounce
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+
+    if (searchInput && searchForm) {
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            
+            // Attendre 500ms après la dernière frappe avant de soumettre
+            searchTimeout = setTimeout(() => {
+                searchForm.submit();
+            }, 500);
+        });
+
+        // Soumettre immédiatement sur Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                searchForm.submit();
+            }
+        });
+
+        // Effet visuel sur la recherche active
+        if (searchInput.value.trim() !== '') {
+            searchInput.style.borderColor = 'var(--primary)';
+            searchInput.style.boxShadow = '0 0 0 4px rgba(29, 93, 155, 0.15)';
+        }
+    }
+
+    // ✅ Animate counters
     function animateCounter(element) {
         const target = parseInt(element.textContent);
         if (isNaN(target)) return;
@@ -1157,12 +1088,13 @@
         updateCounter();
     }
 
-    // Animer les compteurs au chargement
     const statObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const counter = entry.target.querySelector('h3');
-                animateCounter(counter);
+                if (counter) {
+                    animateCounter(counter);
+                }
                 statObserver.unobserve(entry.target);
             }
         });
@@ -1172,30 +1104,6 @@
         statObserver.observe(card);
     });
 
-    // Animation au scroll pour les cartes
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll('.rdv-card, .stat-card').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(card);
-    });
-
-    console.log('🏥 MEDINOVA - Mes Rendez-vous chargés avec succès!');
-    console.log('🎨 Palette de couleurs: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
-    console.log('✨ Design harmonisé avec les fiches médicales');
+    console.log('🏥 MEDINOVA - Espace Médecin chargé avec succès!');
 </script>
 {% endblock %}

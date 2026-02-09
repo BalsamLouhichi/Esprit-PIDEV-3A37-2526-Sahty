@@ -30,6 +30,12 @@ class FicheMedicale
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
     private ?string $poids = null;
 
+    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    private ?float $imc = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $categorieImc = null;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $diagnostic = null;
 
@@ -39,16 +45,17 @@ class FicheMedicale
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $cree_le = null;
+    // ✅ CORRECTION : Utiliser camelCase avec mapping vers snake_case en BDD
+    #[ORM\Column(name: 'cree_le', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $creeLe = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $modifie_le = null;
+    #[ORM\Column(name: 'modifie_le', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $modifieLe = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $statut = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'fichesMedicales')]
     #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: true)]
     private ?Patient $patient = null;
 
@@ -56,7 +63,7 @@ class FicheMedicale
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     private ?RendezVous $rendezVous = null;
 
-    // GETTERS ET SETTERS
+    // ==================== GETTERS ET SETTERS ====================
 
     public function getId(): ?int
     {
@@ -96,8 +103,6 @@ class FicheMedicale
         return $this;
     }
 
-    
-
     public function getTaille(): ?string
     {
         return $this->taille;
@@ -117,6 +122,28 @@ class FicheMedicale
     public function setPoids(?string $poids): static
     {
         $this->poids = $poids;
+        return $this;
+    }
+
+    public function getImc(): ?float
+    {
+        return $this->imc;
+    }
+
+    public function setImc(?float $imc): static
+    {
+        $this->imc = $imc;
+        return $this;
+    }
+
+    public function getCategorieImc(): ?string
+    {
+        return $this->categorieImc;
+    }
+
+    public function setCategorieImc(?string $categorieImc): static
+    {
+        $this->categorieImc = $categorieImc;
         return $this;
     }
 
@@ -153,25 +180,26 @@ class FicheMedicale
         return $this;
     }
 
+    // ✅ CORRECTION : Getters/Setters en camelCase
     public function getCreeLe(): ?\DateTimeInterface
     {
-        return $this->cree_le;
+        return $this->creeLe;
     }
 
-    public function setCreeLe(?\DateTimeInterface $cree_le): static
+    public function setCreeLe(?\DateTimeInterface $creeLe): static
     {
-        $this->cree_le = $cree_le;
+        $this->creeLe = $creeLe;
         return $this;
     }
 
     public function getModifieLe(): ?\DateTimeInterface
     {
-        return $this->modifie_le;
+        return $this->modifieLe;
     }
 
-    public function setModifieLe(?\DateTimeInterface $modifie_le): static
+    public function setModifieLe(?\DateTimeInterface $modifieLe): static
     {
-        $this->modifie_le = $modifie_le;
+        $this->modifieLe = $modifieLe;
         return $this;
     }
 
@@ -208,12 +236,14 @@ class FicheMedicale
         return $this;
     }
 
-    // LIFECYCLE CALLBACKS - TRÈS IMPORTANT !
+    // ==================== LIFECYCLE CALLBACKS ====================
     
     #[ORM\PrePersist]
     public function setCreeLeValue(): void
     {
-        $this->cree_le = new \DateTime();
+        if ($this->creeLe === null) {
+            $this->creeLe = new \DateTime();
+        }
         if ($this->statut === null) {
             $this->statut = 'actif';
         }
@@ -222,78 +252,80 @@ class FicheMedicale
     #[ORM\PreUpdate]
     public function setModifieLeValue(): void
     {
-        $this->modifie_le = new \DateTime();
+        $this->modifieLe = new \DateTime();
     }
 
-    // MÉTHODES UTILITAIRES
+    // ==================== MÉTHODES UTILITAIRES ====================
 
-    public function getImc(): ?float
+    /**
+     * Calcule automatiquement l'IMC et sa catégorie
+     */
+    public function calculerImc(): void
     {
         if ($this->taille && $this->poids && (float)$this->taille > 0) {
             $tailleEnMetres = (float)$this->taille;
             $poidsEnKg = (float)$this->poids;
-            
+
             $imc = $poidsEnKg / ($tailleEnMetres * $tailleEnMetres);
-            return round($imc, 2);
+            $this->imc = round($imc, 2);
+
+            // Déterminer la catégorie
+            if ($imc < 18.5) {
+                $this->categorieImc = 'Maigreur';
+            } elseif ($imc < 25) {
+                $this->categorieImc = 'Normal';
+            } elseif ($imc < 30) {
+                $this->categorieImc = 'Surpoids';
+            } else {
+                $this->categorieImc = 'Obésité';
+            }
+        } else {
+            $this->imc = null;
+            $this->categorieImc = null;
         }
-        
+    }
+
+    /**
+     * Retourne l'âge du patient si disponible
+     */
+    public function getAgePatient(): ?int
+    {
+        if ($this->patient && $this->patient->getDateNaissance()) {
+            $now = new \DateTime();
+            $interval = $this->patient->getDateNaissance()->diff($now);
+            return $interval->y;
+        }
         return null;
     }
-public function setImc(?float $imc): static
-{
-    $this->imc = $imc;
-    return $this;
-}
-    public function getCategorieImc(): ?string
+
+    /**
+     * Vérifie si la fiche est récente (moins de 30 jours)
+     */
+    public function isRecente(): bool
     {
-        $imc = $this->getImc();
-        
-        if ($imc === null) {
-            return null;
+        if ($this->creeLe === null) {
+            return false;
         }
         
-        if ($imc < 18.5) {
-            return 'Maigreur';
-        } elseif ($imc < 25) {
-            return 'Normal';
-        } elseif ($imc < 30) {
-            return 'Surpoids';
-        } else {
-            return 'Obésité';
-        }
+        $now = new \DateTime();
+        $interval = $this->creeLe->diff($now);
+        return $interval->days < 30;
     }
-public function setCategorieImc(?string $categorie): static
-{
-    $this->categorieImc = $categorie;
-    return $this;
-}
 
-public function calculerImc(): void
-{
-    if ($this->taille && $this->poids && (float)$this->taille > 0) {
-        $tailleEnMetres = (float)$this->taille;
-        $poidsEnKg = (float)$this->poids;
-
-        $imc = $poidsEnKg / ($tailleEnMetres * $tailleEnMetres);
-        $this->setImc(round($imc, 2));
-
-        if ($imc < 18.5) {
-            $this->setCategorieImc('Maigreur');
-        } elseif ($imc < 25) {
-            $this->setCategorieImc('Normal');
-        } elseif ($imc < 30) {
-            $this->setCategorieImc('Surpoids');
-        } else {
-            $this->setCategorieImc('Obésité');
-        }
-    } else {
-        $this->setImc(null);
-        $this->setCategorieImc(null);
+    /**
+     * Retourne un résumé de la fiche
+     */
+    public function getResume(): string
+    {
+        $patient = $this->patient ? $this->patient->getNom() . ' ' . $this->patient->getPrenom() : 'Patient inconnu';
+        $date = $this->creeLe ? $this->creeLe->format('d/m/Y') : 'Date inconnue';
+        
+        return sprintf('Fiche de %s - %s', $patient, $date);
     }
-}
+
     // Méthode toString pour affichage
     public function __toString(): string
     {
-        return 'Fiche Médicale #' . $this->id;
+        return $this->getResume();
     }
 }

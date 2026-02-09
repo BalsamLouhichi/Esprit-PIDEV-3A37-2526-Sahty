@@ -12,14 +12,12 @@
     <style>
         /* ============ PALETTE DE COULEURS MÉDICALE PROFESSIONNELLE ============ */
         :root {
-            /* Couleurs principales inspirées de l'image */
             --mughal-green: #304D30;
             --prussian-blue: #163A5F;
             --teal-blue: #1D5D9B;
             --pastel-blue: #75C2F6;
             --light-silver: #F4F6FF;
             
-            /* Palette étendue */
             --primary: #1D5D9B;
             --primary-light: #E8F4F8;
             --primary-dark: #163A5F;
@@ -37,7 +35,6 @@
             --dark: #1A2332;
             --dark-light: #2C3E50;
             
-            /* Couleurs de statut */
             --success: #4A7C59;
             --success-light: #D4E9DA;
             --danger: #C1666B;
@@ -384,9 +381,14 @@
             border: 2px solid rgba(117, 194, 246, 0.2);
         }
 
+        /* ============ CUSTOM DROPDOWN POUR RECHERCHE ============ */
+        .custom-dropdown {
+            position: relative;
+        }
+
         .search-wrapper {
             position: relative;
-            margin-bottom: 25px;
+            margin-bottom: 0;
         }
 
         .search-input {
@@ -411,6 +413,11 @@
             transform: translateY(-2px);
         }
 
+        .search-input.active {
+            border-radius: 16px 16px 0 0;
+            border-bottom-color: transparent;
+        }
+
         .search-icon {
             position: absolute;
             right: 22px;
@@ -421,45 +428,124 @@
             pointer-events: none;
         }
 
-        /* ============ CUSTOM SELECT ============ */
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--primary);
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+            max-height: 350px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 30px rgba(29, 93, 155, 0.25);
+            margin-top: -2px;
+        }
+
+        .dropdown-list.show {
+            display: block;
+            animation: slideDownDropdown 0.3s ease;
+        }
+
+        @keyframes slideDownDropdown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--light-alt);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.12) 0%, var(--light) 100%);
+            padding-left: 25px;
+        }
+
+        .dropdown-item.selected {
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(117, 194, 246, 0.25) 100%);
+            font-weight: 700;
+            color: var(--primary);
+            border-left: 5px solid var(--primary);
+        }
+
+        .dropdown-item-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(29, 93, 155, 0.25);
+            text-transform: uppercase;
+        }
+
+        .dropdown-item-content {
+            flex: 1;
+        }
+
+        .dropdown-item-name {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .dropdown-item-specialty {
+            font-size: 0.85rem;
+            color: var(--dark-light);
+            font-weight: 600;
+        }
+
+        /* Scrollbar pour dropdown */
+        .dropdown-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-list::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 0 0 10px 0;
+        }
+
+        .dropdown-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+        }
+
+        /* Masquer le select natif */
+        #medecinSelect {
+            display: none !important;
+        }
+
         .custom-select-wrapper {
             position: relative;
         }
 
-        .custom-select-wrapper select {
-            width: 100%;
-            padding: 18px 50px 18px 22px;
-            border: 2px solid rgba(117, 194, 246, 0.3);
-            border-radius: 16px;
-            font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            appearance: none;
-            font-weight: 500;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
         .custom-select-wrapper::after {
-            content: '▼';
-            position: absolute;
-            right: 22px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-            color: var(--primary);
-            font-size: 0.9rem;
-            font-weight: 700;
-        }
-
-        .custom-select-wrapper select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 
-                0 0 0 4px rgba(29, 93, 155, 0.15),
-                inset 0 2px 5px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
+            display: none;
         }
 
         /* ============ DOCTOR DETAILS CARD ============ */
@@ -930,16 +1016,20 @@
                     </div>
 
                     <div class="doctor-selection-area">
-                        <div class="search-wrapper">
-                            <input type="text" id="searchDoctor" class="search-input" placeholder="🔍 Rechercher un médecin par nom ou spécialité..." autocomplete="off">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-
                         <div class="form-field">
-                            <label for="medecinSelect"><i class="fas fa-user-md"></i> Sélectionnez un médecin</label>
+                            <label for="searchDoctor"><i class="fas fa-user-md"></i> Sélectionner un médecin</label>
+                            
+                            <div class="custom-dropdown">
+                                
+                                
+                                <div class="dropdown-list" id="dropdownList"></div>
+                            </div>
+
+                            <!-- Select caché pour le formulaire -->
                             <div class="custom-select-wrapper">
                                 {{ form_widget(form.medecin, {attr: {class: 'form-control', id: 'medecinSelect'}}) }}
                             </div>
+                            
                             {{ form_errors(form.medecin) }}
                             <div class="no-results" id="noResults">Aucun médecin trouvé pour cette recherche</div>
                         </div>
@@ -1029,10 +1119,10 @@
                 <!-- Boutons -->
                 <div class="form-footer">
                     <button type="button" class="btn btn-secondary" onclick="window.history.back()">
-                        <i class="fas fa-arrow-left"></i> Annuler
+                        <i class="fas fa-arrow-left"></i> <span>Annuler</span>
                     </button>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        Confirmer le rendez-vous <i class="fas fa-check-circle"></i>
+                        <span>Confirmer le rendez-vous</span> <i class="fas fa-check-circle"></i>
                     </button>
                 </div>
 
@@ -1050,6 +1140,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const searchInput = document.getElementById('searchDoctor');
     const medecinSelect = document.getElementById('medecinSelect');
+    const dropdownList = document.getElementById('dropdownList');
     const doctorDetailsCard = document.getElementById('doctorDetailsCard');
     const noResults = document.getElementById('noResults');
     const dateInput = document.getElementById('dateInput');
@@ -1059,6 +1150,113 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const dateError = document.getElementById('dateError');
     const timeError = document.getElementById('timeError');
+
+    let selectedMedecinId = null;
+
+    /* === Fonction pour afficher la liste déroulante === */
+    function renderDropdown(filteredMedecins) {
+        dropdownList.innerHTML = '';
+        
+        if (filteredMedecins.length === 0) {
+            noResults.classList.add('show');
+            dropdownList.classList.remove('show');
+            searchInput.classList.remove('active');
+            return;
+        }
+        
+        noResults.classList.remove('show');
+        
+        filteredMedecins.forEach(med => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            if (selectedMedecinId == med.id) {
+                item.classList.add('selected');
+            }
+            
+            const initials = ((med.prenom||'').charAt(0) + (med.nom||'').charAt(0)).toUpperCase();
+            
+            item.innerHTML = `
+                <div class="dropdown-item-icon">${initials || '👨‍⚕️'}</div>
+                <div class="dropdown-item-content">
+                    <div class="dropdown-item-name">Dr. ${med.prenom || ''} ${med.nom || ''}</div>
+                    <div class="dropdown-item-specialty">${med.specialite || 'Généraliste'}</div>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => selectMedecin(med));
+            dropdownList.appendChild(item);
+        });
+        
+        dropdownList.classList.add('show');
+        searchInput.classList.add('active');
+    }
+
+    /* === Fonction pour sélectionner un médecin === */
+    function selectMedecin(med) {
+        selectedMedecinId = med.id;
+        medecinSelect.value = med.id;
+        searchInput.value = `Dr. ${med.prenom || ''} ${med.nom || ''} - ${med.specialite || 'Généraliste'}`;
+        
+        dropdownList.classList.remove('show');
+        searchInput.classList.remove('active');
+        
+        // Afficher les détails
+        document.getElementById('doctorName').textContent = `Dr. ${med.prenom || ''} ${med.nom || ''}`.trim();
+        document.getElementById('doctorSpecialty').textContent = med.specialite || 'Généraliste';
+        document.getElementById('doctorExperience').textContent = med.anneeExperience ? `${med.anneeExperience} an${med.anneeExperience>1?'s':''}` : '-';
+        document.getElementById('doctorGrade').textContent = med.grade || '-';
+        document.getElementById('doctorEstablishment').textContent = med.nomEtablissement || '-';
+        
+        const initials = ((med.prenom||'').charAt(0) + (med.nom||'').charAt(0)).toUpperCase();
+        document.getElementById('doctorAvatar').textContent = initials || '👨‍⚕️';
+        
+        doctorDetailsCard.classList.add('show');
+        updateTimeline(1);
+    }
+
+    /* === Recherche en temps réel === */
+    searchInput.addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        
+        // Si on efface complètement, réinitialiser
+        if (term === '' && selectedMedecinId) {
+            selectedMedecinId = null;
+            medecinSelect.value = '';
+            doctorDetailsCard.classList.remove('show');
+        }
+        
+        const filtered = medecinsData.filter(med => {
+            const text = `${med.nom || ''} ${med.prenom || ''} ${med.specialite || ''}`.toLowerCase();
+            return text.includes(term);
+        });
+        
+        renderDropdown(filtered);
+    });
+
+    /* === Afficher la liste au focus === */
+    searchInput.addEventListener('focus', function() {
+        const term = this.value.toLowerCase().trim();
+        
+        // Si déjà sélectionné, ne pas afficher la liste
+        if (selectedMedecinId && term !== '') {
+            return;
+        }
+        
+        const filtered = medecinsData.filter(med => {
+            const text = `${med.nom || ''} ${med.prenom || ''} ${med.specialite || ''}`.toLowerCase();
+            return text.includes(term);
+        });
+        
+        renderDropdown(filtered);
+    });
+
+    /* === Fermer la liste en cliquant ailleurs === */
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdownList.contains(e.target)) {
+            dropdownList.classList.remove('show');
+            searchInput.classList.remove('active');
+        }
+    });
 
     /* === Date ≥ aujourd'hui et week-end bloqués === */
     const today = new Date();
@@ -1098,46 +1296,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         timeError.style.display = 'none';
         updateTimeline(3);
-    });
-
-    /* === Recherche médecin === */
-    searchInput.addEventListener('input', function(){
-        const term = this.value.toLowerCase().trim();
-        let hasVisible = false;
-        Array.from(medecinSelect.options).forEach(opt=>{
-            if(opt.value === '' || opt.value === '0') return;
-            const med = medecinsById[opt.value];
-            if(!med){ opt.style.display='none'; return; }
-            const text = `${med.nom || ''} ${med.prenom || ''} ${med.specialite || ''}`.toLowerCase();
-            if(text.includes(term) || term === '') { 
-                opt.style.display=''; 
-                hasVisible=true; 
-            }
-            else { opt.style.display='none'; }
-        });
-        noResults.classList.toggle('show', !hasVisible && term!=='');
-        if(!hasVisible) { 
-            medecinSelect.value=''; 
-            doctorDetailsCard.classList.remove('show'); 
-        }
-    });
-
-    /* === Affichage détails médecin === */
-    medecinSelect.addEventListener('change', function(){
-        const med = medecinsById[this.value];
-        if(!med){ 
-            doctorDetailsCard.classList.remove('show'); 
-            return; 
-        }
-        document.getElementById('doctorName').textContent = `Dr. ${med.prenom || ''} ${med.nom || ''}`.trim();
-        document.getElementById('doctorSpecialty').textContent = med.specialite || 'Généraliste';
-        document.getElementById('doctorExperience').textContent = med.anneeExperience? `${med.anneeExperience} an${med.anneeExperience>1?'s':''}` : '-';
-        document.getElementById('doctorGrade').textContent = med.grade || '-';
-        document.getElementById('doctorEstablishment').textContent = med.nomEtablissement || '-';
-        const initials = ((med.prenom||'').charAt(0) + (med.nom||'').charAt(0)).toUpperCase();
-        document.getElementById('doctorAvatar').textContent = initials || '👨‍⚕️';
-        doctorDetailsCard.classList.add('show');
-        updateTimeline(1);
     });
 
     /* === Motif === */
@@ -1181,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if(!medecinSelect.value || medecinSelect.value==='0'){ 
             alert('⚠️ Veuillez sélectionner un médecin'); 
-            medecinSelect.focus(); 
+            searchInput.focus(); 
             hasError=true; 
         }
         
@@ -1190,12 +1348,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return false; 
         }
         
-        submitBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
+        submitBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> <span>Traitement en cours...</span>';
         submitBtn.disabled=true;
     });
 
-    console.log('🏥 MEDINOVA - Formulaire de rendez-vous chargé avec succès!');
-    console.log('🎨 Design harmonisé avec le thème principal');
+    console.log('🏥 MEDINOVA - Formulaire de rendez-vous avec recherche interactive chargé!');
+    console.log(`📊 ${medecinsData.length} médecins disponibles`);
 });
 </script>
 {% endblock %}

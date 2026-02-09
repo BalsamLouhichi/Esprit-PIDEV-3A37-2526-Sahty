@@ -6,7 +6,6 @@ use App\Entity\RendezVous;
 use App\Entity\FicheMedicale;
 use App\Entity\Patient;
 use App\Form\RendezVousType;
-use App\Form\FicheMedicaleType;  // ✅ AJOUTÉ
 use App\Repository\MedecinRepository;
 use App\Repository\RendezVousRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,24 +27,19 @@ class RDVController extends AbstractController
         EntityManagerInterface $em,
         MedecinRepository $medecinRepository
     ): Response {
-        // Vérifier que l'utilisateur est un patient
         $patient = $this->getUser();
         if (!$patient instanceof Patient) {
             $this->addFlash('error', '❌ Seuls les patients peuvent prendre rendez-vous');
             return $this->redirectToRoute('home');
         }
 
-        // 1️⃣ Créer l'entité rendez-vous
         $rdv = new RendezVous();
         $rdv->setPatient($patient);
 
-        // 2️⃣ Créer et traiter le formulaire
         $form = $this->createForm(RendezVousType::class, $rdv);
         $form->handleRequest($request);
 
-        // 3️⃣ Si le formulaire est soumis et valide
         if ($form->isSubmitted() && $form->isValid()) {
-            // ✅ Valider les données
             if (!$rdv->getMedecin()) {
                 $this->addFlash('error', '❌ Veuillez sélectionner un médecin');
                 return $this->redirectToRoute('app_rdv_prendre');
@@ -56,7 +50,6 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
-            // Vérifier que la date est dans le futur
             $rdvDateTime = new \DateTime();
             $rdvDateTime->setDate(
                 $rdv->getDateRdv()->format('Y'),
@@ -73,7 +66,6 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
-            // Vérifier les conflits d'horaires
             $conflictingRdv = $em->getRepository(RendezVous::class)->findBy([
                 'medecin' => $rdv->getMedecin(),
                 'dateRdv' => $rdv->getDateRdv(),
@@ -86,32 +78,21 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
-            // 4️⃣ Définir les paramètres automatiques
             $rdv->setStatut('en attente');
             $rdv->setCreeLe(new \DateTime());
 
-            // 5️⃣ Sauvegarder en base de données
             $em->persist($rdv);
             $em->flush();
 
-            // 6️⃣ Succès
-            $this->addFlash('success', '✅ Rendez-vous confirmé avec succès! Veuillez compléter votre fiche médicale.');
-
-            // Redirection vers la création de fiche médicale
-            return $this->redirectToRoute('app_fiche_medicale_new_for_rdv', [
-                'rdvId' => $rdv->getId()
-            ]);
+            $this->addFlash('success', '✅ Rendez-vous confirmé avec succès!');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        // 5️⃣ Afficher le formulaire
         return $this->render('rdv/prendre.html.twig', [
             'form' => $form->createView(),
             'medecins' => $medecinRepository->findBy(['estActif' => true]),
         ]);
     }
-
-    // ❌ SUPPRIMER TOUTE LA MÉTHODE newForRdv D'ICI
-    // Elle doit rester uniquement dans FicheMedicaleController
 
     /**
      * ✏️ Modifier un rendez-vous existant
@@ -125,25 +106,21 @@ class RDVController extends AbstractController
         EntityManagerInterface $em,
         MedecinRepository $medecinRepository
     ): Response {
-        // Récupérer le rendez-vous
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
             throw $this->createNotFoundException('Rendez-vous non trouvé');
         }
 
-        // Vérifier que c'est le patient du RDV
         if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce rendez-vous');
         }
 
-        // Vérifier que le RDV n'est pas annulé
         if ($rdv->getStatut() === 'Annulé') {
             $this->addFlash('error', '❌ Impossible de modifier un rendez-vous annulé');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        // Vérifier que le RDV n'est pas passé
         $rdvDateTime = new \DateTime();
         $rdvDateTime->setDate(
             $rdv->getDateRdv()->format('Y'),
@@ -160,17 +137,14 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        // Sauvegarder les anciennes valeurs pour la vérification de conflits
         $oldMedecin = $rdv->getMedecin();
         $oldDate = $rdv->getDateRdv();
         $oldHeure = $rdv->getHeureRdv();
 
-        // Créer et traiter le formulaire
         $form = $this->createForm(RendezVousType::class, $rdv);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Valider les données
             if (!$rdv->getMedecin()) {
                 $this->addFlash('error', '❌ Veuillez sélectionner un médecin');
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
@@ -181,7 +155,6 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
             }
 
-            // Vérifier que la nouvelle date est dans le futur
             $newRdvDateTime = new \DateTime();
             $newRdvDateTime->setDate(
                 $rdv->getDateRdv()->format('Y'),
@@ -198,7 +171,6 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
             }
 
-            // Vérifier les conflits seulement si le créneau a changé
             $creneauChanged = (
                 $rdv->getMedecin()->getId() !== $oldMedecin->getId() ||
                 $rdv->getDateRdv()->format('Y-m-d') !== $oldDate->format('Y-m-d') ||
@@ -226,7 +198,6 @@ class RDVController extends AbstractController
                 }
             }
 
-            // Sauvegarder les modifications
             $em->flush();
 
             $this->addFlash('success', '✅ Rendez-vous modifié avec succès!');
@@ -254,7 +225,6 @@ class RDVController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer tous les RDV du patient
         $rdvs = $rdvRepository->findBy(
             ['patient' => $patient],
             ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']
@@ -262,6 +232,30 @@ class RDVController extends AbstractController
 
         return $this->render('rdv/mes_rdv.html.twig', [
             'rendez_vous' => $rdvs,
+        ]);
+    }
+
+    /**
+     * 👁️ Consulter un rendez-vous (lecture seule pour RDV annulés)
+     */
+    #[Route('/rdv/consulter/{id}', name: 'app_rdv_consulter', methods: ['GET'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function consulter(
+        int $id,
+        RendezVousRepository $rdvRepository
+    ): Response {
+        $rdv = $rdvRepository->find($id);
+
+        if (!$rdv) {
+            throw $this->createNotFoundException('Rendez-vous non trouvé');
+        }
+
+        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $this->render('rdv/consulter.html.twig', [
+            'rdv' => $rdv,
         ]);
     }
 
@@ -281,18 +275,15 @@ class RDVController extends AbstractController
             throw $this->createNotFoundException('Rendez-vous non trouvé');
         }
 
-        // Vérifier que c'est le patient du RDV
         if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que le RDV n'est pas déjà annulé
         if ($rdv->getStatut() === 'Annulé') {
             $this->addFlash('error', '❌ Ce rendez-vous est déjà annulé');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        // Vérifier que le RDV n'est pas passé
         $rdvDateTime = new \DateTime();
         $rdvDateTime->setDate(
             $rdv->getDateRdv()->format('Y'),
@@ -309,7 +300,6 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        // Annuler
         $rdv->setStatut('Annulé');
         $em->flush();
 

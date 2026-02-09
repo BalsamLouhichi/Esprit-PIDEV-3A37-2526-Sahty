@@ -342,4 +342,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $interval = $now->diff($this->dateNaissance);
         return $interval->y;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e8a212d3ad474599065d1f26bc52cde629e2f394

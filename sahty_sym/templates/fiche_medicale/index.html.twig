@@ -493,12 +493,14 @@
             flex-wrap: wrap;
         }
 
-        /* ============ SEARCH CONTAINER ============ */
+        /* ============ SEARCH CONTAINER - CORRIGÉ ============ */
         .search-container {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             align-items: center;
+            flex: 1;
+            max-width: 500px;
         }
 
         .search-box {
@@ -507,10 +509,10 @@
             position: relative;
         }
 
-        /* NOUVEAU STYLE : Bouton AVANT l'input */
+        /* Input group avec bouton AVANT */
         .input-group {
             display: flex;
-            align-items: center;
+            align-items: stretch;
             gap: 0;
             background: white;
             border-radius: 16px;
@@ -527,9 +529,17 @@
         }
 
         .input-group .btn-icon {
-            border-radius: 16px 0 0 16px !important;
+            border-radius: 0 !important;
             margin: 0;
             flex-shrink: 0;
+            box-shadow: none;
+            width: 56px;
+            height: 56px;
+            border-right: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .input-group .btn-icon:hover {
+            transform: none;
             box-shadow: none;
         }
 
@@ -546,9 +556,10 @@
 
         .input-group input::placeholder {
             color: #999;
+            font-style: italic;
         }
 
-        /* ============ AJAX SEARCH RESULTS ============ */
+        /* ============ AJAX SEARCH RESULTS DROPDOWN ============ */
         .search-results-dropdown {
             position: absolute;
             top: calc(100% + 10px);
@@ -557,7 +568,7 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 15px 50px rgba(29, 93, 155, 0.25);
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
@@ -581,7 +592,7 @@
         }
 
         .search-result-item {
-            padding: 15px 20px;
+            padding: 18px 22px;
             border-bottom: 1px solid var(--light-alt);
             cursor: pointer;
             transition: all 0.3s ease;
@@ -595,21 +606,22 @@
         }
 
         .search-result-item:hover {
-            background: linear-gradient(90deg, rgba(117, 194, 246, 0.1) 0%, transparent 100%);
-            padding-left: 25px;
+            background: linear-gradient(90deg, rgba(117, 194, 246, 0.15) 0%, transparent 100%);
+            padding-left: 28px;
         }
 
         .search-result-icon {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1rem;
+            font-size: 1.1rem;
             flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(29, 93, 155, 0.3);
         }
 
         .search-result-content {
@@ -619,54 +631,102 @@
         .search-result-title {
             font-weight: 700;
             color: var(--dark);
-            margin-bottom: 4px;
-            font-size: 0.95rem;
+            margin-bottom: 6px;
+            font-size: 1rem;
         }
 
         .search-result-meta {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--dark-light);
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             flex-wrap: wrap;
         }
 
         .search-result-badge {
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 10px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .search-result-badge.status-actif {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .search-result-badge.status-inactif {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .search-result-badge.status-modifié,
+        .search-result-badge.status-modifie {
+            background: var(--warning-light);
+            color: var(--warning);
         }
 
         .search-no-results {
-            padding: 30px 20px;
+            padding: 40px 20px;
             text-align: center;
             color: var(--dark-light);
         }
 
         .search-no-results i {
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: var(--primary);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: block;
         }
 
+        .search-no-results p {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
         .search-loading {
-            padding: 20px;
+            padding: 30px 20px;
             text-align: center;
             color: var(--primary);
         }
 
         .search-loading i {
-            font-size: 1.5rem;
+            font-size: 2rem;
             animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .search-loading p {
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar pour les résultats */
+        .search-results-dropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
         }
 
         /* ============ STATS GRID ============ */
@@ -949,7 +1009,7 @@
             color: var(--dark);
         }
 
-        .imc-obésité {
+        .imc-obésité, .imc-obesite {
             background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
             color: white;
         }
@@ -1014,9 +1074,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background:      radial-gradient(2px 2px at 20% 30%, rgba(29, 93, 155, 0.2), transparent),
-                radial-gradient(2px 2px at 60% 70%, rgba(48, 77, 48, 0.2), transparent),
-                radial-gradient(1px 1px at 50% 50%, rgba(117, 194, 246, 0.15), transparent);
+            background: rgba(26, 35, 50, 0.85);
             backdrop-filter: blur(20px) saturate(180%);
             z-index: 9999;
             display: flex;
@@ -1027,7 +1085,6 @@
             animation: modalFadeIn 0.4s ease;
         }
 
-        /* Animation d'arrière-plan du modal */
         .modal::before {
             content: '';
             position: fixed;
@@ -1080,7 +1137,6 @@
             position: relative;
         }
 
-        /* Effet de brillance sur le modal */
         .modal-content::before {
             content: '';
             position: absolute;
@@ -1111,7 +1167,7 @@
         }
 
         .modal-header {
-            background: rgba(141, 167, 194, 0.884);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             padding: 35px 45px;
             display: flex;
@@ -1125,7 +1181,6 @@
             z-index: 2;
         }
 
-        /* Animation de fond du header */
         .modal-header::before {
             content: '';
             position: absolute;
@@ -1218,7 +1273,6 @@
             z-index: 2;
         }
 
-        /* Scrollbar personnalisée pour le modal */
         .modal-body::-webkit-scrollbar {
             width: 10px;
         }
@@ -1243,7 +1297,6 @@
             grid-template-columns: 1fr 1fr;
         }
 
-        /* Patient Section avec thème cohérent */
         .patient-section {
             background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
             padding: 45px;
@@ -1319,7 +1372,6 @@
             z-index: 1;
         }
 
-        /* Médecin Section avec thème cohérent */
         .medecin-section {
             background: linear-gradient(135deg, rgba(48, 77, 48, 0.08) 0%, #F0F8F0 100%);
             padding: 45px;
@@ -1340,7 +1392,7 @@
         }
 
         .medecin-section .section-header {
-            background: rgb(182, 58, 58);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
             color: white;
             padding: 28px;
             border-radius: 20px;
@@ -1389,7 +1441,6 @@
             z-index: 1;
         }
 
-        /* Form Elements avec style cohérent */
         .form-group {
             margin-bottom: 28px;
             position: relative;
@@ -1487,7 +1538,6 @@
             pointer-events: none;
         }
 
-        /* Champs readonly pour non-médecins */
         .form-control[readonly]:not(.form-control:focus),
         .form-select[disabled] {
             background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
@@ -1502,7 +1552,6 @@
             font-style: italic;
         }
 
-        /* Effet visuel pour les champs médecin accessibles */
         .medecin-section .form-control:not([readonly]):focus,
         .medecin-section .form-select:not([disabled]):focus {
             border-color: var(--success) !important;
@@ -1512,7 +1561,6 @@
                 inset 0 2px 5px rgba(0, 0, 0, 0.05) !important;
         }
 
-        /* Info badge dans les modaux */
         .modal .info-badge {
             background: linear-gradient(135deg, rgba(117, 194, 246, 0.15) 0%, rgba(117, 194, 246, 0.05) 100%);
             border: 2px solid var(--primary);
@@ -1569,6 +1617,7 @@
 
             .search-container {
                 flex-direction: column;
+                max-width: 100%;
             }
 
             .search-box {
@@ -1614,6 +1663,16 @@
         ::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
         }
+
+        /* Animation shake */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
     </style>
 {% endblock %}
 
@@ -1655,28 +1714,37 @@
             </div>
         {% endfor %}
 
-        <!-- Action Bar -->
+        <!-- Action Bar avec recherche AJAX -->
         <div class="action-bar">
             <div class="action-buttons">
+                {% if isPatient %}
+                    <a href="{{ path('app_fiche_medicale_index', {'new': true}) }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Nouvelle Fiche</span>
+                    </a>
+                {% endif %}
+                
                 <a href="{{ path('app_fiche_medicale_export_all_pdf') }}" class="btn btn-export" target="_blank">
                     <i class="fas fa-file-pdf"></i>
                     <span>Exporter Tout PDF</span>
                 </a>
             </div>
             
-            <!-- SEARCH CONTAINER : Bouton AVANT input -->
+            <!-- RECHERCHE AJAX CORRIGÉE -->
             <div class="search-container">
                 <div class="search-box">
                     <div class="input-group">
-                        <button class="btn-icon btn-icon-primary" type="button" id="search-btn" data-tooltip="
-Rechercher">
+                        <button type="button" class="btn-icon btn-icon-primary" id="search-btn">
                             <i class="fas fa-search"></i>
                         </button>
                         <input type="text" 
                                id="ajax-search-input" 
-                               placeholder="Rechercher par nom, prénom, ID..." 
+                               class="form-control" 
+                               placeholder="Rechercher par patient, diagnostic, ID..."
                                autocomplete="off">
                     </div>
+                    
+                    <!-- Dropdown des résultats -->
                     <div id="search-results" class="search-results-dropdown"></div>
                 </div>
             </div>
@@ -1707,7 +1775,7 @@ Rechercher">
             <div class="fiches-grid">
                 {% for fiche in fiches %}
                     <div class="fiche-card">
-                        <span class="fiche-status status-{{ fiche.statut|lower|replace({' ': '-'}) }}">
+                        <span class="fiche-status status-{{ fiche.statut|lower|replace({' ': '-', 'é': 'e'}) }}">
                             {{ fiche.statut|default('Non défini') }}
                         </span>
                         
@@ -1736,7 +1804,7 @@ Rechercher">
                                     <strong>📏 Mesures Physiques</strong>
                                     <p>{{ fiche.taille }} m / {{ fiche.poids }} kg</p>
                                     {% if fiche.imc %}
-                                        <span class="imc-indicator imc-{{ fiche.categorieImc|lower }}">
+                                        <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
                                             IMC: {{ fiche.imc|number_format(2) }} - {{ fiche.categorieImc }}
                                         </span>
                                     {% endif %}
@@ -1777,16 +1845,18 @@ Rechercher">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 
-                                <form action="{{ path('app_fiche_medicale_index') }}" method="post" style="display: inline;" 
-                                      onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette fiche ?');">
-                                    <input type="hidden" name="delete_id" value="{{ fiche.id }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ fiche.id) }}">
-                                    <button type="submit" 
-                                            class="btn-icon btn-icon-secondary" 
-                                            data-tooltip="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                {% if isPatient %}
+                                    <form action="{{ path('app_fiche_medicale_index') }}" method="post" style="display: inline;" 
+                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette fiche ?');">
+                                        <input type="hidden" name="delete_id" value="{{ fiche.id }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ fiche.id) }}">
+                                        <button type="submit" 
+                                                class="btn-icon btn-icon-secondary" 
+                                                data-tooltip="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -1799,10 +1869,12 @@ Rechercher">
                 </div>
                 <h3>Aucune fiche médicale</h3>
                 <p>Commencez par créer votre première fiche médicale</p>
-                <a href="{{ path('app_fiche_medicale_index', {'new': true}) }}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Créer ma première fiche</span>
-                </a>
+                {% if isPatient %}
+                    <a href="{{ path('app_fiche_medicale_index', {'new': true}) }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Créer ma première fiche</span>
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
     </div>
@@ -2037,7 +2109,7 @@ Rechercher">
                                 <strong>📏 Mesures</strong>
                                 <p>Taille: {{ fiche.taille }} m | Poids: {{ fiche.poids }} kg</p>
                                 {% if fiche.imc %}
-                                    <span class="imc-indicator imc-{{ fiche.categorieImc|lower }}">
+                                    <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
                                         IMC: {{ fiche.imc|number_format(2) }} - {{ fiche.categorieImc }}
                                     </span>
                                 {% endif %}
@@ -2073,7 +2145,7 @@ Rechercher">
                         <div class="detail-item">
                             <strong>📊 Statut</strong>
                             <p>
-                                <span class="status-{{ fiche.statut|lower|replace({' ': '-'}) }} fiche-status" style="position: static;">
+                                <span class="status-{{ fiche.statut|lower|replace({' ': '-', 'é': 'e'}) }} fiche-status" style="position: static;">
                                     {{ fiche.statut|default('Non défini') }}
                                 </span>
                             </p>
@@ -2194,7 +2266,7 @@ Rechercher">
                         classe = 'imc-surpoids';
                     } else {
                         categorie = 'Obésité';
-                        classe = 'imc-obésité';
+                        classe = 'imc-obesite';
                     }
                     
                     imcDisplay.innerHTML = `
@@ -2212,19 +2284,30 @@ Rechercher">
             calculerIMC();
         }
 
-        // ============ AJAX SEARCH FUNCTIONALITY ============
+        // ============ AJAX SEARCH FUNCTIONALITY - CORRIGÉ ============
         (function() {
             const searchInput = document.getElementById('ajax-search-input');
             const searchResults = document.getElementById('search-results');
             const searchBtn = document.getElementById('search-btn');
             let searchTimeout = null;
 
-            if (!searchInput || !searchResults) return;
+            console.log('🔍 Initialisation de la recherche AJAX...');
+            console.log('Input:', searchInput);
+            console.log('Results container:', searchResults);
+            console.log('Button:', searchBtn);
+
+            if (!searchInput || !searchResults) {
+                console.error('❌ Éléments de recherche non trouvés!');
+                return;
+            }
 
             // Fonction de recherche AJAX
             function performSearch(query) {
+                console.log('🔎 Recherche pour:', query);
+
                 if (query.length < 2) {
                     searchResults.classList.remove('active');
+                    searchResults.innerHTML = '';
                     return;
                 }
 
@@ -2239,16 +2322,21 @@ Rechercher">
 
                 // Effectuer la requête AJAX
                 fetch(`{{ path('app_fiche_medicale_search_ajax') }}?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('✅ Réponse reçue:', response.status);
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('📊 Données reçues:', data);
                         displayResults(data);
                     })
                     .catch(error => {
-                        console.error('Erreur de recherche:', error);
+                        console.error('❌ Erreur de recherche:', error);
                         searchResults.innerHTML = `
                             <div class="search-no-results">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <p>Erreur lors de la recherche</p>
+                                <small style="color: #999; margin-top: 5px; display: block;">${error.message}</small>
                             </div>
                         `;
                     });
@@ -2268,11 +2356,17 @@ Rechercher">
 
                 let html = '';
                 results.forEach(fiche => {
-                    const statusClass = fiche.statut ? fiche.statut.toLowerCase().replace(' ', '-') : 'non-defini';
+                    const statusClass = fiche.statut ? fiche.statut.toLowerCase().replace(/[éè]/g, 'e').replace(' ', '-') : 'non-defini';
                     const imcBadge = fiche.imc ? `
-                        <span class="search-result-badge imc-${fiche.categorieImc ? fiche.categorieImc.toLowerCase() : ''}">
+                        <span class="search-result-badge" style="background: var(--info-light); color: var(--info);">
                             IMC: ${fiche.imc}
                         </span>
+                    ` : '';
+
+                    const diagnosticPreview = fiche.diagnostic ? `
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 4px; font-style: italic;">
+                            ${fiche.diagnostic}
+                        </div>
                     ` : '';
 
                     html += `
@@ -2291,6 +2385,7 @@ Rechercher">
                                     ${imcBadge}
                                     <span><i class="fas fa-calendar"></i> ${fiche.creeLe}</span>
                                 </div>
+                                ${diagnosticPreview}
                             </div>
                         </div>
                     `;
@@ -2302,9 +2397,12 @@ Rechercher">
                 document.querySelectorAll('.search-result-item').forEach(item => {
                     item.addEventListener('click', function() {
                         const ficheId = this.dataset.ficheId;
+                        console.log('📋 Redirection vers fiche:', ficheId);
                         window.location.href = `{{ path('app_fiche_medicale_index') }}?view=${ficheId}`;
                     });
                 });
+
+                console.log('✅ Affichage de', results.length, 'résultats');
             }
 
             // Événement de saisie avec debounce
@@ -2318,18 +2416,25 @@ Rechercher">
             });
 
             // Bouton de recherche
-            searchBtn.addEventListener('click', function() {
-                const query = searchInput.value.trim();
-                if (query.length >= 2) {
-                    performSearch(query);
-                } else {
-                    searchInput.focus();
-                }
-            });
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    const query = searchInput.value.trim();
+                    console.log('🔘 Clic sur bouton recherche:', query);
+                    if (query.length >= 2) {
+                        performSearch(query);
+                    } else {
+                        searchInput.focus();
+                        searchInput.classList.add('shake');
+                        setTimeout(() => searchInput.classList.remove('shake'), 500);
+                    }
+                });
+            }
 
             // Fermer les résultats en cliquant ailleurs
             document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target) && !searchBtn.contains(e.target)) {
+                if (!searchInput.contains(e.target) && 
+                    !searchResults.contains(e.target) && 
+                    !searchBtn.contains(e.target)) {
                     searchResults.classList.remove('active');
                 }
             });
@@ -2352,9 +2457,15 @@ Rechercher">
                         performSearch(this.value.trim());
                     }
                 }
+
+                // Fermer avec Escape
+                if (e.key === 'Escape') {
+                    searchResults.classList.remove('active');
+                    this.blur();
+                }
             });
 
-            console.log('✅ Recherche AJAX activée avec bouton');
+            console.log('✅ Recherche AJAX complètement initialisée');
         })();
 
         // Animation des boutons icônes au chargement
