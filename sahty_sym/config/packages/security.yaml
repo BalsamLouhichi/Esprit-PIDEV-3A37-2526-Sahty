@@ -33,7 +33,10 @@ security:
                 csrf_token_id: authenticate        # ID du token CSRF
                 default_target_path: app_home      # Redirection après login réussi
                 failure_path: app_login            # Redirection en cas d'échec
-                use_referer: true                  # Utiliser la page précédente si définie
+                
+            
+
+
             
             # Configuration de la déconnexion
             logout:
@@ -53,7 +56,9 @@ security:
         - { path: ^/login$, roles: PUBLIC_ACCESS, methods: [GET, POST] }
         - { path: ^/signup$, roles: PUBLIC_ACCESS }
         - { path: ^/register$, roles: PUBLIC_ACCESS }
-        - { path: ^/$, roles: PUBLIC_ACCESS }      # Page d'accueil
+        - { path: ^/$, roles: PUBLIC_ACCESS }  
+        
+            # Page d'accueil
         
         # Pages protégées par rôle
         - { path: ^/admin/, roles: ROLE_ADMIN }

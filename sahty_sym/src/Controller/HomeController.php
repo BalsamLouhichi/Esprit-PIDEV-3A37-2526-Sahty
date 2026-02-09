@@ -26,8 +26,6 @@ class HomeController extends AbstractController
    
 
 
-   
-
     #[Route('/forgot', name: 'app_forgot_password')]
     public function forgot(): Response
     {
@@ -37,7 +35,7 @@ class HomeController extends AbstractController
     #[Route('/admin_dashboard', name: 'admin_dashboard')]
     public function dashboard(): Response
     {
-        return $this->render('admin_dashboard/index.html.twig');
+        return $this->render('admin/index.html.twig');
     }
 
     #[Route('/profil', name: 'app_profile')]

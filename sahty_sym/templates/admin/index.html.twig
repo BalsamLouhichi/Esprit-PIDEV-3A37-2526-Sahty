@@ -1,8 +1,8 @@
-{% set app_name = app_name ?? 'MEDINOVA' %}
+{% set app_name = app_name ?? 'Sahty' %}
 {% set app_version = app_version ?? '1.0.0' %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <title>{{ app_name }} - Admin Dashboard</title>
@@ -16,12 +16,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Icon Font Stylesheet -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
-
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <!-- Template CSS -->
     <style>
@@ -978,60 +977,27 @@
         <div class="sidebar-menu">
             <ul>
                 <li>
-                    <a href="#" class="active">
+                    <a href="{{ path('admin_index') }}" {% if app.request.attributes.get('_route') == 'admin_index' %}class="active"{% endif %}>
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="{{ path('admin_users') }}" {% if app.request.attributes.get('_route') in ['admin_users', 'admin_user_new', 'admin_user_edit', 'admin_user_delete', 'admin_user_toggle_status'] %}class="active"{% endif %}>
                         <i class="fas fa-users"></i>
                         <span>Users Management</span>
-                        {% if pending_users_count|default(0) > 0 %}
-                            <span class="badge bg-primary rounded-pill">{{ pending_users_count }}</span>
-                        {% endif %}
                     </a>
                 </li>
                 <li>
                     <a href="#">
                         <i class="fas fa-calendar-check"></i>
                         <span>Appointments</span>
-                        {% if stats.todays_appointments|default(0) > 0 %}
-                            <span class="badge bg-warning rounded-pill">{{ stats.todays_appointments }}</span>
-                        {% endif %}
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-heartbeat"></i>
-                        <span>Medical Records</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-pills"></i>
-                        <span>Pharmacy</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-flask"></i>
-                        <span>Laboratory</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Billing</span>
-                        {% if stats.pending_bills|default(0) > 0 %}
-                            <span class="badge bg-danger rounded-pill">{{ stats.pending_bills }}</span>
-                        {% endif %}
                     </a>
                 </li>
                 <li>
                     <a href="#">
                         <i class="fas fa-chart-bar"></i>
-                        <span>Reports & Analytics</span>
+                        <span>Reports</span>
                     </a>
                 </li>
                 <li>
@@ -1040,20 +1006,11 @@
                         <span>Settings</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <i class="fas fa-bell"></i>
-                        <span>Notifications</span>
-                        {% if stats.unread_notifications|default(0) > 0 %}
-                            <span class="badge bg-info rounded-pill">{{ stats.unread_notifications }}</span>
-                        {% endif %}
-                    </a>
-                </li>
             </ul>
         </div>
 
         <div class="sidebar-footer">
-            <a href="#" class="btn">
+            <a href="{{ path('app_logout') }}" class="btn">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </a>
@@ -1070,16 +1027,16 @@
             
             <div class="user-menu">
                 <div class="user-info d-none d-md-block">
-                    <h6>{{ app.user.fullName ?? 'Administrator' }}</h6>
-                    <small>{{ app.user.role|default('Admin') }}</small>
-                </div>
+                        <h6>{{ app.user.prenom is defined ? (app.user.prenom ~ ' ' ~ app.user.nom) : (app.user.username|default('Administrator')) }}</h6>
+                        <small>{{ app.user.role|default('Admin') }}</small>
+                    </div>
                 <div class="dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        {% if app.user.avatar|default %}
+                            {% if app.user.avatar|default %}
                             <img src="{{ app.user.avatar }}" alt="User" class="user-avatar">
                         {% else %}
                             <div class="user-avatar">
-                                {{ (app.user.fullName ?? 'A')[:1]|upper }}
+                                {{ app.user.prenom is defined ? (app.user.prenom[:1]|upper) : (app.user.username|default('A')[:1]|upper) }}
                             </div>
                         {% endif %}
                     </a>
@@ -1104,6 +1061,17 @@
 
         <!-- Content Container -->
         <div class="content-container">
+            <!-- Alerts -->
+            {% if app.session.flashbag.has('success') %}
+                {% for message in app.session.flashbag.get('success') %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             <!-- Statistics Cards -->
             <div class="stats-grid">
                 <div class="stat-card users">
@@ -1171,233 +1139,38 @@
                 </div>
             </div>
 
-            <!-- Main Content Grid -->
-            <div class="content-grid">
-                <!-- Left Column -->
-                <div class="left-column">
-                    <!-- Appointments Chart -->
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h5><i class="fas fa-chart-line"></i> Appointments Overview</h5>
-                            <div class="chart-filters">
-                                <button class="chart-filter-btn">Week</button>
-                                <button class="chart-filter-btn active">Month</button>
-                                <button class="chart-filter-btn">Year</button>
-                            </div>
-                        </div>
-                        <div class="chart">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-chart-line"></i>
-                                <p>Appointments chart visualization</p>
-                                <small>Daily appointments: Mon({{ stats.weekly_appointments.mon|default(45) }}), Tue({{ stats.weekly_appointments.tue|default(52) }}), Wed({{ stats.weekly_appointments.wed|default(48) }}), Thu({{ stats.weekly_appointments.thu|default(55) }}), Fri({{ stats.weekly_appointments.fri|default(60) }})</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Appointments Table -->
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h5><i class="fas fa-calendar-alt"></i> Recent Appointments</h5>
-                            <a href="#" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye"></i> View All
-                            </a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Patient</th>
-                                        <th>Doctor</th>
-                                        <th>Time</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for appointment in recent_appointments|default([]) %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                {% if appointment.patientAvatar %}
-                                                    <img src="{{ appointment.patientAvatar }}" alt="Patient" class="user-avatar-sm me-3">
-                                                {% else %}
-                                                    <div class="user-avatar-sm me-3 d-flex align-items-center justify-content-center bg-primary text-white">
-                                                        {{ appointment.patientName[:1]|upper }}
-                                                    </div>
-                                                {% endif %}
-                                                <div>
-                                                    <strong>{{ appointment.patientName }}</strong>
-                                                    <div class="text-muted small">ID: {{ appointment.patientId }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ appointment.doctorName }}</td>
-                                        <td>{{ appointment.time }}</td>
-                                        <td>
-                                            <span class="status-badge 
-                                                {% if appointment.status == 'confirmed' %}status-active
-                                                {% elseif appointment.status == 'pending' %}status-pending
-                                                {% else %}status-inactive{% endif %}">
-                                                <i class="fas 
-                                                    {% if appointment.status == 'confirmed' %}fa-check-circle
-                                                    {% elseif appointment.status == 'pending' %}fa-clock
-                                                    {% else %}fa-times-circle{% endif %}">
-                                                </i>
-                                                {{ appointment.status|capitalize }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                <a href="#" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                {% if appointment.status == 'pending' %}
-                                                <a href="#" class="btn btn-sm btn-outline-success">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
-                                            <i class="fas fa-calendar-times fa-2x mb-3"></i>
-                                            <p>No appointments found</p>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column -->
-                <div class="right-column">
-                    <!-- Recent Activity -->
-                    <div class="chart-container">
-                        <div class="table-header">
-                            <h5><i class="fas fa-history"></i> Recent Activity</h5>
-                            <a href="#" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-sync-alt"></i>
-                            </a>
-                        </div>
-                        <ul class="activity-list">
-                            {% for activity in recent_activities|default([]) %}
-                            <li class="activity-item">
-                                <div class="activity-icon 
-                                    {% if activity.type == 'user' %}user
-                                    {% elseif activity.type == 'appointment' %}appointment
-                                    {% elseif activity.type == 'payment' %}payment
-                                    {% else %}system{% endif %}">
-                                    <i class="fas 
-                                        {% if activity.type == 'user' %}fa-user-plus
-                                        {% elseif activity.type == 'appointment' %}fa-calendar-plus
-                                        {% elseif activity.type == 'payment' %}fa-credit-card
-                                        {% else %}fa-cog{% endif %}">
-                                    </i>
-                                </div>
-                                <div class="activity-content">
-                                    <h6>{{ activity.title }}</h6>
-                                    <p>{{ activity.description }}</p>
-                                    <div class="activity-time">
-                                        <i class="far fa-clock"></i>
-                                        {{ activity.time }}
-                                    </div>
-                                </div>
-                            </li>
-                            {% else %}
-                            <li class="activity-item">
-                                <div class="activity-content text-center text-muted py-3">
-                                    <i class="fas fa-history fa-2x mb-2"></i>
-                                    <p>No recent activity</p>
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <!-- Quick Stats -->
-                    <div class="chart-container">
-                        <h5><i class="fas fa-chart-pie"></i> Quick Stats</h5>
-                        <div class="quick-stats">
-                            <div class="quick-stat-item">
-                                <h4 class="text-primary">{{ stats.pending_appointments|default(24) }}</h4>
-                                <small>Pending Appointments</small>
-                            </div>
-                            <div class="quick-stat-item">
-                                <h4 class="text-success">{{ stats.todays_patients|default(156) }}</h4>
-                                <small>Today's Patients</small>
-                            </div>
-                            <div class="quick-stat-item">
-                                <h4 class="text-warning">{{ stats.available_doctors|default(8) }}</h4>
-                                <small>Available Doctors</small>
-                            </div>
-                            <div class="quick-stat-item">
-                                <h4 class="text-danger">{{ stats.emergency_cases|default(12) }}</h4>
-                                <small>Emergency Cases</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Status -->
-                    <div class="chart-container">
-                        <h5><i class="fas fa-server"></i> System Status</h5>
-                        <div class="progress-container">
-                            <div class="progress-label">
-                                <span>Server Load</span>
-                                <span>{{ system_status.server_load|default(65) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar 
-                                    {% if system_status.server_load|default(65) < 70 %}bg-success
-                                    {% elseif system_status.server_load|default(65) < 85 %}bg-warning
-                                    {% else %}bg-danger{% endif %}" 
-                                    style="width: {{ system_status.server_load|default(65) }}%">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-label">
-                                <span>Database Usage</span>
-                                <span>{{ system_status.database_usage|default(42) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar bg-info" style="width: {{ system_status.database_usage|default(42) }}%"></div>
-                            </div>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-label">
-                                <span>Storage</span>
-                                <span>{{ system_status.storage|default(78) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar bg-warning" style="width: {{ system_status.storage|default(78) }}%"></div>
-                            </div>
-                        </div>
-                        <div class="system-status-alert alert 
-                            {% if system_status.overall|default('operational') == 'operational' %}alert-success
-                            {% else %}alert-warning{% endif %}">
-                            <i class="fas 
-                                {% if system_status.overall|default('operational') == 'operational' %}fa-check-circle
-                                {% else %}fa-exclamation-triangle{% endif %}">
-                            </i>
-                            <div>{% if system_status.overall|default('operational') == 'operational' %}All systems operational{% else %}System issues detected{% endif %}</div>
-                        </div>
-                    </div>
+            <!-- Role Filters -->
+            <div class="card-section" style="margin-top:18px;">
+                <h5 style="margin-bottom:12px;"><i class="fas fa-filter"></i> Filtrer par type d'utilisateur</h5>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ path('admin_users', {role: 'medecin'}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-user-md me-1"></i> Médecins ({{ user_distribution.doctors|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'patient'}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-user-injured me-1"></i> Patients ({{ user_distribution.patients|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'admin'}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-user-shield me-1"></i> Admins ({{ user_distribution.admins|default(user_distribution.admin|default(0)) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'staff'}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users-cog me-1"></i> Staff ({{ user_distribution.staff|default(user_distribution.others|default(0)) }})
+                    </a>
+                    <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-list me-1"></i> Tous ({{ stats.total_users|default(0) }})
+                    </a>
                 </div>
             </div>
 
+           
             <!-- Bottom Row -->
             <div class="content-grid mt-4">
                 <div class="left-column">
                     <div class="table-container">
                         <div class="table-header">
                             <h5><i class="fas fa-user-friends"></i> Recent Users</h5>
-                            <a href="#" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i> Add User
-                            </a>
+                            <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Add User
+                                </a>
                         </div>
                         <div class="table-responsive">
                             <table class="table">
@@ -1415,41 +1188,47 @@
                                     {% for user in recent_users|default([]) %}
                                     <tr>
                                         <td>
-                                            <div class="fw-medium">{{ user.fullName }}</div>
+                                            <div class="fw-medium">{{ user.prenom }} {{ user.nom }}</div>
                                             <div class="text-muted small">{{ user.email }}</div>
                                         </td>
                                         <td>{{ user.email }}</td>
                                         <td>
                                             <span class="badge 
-                                                {% if user.role == 'Doctor' %}bg-success
-                                                {% elseif user.role == 'Patient' %}bg-primary
-                                                {% elseif user.role == 'Admin' %}bg-danger
+                                                {% if user.role == 'medecin' %}bg-success
+                                                {% elseif user.role == 'patient' %}bg-primary
+                                                {% elseif user.role == 'admin' %}bg-danger
                                                 {% else %}bg-secondary{% endif %}">
-                                                {{ user.role }}
+                                                {% if user.role == 'medecin' %}Doctor
+                                                {% elseif user.role == 'patient' %}Patient
+                                                {% elseif user.role == 'admin' %}Admin
+                                                {% elseif user.role == 'responsable_labo' %}Lab Manager
+                                                {% elseif user.role == 'responsable_para' %}Para Manager
+                                                {% else %}User{% endif %}
                                             </span>
                                         </td>
                                         <td>
                                             <span class="status-badge 
-                                                {% if user.status|default('active') == 'active' %}status-active
-                                                {% elseif user.status|default('active') == 'pending' %}status-pending
+                                                {% if user.estActif %}status-active
                                                 {% else %}status-inactive{% endif %}">
                                                 <i class="fas 
-                                                    {% if user.status|default('active') == 'active' %}fa-check-circle
-                                                    {% elseif user.status|default('active') == 'pending' %}fa-clock
+                                                    {% if user.estActif %}fa-check-circle
                                                     {% else %}fa-times-circle{% endif %}">
                                                 </i>
-                                                {{ user.status|default('active')|capitalize }}
+                                                {% if user.estActif %}Active{% else %}Inactive{% endif %}
                                             </span>
                                         </td>
-                                        <td>{{ user.joinedDate|default('2023-12-01') }}</td>
+                                        <td>{{ user.creeLe ? user.creeLe.format('d/m/Y') : 'N/A' }}</td>
                                         <td>
                                             <div class="d-flex gap-2">
-                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="#" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+                                                <form method="POST" action="{{ path('admin_user_delete', {id: user.id}) }}" style="display: inline;">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete user?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

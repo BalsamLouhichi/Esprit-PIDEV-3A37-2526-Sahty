@@ -12,40 +12,40 @@ class SecurityController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // Si l'utilisateur est déjà connecté, redirigez-le vers son profil
+        // ✅ Si l'utilisateur est déjà connecté
         if ($this->getUser()) {
+            // 🔐 Si c'est un administrateur, rediriger vers le dashboard admin
+            if ($this->isGranted('ROLE_ADMIN')) {
+                return $this->redirectToRoute('admin_dashboard');
+            }
+           
+            // ✅ Autres utilisateurs
             return $this->redirectToRoute('app_profile');
         }
 
-        // Récupérer l'erreur de login s'il y en a une
-        $error = $authenticationUtils->getLastAuthenticationError();
-        
-        // Dernier email saisi par l'utilisateur
-        $lastUsername = $authenticationUtils->getLastUsername();
-
         return $this->render('securityL/login.html.twig', [
-            'last_username' => $lastUsername,
-            'error' => $error,
-        ]);
+            'last_username' => $authenticationUtils->getLastUsername(),
+            'error' => $authenticationUtils->getLastAuthenticationError(),
+        ]); 
     }
 
     #[Route('/logout', name: 'app_logout')]
     public function logout(): void
     {
-        // Cette méthode est gérée par Symfony
-        throw new \LogicException('This method will be intercepted by the logout key on your firewall.');
+        throw new \LogicException('This method is intercepted by the firewall.');
     }
 
     #[Route('/profile', name: 'app_profile')]
     public function profile(): Response
     {
-        // S'assurer que l'utilisateur est connecté
+        // 🔐 Sécurité
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        
-        $user = $this->getUser();
-        
+
+      
+       
+
         return $this->render('profile/index.html.twig', [
-            'user' => $user,
+            'user' => $this->getUser(),
         ]);
     }
 }
