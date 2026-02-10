@@ -3,6 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Utilisateur;
+use App\Entity\Medecin;
+use App\Entity\Patient;
+use App\Entity\ResponsableLaboratoire;
+use App\Entity\ResponsableParapharmacie;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -125,16 +130,97 @@ class AdminController extends AbstractController
 
             $data = $request->request;
 
-            $user = new Utilisateur();
+            // Instantiate correct subclass based on role
+            $role = $data->get('role');
+            switch ($role) {
+                case 'medecin':
+                    $user = new Medecin();
+                    break;
+                case 'patient':
+                    $user = new Patient();
+                    break;
+                case 'responsable_labo':
+                    $user = new ResponsableLaboratoire();
+                    break;
+                case 'responsable_para':
+                    $user = new ResponsableParapharmacie();
+                    break;
+                default:
+                    $user = new Utilisateur();
+            }
+
             $user->setNom($data->get('nom'));
             $user->setPrenom($data->get('prenom'));
             $user->setEmail($data->get('email'));
-            $user->setRole($data->get('role'));
+            $user->setRole($role ?: $user->getRole());
 
+            // basic extra fields
+            if ($tel = $data->get('telephone')) {
+                $user->setTelephone($tel);
+            }
+            if ($dn = $data->get('dateNaissance')) {
+                try {
+                    $user->setDateNaissance(new \DateTime($dn));
+                } catch (\Exception $e) {
+                }
+            }
+            $user->setEstActif($data->get('estActif') ? true : false);
+
+            // password
             $plain = $data->get('password');
             if ($plain) {
                 $hashed = $passwordHasher->hashPassword($user, $plain);
                 $user->setPassword($hashed);
+            }
+
+            // file uploads
+            /** @var UploadedFile $photo */
+            $photo = $request->files->get('photoUpload');
+            if ($photo instanceof UploadedFile) {
+                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                }
+                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
+                $photo->move($uploadsDir, $filename);
+                $user->setPhotoProfil('/uploads/profiles/' . $filename);
+            } elseif ($data->get('photoProfil')) {
+                $user->setPhotoProfil($data->get('photoProfil'));
+            }
+
+            // role-specific fields
+            if ($user instanceof Medecin) {
+                $user->setSpecialite($data->get('specialite'));
+                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
+                $user->setGrade($data->get('grade'));
+                $user->setAdresseCabinet($data->get('adresseCabinet'));
+                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
+                $user->setNomEtablissement($data->get('nomEtablissement'));
+                $user->setNumeroUrgence($data->get('numeroUrgence'));
+                $user->setDisponibilite($data->get('disponibilite'));
+
+                $doc = $request->files->get('documentPdf');
+                if ($doc instanceof UploadedFile) {
+                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
+                    $doc->move($uploadsDir, $docName);
+                    $user->setDocumentPdf('/uploads/docs/' . $docName);
+                }
+            }
+
+            if ($user instanceof Patient) {
+                $user->setGroupeSanguin($data->get('groupeSanguin'));
+                $user->setContactUrgence($data->get('contactUrgence'));
+                $user->setSexe($data->get('sexe'));
+            }
+
+            if ($user instanceof ResponsableLaboratoire) {
+                $user->setLaboratoireId($data->get('laboratoireId') ? (int)$data->get('laboratoireId') : null);
+            }
+
+            if ($user instanceof ResponsableParapharmacie) {
+                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
             }
 
             $this->em->persist($user);
@@ -173,9 +259,74 @@ class AdminController extends AbstractController
             $user->setEmail($data->get('email'));
             $user->setRole($data->get('role'));
 
+            if ($tel = $data->get('telephone')) {
+                $user->setTelephone($tel);
+            } else {
+                $user->setTelephone(null);
+            }
+
+            if ($dn = $data->get('dateNaissance')) {
+                try {
+                    $user->setDateNaissance(new \DateTime($dn));
+                } catch (\Exception $e) {
+                }
+            } else {
+                $user->setDateNaissance(null);
+            }
+
+            $user->setEstActif($data->get('estActif') ? true : false);
+
             $plain = $data->get('password');
             if ($plain) {
                 $user->setPassword($passwordHasher->hashPassword($user, $plain));
+            }
+
+            // file uploads
+            /** @var UploadedFile $photo */
+            $photo = $request->files->get('photoUpload');
+            if ($photo instanceof UploadedFile) {
+                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
+                $photo->move($uploadsDir, $filename);
+                $user->setPhotoProfil('/uploads/profiles/' . $filename);
+            } elseif ($data->get('photoProfil')) {
+                $user->setPhotoProfil($data->get('photoProfil'));
+            }
+
+            // role-specific fields
+            if ($user instanceof Medecin) {
+                $user->setSpecialite($data->get('specialite'));
+                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
+                $user->setGrade($data->get('grade'));
+                $user->setAdresseCabinet($data->get('adresseCabinet'));
+                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
+                $user->setNomEtablissement($data->get('nomEtablissement'));
+                $user->setNumeroUrgence($data->get('numeroUrgence'));
+                $user->setDisponibilite($data->get('disponibilite'));
+
+                $doc = $request->files->get('documentPdf');
+                if ($doc instanceof UploadedFile) {
+                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
+                    $doc->move($uploadsDir, $docName);
+                    $user->setDocumentPdf('/uploads/docs/' . $docName);
+                }
+            }
+
+            if ($user instanceof Patient) {
+                $user->setGroupeSanguin($data->get('groupeSanguin'));
+                $user->setContactUrgence($data->get('contactUrgence'));
+                $user->setSexe($data->get('sexe'));
+            }
+
+            if ($user instanceof ResponsableLaboratoire) {
+                $user->setLaboratoireId($data->get('laboratoireId') ? (int)$data->get('laboratoireId') : null);
+            }
+
+            if ($user instanceof ResponsableParapharmacie) {
+                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
             }
 
             $this->em->flush();

@@ -31,7 +31,7 @@ security:
                 enable_csrf: true                  # Activer la protection CSRF
                 csrf_parameter: _csrf_token        # Nom du paramètre CSRF
                 csrf_token_id: authenticate        # ID du token CSRF
-                default_target_path: app_home      # Redirection après login réussi
+                success_handler: App\Security\AuthenticationSuccessHandler  # Gestionnaire personnalisé
                 failure_path: app_login            # Redirection en cas d'échec
                 
             
@@ -57,6 +57,8 @@ security:
         - { path: ^/signup$, roles: PUBLIC_ACCESS }
         - { path: ^/register$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }  
+        - { path: ^/forgot, roles: PUBLIC_ACCESS }
+        
         
             # Page d'accueil
         

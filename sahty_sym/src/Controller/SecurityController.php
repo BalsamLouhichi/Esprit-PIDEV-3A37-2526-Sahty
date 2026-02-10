@@ -16,7 +16,7 @@ class SecurityController extends AbstractController
         if ($this->getUser()) {
             // 🔐 Si c'est un administrateur, rediriger vers le dashboard admin
             if ($this->isGranted('ROLE_ADMIN')) {
-                return $this->redirectToRoute('admin_dashboard');
+                return $this->redirectToRoute('admin_index');
             }
            
             // ✅ Autres utilisateurs
@@ -48,4 +48,5 @@ class SecurityController extends AbstractController
             'user' => $this->getUser(),
         ]);
     }
+   
 }

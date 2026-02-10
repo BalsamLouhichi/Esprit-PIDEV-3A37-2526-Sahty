@@ -371,7 +371,7 @@
                     </div>
 
                     <div class="card-body">
-                        <form method="POST">
+                        <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="_token" value="{{ csrf_token('form') }}">
                             
                             <!-- First Name -->
@@ -462,6 +462,125 @@
                                 </small>
                             </div>
 
+                            <!-- Telephone -->
+                            <div class="form-group">
+                                <label for="telephone" class="form-label">Telephone</label>
+                                <input type="text" id="telephone" name="telephone" class="form-control" value="{{ user ? user.telephone : '' }}">
+                            </div>
+
+                            <!-- Date of Birth -->
+                            <div class="form-group">
+                                <label for="dateNaissance" class="form-label">Date de naissance</label>
+                                <input type="date" id="dateNaissance" name="dateNaissance" class="form-control" value="{{ user and user.dateNaissance ? user.dateNaissance|date('Y-m-d') : '' }}">
+                            </div>
+
+                            <!-- Profile Photo URL -->
+                            <div class="form-group">
+                                <label for="photoProfil" class="form-label">Profile Photo URL</label>
+                                <input type="text" id="photoProfil" name="photoProfil" class="form-control" value="{{ user ? user.photoProfil : '' }}">
+                                <small class="form-text">Or upload a file below</small>
+                            </div>
+
+                            <!-- Profile Photo Upload -->
+                            <div class="form-group">
+                                <label for="photoUpload" class="form-label">Upload Profile Photo</label>
+                                <input type="file" id="photoUpload" name="photoUpload" class="form-control">
+                                {% if user and user.photoProfil %}
+                                    <div class="form-text mt-2">Current: <a href="{{ user.photoProfil }}" target="_blank">View</a></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Active -->
+                            <div class="form-group form-check">
+                                <input type="checkbox" id="estActif" name="estActif" class="form-check-input" {% if user and user.estActif %}checked{% endif %}>
+                                <label for="estActif" class="form-check-label">Active</label>
+                            </div>
+
+                            <!-- Role-specific sections -->
+                            <div id="medecin-fields" class="role-fields" style="display: none;">
+                                <hr>
+                                <h6>Doctor (Médecin) details</h6>
+                                <div class="form-group">
+                                    <label class="form-label">Spécialité</label>
+                                    <input type="text" name="specialite" class="form-control" value="{{ user is defined and user is not null and user.specialite ? user.specialite : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Années d'expérience</label>
+                                    <input type="number" name="anneeExperience" class="form-control" value="{{ user is defined and user is not null and user.anneeExperience ? user.anneeExperience : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Grade</label>
+                                    <input type="text" name="grade" class="form-control" value="{{ user is defined and user is not null and user.grade ? user.grade : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Adresse du cabinet</label>
+                                    <input type="text" name="adresseCabinet" class="form-control" value="{{ user is defined and user is not null and user.adresseCabinet ? user.adresseCabinet : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Téléphone cabinet</label>
+                                    <input type="text" name="telephoneCabinet" class="form-control" value="{{ user is defined and user is not null and user.telephoneCabinet ? user.telephoneCabinet : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nom établissement</label>
+                                    <input type="text" name="nomEtablissement" class="form-control" value="{{ user is defined and user is not null and user.nomEtablissement ? user.nomEtablissement : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Numéro urgence</label>
+                                    <input type="text" name="numeroUrgence" class="form-control" value="{{ user is defined and user is not null and user.numeroUrgence ? user.numeroUrgence : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Disponibilité</label>
+                                    <textarea name="disponibilite" class="form-control">{{ user is defined and user is not null and user.disponibilite ? user.disponibilite : '' }}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Document PDF (contrat / diplôme)</label>
+                                    <input type="file" name="documentPdf" class="form-control">
+                                    {% if user is defined and user is not null and user.documentPdf %}
+                                        <div class="form-text mt-2">Current doc: <a href="{{ user.documentPdf }}" target="_blank">View</a></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div id="patient-fields" class="role-fields" style="display: none;">
+                                <hr>
+                                <h6>Patient details</h6>
+                                <div class="form-group">
+                                    <label class="form-label">Groupe sanguin</label>
+                                    <input type="text" name="groupeSanguin" class="form-control" value="{{ user is defined and user is not null and user.groupeSanguin ? user.groupeSanguin : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Contact urgence</label>
+                                    <input type="text" name="contactUrgence" class="form-control" value="{{ user is defined and user is not null and user.contactUrgence ? user.contactUrgence : '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Sexe</label>
+                                    <select name="sexe" class="form-select">
+                                        <option value="">--</option>
+                                        <option value="male" {% if user and user.sexe == 'male' %}selected{% endif %}>Male</option>
+                                        <option value="female" {% if user and user.sexe == 'female' %}selected{% endif %}>Female</option>
+                                        <option value="other" {% if user and user.sexe == 'other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="resp-labo-fields" class="role-fields" style="display: none;">
+                                <hr>
+                                <h6>Responsable Laboratoire</h6>
+                                <div class="form-group">
+                                    <label class="form-label">Laboratoire ID</label>
+                                    <input type="number" name="laboratoireId" class="form-control" value="{{ user is defined and user is not null and user.laboratoireId ? user.laboratoireId : '' }}">
+                                </div>
+                            </div>
+
+                            <div id="resp-para-fields" class="role-fields" style="display: none;">
+                                <hr>
+                                <h6>Responsable Parapharmacie</h6>
+                                <div class="form-group">
+                                    <label class="form-label">Parapharmacie ID</label>
+                                    <input type="number" name="parapharmacieId" class="form-control" value="{{ user is defined and user is not null and user.parapharmacieId ? user.parapharmacieId : '' }}">
+                                </div>
+                            </div>
+
                             <!-- Form Actions -->
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary">
@@ -480,5 +599,30 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function(){
+            const roleEl = document.getElementById('role');
+            const sections = {
+                'medecin': document.getElementById('medecin-fields'),
+                'patient': document.getElementById('patient-fields'),
+                'responsable_labo': document.getElementById('resp-labo-fields'),
+                'responsable_para': document.getElementById('resp-para-fields')
+            };
+
+            function update() {
+                const val = roleEl.value;
+                Object.keys(sections).forEach(k => {
+                    const el = sections[k];
+                    if (!el) return;
+                    el.style.display = (k === val) ? 'block' : 'none';
+                });
+            }
+
+            if (roleEl) {
+                roleEl.addEventListener('change', update);
+                update();
+            }
+        })();
+    </script>
 </body>
 </html>

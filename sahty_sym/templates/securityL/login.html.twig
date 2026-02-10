@@ -43,17 +43,40 @@
         .btn-apple { background:#000; color:#fff; }
         .btn-apple:hover { background:#333; }
 
-        /* Lien mot de passe oublié */
-        .forgot-password { display:block; text-align:right; margin-top:-15px; margin-bottom:15px; font-size:0.9rem; }
-        .forgot-password a { color:#0d6efd; text-decoration:none; }
-        .forgot-password a:hover { text-decoration:underline; }
+        /* Lien mot de passe oublié - MODIFIÉ */
+        .forgot-password-container { 
+            text-align: center; 
+            margin: 15px 0; 
+            padding: 10px;
+        }
+        .forgot-password-link { 
+            color: #0d6efd; 
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+        .forgot-password-link:hover { 
+            text-decoration: none;
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Style pour le bouton de soumission externe */
+        .submit-button-container {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ path('app_home') }}">
+            <a class="navbar-brand" href="{{ path('home') }}">
                 <h1 class="m-0 text-uppercase text-primary">
                     <i class="fas fa-clinic-medical me-2"></i>Medinova
                 </h1>
@@ -63,7 +86,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0 align-items-center">
-                    <a href="{{ path('app_home') }}" class="nav-item nav-link">Accueil</a>
+                    <a href="{{ path('home') }}" class="nav-item nav-link">Accueil</a>
                     <a href="#about" class="nav-item nav-link">À propos</a>
                     <a href="#services" class="nav-item nav-link">Services</a>
                     <a href="#contact" class="nav-item nav-link">Contact</a>
@@ -132,7 +155,7 @@
                 {% endfor %}
 
                 <!-- Formulaire de connexion Symfony -->
-                <form method="post" action="{{ path('app_login') }}">
+                <form method="post" action="{{ path('app_login') }}" id="loginForm">
                     {# Protection CSRF #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
@@ -167,20 +190,31 @@
                         </div>
                     </div>
 
-                    {# Lien mot de passe oublié #}
-                    <div class="forgot-password">
-                        <a href="#">Mot de passe oublié ?</a>
-                    </div>
+                    <!-- REMARQUE: Le lien "Mot de passe oublié" est maintenant EN DEHORS du formulaire -->
+                </form>
 
-                    <div class="form-check mb-3">
-                        <input type="checkbox" name="_remember_me" value="on" class="form-check-input" id="remember">
-                        <label class="form-check-label" for="remember">Se souvenir de moi</label>
-                    </div>
+                <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
+                <div class="forgot-password-container">
+                    <a href="{{ path('app_forgot_password') }}" 
+                       class="forgot-password-link"
+                       id="forgotPasswordLink">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Mot de passe oublié ?</strong>
+                    </a>
+                </div>
 
-                    <button type="submit" class="btn-login">
+                <!-- Bouton de soumission du formulaire -->
+                <div class="submit-button-container">
+                    <button type="submit" form="loginForm" class="btn-login">
                         Se connecter <i class="fas fa-sign-in-alt"></i>
                     </button>
-                </form>
+                </div>
+
+                <!-- Case à cocher "Se souvenir de moi" -->
+                <div class="form-check mb-3" style="margin-top: 15px;">
+                    <input type="checkbox" name="_remember_me" value="on" class="form-check-input" id="remember">
+                    <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                </div>
 
                 {# Boutons de connexion sociale #}
                 <div class="social-login">
@@ -202,19 +236,21 @@
     <script>
         // Afficher/Masquer le mot de passe
         const togglePassword = document.getElementById('togglePassword');
-        togglePassword.addEventListener('click', function () {
-            const passwordInput = document.getElementById('inputPassword');
-            const icon = this.querySelector('i');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function () {
+                const passwordInput = document.getElementById('inputPassword');
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
 
         // Animation d'entrée
         document.addEventListener('DOMContentLoaded', function() {
@@ -227,6 +263,20 @@
                 loginCard.style.opacity = '1';
                 loginCard.style.transform = 'translateY(0)';
             }, 100);
+        });
+
+        // S'assurer que le lien "mot de passe oublié" fonctionne
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            console.log('Redirection vers la page de récupération de mot de passe');
+            // La navigation se fera normalement via l'attribut href
+        });
+
+        // Prévenir toute soumission accidentelle du formulaire
+        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                document.querySelector('button[form="loginForm"]').click();
+            }
         });
     </script>
 </body>
