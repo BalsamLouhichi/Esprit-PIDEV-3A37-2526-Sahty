@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management - Sahty</title>
+    <title>Gestion des utilisateurs - Sahty</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -17,6 +17,8 @@
             --success: #10B981;
             --danger: #EF4444;
             --warning: #F59E0B;
+            --purple: #8B5CF6;
+            --orange: #F59E0B;
         }
 
         * {
@@ -64,6 +66,7 @@
 
         .sidebar-menu ul {
             list-style: none;
+            padding-left: 0;
         }
 
         .sidebar-menu li {
@@ -93,6 +96,8 @@
 
         .sidebar-menu i {
             font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
         }
 
         /* Main Content */
@@ -175,12 +180,24 @@
         .alert {
             border-radius: 8px;
             margin-bottom: 20px;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .alert-danger {
+            background-color: #FEE2E2;
+            color: #991B1B;
         }
 
         /* Buttons */
         .btn {
             border-radius: 8px;
             font-weight: 500;
+            transition: all 0.2s;
         }
 
         .btn-primary {
@@ -194,23 +211,52 @@
             border-color: var(--primary-dark);
         }
 
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
         .btn-sm {
             padding: 6px 12px;
             font-size: 0.85rem;
         }
 
-        .btn-danger {
-            background-color: var(--danger);
-            border-color: var(--danger);
-            color: white;
+        .btn-group {
+            gap: 5px;
         }
 
-        .btn-danger:hover {
-            background-color: #DC2626;
-            border-color: #DC2626;
+        /* Search Box */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(19, 197, 221, 0.1);
         }
 
         /* Table */
+        .table-responsive {
+            border-radius: 8px;
+        }
+
         .table {
             margin-bottom: 0;
         }
@@ -221,6 +267,9 @@
             font-weight: 600;
             padding: 15px;
             background-color: #F9FAFB;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .table tbody td {
@@ -230,63 +279,71 @@
         }
 
         .table tbody tr:hover {
-            background-color: var(--light);
+            background-color: #F9FAFB;
         }
 
         .badge {
-            font-size: 0.8rem;
-            padding: 6px 12px;
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 500;
         }
 
-        .badge-primary {
-            background-color: var(--primary);
+        .bg-success {
+            background-color: var(--success) !important;
         }
 
-        .badge-success {
-            background-color: var(--success);
+        .bg-danger {
+            background-color: var(--danger) !important;
         }
 
-        .badge-danger {
-            background-color: var(--danger);
-        }
-
-        .badge-warning {
-            background-color: var(--warning);
-        }
-
-        .badge-secondary {
-            background-color: var(--gray-600);
-        }
-
-        /* Search Bar */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
-        }
-
-        .search-box button {
-            padding: 10px 20px;
+        .bg-warning {
+            background-color: var(--warning) !important;
+            color: white;
         }
 
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px;
+            padding: 40px 20px;
             color: var(--gray-600);
         }
 
         .empty-state i {
             font-size: 3rem;
             margin-bottom: 15px;
-            opacity: 0.5;
+            color: #CBD5E1;
+        }
+
+        .empty-state h5 {
+            color: #64748B;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #94A3B8;
+            margin-bottom: 20px;
+        }
+
+        /* Filter Buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-buttons .btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Spinner */
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary);
         }
 
         /* Responsive */
@@ -321,13 +378,18 @@
                 padding: 15px;
             }
 
-            .table {
-                font-size: 0.85rem;
+            .filter-buttons {
+                justify-content: center;
             }
 
             .table thead th,
             .table tbody td {
                 padding: 10px;
+            }
+            
+            .btn-group {
+                display: flex;
+                flex-direction: column;
             }
         }
     </style>
@@ -386,58 +448,66 @@
         <div class="main-content">
             <!-- Topbar -->
             <div class="topbar">
-                <h5>Users Management</h5>
+                <h5><i class="fas fa-users me-2"></i>Gestion des utilisateurs</h5>
                 <div class="user-info">
-                    <span>Welcome, {{ app.user.nom ?? 'Admin' }}</span>
-                    <div class="user-avatar">{{ (app.user.nom ?? 'A')[:1]|upper }}</div>
+                    <span>Bienvenue, {{ app.user.prenom ?? 'Admin' }} {{ app.user.nom ?? '' }}</span>
+                    <div class="user-avatar">
+                        {% if app.user and app.user.photoProfil %}
+                            <img src="{{ app.user.photoProfil }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ (app.user.prenom ?? 'A')[:1]|upper }}{{ (app.user.nom ?? '')[:1]|upper }}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
             <!-- Content -->
             <div class="content">
                 <!-- Alerts -->
-                {% if app.session.flashbag.has('success') %}
-                    {% for message in app.session.flashbag.get('success') %}
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                            {% if label == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                            {% endif %}
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     {% endfor %}
-                {% endif %}
+                {% endfor %}
 
-                {% if app.session.flashbag.has('danger') %}
-                    {% for message in app.session.flashbag.get('danger') %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
-                <!-- Role Filters -->
+                <!-- Filters Card -->
                 <div class="card mb-3">
-                    <div class="card-body" style="padding: 15px;">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                            <strong style="margin-right: 10px;">Filter by Role:</strong>
-                            <a href="{{ path('admin_users') }}" class="btn btn-sm {% if not selectedRole %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                                <i class="fas fa-users me-1"></i> All
+                    <div class="card-body">
+                        <div class="filter-buttons">
+                            <strong style="margin-right: 10px;">Filtrer par rôle :</strong>
+                            <a href="{{ path('admin_users') }}" 
+                               class="btn btn-sm filter-role-link {% if not selectedRole %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                <i class="fas fa-users me-1"></i> Tous
                             </a>
-                            <a href="{{ path('admin_users') }}?role=admin" class="btn btn-sm {% if selectedRole == 'admin' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                            <a href="{{ path('admin_users') }}?role=admin" 
+                               class="btn btn-sm filter-role-link {% if selectedRole == 'admin' %}btn-dark{% else %}btn-outline-dark{% endif %}">
                                 <i class="fas fa-user-shield me-1"></i> Admins
                             </a>
-                            <a href="{{ path('admin_users') }}?role=medecin" class="btn btn-sm {% if selectedRole == 'medecin' %}btn-success{% else %}btn-outline-success{% endif %}">
-                                <i class="fas fa-user-md me-1"></i> Doctors
+                            <a href="{{ path('admin_users') }}?role=medecin" 
+                               class="btn btn-sm filter-role-link {% if selectedRole == 'medecin' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                <i class="fas fa-user-md me-1"></i> Médecins
                             </a>
-                            <a href="{{ path('admin_users') }}?role=patient" class="btn btn-sm {% if selectedRole == 'patient' %}btn-info{% else %}btn-outline-info{% endif %}">
+                            <a href="{{ path('admin_users') }}?role=patient" 
+                               class="btn btn-sm filter-role-link {% if selectedRole == 'patient' %}btn-info{% else %}btn-outline-info{% endif %}">
                                 <i class="fas fa-bed me-1"></i> Patients
                             </a>
-                            <a href="{{ path('admin_users') }}?role=responsable_labo" class="btn btn-sm" style="{% if selectedRole == 'responsable_labo' %}background-color: #8B5CF6; color: white; border-color: #8B5CF6;{% else %}color: #8B5CF6; border-color: #8B5CF6;{% endif %}">
-                                <i class="fas fa-flask me-1"></i> Lab
+                            <a href="{{ path('admin_users') }}?role=responsable_labo" 
+                               class="btn btn-sm filter-role-link" 
+                               style="{% if selectedRole == 'responsable_labo' %}background-color: #8B5CF6; color: white; border-color: #8B5CF6;{% else %}color: #8B5CF6; border-color: #8B5CF6;{% endif %}">
+                                <i class="fas fa-flask me-1"></i> Resp. Labo
                             </a>
-                            <a href="{{ path('admin_users') }}?role=responsable_para" class="btn btn-sm" style="{% if selectedRole == 'responsable_para' %}background-color: #F59E0B; color: white; border-color: #F59E0B;{% else %}color: #F59E0B; border-color: #F59E0B;{% endif %}">
-                                <i class="fas fa-pills me-1"></i> Pharmacy
+                            <a href="{{ path('admin_users') }}?role=responsable_para" 
+                               class="btn btn-sm filter-role-link" 
+                               style="{% if selectedRole == 'responsable_para' %}background-color: #F59E0B; color: white; border-color: #F59E0B;{% else %}color: #F59E0B; border-color: #F59E0B;{% endif %}">
+                                <i class="fas fa-pills me-1"></i> Resp. Para
                             </a>
                         </div>
                     </div>
@@ -447,97 +517,67 @@
                 <div class="card">
                     <div class="card-header">
                         <div>
-                            <h5><i class="fas fa-users me-2"></i>All Users</h5>
+                            <h5><i class="fas fa-list me-2"></i>Liste des utilisateurs</h5>
+                            <small class="text-muted" id="user-count">{{ utilisateurs|length }} utilisateur(s) trouvé(s)</small>
                         </div>
-                        <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-user-plus me-2"></i>Add New User
-                        </a>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm me-2" id="reset-filters" title="Réinitialiser les filtres">
+                                <i class="fas fa-undo me-1"></i> Réinitialiser
+                            </button>
+                            <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-user-plus me-2"></i>Nouvel utilisateur
+                            </a>
+                        </div>
                     </div>
 
                     <div class="card-body">
                         <!-- Search Bar -->
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="Search by name or email..." class="form-control">
-                            <button class="btn btn-primary btn-sm">
-                                <i class="fas fa-search"></i>
-                            </button>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       id="searchInput" 
+                                       class="form-control border-start-0 ps-0" 
+                                       placeholder="Rechercher par nom, prénom ou email..."
+                                       value="{{ searchQuery ?? '' }}"
+                                       autofocus>
+                                <button class="btn btn-primary" type="button" id="searchButton">
+                                    <i class="fas fa-search me-1"></i> Rechercher
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Loading Spinner (hidden by default) -->
+                        <div id="loading-spinner" class="text-center py-5 d-none">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Recherche en cours...</p>
                         </div>
 
                         <!-- Users Table -->
-                        {% if utilisateurs|length > 0 %}
+                        <div id="table-container">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
+                                            <th>Nom & Prénom</th>
+                                            <th>Email / Téléphone</th>
+                                            <th>Rôle</th>
+                                            <th>Statut</th>
+                                            <th>Créé le</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {% for user in utilisateurs %}
-                                        <tr>
-                                            <td>#{{ user.id }}</td>
-                                            <td>
-                                                <strong>{{ user.prenom }} {{ user.nom }}</strong>
-                                            </td>
-                                            <td>{{ user.email }}</td>
-                                            <td>
-                                                <span class="badge
-                                                    {% if user.role == 'admin' %}badge-danger
-                                                    {% elseif user.role == 'medecin' %}badge-success
-                                                    {% elseif user.role == 'patient' %}badge-primary
-                                                    {% else %}badge-secondary{% endif %}">
-                                                    {{ user.role|capitalize }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {% if user.estActif %}
-                                                    <span class="badge bg-success">
-                                                        <i class="fas fa-check-circle me-1"></i>Active
-                                                    </span>
-                                                {% else %}
-                                                    <span class="badge bg-danger">
-                                                        <i class="fas fa-times-circle me-1"></i>Inactive
-                                                    </span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {{ user.creeLe ? user.creeLe.format('d/m/Y') : 'N/A' }}
-                                            </td>
-                                            <td>
-                                                <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-primary" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form method="POST" action="{{ path('admin_user_toggle_status', {id: user.id}) }}" style="display:inline;">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle-user' ~ user.id) }}">
-                                                    <button type="submit" class="btn btn-sm {% if user.estActif %}btn-warning{% else %}btn-success{% endif %}" title="{% if user.estActif %}Deactivate{% else %}Activate{% endif %}">
-                                                        <i class="fas {% if user.estActif %}fa-ban{% else %}fa-check{% endif %}"></i>
-                                                    </button>
-                                                </form>
-                                                <form method="POST" action="{{ path('admin_user_delete', {id: user.id}) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete-user' ~ user.id) }}">
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
+                                    <tbody id="user-table-body">
+                                        {% include 'admin/_user_table_rows.html.twig' %}
                                     </tbody>
                                 </table>
                             </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <i class="fas fa-users"></i>
-                                <h5>No Users Found</h5>
-                                <p>No users in the system yet. <a href="{{ path('admin_user_new') }}">Create one</a></p>
-                            </div>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -546,14 +586,225 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Simple search functionality
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('table tbody tr');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Éléments DOM
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const resetButton = document.getElementById('reset-filters');
+            const filterLinks = document.querySelectorAll('.filter-role-link');
+            const tbody = document.getElementById('user-table-body');
+            const spinner = document.getElementById('loading-spinner');
+            const tableContainer = document.getElementById('table-container');
+            const userCount = document.getElementById('user-count');
             
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            let searchTimeout = null;
+            
+            // Fonction de recherche AJAX
+            function performSearch() {
+                const search = searchInput.value.trim();
+                const urlParams = new URLSearchParams(window.location.search);
+                const role = urlParams.get('role') || '';
+                
+                // Afficher le spinner
+                spinner.classList.remove('d-none');
+                tableContainer.style.opacity = '0.5';
+                
+                // Construire l'URL
+                let url = '/admin/users/search?';
+                if (search) url += 'search=' + encodeURIComponent(search) + '&';
+                if (role) url += 'role=' + encodeURIComponent(role);
+                
+                // Requête AJAX
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Mettre à jour le tableau
+                    tbody.innerHTML = html;
+                    
+                    // Mettre à jour le compteur
+                    const rowCount = tbody.querySelectorAll('tr:not(.empty-state-row)').length;
+                    if (userCount) {
+                        userCount.textContent = rowCount + ' utilisateur(s) trouvé(s)';
+                    }
+                    
+                    // Mettre à jour l'URL sans recharger la page
+                    let newUrl = '/admin/users';
+                    let params = [];
+                    if (search) params.push('search=' + encodeURIComponent(search));
+                    if (role) params.push('role=' + encodeURIComponent(role));
+                    if (params.length > 0) newUrl += '?' + params.join('&');
+                    window.history.pushState({ path: newUrl }, '', newUrl);
+                })
+                .catch(error => {
+                    console.error('Erreur AJAX:', error);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-danger">
+                                <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                                <p>Une erreur est survenue lors de la recherche.</p>
+                            </td>
+                        </tr>
+                    `;
+                })
+                .finally(() => {
+                    // Cacher le spinner
+                    spinner.classList.add('d-none');
+                    tableContainer.style.opacity = '1';
+                });
+            }
+            
+            // Recherche en temps réel (debounce)
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(performSearch, 400);
+                });
+                
+                // Recherche avec la touche Entrée
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        clearTimeout(searchTimeout);
+                        performSearch();
+                    }
+                });
+            }
+            
+            // Recherche au clic sur le bouton
+            if (searchButton) {
+                searchButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    performSearch();
+                });
+            }
+            
+            // Gestion des clics sur les filtres de rôle
+            filterLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const href = this.getAttribute('href');
+                    const url = new URL(href, window.location.origin);
+                    const role = url.searchParams.get('role');
+                    
+                    // Mettre à jour l'URL
+                    let newUrl = '/admin/users';
+                    let params = [];
+                    if (role) params.push('role=' + encodeURIComponent(role));
+                    if (searchInput.value.trim()) {
+                        params.push('search=' + encodeURIComponent(searchInput.value.trim()));
+                    }
+                    if (params.length > 0) newUrl += '?' + params.join('&');
+                    window.history.pushState({ path: newUrl }, '', newUrl);
+                    
+                    // Mettre à jour les classes des boutons
+                    filterLinks.forEach(l => {
+                        const lHref = l.getAttribute('href');
+                        const lUrl = new URL(lHref, window.location.origin);
+                        const lRole = lUrl.searchParams.get('role');
+                        
+                        // Réinitialiser les classes
+                        l.className = 'btn btn-sm filter-role-link';
+                        
+                        // Appliquer les classes appropriées
+                        if (lRole === role) {
+                            if (role === 'admin') {
+                                l.classList.add('btn-dark');
+                            } else if (role === 'medecin') {
+                                l.classList.add('btn-success');
+                            } else if (role === 'patient') {
+                                l.classList.add('btn-info');
+                            } else if (role === 'responsable_labo') {
+                                l.style.backgroundColor = '#8B5CF6';
+                                l.style.color = 'white';
+                                l.style.borderColor = '#8B5CF6';
+                            } else if (role === 'responsable_para') {
+                                l.style.backgroundColor = '#F59E0B';
+                                l.style.color = 'white';
+                                l.style.borderColor = '#F59E0B';
+                            } else {
+                                l.classList.add('btn-primary');
+                            }
+                        } else {
+                            if (role === 'responsable_labo' || lRole === 'responsable_labo') {
+                                l.style.backgroundColor = '';
+                                l.style.color = '#8B5CF6';
+                                l.style.borderColor = '#8B5CF6';
+                                l.classList.add('btn-outline-primary');
+                            } else if (role === 'responsable_para' || lRole === 'responsable_para') {
+                                l.style.backgroundColor = '';
+                                l.style.color = '#F59E0B';
+                                l.style.borderColor = '#F59E0B';
+                                l.classList.add('btn-outline-primary');
+                            } else {
+                                l.classList.add('btn-outline-primary');
+                            }
+                        }
+                    });
+                    
+                    // Recharger les résultats
+                    performSearch();
+                });
+            });
+            
+            // Réinitialiser les filtres
+            if (resetButton) {
+                resetButton.addEventListener('click', function() {
+                    // Vider le champ de recherche
+                    if (searchInput) {
+                        searchInput.value = '';
+                    }
+                    
+                    // Remettre le filtre "Tous" actif
+                    window.history.pushState({ path: '/admin/users' }, '', '/admin/users');
+                    
+                    // Réinitialiser les classes des boutons
+                    filterLinks.forEach(l => {
+                        const href = l.getAttribute('href');
+                        const url = new URL(href, window.location.origin);
+                        const role = url.searchParams.get('role');
+                        
+                        l.className = 'btn btn-sm filter-role-link';
+                        l.style.backgroundColor = '';
+                        l.style.color = '';
+                        l.style.borderColor = '';
+                        
+                        if (!role) {
+                            l.classList.add('btn-primary');
+                        } else if (role === 'responsable_labo') {
+                            l.style.color = '#8B5CF6';
+                            l.style.borderColor = '#8B5CF6';
+                            l.classList.add('btn-outline-primary');
+                        } else if (role === 'responsable_para') {
+                            l.style.color = '#F59E0B';
+                            l.style.borderColor = '#F59E0B';
+                            l.classList.add('btn-outline-primary');
+                        } else {
+                            l.classList.add('btn-outline-' + 
+                                (role === 'admin' ? 'dark' : 
+                                 role === 'medecin' ? 'success' : 
+                                 role === 'patient' ? 'info' : 'primary'));
+                        }
+                    });
+                    
+                    // Recharger tous les utilisateurs
+                    performSearch();
+                });
+            }
+            
+            // Gérer le bouton retour du navigateur
+            window.addEventListener('popstate', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const search = urlParams.get('search') || '';
+                if (searchInput) {
+                    searchInput.value = search;
+                }
+                performSearch();
             });
         });
     </script>

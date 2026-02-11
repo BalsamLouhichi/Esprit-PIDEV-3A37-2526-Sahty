@@ -1027,15 +1027,15 @@
             
             <div class="user-menu">
                 <div class="user-info d-none d-md-block">
-                        <h6>{{ app.user.prenom is defined ? (app.user.prenom ~ ' ' ~ app.user.nom) : (app.user.username|default('Administrator')) }}</h6>
-                        <small>{{ app.user.role|default('Admin') }}</small>
-                    </div>
+                    <h6>{{ app.user.prenom is defined ? (app.user.prenom ~ ' ' ~ app.user.nom) : (app.user.username|default('Administrator')) }}</h6>
+                    <small>{{ app.user.role|default('Admin') }}</small>
+                </div>
                 <div class="dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                            {% if app.user.avatar|default %}
+                        {% if app.user.avatar|default %}
                             <img src="{{ app.user.avatar }}" alt="User" class="user-avatar">
                         {% else %}
-                            <div class="user-avatar">
+                            <div class="user-avatar d-flex align-items-center justify-content-center bg-primary text-white">
                                 {{ app.user.prenom is defined ? (app.user.prenom[:1]|upper) : (app.user.username|default('A')[:1]|upper) }}
                             </div>
                         {% endif %}
@@ -1051,7 +1051,7 @@
                             <i class="fas fa-moon me-2"></i>Dark Mode
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="{{ path('app_logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i>Logout
                         </a>
                     </div>
@@ -1062,15 +1062,15 @@
         <!-- Content Container -->
         <div class="content-container">
             <!-- Alerts -->
-            {% if app.session.flashbag.has('success') %}
-                {% for message in app.session.flashbag.get('success') %}
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ label == 'success' ? 'check-circle' : (label == 'danger' ? 'exclamation-circle' : 'info-circle') }} me-2"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 {% endfor %}
-            {% endif %}
+            {% endfor %}
 
             <!-- Statistics Cards -->
             <div class="stats-grid">
@@ -1093,8 +1093,8 @@
                 <div class="stat-card doctors">
                     <div class="stat-card-header">
                         <div class="stat-card-content">
-                            <h3>{{ stats.active_doctors|default(0) }}</h3>
-                            <p>Active Doctors</p>
+                            <h3>{{ totalMedecins|default(0) }}</h3>
+                            <p>Total Doctors</p>
                         </div>
                         <div class="stat-card-icon doctors">
                             <i class="fas fa-user-md"></i>
@@ -1109,10 +1109,93 @@
                 <div class="stat-card appointments">
                     <div class="stat-card-header">
                         <div class="stat-card-content">
+                            <h3>{{ totalPatients|default(0) }}</h3>
+                            <p>Total Patients</p>
+                        </div>
+                        <div class="stat-card-icon appointments">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>3.1%</span> from last month
+                    </div>
+                </div>
+
+                <div class="stat-card revenue">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalActive|default(0) }}</h3>
+                            <p>Active Users</p>
+                        </div>
+                        <div class="stat-card-icon revenue">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>8.3%</span> from last month
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Row Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalInactive|default(0) }}</h3>
+                            <p>Inactive Users</p>
+                        </div>
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg, var(--warning) 0%, #e0a800 100%);">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>2.4%</span> from last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalResponsableLabo|default(0) }}</h3>
+                            <p>Lab Managers</p>
+                        </div>
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg, var(--info) 0%, #117a8b 100%);">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>15.7%</span> from last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalResponsablePara|default(0) }}</h3>
+                            <p>Para Managers</p>
+                        </div>
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);">
+                            <i class="fas fa-capsules"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>10.2%</span> from last month
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
                             <h3>{{ stats.todays_appointments|default(0) }}</h3>
                             <p>Today's Appointments</p>
                         </div>
-                        <div class="stat-card-icon appointments">
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);">
                             <i class="fas fa-calendar-check"></i>
                         </div>
                     </div>
@@ -1121,144 +1204,316 @@
                         <span>3.1%</span> from yesterday
                     </div>
                 </div>
+            </div>
 
-                <div class="stat-card revenue">
-                    <div class="stat-card-header">
-                        <div class="stat-card-content">
-                            <h3>${{ stats.monthly_revenue|default(0)|number_format(0, '.', ',') }}</h3>
-                            <p>Monthly Revenue</p>
+            <!-- System Status Cards -->
+            <div class="content-grid" style="margin-top: 10px;">
+                <div class="chart-container">
+                    <h5><i class="fas fa-server"></i> System Status</h5>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Server Load</span>
+                            <span>{{ system_status.server_load|default(0) }}%</span>
                         </div>
-                        <div class="stat-card-icon revenue">
-                            <i class="fas fa-dollar-sign"></i>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ system_status.server_load|default(0) }}%"></div>
                         </div>
                     </div>
-                    <div class="stat-card-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>18.7%</span> from last month
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Database Usage</span>
+                            <span>{{ system_status.database_usage|default(0) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ system_status.database_usage|default(0) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Storage</span>
+                            <span>{{ system_status.storage|default(0) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ system_status.storage|default(0) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="system-status-alert alert alert-success">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                        <div>
+                            <strong>System Status: {{ system_status.overall|default('operational')|capitalize }}</strong>
+                            <p class="mb-0">All systems are running normally</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie"></i> User Distribution</h5>
+                    <div class="chart">
+                        <div class="chart-placeholder">
+                            <div style="position: relative; width: 200px; height: 200px; margin: 0 auto;">
+                                <!-- Simple pie chart representation -->
+                                <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(
+                                    var(--primary) 0% {{ user_distribution.doctors|default(15) }}%, 
+                                    var(--success) {{ user_distribution.doctors|default(15) }}% {{ user_distribution.doctors|default(15) + user_distribution.patients|default(75) }}%, 
+                                    var(--warning) {{ user_distribution.doctors|default(15) + user_distribution.patients|default(75) }}% {{ user_distribution.doctors|default(15) + user_distribution.patients|default(75) + user_distribution.staff|default(8) }}%, 
+                                    var(--danger) {{ user_distribution.doctors|default(15) + user_distribution.patients|default(75) + user_distribution.staff|default(8) }}% 100%
+                                );"></div>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                    {{ stats.total_users|default(0) }}
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                    <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--primary); border-radius: 2px;"></span> Doctors: {{ user_distribution.doctors|default(15) }}%</span>
+                                    <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--success); border-radius: 2px;"></span> Patients: {{ user_distribution.patients|default(75) }}%</span>
+                                    <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--warning); border-radius: 2px;"></span> Staff: {{ user_distribution.staff|default(8) }}%</span>
+                                    <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--danger); border-radius: 2px;"></span> Admin: {{ user_distribution.admin|default(2) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Appointments Chart -->
+            <div class="content-grid mt-4">
+                <div class="chart-container">
+                    <h5><i class="fas fa-calendar-week"></i> Weekly Appointments</h5>
+                    <div class="chart-header">
+                        <div class="chart-filters">
+                            <button class="chart-filter-btn active">Week</button>
+                            <button class="chart-filter-btn">Month</button>
+                            <button class="chart-filter-btn">Year</button>
+                        </div>
+                    </div>
+                    <div class="chart">
+                        <div class="chart-placeholder w-100 px-4">
+                            <div class="d-flex justify-content-around align-items-end" style="height: 200px;">
+                                {% set weekly_data = stats.weekly_appointments|default({'mon': 45, 'tue': 52, 'wed': 48, 'thu': 55, 'fri': 60}) %}
+                                <div class="text-center">
+                                    <div style="height: {{ (weekly_data.mon/60*150) }}px; width: 30px; background: var(--primary); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Mon</span>
+                                    <strong>{{ weekly_data.mon }}</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: {{ (weekly_data.tue/60*150) }}px; width: 30px; background: var(--primary); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Tue</span>
+                                    <strong>{{ weekly_data.tue }}</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: {{ (weekly_data.wed/60*150) }}px; width: 30px; background: var(--primary); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Wed</span>
+                                    <strong>{{ weekly_data.wed }}</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: {{ (weekly_data.thu/60*150) }}px; width: 30px; background: var(--primary); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Thu</span>
+                                    <strong>{{ weekly_data.thu }}</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: {{ (weekly_data.fri/60*150) }}px; width: 30px; background: var(--primary); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Fri</span>
+                                    <strong>{{ weekly_data.fri }}</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: 40px; width: 30px; background: var(--gray-300); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Sat</span>
+                                    <strong>0</strong>
+                                </div>
+                                <div class="text-center">
+                                    <div style="height: 25px; width: 30px; background: var(--gray-300); border-radius: 6px 6px 0 0;"></div>
+                                    <span class="mt-2 d-block">Sun</span>
+                                    <strong>0</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    <div class="quick-stats">
+                        <div class="quick-stat-item">
+                            <i class="fas fa-user-plus fa-2x text-primary mb-2"></i>
+                            <h4>{{ stats.pending_appointments|default(0) }}</h4>
+                            <small>Pending Appointments</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-user-md fa-2x text-success mb-2"></i>
+                            <h4>{{ stats.available_doctors|default(totalMedecins|default(0)) }}</h4>
+                            <small>Available Doctors</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-ambulance fa-2x text-warning mb-2"></i>
+                            <h4>{{ stats.emergency_cases|default(0) }}</h4>
+                            <small>Emergency Cases</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-file-invoice-dollar fa-2x text-danger mb-2"></i>
+                            <h4>{{ stats.pending_bills|default(0) }}</h4>
+                            <small>Pending Bills</small>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ path('admin_user_new') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus-circle"></i> Create New User
+                        </a>
                     </div>
                 </div>
             </div>
 
             <!-- Role Filters -->
-            <div class="card-section" style="margin-top:18px;">
-                <h5 style="margin-bottom:12px;"><i class="fas fa-filter"></i> Filtrer par type d'utilisateur</h5>
+            <div class="card-section" style="margin-top: 30px; margin-bottom: 20px;">
+                <h5 style="margin-bottom: 16px; color: var(--dark);">
+                    <i class="fas fa-filter" style="color: var(--primary);"></i> Filtrer par type d'utilisateur
+                </h5>
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ path('admin_users', {role: 'medecin'}) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-user-md me-1"></i> Médecins ({{ user_distribution.doctors|default(0) }})
+                    <a href="{{ path('admin_users', {role: 'medecin'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-md me-1"></i> Médecins ({{ totalMedecins|default(0) }})
                     </a>
-                    <a href="{{ path('admin_users', {role: 'patient'}) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-user-injured me-1"></i> Patients ({{ user_distribution.patients|default(0) }})
+                    <a href="{{ path('admin_users', {role: 'patient'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-injured me-1"></i> Patients ({{ totalPatients|default(0) }})
                     </a>
-                    <a href="{{ path('admin_users', {role: 'admin'}) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-user-shield me-1"></i> Admins ({{ user_distribution.admins|default(user_distribution.admin|default(0)) }})
+                    <a href="{{ path('admin_users', {role: 'responsable_labo'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-flask me-1"></i> Lab Managers ({{ totalResponsableLabo|default(0) }})
                     </a>
-                    <a href="{{ path('admin_users', {role: 'staff'}) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-users-cog me-1"></i> Staff ({{ user_distribution.staff|default(user_distribution.others|default(0)) }})
+                    <a href="{{ path('admin_users', {role: 'responsable_para'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-capsules me-1"></i> Para Managers ({{ totalResponsablePara|default(0) }})
                     </a>
-                    <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-list me-1"></i> Tous ({{ stats.total_users|default(0) }})
+                    <a href="{{ path('admin_users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i> Tous les utilisateurs ({{ stats.total_users|default(0) }})
                     </a>
                 </div>
             </div>
 
-           
-            <!-- Bottom Row -->
+            <!-- Bottom Row - Recent Users -->
             <div class="content-grid mt-4">
-                <div class="left-column">
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h5><i class="fas fa-user-friends"></i> Recent Users</h5>
-                            <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> Add User
-                                </a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Joined</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in recent_users|default([]) %}
-                                    <tr>
-                                        <td>
-                                            <div class="fw-medium">{{ user.prenom }} {{ user.nom }}</div>
-                                            <div class="text-muted small">{{ user.email }}</div>
-                                        </td>
-                                        <td>{{ user.email }}</td>
-                                        <td>
-                                            <span class="badge 
-                                                {% if user.role == 'medecin' %}bg-success
-                                                {% elseif user.role == 'patient' %}bg-primary
-                                                {% elseif user.role == 'admin' %}bg-danger
-                                                {% else %}bg-secondary{% endif %}">
-                                                {% if user.role == 'medecin' %}Doctor
-                                                {% elseif user.role == 'patient' %}Patient
-                                                {% elseif user.role == 'admin' %}Admin
-                                                {% elseif user.role == 'responsable_labo' %}Lab Manager
-                                                {% elseif user.role == 'responsable_para' %}Para Manager
-                                                {% else %}User{% endif %}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge 
-                                                {% if user.estActif %}status-active
-                                                {% else %}status-inactive{% endif %}">
-                                                <i class="fas 
-                                                    {% if user.estActif %}fa-check-circle
-                                                    {% else %}fa-times-circle{% endif %}">
-                                                </i>
-                                                {% if user.estActif %}Active{% else %}Inactive{% endif %}
-                                            </span>
-                                        </td>
-                                        <td>{{ user.creeLe ? user.creeLe.format('d/m/Y') : 'N/A' }}</td>
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form method="POST" action="{{ path('admin_user_delete', {id: user.id}) }}" style="display: inline;">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete user?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5><i class="fas fa-user-friends"></i> Recent Users</h5>
+                        <a href="{{ path('admin_user_new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add User
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if user.photoProfil %}
+                                                <img src="{{ asset(user.photoProfil) }}" alt="{{ user.prenom }}" class="user-avatar-sm">
+                                            {% else %}
+                                                <div class="user-avatar-sm d-flex align-items-center justify-content-center bg-primary text-white">
+                                                    {{ user.prenom[:1]|upper }}{{ user.nom[:1]|upper }}
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-medium">{{ user.prenom }} {{ user.nom }}</div>
+                                                <small class="text-muted">{{ user.email }}</small>
                                             </div>
-                                        </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            <i class="fas fa-users fa-2x mb-3"></i>
-                                            <p>No users found</p>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if user.role == 'medecin' %}bg-success
+                                            {% elseif user.role == 'patient' %}bg-primary
+                                            {% elseif user.role == 'responsable_labo' %}bg-info
+                                            {% elseif user.role == 'responsable_para' %}bg-secondary
+                                            {% else %}bg-danger{% endif %}">
+                                            {% if user.role == 'medecin' %}Doctor
+                                            {% elseif user.role == 'patient' %}Patient
+                                            {% elseif user.role == 'responsable_labo' %}Lab Manager
+                                            {% elseif user.role == 'responsable_para' %}Para Manager
+                                            {% else %}Admin{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {% if user.estActif %}status-active
+                                            {% else %}status-inactive{% endif %}">
+                                            <i class="fas 
+                                                {% if user.estActif %}fa-check-circle
+                                                {% else %}fa-times-circle{% endif %}">
+                                            </i>
+                                            {% if user.estActif %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.creeLe ? user.creeLe|date('d/m/Y') : 'N/A' }}</td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" action="{{ path('admin_user_toggle_status', {id: user.id}) }}" style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('toggle-user' ~ user.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" title="{{ user.estActif ? 'Deactivate' : 'Activate' }}">
+                                                    <i class="fas fa-{{ user.estActif ? 'ban' : 'check' }}"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ path('admin_user_delete', {id: user.id}) }}" style="display: inline;">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete-user' ~ user.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-users fa-3x mb-3"></i>
+                                        <p class="mb-0">Aucun utilisateur récent</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="right-column">
-                    <div class="chart-container">
-                        <h5><i class="fas fa-chart-bar"></i> User Distribution</h5>
-                        <div class="chart">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-chart-pie"></i>
-                                <p>User distribution visualization</p>
-                                <small>Doctors: {{ user_distribution.doctors|default(15) }}%, 
-                                Patients: {{ user_distribution.patients|default(75) }}%, 
-                                Staff: {{ user_distribution.staff|default(8) }}%, 
-                                Admin: {{ user_distribution.admin|default(2) }}%</small>
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-line"></i> Recent Activities</h5>
+                    <div class="activity-list">
+                        {% if recent_activities|default([])|length > 0 %}
+                            {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="activity-icon {{ activity.type|default('user') }}">
+                                    <i class="fas fa-{{ activity.icon|default('user') }}"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <h6>{{ activity.title|default('User Action') }}</h6>
+                                    <p>{{ activity.description|default('No description available') }}</p>
+                                    <span class="activity-time">
+                                        <i class="far fa-clock"></i> {{ activity.time|default('Just now') }}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-history fa-3x mb-3"></i>
+                                <p class="mb-0">Aucune activité récente</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sync-alt"></i> View All Activities
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1267,10 +1522,10 @@
             <footer>
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <p>&copy; {{ "now"|date("Y") }} {{ app_name }} Hospital Management System. All rights reserved.</p>
+                        <p>&copy; {{ "now"|date("Y") }} {{ app_name }}. Tous droits réservés.</p>
                     </div>
                     <div class="col-md-6 text-md-end">
-                        <p class="mb-0">v{{ app_version }} | Last updated: {{ "now"|date("F d, Y") }}</p>
+                        <p class="mb-0">Version {{ app_version }} | Dernière mise à jour: {{ "now"|date("d/m/Y") }}</p>
                     </div>
                 </div>
             </footer>
@@ -1293,9 +1548,10 @@
                         const isHidden = sidebar.style.transform === 'translateX(-100%)' || !sidebar.style.transform;
                         sidebar.style.transform = isHidden ? 'translateX(0)' : 'translateX(-100%)';
                     } else {
-                        const isCollapsed = sidebar.style.width === '0px';
+                        const isCollapsed = sidebar.style.width === '0px' || sidebar.style.width === '0';
                         sidebar.style.width = isCollapsed ? '260px' : '0px';
                         sidebar.style.overflow = isCollapsed ? 'visible' : 'hidden';
+                        sidebar.style.padding = isCollapsed ? '' : '0';
                         mainContent.style.marginLeft = isCollapsed ? '260px' : '0px';
                     }
                 });
@@ -1310,14 +1566,6 @@
                 });
             });
             
-            // Update current date in footer
-            const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric'
-            };
-            
             // Initialize Bootstrap tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1328,10 +1576,21 @@
             const progressBars = document.querySelectorAll('.progress-bar');
             progressBars.forEach(bar => {
                 const width = bar.style.width;
-                bar.style.width = '0';
+                if (width) {
+                    bar.style.width = '0';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                }
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
                 setTimeout(() => {
-                    bar.style.width = width;
-                }, 100);
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
             });
         });
     </script>

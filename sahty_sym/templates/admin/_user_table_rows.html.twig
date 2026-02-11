@@ -1,0 +1,128 @@
+{% for user in utilisateurs %}
+<tr>
+    <td>#{{ user.id }}</td>
+    <td>
+        <div class="d-flex align-items-center">
+            {% if user.photoProfil %}
+                <img src="{{ user.photoProfil }}" alt="Photo" 
+                     width="35" height="35" 
+                     style="border-radius: 50%; object-fit: cover; margin-right: 10px;">
+            {% else %}
+                <div class="user-avatar-mini" 
+                     style="width: 35px; height: 35px; border-radius: 50%; 
+                            background: var(--primary); color: white; 
+                            display: flex; align-items: center; justify-content: center;
+                            margin-right: 10px; font-weight: bold; font-size: 14px;">
+                    {{ user.prenom[:1]|upper }}{{ user.nom[:1]|upper }}
+                </div>
+            {% endif %}
+            <div>
+                <strong>{{ user.prenom }} {{ user.nom }}</strong>
+                {% if user.dateNaissance %}
+                    <br><small class="text-muted">{{ user.dateNaissance|date('d/m/Y') }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+    <td>
+        {{ user.email }}
+        {% if user.telephone %}
+            <br><small class="text-muted">{{ user.telephone }}</small>
+        {% endif %}
+    </td>
+    <td>
+        {% if user.role == 'admin' %}
+            <span class="badge" style="background: #1D2A4D; color: white;">
+                <i class="fas fa-user-shield me-1"></i>Admin
+            </span>
+        {% elseif user.role == 'medecin' %}
+            <span class="badge" style="background: #10B981; color: white;">
+                <i class="fas fa-user-md me-1"></i>Médecin
+            </span>
+            {% if user.specialite %}
+                <br><small class="text-muted">{{ user.specialite }}</small>
+            {% endif %}
+        {% elseif user.role == 'patient' %}
+            <span class="badge" style="background: #13C5DD; color: white;">
+                <i class="fas fa-bed me-1"></i>Patient
+            </span>
+            {% if user.groupeSanguin %}
+                <br><small class="text-muted">Groupe: {{ user.groupeSanguin }}</small>
+            {% endif %}
+        {% elseif user.role == 'responsable_labo' %}
+            <span class="badge" style="background: #8B5CF6; color: white;">
+                <i class="fas fa-flask me-1"></i>Resp. Labo
+            </span>
+        {% elseif user.role == 'responsable_para' %}
+            <span class="badge" style="background: #F59E0B; color: white;">
+                <i class="fas fa-pills me-1"></i>Resp. Para
+            </span>
+        {% else %}
+            <span class="badge bg-secondary">{{ user.role }}</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if user.estActif %}
+            <span class="badge bg-success">
+                <i class="fas fa-check-circle me-1"></i>Actif
+            </span>
+        {% else %}
+            <span class="badge bg-danger">
+                <i class="fas fa-times-circle me-1"></i>Inactif
+            </span>
+        {% endif %}
+    </td>
+    <td>
+        {% if user.creeLe %}
+            {{ user.creeLe|date('d/m/Y') }}
+            <br><small class="text-muted">{{ user.creeLe|date('H:i') }}</small>
+        {% else %}
+            N/A
+        {% endif %}
+    </td>
+    <td>
+        <div class="btn-group" role="group">
+            <a href="{{ path('admin_user_edit', {id: user.id}) }}" 
+               class="btn btn-sm btn-primary" 
+               title="Modifier">
+                <i class="fas fa-edit"></i>
+            </a>
+            
+            <form method="POST" action="{{ path('admin_user_toggle_status', {id: user.id}) }}" 
+                  style="display:inline;" 
+                  onsubmit="return confirm('Voulez-vous {{ user.estActif ? 'désactiver' : 'activer' }} {{ user.prenom }} {{ user.nom }} ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('toggle-user' ~ user.id) }}">
+                <button type="submit" 
+                        class="btn btn-sm {{ user.estActif ? 'btn-warning' : 'btn-success' }}" 
+                        title="{{ user.estActif ? 'Désactiver' : 'Activer' }}">
+                    <i class="fas {{ user.estActif ? 'fa-ban' : 'fa-check' }}"></i>
+                </button>
+            </form>
+            
+            {% if user != app.user %}
+                <form method="POST" action="{{ path('admin_user_delete', {id: user.id}) }}" 
+                      style="display:inline;" 
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.prenom }} {{ user.nom }} ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete-user' ~ user.id) }}">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="7" class="text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-users fa-3x mb-3" style="color: #CBD5E1;"></i>
+            <h5 style="color: #64748B;">Aucun utilisateur trouvé</h5>
+            <p style="color: #94A3B8;">Aucun utilisateur ne correspond à vos critères de recherche.</p>
+            <a href="{{ path('admin_user_new') }}" class="btn btn-primary mt-3">
+                <i class="fas fa-plus me-2"></i>Créer un utilisateur
+            </a>
+        </div>
+    </td>
+</tr>
+{% endfor %}

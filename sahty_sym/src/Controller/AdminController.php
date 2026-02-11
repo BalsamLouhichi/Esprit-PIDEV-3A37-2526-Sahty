@@ -35,11 +35,11 @@ class AdminController extends AbstractController
 
         // Get basic statistics
         $totalUsers = $this->userRepo->count([]);
-        $totalMedecins = $this->userRepo->count(['role' => 'medecin']);
-        $totalPatients = $this->userRepo->count(['role' => 'patient']);
-        $totalResponsableLabo = $this->userRepo->count(['role' => 'responsable_labo']);
-        $totalResponsablePara = $this->userRepo->count(['role' => 'responsable_para']);
-        $totalInactive = $this->userRepo->count(['estActif' => false]);
+        $totalMedecins = $this->userRepo->countByRole('medecin');
+        $totalPatients = $this->userRepo->countByRole('patient');
+        $totalResponsableLabo = $this->userRepo->countByRole('responsable_labo');
+        $totalResponsablePara = $this->userRepo->countByRole('responsable_para');
+        $totalInactive = $this->userRepo->countByStatus(false);
         $totalActive = $totalUsers - $totalInactive;
 
         // Calculate user distribution percentages
@@ -57,6 +57,8 @@ class AdminController extends AbstractController
             'totalPatients' => $totalPatients,
             'totalInactive' => $totalInactive,
             'totalActive' => $totalActive,
+            'totalResponsableLabo' => $totalResponsableLabo,
+            'totalResponsablePara' => $totalResponsablePara,
             'stats' => [
                 'total_users' => $totalUsers,
                 'active_doctors' => $totalMedecins,
@@ -102,9 +104,11 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $role = $request->query->get('role');
+        $search = $request->query->get('search');
         
-        if ($role) {
-            $utilisateurs = $this->userRepo->findBy(['role' => $role]);
+        // Utilise la méthode de recherche
+        if ($search || $role) {
+            $utilisateurs = $this->userRepo->search($search, $role);
         } else {
             $utilisateurs = $this->userRepo->findAll();
         }
@@ -112,7 +116,34 @@ class AdminController extends AbstractController
         return $this->render('admin/users.html.twig', [
             'utilisateurs' => $utilisateurs,
             'selectedRole' => $role,
+            'searchQuery' => $search
         ]);
+    }
+
+    #[Route('/users/search', name: 'users_search_ajax', methods: ['GET'])]
+    public function searchAjax(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $role = $request->query->get('role');
+        $search = $request->query->get('search');
+        
+        // Utilise la méthode de recherche
+        if ($search || $role) {
+            $utilisateurs = $this->userRepo->search($search, $role);
+        } else {
+            $utilisateurs = $this->userRepo->findAll();
+        }
+        
+        // Si c'est une requête AJAX, retourne seulement le tableau HTML
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('admin/_user_table_rows.html.twig', [
+                'utilisateurs' => $utilisateurs
+            ]);
+        }
+        
+        // Sinon, redirige vers la page principale
+        return $this->redirectToRoute('admin_users');
     }
 
     #[Route('/users/new', name: 'user_new')]

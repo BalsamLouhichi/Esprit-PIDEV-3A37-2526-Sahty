@@ -33,28 +33,43 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
         $this->getEntityManager()->flush();
     }
 
-    //    /**
-    //     * @return Utilisateur[] Returns an array of Utilisateur objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Recherche avancée d'utilisateurs avec filtres
+     */
+    public function search(?string $query = null, ?string $role = null): array
+    {
+        $qb = $this->createQueryBuilder('u');
+        
+        if ($query) {
+            $qb->where('LOWER(u.nom) LIKE LOWER(:query) 
+                        OR LOWER(u.prenom) LIKE LOWER(:query) 
+                        OR LOWER(u.email) LIKE LOWER(:query)')
+               ->setParameter('query', '%' . $query . '%');
+        }
+        
+        if ($role) {
+            $qb->andWhere('u.role = :role')
+               ->setParameter('role', $role);
+        }
+        
+        return $qb->orderBy('u.creeLe', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?Utilisateur
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Compte les utilisateurs par rôle
+     */
+    public function countByRole(string $role): int
+    {
+        return $this->count(['role' => $role]);
+    }
+
+    /**
+     * Compte les utilisateurs actifs/inactifs
+     */
+    public function countByStatus(bool $estActif): int
+    {
+        return $this->count(['estActif' => $estActif]);
+    }
 }
