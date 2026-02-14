@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Fiche Médicale{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4">Créer une nouvelle Fiche Médicale</h1>
+    
+    {{ form_start(form) }}
+    <div class="card">
+        <div class="card-body">
+            {{ form_widget(form) }}
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Enregistrer
+            </button>
+            <a href="{{ path('app_fiche_medicale_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Annuler
+            </a>
+        </div>
+    </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

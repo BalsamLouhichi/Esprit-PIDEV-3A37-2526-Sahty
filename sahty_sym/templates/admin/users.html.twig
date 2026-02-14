@@ -6,19 +6,46 @@
     <title>Gestion des utilisateurs - Sahty</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #13C5DD;
+            --primary-light: #E1F5F8;
             --primary-dark: #0FA8B9;
             --dark: #1D2A4D;
+            --dark-light: #2A3A6B;
             --light: #F5F7FA;
+            --gray-100: #F8FAFC;
             --gray-200: #E8ECEF;
+            --gray-300: #DEE2E6;
+            --gray-400: #CED4DA;
+            --gray-500: #ADB5BD;
             --gray-600: #6B7280;
+            --gray-700: #495057;
+            --gray-800: #343A40;
             --success: #10B981;
+            --success-light: #D1FAE5;
             --danger: #EF4444;
+            --danger-light: #FEE2E2;
             --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --info: #3B82F6;
             --purple: #8B5CF6;
+            --purple-light: #EDE9FE;
             --orange: #F59E0B;
+            --orange-light: #FEF3C7;
+            
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+            
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            
+            --transition: all 0.2s ease-in-out;
         }
 
         * {
@@ -28,139 +55,156 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light);
-            color: #333;
-        }
-
-        .dashboard-container {
-            display: flex;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--gray-800);
             min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(135deg, var(--dark) 0%, #2D3E5F 100%);
-            color: white;
-            padding: 20px;
-            overflow-y: auto;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .sidebar-header {
-            margin-bottom: 30px;
-        }
-
-        .sidebar-header h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            padding: 2rem;
         }
 
-        .sidebar-menu ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .sidebar-menu li {
-            margin-bottom: 10px;
-        }
-
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-menu a:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .sidebar-menu a.active {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .sidebar-menu i {
-            font-size: 1.1rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 260px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .main-container {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            animation: slideIn 0.5s ease;
         }
 
         /* Topbar */
         .topbar {
             background: white;
-            padding: 15px 30px;
+            padding: 1.2rem 2rem;
             border-bottom: 1px solid var(--gray-200);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: var(--shadow-sm);
         }
 
-        .topbar h5 {
+        .topbar h2 {
             margin: 0;
             color: var(--dark);
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar h2 i {
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Dashboard Button */
+        .dashboard-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .dashboard-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .user-info {
             display: flex;
             align-items: center;
             gap: 15px;
+            background: var(--light);
+            padding: 5px 20px 5px 25px;
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-info span {
+            color: var(--gray-700);
+            font-weight: 500;
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 1.1rem;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            background: var(--danger-light);
+            color: var(--danger);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         /* Content Area */
         .content {
-            padding: 30px;
-            flex: 1;
-            overflow-y: auto;
+            padding: 2rem;
+            background: var(--light);
         }
 
         /* Cards */
         .card {
             border: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border-radius: var(--border-radius-lg);
             margin-bottom: 20px;
+            overflow: hidden;
+            animation: slideIn 0.5s ease;
         }
 
         .card-header {
             background: white;
-            border-bottom: 1px solid var(--gray-200);
-            padding: 20px;
+            border-bottom: 2px solid var(--gray-200);
+            padding: 1.2rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -170,159 +214,106 @@
             margin: 0;
             color: var(--dark);
             font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header h5 i {
+            color: var(--primary);
         }
 
         .card-body {
-            padding: 20px;
+            padding: 1.5rem;
         }
 
         /* Alerts */
         .alert {
-            border-radius: 8px;
+            border-radius: var(--border-radius-lg);
             margin-bottom: 20px;
             border: none;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid transparent;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .alert-success {
-            background-color: #D1FAE5;
+            background-color: var(--success-light);
             color: #065F46;
+            border-left-color: var(--success);
         }
 
         .alert-danger {
-            background-color: #FEE2E2;
+            background-color: var(--danger-light);
             color: #991B1B;
+            border-left-color: var(--danger);
         }
 
         /* Buttons */
         .btn {
-            border-radius: 8px;
+            border-radius: var(--border-radius-md);
             font-weight: 500;
-            transition: all 0.2s;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid transparent;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
             color: white;
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-dark);
-            border-color: var(--primary-dark);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
         }
 
         .btn-outline-primary {
             color: var(--primary);
-            border-color: var(--primary);
+            border: 2px solid var(--primary);
+            background: transparent;
         }
 
         .btn-outline-primary:hover {
-            background-color: var(--primary);
+            background: var(--primary);
             color: white;
         }
 
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
         }
 
         .btn-group {
             gap: 5px;
-        }
-
-        /* Search Box */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            transition: border-color 0.2s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(19, 197, 221, 0.1);
-        }
-
-        /* Table */
-        .table-responsive {
-            border-radius: 8px;
-        }
-
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table thead th {
-            border-bottom: 2px solid var(--gray-200);
-            color: var(--dark);
-            font-weight: 600;
-            padding: 15px;
-            background-color: #F9FAFB;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .table tbody td {
-            padding: 15px;
-            vertical-align: middle;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .table tbody tr:hover {
-            background-color: #F9FAFB;
-        }
-
-        .badge {
-            font-size: 0.75rem;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-
-        .bg-success {
-            background-color: var(--success) !important;
-        }
-
-        .bg-danger {
-            background-color: var(--danger) !important;
-        }
-
-        .bg-warning {
-            background-color: var(--warning) !important;
-            color: white;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--gray-600);
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #CBD5E1;
-        }
-
-        .empty-state h5 {
-            color: #64748B;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            color: #94A3B8;
-            margin-bottom: 20px;
         }
 
         /* Filter Buttons */
@@ -334,9 +325,196 @@
         }
 
         .filter-buttons .btn {
-            display: flex;
+            border-radius: 50px;
+        }
+
+        .filter-buttons strong {
+            color: var(--gray-700);
+            margin-right: 10px;
+        }
+
+        /* Search Box */
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+        }
+
+        .input-group-text {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-right: none;
+            color: var(--gray-500);
+        }
+
+        .input-group .form-control {
+            border: 2px solid var(--gray-200);
+            border-left: none;
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(19, 197, 221, 0.1);
+            outline: none;
+        }
+
+        .input-group .btn-primary {
+            border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
+            padding: 0 1.5rem;
+        }
+
+        /* Table */
+        .table-responsive {
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+            background: white;
+        }
+
+        .table thead th {
+            border-bottom: 2px solid var(--gray-200);
+            color: var(--gray-700);
+            font-weight: 600;
+            padding: 1rem;
+            background-color: var(--light);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.9rem;
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--light);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 50px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge i {
+            font-size: 0.7rem;
+        }
+
+        .badge.bg-success {
+            background: var(--success-light) !important;
+            color: #065F46;
+        }
+
+        .badge.bg-danger {
+            background: var(--danger-light) !important;
+            color: #991B1B;
+        }
+
+        .badge.bg-warning {
+            background: var(--warning-light) !important;
+            color: #92400E;
+        }
+
+        .badge.bg-primary {
+            background: var(--primary-light) !important;
+            color: var(--primary-dark);
+        }
+
+        .badge.bg-info {
+            background: #E0F2FE !important;
+            color: #0369A1;
+        }
+
+        .badge.bg-purple {
+            background: var(--purple-light) !important;
+            color: var(--purple);
+        }
+
+        .badge.bg-orange {
+            background: var(--orange-light) !important;
+            color: var(--orange);
+        }
+
+        /* Role-specific badges */
+        .role-badge {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .role-badge.medecin {
+            background: var(--success-light);
+            color: #065F46;
+        }
+
+        .role-badge.patient {
+            background: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .role-badge.labo {
+            background: var(--purple-light);
+            color: var(--purple);
+        }
+
+        .role-badge.para {
+            background: var(--orange-light);
+            color: var(--orange);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--gray-400);
+        }
+
+        .empty-state h5 {
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
         }
 
         /* Spinner */
@@ -346,22 +524,46 @@
             color: var(--primary);
         }
 
+        /* Count badge */
+        .count-badge {
+            background: var(--gray-200);
+            color: var(--gray-700);
+            padding: 0.2rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.5s ease;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
         /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 0;
-                transform: translateX(-100%);
-                transition: all 0.3s ease;
-            }
-
-            .sidebar.active {
-                width: 260px;
-                transform: translateX(0);
-                z-index: 1000;
-            }
-
-            .main-content {
-                margin-left: 0;
+        @media (max-width: 992px) {
+            body {
+                padding: 1rem;
             }
 
             .card-header {
@@ -371,212 +573,260 @@
             }
 
             .topbar {
-                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .topbar h2 {
+                font-size: 1.3rem;
+            }
+
+            .topbar-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 1rem;
             }
 
             .content {
-                padding: 15px;
+                padding: 1rem;
             }
 
             .filter-buttons {
                 justify-content: center;
             }
 
+            .filter-buttons strong {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
             .table thead th,
             .table tbody td {
-                padding: 10px;
+                padding: 0.8rem;
+                font-size: 0.8rem;
             }
-            
+
             .btn-group {
-                display: flex;
                 flex-direction: column;
+                width: 100%;
             }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+            .user-info span {
+                display: none;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-200);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Hover effects */
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover td:first-child {
+            border-left: 3px solid var(--primary);
+        }
+
+        .btn-outline-secondary {
+            border-color: var(--gray-300);
+            color: var(--gray-600);
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-400);
+            color: var(--gray-800);
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h3><i class="fas fa-clinic-medical"></i> Sahty</h3>
-            </div>
-
-            <div class="sidebar-menu">
-                <ul>
-                    <li>
-                        <a href="{{ path('admin_index') }}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ path('admin_users') }}" class="active">
-                            <i class="fas fa-users"></i>
-                            <span>Users Management</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>Appointments</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Reports</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
-                            <i class="fas fa-cog"></i>
-                            <span>Settings</span>
-                        </a>
-                    </li>
-                    <li style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                        <a href="{{ path('app_logout') }}">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Topbar -->
-            <div class="topbar">
-                <h5><i class="fas fa-users me-2"></i>Gestion des utilisateurs</h5>
+    <div class="main-container">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h2>
+                <i class="fas fa-users"></i>
+                Gestion des utilisateurs
+            </h2>
+            <div class="topbar-actions">
+                <!-- Dashboard Button -->
+                <a href="{{ path('admin_index') }}" class="dashboard-btn">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="d-none d-md-inline">Tableau de bord</span>
+                </a>
+                
                 <div class="user-info">
-                    <span>Bienvenue, {{ app.user.prenom ?? 'Admin' }} {{ app.user.nom ?? '' }}</span>
+                    <span>{{ app.user.prenom ?? 'Admin' }} {{ app.user.nom ?? '' }}</span>
                     <div class="user-avatar">
                         {% if app.user and app.user.photoProfil %}
-                            <img src="{{ app.user.photoProfil }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <img src="{{ app.user.photoProfil }}" alt="Profile">
                         {% else %}
                             {{ (app.user.prenom ?? 'A')[:1]|upper }}{{ (app.user.nom ?? '')[:1]|upper }}
                         {% endif %}
                     </div>
                 </div>
+                <a href="{{ path('app_logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="d-none d-md-inline">Déconnexion</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Alerts -->
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }} alert-dismissible fade show animate-slide-in" role="alert">
+                        <i class="fas fa-{{ label == 'success' ? 'check-circle' : 'exclamation-circle' }}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <!-- Filters Card -->
+            <div class="card animate-slide-in">
+                <div class="card-body">
+                    <div class="filter-buttons">
+                        <strong><i class="fas fa-filter me-2"></i>Filtrer par rôle :</strong>
+                        
+                        <a href="{{ path('admin_users') }}" 
+                           class="btn filter-role-link {% if not selectedRole %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <i class="fas fa-users"></i> Tous
+                            <span class="count-badge">{{ utilisateurs|length }}</span>
+                        </a>
+
+                        <a href="{{ path('admin_users') }}?role=admin" 
+                           class="btn filter-role-link {% if selectedRole == 'admin' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+                            <i class="fas fa-user-shield"></i> Admins
+                        </a>
+
+                        <a href="{{ path('admin_users') }}?role=medecin" 
+                           class="btn filter-role-link {% if selectedRole == 'medecin' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            <i class="fas fa-user-md"></i> Médecins
+                        </a>
+
+                        <a href="{{ path('admin_users') }}?role=patient" 
+                           class="btn filter-role-link {% if selectedRole == 'patient' %}btn-info{% else %}btn-outline-info{% endif %}">
+                            <i class="fas fa-bed"></i> Patients
+                        </a>
+
+                        <a href="{{ path('admin_users') }}?role=responsable_labo" 
+                           class="btn filter-role-link {% if selectedRole == 'responsable_labo' %}btn-purple{% else %}btn-outline-purple{% endif %}"
+                           style="{% if selectedRole == 'responsable_labo' %}background: var(--purple); color: white; border: none;{% else %}color: var(--purple); border-color: var(--purple);{% endif %}">
+                            <i class="fas fa-flask"></i> Resp. Labo
+                        </a>
+
+                        <a href="{{ path('admin_users') }}?role=responsable_para" 
+                           class="btn filter-role-link {% if selectedRole == 'responsable_para' %}btn-orange{% else %}btn-outline-orange{% endif %}"
+                           style="{% if selectedRole == 'responsable_para' %}background: var(--orange); color: white; border: none;{% else %}color: var(--orange); border-color: var(--orange);{% endif %}">
+                            <i class="fas fa-pills"></i> Resp. Para
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Content -->
-            <div class="content">
-                <!-- Alerts -->
-                {% for label, messages in app.flashes %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
-                            {% if label == 'success' %}
-                                <i class="fas fa-check-circle me-2"></i>
-                            {% else %}
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                            {% endif %}
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endfor %}
-
-                <!-- Filters Card -->
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="filter-buttons">
-                            <strong style="margin-right: 10px;">Filtrer par rôle :</strong>
-                            <a href="{{ path('admin_users') }}" 
-                               class="btn btn-sm filter-role-link {% if not selectedRole %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                                <i class="fas fa-users me-1"></i> Tous
-                            </a>
-                            <a href="{{ path('admin_users') }}?role=admin" 
-                               class="btn btn-sm filter-role-link {% if selectedRole == 'admin' %}btn-dark{% else %}btn-outline-dark{% endif %}">
-                                <i class="fas fa-user-shield me-1"></i> Admins
-                            </a>
-                            <a href="{{ path('admin_users') }}?role=medecin" 
-                               class="btn btn-sm filter-role-link {% if selectedRole == 'medecin' %}btn-success{% else %}btn-outline-success{% endif %}">
-                                <i class="fas fa-user-md me-1"></i> Médecins
-                            </a>
-                            <a href="{{ path('admin_users') }}?role=patient" 
-                               class="btn btn-sm filter-role-link {% if selectedRole == 'patient' %}btn-info{% else %}btn-outline-info{% endif %}">
-                                <i class="fas fa-bed me-1"></i> Patients
-                            </a>
-                            <a href="{{ path('admin_users') }}?role=responsable_labo" 
-                               class="btn btn-sm filter-role-link" 
-                               style="{% if selectedRole == 'responsable_labo' %}background-color: #8B5CF6; color: white; border-color: #8B5CF6;{% else %}color: #8B5CF6; border-color: #8B5CF6;{% endif %}">
-                                <i class="fas fa-flask me-1"></i> Resp. Labo
-                            </a>
-                            <a href="{{ path('admin_users') }}?role=responsable_para" 
-                               class="btn btn-sm filter-role-link" 
-                               style="{% if selectedRole == 'responsable_para' %}background-color: #F59E0B; color: white; border-color: #F59E0B;{% else %}color: #F59E0B; border-color: #F59E0B;{% endif %}">
-                                <i class="fas fa-pills me-1"></i> Resp. Para
-                            </a>
-                        </div>
+            <!-- Users List Card -->
+            <div class="card animate-slide-in" style="animation-delay: 0.1s;">
+                <div class="card-header">
+                    <div>
+                        <h5>
+                            <i class="fas fa-list"></i>
+                            Liste des utilisateurs
+                        </h5>
+                        <small class="text-muted" id="user-count">
+                            <i class="fas fa-user me-1"></i>
+                            {{ utilisateurs|length }} utilisateur(s) trouvé(s)
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-secondary btn-sm" id="reset-filters" title="Réinitialiser les filtres">
+                            <i class="fas fa-undo"></i>
+                            Réinitialiser
+                        </button>
+                        <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm ms-2">
+                            <i class="fas fa-user-plus"></i>
+                            Nouvel utilisateur
+                        </a>
                     </div>
                 </div>
 
-                <!-- Users List Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h5><i class="fas fa-list me-2"></i>Liste des utilisateurs</h5>
-                            <small class="text-muted" id="user-count">{{ utilisateurs|length }} utilisateur(s) trouvé(s)</small>
-                        </div>
-                        <div>
-                            <button class="btn btn-outline-secondary btn-sm me-2" id="reset-filters" title="Réinitialiser les filtres">
-                                <i class="fas fa-undo me-1"></i> Réinitialiser
+                <div class="card-body">
+                    <!-- Search Bar -->
+                    <div class="search-box">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" 
+                                   id="searchInput" 
+                                   class="form-control border-start-0" 
+                                   placeholder="Rechercher par nom, prénom ou email..."
+                                   value="{{ searchQuery ?? '' }}"
+                                   autofocus>
+                            <button class="btn btn-primary" type="button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                                Rechercher
                             </button>
-                            <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-user-plus me-2"></i>Nouvel utilisateur
-                            </a>
                         </div>
                     </div>
 
-                    <div class="card-body">
-                        <!-- Search Bar -->
-                        <div class="search-box">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="text" 
-                                       id="searchInput" 
-                                       class="form-control border-start-0 ps-0" 
-                                       placeholder="Rechercher par nom, prénom ou email..."
-                                       value="{{ searchQuery ?? '' }}"
-                                       autofocus>
-                                <button class="btn btn-primary" type="button" id="searchButton">
-                                    <i class="fas fa-search me-1"></i> Rechercher
-                                </button>
-                            </div>
+                    <!-- Loading Spinner -->
+                    <div id="loading-spinner" class="text-center py-5 d-none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Chargement...</span>
                         </div>
+                        <p class="mt-2 text-muted">Recherche en cours...</p>
+                    </div>
 
-                        <!-- Loading Spinner (hidden by default) -->
-                        <div id="loading-spinner" class="text-center py-5 d-none">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Recherche en cours...</p>
-                        </div>
-
-                        <!-- Users Table -->
-                        <div id="table-container">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nom & Prénom</th>
-                                            <th>Email / Téléphone</th>
-                                            <th>Rôle</th>
-                                            <th>Statut</th>
-                                            <th>Créé le</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="user-table-body">
-                                        {% include 'admin/_user_table_rows.html.twig' %}
-                                    </tbody>
-                                </table>
-                            </div>
+                    <!-- Users Table -->
+                    <div id="table-container">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nom & Prénom</th>
+                                        <th>Contact</th>
+                                        <th>Rôle</th>
+                                        <th>Statut</th>
+                                        <th>Créé le</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-table-body">
+                                    {% include 'admin/_user_table_rows.html.twig' %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -622,16 +872,13 @@
                 })
                 .then(response => response.text())
                 .then(html => {
-                    // Mettre à jour le tableau
                     tbody.innerHTML = html;
                     
-                    // Mettre à jour le compteur
                     const rowCount = tbody.querySelectorAll('tr:not(.empty-state-row)').length;
                     if (userCount) {
-                        userCount.textContent = rowCount + ' utilisateur(s) trouvé(s)';
+                        userCount.innerHTML = `<i class="fas fa-user me-1"></i>${rowCount} utilisateur(s) trouvé(s)`;
                     }
                     
-                    // Mettre à jour l'URL sans recharger la page
                     let newUrl = '/admin/users';
                     let params = [];
                     if (search) params.push('search=' + encodeURIComponent(search));
@@ -651,20 +898,18 @@
                     `;
                 })
                 .finally(() => {
-                    // Cacher le spinner
                     spinner.classList.add('d-none');
                     tableContainer.style.opacity = '1';
                 });
             }
             
-            // Recherche en temps réel (debounce)
+            // Recherche en temps réel
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(performSearch, 400);
                 });
                 
-                // Recherche avec la touche Entrée
                 searchInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -692,7 +937,6 @@
                     const url = new URL(href, window.location.origin);
                     const role = url.searchParams.get('role');
                     
-                    // Mettre à jour l'URL
                     let newUrl = '/admin/users';
                     let params = [];
                     if (role) params.push('role=' + encodeURIComponent(role));
@@ -702,16 +946,13 @@
                     if (params.length > 0) newUrl += '?' + params.join('&');
                     window.history.pushState({ path: newUrl }, '', newUrl);
                     
-                    // Mettre à jour les classes des boutons
                     filterLinks.forEach(l => {
                         const lHref = l.getAttribute('href');
                         const lUrl = new URL(lHref, window.location.origin);
                         const lRole = lUrl.searchParams.get('role');
                         
-                        // Réinitialiser les classes
-                        l.className = 'btn btn-sm filter-role-link';
+                        l.className = 'btn filter-role-link';
                         
-                        // Appliquer les classes appropriées
                         if (lRole === role) {
                             if (role === 'admin') {
                                 l.classList.add('btn-dark');
@@ -720,34 +961,41 @@
                             } else if (role === 'patient') {
                                 l.classList.add('btn-info');
                             } else if (role === 'responsable_labo') {
-                                l.style.backgroundColor = '#8B5CF6';
+                                l.style.background = 'var(--purple)';
                                 l.style.color = 'white';
-                                l.style.borderColor = '#8B5CF6';
+                                l.style.border = 'none';
                             } else if (role === 'responsable_para') {
-                                l.style.backgroundColor = '#F59E0B';
+                                l.style.background = 'var(--orange)';
                                 l.style.color = 'white';
-                                l.style.borderColor = '#F59E0B';
+                                l.style.border = 'none';
                             } else {
                                 l.classList.add('btn-primary');
                             }
                         } else {
-                            if (role === 'responsable_labo' || lRole === 'responsable_labo') {
-                                l.style.backgroundColor = '';
-                                l.style.color = '#8B5CF6';
-                                l.style.borderColor = '#8B5CF6';
-                                l.classList.add('btn-outline-primary');
-                            } else if (role === 'responsable_para' || lRole === 'responsable_para') {
-                                l.style.backgroundColor = '';
-                                l.style.color = '#F59E0B';
-                                l.style.borderColor = '#F59E0B';
-                                l.classList.add('btn-outline-primary');
+                            l.style.background = '';
+                            l.style.color = '';
+                            l.style.border = '';
+                            
+                            if (lRole === 'admin') {
+                                l.classList.add('btn-outline-secondary');
+                            } else if (lRole === 'medecin') {
+                                l.classList.add('btn-outline-success');
+                            } else if (lRole === 'patient') {
+                                l.classList.add('btn-outline-info');
+                            } else if (lRole === 'responsable_labo') {
+                                l.style.color = 'var(--purple)';
+                                l.style.borderColor = 'var(--purple)';
+                                l.classList.add('btn-outline-purple');
+                            } else if (lRole === 'responsable_para') {
+                                l.style.color = 'var(--orange)';
+                                l.style.borderColor = 'var(--orange)';
+                                l.classList.add('btn-outline-orange');
                             } else {
                                 l.classList.add('btn-outline-primary');
                             }
                         }
                     });
                     
-                    // Recharger les résultats
                     performSearch();
                 });
             });
@@ -755,44 +1003,41 @@
             // Réinitialiser les filtres
             if (resetButton) {
                 resetButton.addEventListener('click', function() {
-                    // Vider le champ de recherche
                     if (searchInput) {
                         searchInput.value = '';
                     }
                     
-                    // Remettre le filtre "Tous" actif
                     window.history.pushState({ path: '/admin/users' }, '', '/admin/users');
                     
-                    // Réinitialiser les classes des boutons
                     filterLinks.forEach(l => {
                         const href = l.getAttribute('href');
                         const url = new URL(href, window.location.origin);
                         const role = url.searchParams.get('role');
                         
-                        l.className = 'btn btn-sm filter-role-link';
-                        l.style.backgroundColor = '';
+                        l.className = 'btn filter-role-link';
+                        l.style.background = '';
                         l.style.color = '';
-                        l.style.borderColor = '';
+                        l.style.border = '';
                         
                         if (!role) {
                             l.classList.add('btn-primary');
+                        } else if (role === 'admin') {
+                            l.classList.add('btn-outline-secondary');
+                        } else if (role === 'medecin') {
+                            l.classList.add('btn-outline-success');
+                        } else if (role === 'patient') {
+                            l.classList.add('btn-outline-info');
                         } else if (role === 'responsable_labo') {
-                            l.style.color = '#8B5CF6';
-                            l.style.borderColor = '#8B5CF6';
-                            l.classList.add('btn-outline-primary');
+                            l.style.color = 'var(--purple)';
+                            l.style.borderColor = 'var(--purple)';
+                            l.classList.add('btn-outline-purple');
                         } else if (role === 'responsable_para') {
-                            l.style.color = '#F59E0B';
-                            l.style.borderColor = '#F59E0B';
-                            l.classList.add('btn-outline-primary');
-                        } else {
-                            l.classList.add('btn-outline-' + 
-                                (role === 'admin' ? 'dark' : 
-                                 role === 'medecin' ? 'success' : 
-                                 role === 'patient' ? 'info' : 'primary'));
+                            l.style.color = 'var(--orange)';
+                            l.style.borderColor = 'var(--orange)';
+                            l.classList.add('btn-outline-orange');
                         }
                     });
                     
-                    // Recharger tous les utilisateurs
                     performSearch();
                 });
             }

@@ -5,14 +5,21 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use App\Entity\Medecin;
 use App\Entity\Patient;
+use App\Entity\RendezVous;
+use App\Entity\FicheMedicale;
 use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use App\Repository\UtilisateurRepository;
+use App\Repository\RendezVousRepository;
+use App\Repository\FicheMedicaleRepository;
+use App\Repository\PatientRepository;
+use App\Repository\MedecinRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -28,28 +35,79 @@ class AdminController extends AbstractController
         $this->em = $em;
     }
 
+    // ==================== TABLEAU DE BORD PRINCIPAL ====================
+
     #[Route('/', name: 'index')]
-    public function index(): Response
-    {
+    public function index(
+        RendezVousRepository $rdvRepo,
+        FicheMedicaleRepository $ficheRepo,
+        MedecinRepository $medecinRepo,
+        PatientRepository $patientRepo
+    ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        // Get basic statistics
+        // Statistiques de base
         $totalUsers = $this->userRepo->count([]);
-        $totalMedecins = $this->userRepo->countByRole('medecin');
-        $totalPatients = $this->userRepo->countByRole('patient');
-        $totalResponsableLabo = $this->userRepo->countByRole('responsable_labo');
-        $totalResponsablePara = $this->userRepo->countByRole('responsable_para');
-        $totalInactive = $this->userRepo->countByStatus(false);
+        $totalMedecins = $this->userRepo->count(['role' => 'medecin']);
+        $totalPatients = $this->userRepo->count(['role' => 'patient']);
+        $totalResponsableLabo = $this->userRepo->count(['role' => 'responsable_labo']);
+        $totalResponsablePara = $this->userRepo->count(['role' => 'responsable_para']);
+        $totalInactive = $this->userRepo->count(['estActif' => false]);
         $totalActive = $totalUsers - $totalInactive;
 
-        // Calculate user distribution percentages
+        // Pourcentages de distribution
         $doctorsPercent = $totalUsers > 0 ? round(($totalMedecins / $totalUsers) * 100) : 0;
         $patientsPercent = $totalUsers > 0 ? round(($totalPatients / $totalUsers) * 100) : 0;
         $staffPercent = $totalUsers > 0 ? round((($totalResponsableLabo + $totalResponsablePara) / $totalUsers) * 100) : 0;
-        $adminPercent = 100 - ($doctorsPercent + $patientsPercent + $staffPercent);
+        $adminPercent = max(0, 100 - ($doctorsPercent + $patientsPercent + $staffPercent));
 
-        // Get recent users
+        // Utilisateurs récents
         $recentUsers = $this->userRepo->findBy([], ['creeLe' => 'DESC'], 5);
+
+        // Rendez-vous récents
+        $recentAppointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC'], 10);
+
+        // Fiches médicales récentes
+        $recentMedicalRecords = $ficheRepo->findBy([], ['creeLe' => 'DESC'], 10);
+
+        // Comptages pour chaque utilisateur
+        $appointmentsCount = [];
+        $medicalRecordsCount = [];
+        
+        foreach ($recentUsers as $user) {
+            if ($user instanceof Patient) {
+                $appointmentsCount[$user->getId()] = $rdvRepo->count(['patient' => $user]);
+                $medicalRecordsCount[$user->getId()] = $ficheRepo->count(['patient' => $user]);
+            } elseif ($user instanceof Medecin) {
+                $appointmentsCount[$user->getId()] = $rdvRepo->count(['medecin' => $user]);
+            }
+        }
+
+        // Données pour les graphiques
+        $months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+                   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        
+        // Données réelles
+        $appointmentsData = $this->getMonthlyAppointmentsData($rdvRepo);
+        $topMedecins = $this->getTopMedecins($rdvRepo, $medecinRepo);
+        $topPatients = $this->getTopPatients($rdvRepo, $patientRepo);
+        
+        // Données IMC
+        $imcStats = $this->getImcStatistics($ficheRepo);
+        
+        // Statistiques des rendez-vous par statut
+        $statusStats = [
+            'Confirmé' => $rdvRepo->count(['statut' => 'Confirmé']),
+            'En attente' => $rdvRepo->count(['statut' => 'En attente']),
+            'Annulé' => $rdvRepo->count(['statut' => 'Annulé']),
+            'Terminé' => $rdvRepo->count(['statut' => 'Terminé']),
+        ];
+
+        // Statistiques des fiches médicales
+        $ficheStatusStats = [
+            'Actif' => $ficheRepo->count(['statut' => 'actif']),
+            'Inactif' => $ficheRepo->count(['statut' => 'inactif']),
+        ];
 
         return $this->render('admin/index.html.twig', [
             'totalUsers' => $totalUsers,
@@ -62,21 +120,25 @@ class AdminController extends AbstractController
             'stats' => [
                 'total_users' => $totalUsers,
                 'active_doctors' => $totalMedecins,
-                'todays_appointments' => 0,
-                'monthly_revenue' => 0,
-                'pending_appointments' => 0,
-                'todays_patients' => $totalPatients,
+                'todays_appointments' => $rdvRepo->count(['dateRdv' => new \DateTime()]),
+                'pending_appointments' => $rdvRepo->count(['statut' => 'En attente']),
+                'todays_patients' => $rdvRepo->count(['dateRdv' => new \DateTime()]),
                 'available_doctors' => $totalMedecins,
-                'emergency_cases' => 0,
-                'pending_bills' => 0,
-                'unread_notifications' => 0,
-                'weekly_appointments' => [
-                    'mon' => 45,
-                    'tue' => 52,
-                    'wed' => 48,
-                    'thu' => 55,
-                    'fri' => 60,
-                ],
+                'weekly_appointments' => $this->getWeeklyAppointmentsData($rdvRepo),
+            ],
+            'charts' => [
+                'months' => $months,
+                'appointments_data' => $appointmentsData,
+                'medecin_names' => array_column($topMedecins, 'name'),
+                'medecin_counts' => array_column($topMedecins, 'count'),
+                'patient_names' => array_column($topPatients, 'name'),
+                'patient_counts' => array_column($topPatients, 'count'),
+                'imc_labels' => array_keys($imcStats),
+                'imc_counts' => array_values($imcStats),
+                'status_labels' => array_keys($statusStats),
+                'status_counts' => array_values($statusStats),
+                'fiche_status_labels' => array_keys($ficheStatusStats),
+                'fiche_status_counts' => array_values($ficheStatusStats),
             ],
             'system_status' => [
                 'server_load' => 65,
@@ -90,13 +152,1017 @@ class AdminController extends AbstractController
                 'staff' => $staffPercent,
                 'admin' => $adminPercent,
             ],
-            'recent_appointments' => [],
+            'recent_appointments' => $recentAppointments,
+            'recent_medical_records' => $recentMedicalRecords,
             'recent_activities' => [],
             'recent_users' => $recentUsers,
+            'appointments_count' => $appointmentsCount,
+            'medical_records_count' => $medicalRecordsCount,
             'app_name' => 'Sahty',
             'app_version' => '1.0.0',
         ]);
     }
+
+    // ==================== STATISTIQUES DES FICHES MÉDICALES ====================
+
+    #[Route('/statistiques/fiches-medicales', name: 'medical_records_stats')]
+    public function medicalRecordsStats(Request $request, FicheMedicaleRepository $ficheRepo, PatientRepository $patientRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        // Récupération de toutes les fiches médicales
+        $fiches = $ficheRepo->findAll();
+        $totalFiches = count($fiches);
+
+        // Statistiques de base
+        $stats = [
+            'total' => $totalFiches,
+            'actives' => 0,
+            'inactives' => 0,
+            'avec_imc' => 0,
+            'sans_imc' => 0,
+            'imc_maigreur' => 0,
+            'imc_normal' => 0,
+            'imc_surpoids' => 0,
+            'imc_obesite' => 0,
+            'avec_traitement' => 0,
+            'sans_traitement' => 0,
+            'avec_diagnostic' => 0,
+            'sans_diagnostic' => 0,
+            'imc_moyen' => 0,
+            'imc_min' => 100,
+            'imc_max' => 0,
+            'top_patients' => [],
+            'creations_par_mois' => [],
+            'pourcentage_actives' => 0,
+            'pourcentage_inactives' => 0,
+            'pourcentage_avec_imc' => 0,
+            'pourcentage_maigreur' => 0,
+            'pourcentage_normal' => 0,
+            'pourcentage_surpoids' => 0,
+            'pourcentage_obesite' => 0,
+        ];
+
+        // Comptage des patients pour le top
+        $patientCounts = [];
+        $totalImc = 0;
+
+        foreach ($fiches as $fiche) {
+            // Statut
+            if ($fiche->getStatut() === 'actif') {
+                $stats['actives']++;
+            } else {
+                $stats['inactives']++;
+            }
+
+            // IMC
+            $imc = $fiche->getImc();
+            if ($imc) {
+                $stats['avec_imc']++;
+                $totalImc += $imc;
+                $stats['imc_min'] = min($stats['imc_min'], $imc);
+                $stats['imc_max'] = max($stats['imc_max'], $imc);
+
+                // Catégorie IMC
+                if ($imc < 18.5) {
+                    $stats['imc_maigreur']++;
+                } elseif ($imc < 25) {
+                    $stats['imc_normal']++;
+                } elseif ($imc < 30) {
+                    $stats['imc_surpoids']++;
+                } else {
+                    $stats['imc_obesite']++;
+                }
+            } else {
+                $stats['sans_imc']++;
+            }
+
+            // Traitement
+            if ($fiche->getTraitementPrescrit()) {
+                $stats['avec_traitement']++;
+            } else {
+                $stats['sans_traitement']++;
+            }
+
+            // Diagnostic
+            if ($fiche->getDiagnostic()) {
+                $stats['avec_diagnostic']++;
+            } else {
+                $stats['sans_diagnostic']++;
+            }
+
+            // Comptage par patient
+            $patient = $fiche->getPatient();
+            if ($patient) {
+                $patientId = $patient->getId();
+                if (!isset($patientCounts[$patientId])) {
+                    $patientCounts[$patientId] = [
+                        'id' => $patientId,
+                        'prenom' => $patient->getPrenom(),
+                        'nom' => $patient->getNom(),
+                        'count' => 0
+                    ];
+                }
+                $patientCounts[$patientId]['count']++;
+            }
+
+            // Créations par mois
+            $dateCreation = $fiche->getCreeLe();
+            if ($dateCreation) {
+                $mois = $dateCreation->format('m/Y');
+                if (!isset($stats['creations_par_mois'][$mois])) {
+                    $stats['creations_par_mois'][$mois] = 0;
+                }
+                $stats['creations_par_mois'][$mois]++;
+            }
+        }
+
+        // Calcul de l'IMC moyen
+        if ($stats['avec_imc'] > 0) {
+            $stats['imc_moyen'] = round($totalImc / $stats['avec_imc'], 1);
+        }
+
+        // Réinitialiser imc_min si aucune fiche avec IMC
+        if ($stats['avec_imc'] == 0) {
+            $stats['imc_min'] = 0;
+        }
+
+        // Top patients
+        usort($patientCounts, function($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+        $stats['top_patients'] = array_slice($patientCounts, 0, 5);
+
+        // Formatage des créations par mois
+        $creationsParMois = [];
+        foreach ($stats['creations_par_mois'] as $mois => $count) {
+            $creationsParMois[] = [
+                'mois' => $mois,
+                'count' => $count
+            ];
+        }
+        $stats['creations_par_mois'] = $creationsParMois;
+
+        // Calcul des pourcentages
+        if ($totalFiches > 0) {
+            $stats['pourcentage_actives'] = round($stats['actives'] / $totalFiches * 100, 1);
+            $stats['pourcentage_inactives'] = round($stats['inactives'] / $totalFiches * 100, 1);
+            $stats['pourcentage_avec_imc'] = round($stats['avec_imc'] / $totalFiches * 100, 1);
+            
+            $totalAvecImc = $stats['avec_imc'];
+            if ($totalAvecImc > 0) {
+                $stats['pourcentage_maigreur'] = round($stats['imc_maigreur'] / $totalAvecImc * 100, 1);
+                $stats['pourcentage_normal'] = round($stats['imc_normal'] / $totalAvecImc * 100, 1);
+                $stats['pourcentage_surpoids'] = round($stats['imc_surpoids'] / $totalAvecImc * 100, 1);
+                $stats['pourcentage_obesite'] = round($stats['imc_obesite'] / $totalAvecImc * 100, 1);
+            }
+        }
+
+        return $this->render('admin/statistics/medical_records_stats.html.twig', [
+            'stats' => $stats,
+        ]);
+    }
+
+    // ==================== STATISTIQUES DES RENDEZ-VOUS ====================
+
+    #[Route('/statistiques/rendez-vous', name: 'appointments_stats')]
+    public function appointmentsStats(Request $request, RendezVousRepository $rdvRepo, MedecinRepository $medecinRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        // Récupération de la période
+        $period = $request->query->get('period', 'month');
+        $startDate = $request->query->get('start_date');
+        $endDate = $request->query->get('end_date');
+
+        // Calcul des dates selon la période
+        $dateRanges = $this->getDateRangeForPeriod($period, $startDate, $endDate);
+        
+        // Récupération des rendez-vous pour la période
+        $appointments = $rdvRepo->findByDateRange($dateRanges['start'], $dateRanges['end']);
+        
+        // Rendez-vous d'aujourd'hui
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+        $tomorrow = (clone $today)->modify('+1 day');
+        $todayAppointments = $rdvRepo->findByDateRange($today, $tomorrow);
+
+        // Rendez-vous de la semaine
+        $weekStart = $this->getWeekStart();
+        $weekEnd = $this->getWeekEnd();
+        $weekAppointments = $rdvRepo->findByDateRange($weekStart, $weekEnd);
+
+        // Rendez-vous du mois
+        $monthStart = $this->getMonthStart();
+        $monthEnd = $this->getMonthEnd();
+        $monthAppointments = $rdvRepo->findByDateRange($monthStart, $monthEnd);
+
+        // Statistiques simples
+        $stats = [
+            // Totaux
+            'total' => count($appointments),
+            'total_global' => $rdvRepo->count([]),
+            
+            // Par statut
+            'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+            'en_attente' => $this->countByStatus($appointments, 'En attente'),
+            'annules' => $this->countByStatus($appointments, 'Annulé'),
+            'termines' => $this->countByStatus($appointments, 'Terminé'),
+            
+            // Périodes
+            'aujourdhui' => count($todayAppointments),
+            'restants_aujourdhui' => $this->countRemainingToday($todayAppointments),
+            'semaine' => count($weekAppointments),
+            'mois' => count($monthAppointments),
+            
+            // Pourcentages (seront calculés après)
+            'pourcentage_confirmes' => 0,
+            'pourcentage_attente' => 0,
+            'pourcentage_termines' => 0,
+            'taux_annulation' => 0,
+            
+            // Médecins
+            'top_medecins' => $this->getTopMedecinsSimple($appointments),
+            
+            // Répartitions
+            'creneaux_horaires' => $this->getHourlyDistribution($appointments),
+            'lundi' => 0,
+            'mardi' => 0,
+            'mercredi' => 0,
+            'jeudi' => 0,
+            'vendredi' => 0,
+            'samedi' => 0,
+            'dimanche' => 0,
+            'max_jour' => 1,
+            'max_creneau' => 1,
+            
+            // Délais
+            'delai_moyen' => $this->calculateAverageDelay($appointments),
+            'delai_min' => $this->calculateMinDelay($appointments),
+            'delai_max' => $this->calculateMaxDelay($appointments),
+            
+            // Taux
+            'taux_presence' => $this->calculatePresenceRate($appointments),
+            'taux_absence' => 0,
+            'taux_occupation' => $this->calculateOccupationRate($appointments),
+            'evolution_total' => 0,
+            
+            // Divers
+            'duree_moyenne' => 30,
+            'periode_actuelle' => $this->getPeriodLabel($period),
+            'moyenne_journaliere' => $this->calculateDailyAverage($appointments, $dateRanges),
+            'projection_mois' => $this->calculateMonthProjection($rdvRepo),
+            'evolution_labels' => $this->generateEvolutionLabels($dateRanges),
+            'evolution_data' => $this->generateEvolutionData($appointments, $dateRanges),
+        ];
+
+        // Remplir les statistiques par jour
+        $dailyDist = $this->getDailyDistribution($appointments);
+        foreach ($dailyDist as $jour => $count) {
+            $stats[strtolower($jour)] = $count;
+        }
+        $stats['max_jour'] = !empty($dailyDist) ? max($dailyDist) : 1;
+
+        // Remplir les créneaux horaires
+        $hourlyDist = $this->getHourlyDistribution($appointments);
+        $creneaux = [];
+        foreach ($hourlyDist as $heure => $count) {
+            $creneaux[] = ['heure' => $heure, 'nb_rdv' => $count];
+        }
+        $stats['creneaux_horaires'] = $creneaux;
+        $stats['max_creneau'] = !empty($hourlyDist) ? max($hourlyDist) : 1;
+
+        // Calcul des pourcentages
+        if ($stats['total'] > 0) {
+            $stats['pourcentage_confirmes'] = round($stats['confirmes'] / $stats['total'] * 100, 1);
+            $stats['pourcentage_attente'] = round($stats['en_attente'] / $stats['total'] * 100, 1);
+            $stats['pourcentage_termines'] = round($stats['termines'] / $stats['total'] * 100, 1);
+            $stats['taux_annulation'] = round($stats['annules'] / $stats['total'] * 100, 1);
+        }
+
+        // Calcul du taux d'absence
+        $stats['taux_absence'] = 100 - $stats['taux_presence'];
+
+        return $this->render('admin/statistics/appointments_stats.html.twig', [
+            'stats' => $stats,
+            'current_period' => $period,
+            'start_date' => $dateRanges['start']?->format('Y-m-d'),
+            'end_date' => $dateRanges['end']?->format('Y-m-d'),
+        ]);
+    }
+
+    #[Route('/api/statistiques/rendez-vous', name: 'appointments_stats_api')]
+    public function appointmentsStatsApi(Request $request, RendezVousRepository $rdvRepo): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $period = $request->query->get('period', 'month');
+        $startDate = $request->query->get('start_date');
+        $endDate = $request->query->get('end_date');
+
+        $dateRanges = $this->getDateRangeForPeriod($period, $startDate, $endDate);
+        
+        $appointments = $rdvRepo->findByDateRange($dateRanges['start'], $dateRanges['end']);
+
+        return $this->json([
+            'total' => count($appointments),
+            'by_status' => [
+                'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+                'en_attente' => $this->countByStatus($appointments, 'En attente'),
+                'annules' => $this->countByStatus($appointments, 'Annulé'),
+                'termines' => $this->countByStatus($appointments, 'Terminé'),
+            ],
+            'evolution' => [
+                'labels' => $this->generateEvolutionLabels($dateRanges),
+                'data' => $this->generateEvolutionData($appointments, $dateRanges)
+            ],
+        ]);
+    }
+
+    // ==================== MÉTHODES UTILITAIRES POUR STATISTIQUES ====================
+
+    private function getDateRangeForPeriod(string $period, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $now = new \DateTime();
+        $result = ['start' => null, 'end' => null];
+
+        switch ($period) {
+            case 'today':
+                $result['start'] = (new \DateTime())->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->setTime(23, 59, 59);
+                break;
+
+            case 'week':
+                $result['start'] = (new \DateTime())->modify('monday this week')->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->modify('sunday this week')->setTime(23, 59, 59);
+                break;
+
+            case 'month':
+                $result['start'] = (new \DateTime())->modify('first day of this month')->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->modify('last day of this month')->setTime(23, 59, 59);
+                break;
+
+            case 'year':
+                $result['start'] = (new \DateTime())->setDate($now->format('Y'), 1, 1)->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->setDate($now->format('Y'), 12, 31)->setTime(23, 59, 59);
+                break;
+
+            case 'custom':
+                if ($startDate && $endDate) {
+                    $result['start'] = new \DateTime($startDate);
+                    $result['start']->setTime(0, 0, 0);
+                    $result['end'] = new \DateTime($endDate);
+                    $result['end']->setTime(23, 59, 59);
+                }
+                break;
+
+            default:
+                $result['start'] = (new \DateTime())->modify('first day of this month')->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->modify('last day of this month')->setTime(23, 59, 59);
+        }
+
+        return $result;
+    }
+
+    private function getWeekStart(): \DateTime
+    {
+        return (new \DateTime())->modify('monday this week')->setTime(0, 0, 0);
+    }
+
+    private function getWeekEnd(): \DateTime
+    {
+        return (new \DateTime())->modify('sunday this week')->setTime(23, 59, 59);
+    }
+
+    private function getMonthStart(): \DateTime
+    {
+        return (new \DateTime())->modify('first day of this month')->setTime(0, 0, 0);
+    }
+
+    private function getMonthEnd(): \DateTime
+    {
+        return (new \DateTime())->modify('last day of this month')->setTime(23, 59, 59);
+    }
+
+    private function countByStatus(array $appointments, string $status): int
+    {
+        $count = 0;
+        foreach ($appointments as $appointment) {
+            if ($appointment->getStatut() === $status) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    private function countRemainingToday(array $appointments): int
+    {
+        $now = new \DateTime();
+        $count = 0;
+        
+        foreach ($appointments as $appointment) {
+            $heureRdv = $appointment->getHeureRdv();
+            if ($heureRdv && $heureRdv > $now) {
+                $count++;
+            }
+        }
+        
+        return $count;
+    }
+
+    private function getPeriodLabel(string $period): string
+    {
+        switch ($period) {
+            case 'today': return 'Aujourd\'hui';
+            case 'week': return 'Cette semaine';
+            case 'month': return 'Ce mois';
+            case 'year': return 'Cette année';
+            case 'custom': return 'Période personnalisée';
+            default: return 'Cette période';
+        }
+    }
+
+    private function calculatePresenceRate(array $appointments): int
+    {
+        $total = 0;
+        $present = 0;
+
+        foreach ($appointments as $appointment) {
+            $statut = $appointment->getStatut();
+            if ($statut === 'Confirmé' || $statut === 'Terminé') {
+                $present++;
+                $total++;
+            } elseif ($statut === 'Annulé') {
+                $total++;
+            }
+        }
+
+        return $total > 0 ? (int)round($present / $total * 100) : 0;
+    }
+
+    private function calculateAverageDelay(array $appointments): float
+    {
+        $totalDelay = 0;
+        $count = 0;
+
+        foreach ($appointments as $appointment) {
+            $dateCreation = $appointment->getCreeLe();
+            $dateRdv = $appointment->getDateRdv();
+            
+            if ($dateCreation && $dateRdv && $dateRdv > $dateCreation) {
+                $delay = $dateCreation->diff($dateRdv)->days;
+                $totalDelay += $delay;
+                $count++;
+            }
+        }
+
+        return $count > 0 ? round($totalDelay / $count, 1) : 0;
+    }
+
+    private function calculateMinDelay(array $appointments): int
+    {
+        $min = PHP_INT_MAX;
+        foreach ($appointments as $appointment) {
+            $dateCreation = $appointment->getCreeLe();
+            $dateRdv = $appointment->getDateRdv();
+            if ($dateCreation && $dateRdv && $dateRdv > $dateCreation) {
+                $min = min($min, $dateCreation->diff($dateRdv)->days);
+            }
+        }
+        return $min != PHP_INT_MAX ? $min : 0;
+    }
+
+    private function calculateMaxDelay(array $appointments): int
+    {
+        $max = 0;
+        foreach ($appointments as $appointment) {
+            $dateCreation = $appointment->getCreeLe();
+            $dateRdv = $appointment->getDateRdv();
+            if ($dateCreation && $dateRdv && $dateRdv > $dateCreation) {
+                $max = max($max, $dateCreation->diff($dateRdv)->days);
+            }
+        }
+        return $max;
+    }
+
+    private function calculateOccupationRate(array $appointments): int
+    {
+        if (empty($appointments)) return 0;
+        $totalMinutes = count($appointments) * 30;
+        $capaciteMax = 480 * 30; // 8h par jour * 30 jours
+        return $capaciteMax > 0 ? min(100, round(($totalMinutes / $capaciteMax) * 100)) : 0;
+    }
+
+    private function calculateDailyAverage(array $appointments, array $dateRanges): int
+    {
+        $start = $dateRanges['start'];
+        $end = $dateRanges['end'];
+        if (!$start || !$end) return 0;
+        
+        $days = $start->diff($end)->days + 1;
+        return ($days > 0 && count($appointments) > 0) ? (int)round(count($appointments) / $days) : 0;
+    }
+
+    private function calculateMonthProjection(RendezVousRepository $rdvRepo): int
+    {
+        $now = new \DateTime();
+        $monthStart = $this->getMonthStart();
+        $monthEnd = $this->getMonthEnd();
+        
+        $count = $rdvRepo->countByDateRange($monthStart, $monthEnd);
+        $daysPassed = (int)$now->format('j');
+        $daysInMonth = (int)$now->format('t');
+
+        return $daysPassed > 0 ? (int)round($count / $daysPassed * $daysInMonth) : $count;
+    }
+
+    private function getMonthlyAppointmentsData(RendezVousRepository $rdvRepo): array
+    {
+        $data = array_fill(0, 12, 0);
+        $currentYear = (new \DateTime())->format('Y');
+        $start = new \DateTime($currentYear . '-01-01 00:00:00');
+        $end = new \DateTime($currentYear . '-12-31 23:59:59');
+        
+        foreach ($rdvRepo->findByDateRange($start, $end) as $appointment) {
+            if ($dateRdv = $appointment->getDateRdv()) {
+                $data[(int)$dateRdv->format('n') - 1]++;
+            }
+        }
+        return $data;
+    }
+
+    private function getTopMedecins(RendezVousRepository $rdvRepo, MedecinRepository $medecinRepo): array
+    {
+        $result = [];
+        foreach ($medecinRepo->findAll() as $medecin) {
+            if ($count = $rdvRepo->count(['medecin' => $medecin])) {
+                $result[] = [
+                    'name' => 'Dr. ' . $medecin->getPrenom() . ' ' . $medecin->getNom(),
+                    'count' => $count
+                ];
+            }
+        }
+        usort($result, fn($a, $b) => $b['count'] <=> $a['count']);
+        return array_slice($result, 0, 5);
+    }
+
+    private function getTopMedecinsSimple(array $appointments): array
+    {
+        $counts = [];
+        foreach ($appointments as $appointment) {
+            if ($medecin = $appointment->getMedecin()) {
+                $id = $medecin->getId();
+                if (!isset($counts[$id])) {
+                    $counts[$id] = [
+                        'id' => $medecin->getId(),
+                        'nom' => $medecin->getNom(),
+                        'prenom' => $medecin->getPrenom(),
+                        'specialite' => $medecin->getSpecialite() ?? 'Généraliste',
+                        'count' => 0
+                    ];
+                }
+                $counts[$id]['count']++;
+            }
+        }
+        usort($counts, fn($a, $b) => $b['count'] <=> $a['count']);
+        return array_slice($counts, 0, 5);
+    }
+
+    private function getTopPatients(RendezVousRepository $rdvRepo, PatientRepository $patientRepo): array
+    {
+        $result = [];
+        foreach ($patientRepo->findAll() as $patient) {
+            if ($count = $rdvRepo->count(['patient' => $patient])) {
+                $result[] = [
+                    'name' => $patient->getPrenom() . ' ' . $patient->getNom(),
+                    'count' => $count
+                ];
+            }
+        }
+        usort($result, fn($a, $b) => $b['count'] <=> $a['count']);
+        return array_slice($result, 0, 5);
+    }
+
+    private function getImcStatistics(FicheMedicaleRepository $ficheRepo): array
+    {
+        $stats = ['Maigreur' => 0, 'Normal' => 0, 'Surpoids' => 0, 'Obésité' => 0];
+        foreach ($ficheRepo->findAll() as $fiche) {
+            if ($imc = $fiche->getImc()) {
+                if ($imc < 18.5) $stats['Maigreur']++;
+                elseif ($imc < 25) $stats['Normal']++;
+                elseif ($imc < 30) $stats['Surpoids']++;
+                else $stats['Obésité']++;
+            }
+        }
+        return $stats;
+    }
+
+    private function getWeeklyAppointmentsData(RendezVousRepository $rdvRepo): array
+    {
+        $days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        $data = array_fill_keys($days, 0);
+        $dayMap = ['Mon' => 'mon', 'Tue' => 'tue', 'Wed' => 'wed', 'Thu' => 'thu', 'Fri' => 'fri', 'Sat' => 'sat', 'Sun' => 'sun'];
+        
+        foreach ($rdvRepo->findByDateRange($this->getWeekStart(), $this->getWeekEnd()) as $appointment) {
+            if ($dateRdv = $appointment->getDateRdv()) {
+                $data[$dayMap[$dateRdv->format('D')] ?? '']++;
+            }
+        }
+        return $data;
+    }
+
+    private function getHourlyDistribution(array $appointments): array
+    {
+        $distribution = [];
+        for ($h = 8; $h <= 18; $h++) $distribution[$h . 'h'] = 0;
+
+        foreach ($appointments as $appointment) {
+            if ($heure = $appointment->getHeureRdv()) {
+                $hour = (int)$heure->format('H');
+                if ($hour >= 8 && $hour <= 18) $distribution[$hour . 'h']++;
+            }
+        }
+        return $distribution;
+    }
+
+    private function getDailyDistribution(array $appointments): array
+    {
+        $jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        $distribution = array_fill_keys($jours, 0);
+
+        foreach ($appointments as $appointment) {
+            if ($dateRdv = $appointment->getDateRdv()) {
+                $distribution[$jours[(int)$dateRdv->format('N') - 1]]++;
+            }
+        }
+        return $distribution;
+    }
+
+    private function generateEvolutionLabels(array $dateRanges): array
+    {
+        $labels = [];
+        $start = $dateRanges['start'];
+        $end = $dateRanges['end'];
+
+        if (!$start || !$end) {
+            return ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        }
+
+        $days = $start->diff($end)->days;
+        $current = clone $start;
+
+        if ($days <= 31) {
+            while ($current <= $end) {
+                $labels[] = $current->format('d/m');
+                $current->modify('+1 day');
+            }
+        } elseif ($days <= 120) {
+            while ($current <= $end) {
+                $labels[] = 'Sem ' . $current->format('W');
+                $current->modify('+1 week');
+            }
+        } else {
+            while ($current <= $end) {
+                $labels[] = $current->format('M');
+                $current->modify('+1 month');
+            }
+        }
+
+        return $labels;
+    }
+
+    private function generateEvolutionData(array $appointments, array $dateRanges): array
+    {
+        $start = $dateRanges['start'];
+        $end = $dateRanges['end'];
+
+        if (!$start || !$end || empty($appointments)) {
+            return [];
+        }
+
+        $days = $start->diff($end)->days;
+
+        if ($days <= 31) {
+            $period = new \DatePeriod($start, new \DateInterval('P1D'), $end);
+            $data = array_fill(0, iterator_count($period) + 1, 0);
+            foreach ($appointments as $appointment) {
+                if ($dateRdv = $appointment->getDateRdv()) {
+                    $index = (int)$start->diff($dateRdv)->days;
+                    if (isset($data[$index])) $data[$index]++;
+                }
+            }
+        } elseif ($days <= 120) {
+            $weeks = ceil($days / 7);
+            $data = array_fill(0, $weeks, 0);
+            foreach ($appointments as $appointment) {
+                if ($dateRdv = $appointment->getDateRdv()) {
+                    $index = floor($start->diff($dateRdv)->days / 7);
+                    if (isset($data[$index])) $data[$index]++;
+                }
+            }
+        } else {
+            $data = array_fill(0, 12, 0);
+            foreach ($appointments as $appointment) {
+                if ($dateRdv = $appointment->getDateRdv()) {
+                    $data[(int)$dateRdv->format('n') - 1]++;
+                }
+            }
+        }
+
+        return array_values($data);
+    }
+
+    // ==================== ROUTES POUR LES RENDEZ-VOUS ====================
+
+    #[Route('/users/{id}/appointments', name: 'user_appointments', requirements: ['id' => '\d+'])]
+    public function userAppointments(int $id, RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $user = $this->userRepo->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvé');
+        }
+
+        if ($user instanceof Patient) {
+            $appointments = $rdvRepo->findBy(['patient' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+        } elseif ($user instanceof Medecin) {
+            $appointments = $rdvRepo->findBy(['medecin' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+        } else {
+            $appointments = [];
+        }
+
+        return $this->render('admin/user_appointments.html.twig', [
+            'user' => $user,
+            'appointments' => $appointments,
+        ]);
+    }
+
+    #[Route('/appointments/all', name: 'all_appointments')]
+    public function allAppointments(RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+
+        return $this->render('admin/all_appointments.html.twig', [
+            'appointments' => $appointments,
+        ]);
+    }
+
+   
+
+    #[Route('/appointments/{id}/update-status', name: 'update_appointment_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function updateAppointmentStatus(Request $request, int $id, RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointment = $rdvRepo->find($id);
+        if (!$appointment) {
+            $this->addFlash('error', 'Rendez-vous non trouvé');
+            return $this->redirectToRoute('admin_all_appointments');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('update-appointment-status' . $appointment->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
+        }
+
+        $newStatus = $request->request->get('status');
+        $appointment->setStatut($newStatus);
+        
+        if ($newStatus === 'confirmé') {
+            $appointment->setDateValidation(new \DateTime());
+        }
+
+        $this->em->flush();
+
+        $this->addFlash('success', 'Statut du rendez-vous mis à jour avec succès');
+        return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
+    }
+
+    // ==================== ROUTES POUR LES FICHES MÉDICALES ====================
+
+    #[Route('/medical-records/all', name: 'all_medical_records')]
+    public function allMedicalRecords(FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $records = $ficheRepo->findBy([], ['creeLe' => 'DESC']);
+
+        return $this->render('admin/all_medical_records.html.twig', [
+            'records' => $records,
+        ]);
+    }
+
+    #[Route('/medical-records/{id}', name: 'view_medical_record', requirements: ['id' => '\d+'])]
+    public function viewMedicalRecord(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche médicale non trouvée');
+        }
+
+        // Recalculer l'IMC si nécessaire
+        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
+            $record->calculerImc();
+        }
+
+        return $this->render('admin/view_medical_record.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    #[Route('/medical-records/{id}/edit', name: 'edit_medical_record', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function editMedicalRecord(Request $request, int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche médicale non trouvée');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('edit-medical-record' . $record->getId(), $token)) {
+                $this->addFlash('error', 'Jeton CSRF invalide');
+                return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            
+            $record->setTaille($data->get('taille'));
+            $record->setPoids($data->get('poids'));
+            $record->setAntecedents($data->get('antecedents'));
+            $record->setAllergies($data->get('allergies'));
+            $record->setTraitementEnCours($data->get('traitement_en_cours'));
+            $record->setDiagnostic($data->get('diagnostic'));
+            $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+            $record->setObservations($data->get('observations'));
+            
+            // Recalculer l'IMC
+            $record->calculerImc();
+
+            $this->em->flush();
+
+            $this->addFlash('success', 'Fiche médicale mise à jour avec succès');
+            return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
+        }
+
+        return $this->render('admin/edit_medical_record.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    #[Route('/patients/{patientId}/add-medical-record', name: 'add_medical_record', methods: ['POST'], requirements: ['patientId' => '\d+'])]
+    public function addMedicalRecord(Request $request, int $patientId): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patient = $this->userRepo->find($patientId);
+        if (!$patient || !$patient instanceof Patient) {
+            $this->addFlash('error', 'Patient non trouvé');
+            return $this->redirectToRoute('admin_index');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('add-medical-record' . $patient->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_index');
+        }
+
+        $data = $request->request;
+        
+        $record = new FicheMedicale();
+        $record->setPatient($patient);
+        $record->setTaille($data->get('taille'));
+        $record->setPoids($data->get('poids'));
+        $record->setAntecedents($data->get('antecedents'));
+        $record->setAllergies($data->get('allergies'));
+        $record->setTraitementEnCours($data->get('traitement_en_cours'));
+        $record->setDiagnostic($data->get('diagnostic'));
+        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+        $record->setObservations($data->get('observations'));
+        $record->setStatut('actif');
+        
+        // Calculer l'IMC
+        $record->calculerImc();
+
+        $this->em->persist($record);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Fiche médicale ajoutée avec succès');
+        return $this->redirectToRoute('admin_patient_medical_records', ['id' => $patientId]);
+    }
+
+    #[Route('/appointments/{appointmentId}/add-medical-record', name: 'add_medical_record_from_appointment', methods: ['POST'], requirements: ['appointmentId' => '\d+'])]
+    public function addMedicalRecordFromAppointment(
+        Request $request, 
+        int $appointmentId,
+        RendezVousRepository $rdvRepo
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointment = $rdvRepo->find($appointmentId);
+        if (!$appointment) {
+            $this->addFlash('error', 'Rendez-vous non trouvé');
+            return $this->redirectToRoute('admin_all_appointments');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('add-medical-record-appointment' . $appointment->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_view_appointment', ['id' => $appointmentId]);
+        }
+
+        // Vérifier si une fiche existe déjà
+        if ($appointment->getFicheMedicale()) {
+            $this->addFlash('warning', 'Ce rendez-vous a déjà une fiche médicale');
+            return $this->redirectToRoute('admin_view_medical_record', ['id' => $appointment->getFicheMedicale()->getId()]);
+        }
+
+        $data = $request->request;
+        
+        $record = new FicheMedicale();
+        $record->setPatient($appointment->getPatient());
+        $record->setRendezVous($appointment);
+        $record->setTaille($data->get('taille'));
+        $record->setPoids($data->get('poids'));
+        $record->setDiagnostic($data->get('diagnostic'));
+        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+        $record->setObservations($data->get('observations'));
+        $record->setStatut('actif');
+        
+        // Calculer l'IMC
+        $record->calculerImc();
+
+        // Lier la fiche au rendez-vous
+        $appointment->setFicheMedicale($record);
+
+        $this->em->persist($record);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Fiche médicale créée et liée au rendez-vous avec succès');
+        return $this->redirectToRoute('admin_view_medical_record', ['id' => $record->getId()]);
+    }
+
+    #[Route('/medical-records/{id}/export-pdf', name: 'export_medical_record_pdf', requirements: ['id' => '\d+'])]
+    public function exportMedicalRecordPdf(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche médicale non trouvée');
+        }
+
+        // Recalculer l'IMC si nécessaire
+        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
+            $record->calculerImc();
+        }
+
+        return $this->render('admin/medical_record_pdf.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES PATIENTS ====================
+
+    #[Route('/patients/{id}/medical-records', name: 'patient_medical_records', requirements: ['id' => '\d+'])]
+    public function patientMedicalRecords(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patient = $this->userRepo->find($id);
+        if (!$patient || !$patient instanceof Patient) {
+            throw $this->createNotFoundException('Patient non trouvé');
+        }
+
+        $records = $ficheRepo->findBy(['patient' => $patient], ['creeLe' => 'DESC']);
+
+        return $this->render('admin/patient_medical_records.html.twig', [
+            'patient' => $patient,
+            'records' => $records,
+        ]);
+    }
+
+    #[Route('/patients', name: 'patients')]
+    public function patients(PatientRepository $patientRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patients = $patientRepo->findAll();
+
+        return $this->render('admin/patients.html.twig', [
+            'patients' => $patients,
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES UTILISATEURS ====================
 
     #[Route('/users', name: 'users')]
     public function users(Request $request): Response
@@ -154,7 +1220,7 @@ class AdminController extends AbstractController
         if ($request->isMethod('POST')) {
             // Validate CSRF token
             $token = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('form', $token)) {
+            if (!$this->isCsrfTokenValid('user_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_user_new');
             }
@@ -233,7 +1299,9 @@ class AdminController extends AbstractController
                 $doc = $request->files->get('documentPdf');
                 if ($doc instanceof UploadedFile) {
                     $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
-                    if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                    if (!is_dir($uploadsDir)) {
+                        @mkdir($uploadsDir, 0777, true);
+                    } 
                     $docName = uniqid('doc_') . '.' . $doc->guessExtension();
                     $doc->move($uploadsDir, $docName);
                     $user->setDocumentPdf('/uploads/docs/' . $docName);
@@ -266,7 +1334,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/users/{id}/edit', name: 'user_edit')]
+    #[Route('/users/{id}/edit', name: 'user_edit', requirements: ['id' => '\d+'])]
     public function edit(Request $request, int $id, UserPasswordHasherInterface $passwordHasher): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -279,7 +1347,7 @@ class AdminController extends AbstractController
         if ($request->isMethod('POST')) {
             // Validate CSRF token
             $token = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('form', $token)) {
+            if (!$this->isCsrfTokenValid('user_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_user_edit', ['id' => $id]);
             }
@@ -317,7 +1385,9 @@ class AdminController extends AbstractController
             $photo = $request->files->get('photoUpload');
             if ($photo instanceof UploadedFile) {
                 $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
-                if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                } 
                 $filename = uniqid('profile_') . '.' . $photo->guessExtension();
                 $photo->move($uploadsDir, $filename);
                 $user->setPhotoProfil('/uploads/profiles/' . $filename);
@@ -339,7 +1409,9 @@ class AdminController extends AbstractController
                 $doc = $request->files->get('documentPdf');
                 if ($doc instanceof UploadedFile) {
                     $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
-                    if (!is_dir($uploadsDir)) {@mkdir($uploadsDir, 0777, true);} 
+                    if (!is_dir($uploadsDir)) {
+                        @mkdir($uploadsDir, 0777, true);
+                    } 
                     $docName = uniqid('doc_') . '.' . $doc->guessExtension();
                     $doc->move($uploadsDir, $docName);
                     $user->setDocumentPdf('/uploads/docs/' . $docName);
@@ -370,7 +1442,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/users/{id}/delete', name: 'user_delete', methods: ['POST'])]
+    #[Route('/users/{id}/delete', name: 'user_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, int $id): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -387,7 +1459,7 @@ class AdminController extends AbstractController
         }
 
         $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('delete-user'.$user->getId(), $token)) {
+        if (!$this->isCsrfTokenValid('delete-user' . $user->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_users');
         }
@@ -399,7 +1471,7 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('admin_users');
     }
 
-    #[Route('/users/{id}/toggle-status', name: 'user_toggle_status', methods: ['POST'])]
+    #[Route('/users/{id}/toggle-status', name: 'user_toggle_status', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function toggleStatus(Request $request, int $id): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -416,7 +1488,7 @@ class AdminController extends AbstractController
         }
 
         $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('toggle-user'.$user->getId(), $token)) {
+        if (!$this->isCsrfTokenValid('toggle-user' . $user->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_users');
         }

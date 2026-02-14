@@ -1,0 +1,708 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MEDINOVA - Export PDF Complet{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* ============ CONFIGURATION DE BASE ============ */
+        @page { 
+            margin: 1.5cm; 
+            size: A4;
+        }
+
+        /* Masquer les éléments du site lors de l'impression */
+        @media print {
+            .main-header,
+            .main-navbar,
+            .main-footer,
+            header,
+            nav,
+            footer {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+            }
+            
+            .pdf-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .fiche-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+
+        /* ============ CONTENEUR PDF ============ */
+        .pdf-content {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+
+        /* ============ PALETTE DE COULEURS MÉDICALE ============ */
+        .pdf-content {
+            --primary: #1D5D9B;
+            --primary-dark: #163A5F;
+            --secondary: #304D30;
+            --accent: #75C2F6;
+            --success: #4A7C59;
+            --danger: #C1666B;
+            --warning: #D4A574;
+            --light: #F4F6FF;
+            --dark: #1A2332;
+        }
+
+        /* ============ EN-TÊTE PRINCIPAL ============ */
+        .pdf-header {
+            background: linear-gradient(135deg, #1D5D9B 0%, #163A5F 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(29, 93, 155, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pdf-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(117, 194, 246, 0.2) 0%, transparent 70%);
+        }
+
+        .pdf-header h1 {
+            font-size: 32pt;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pdf-header .subtitle {
+            font-size: 13pt;
+            opacity: 0.95;
+            margin-top: 8px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pdf-header .export-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 11pt;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ CARTE DE FICHE ============ */
+        .fiche-card {
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 30px rgba(29, 93, 155, 0.15);
+            page-break-inside: avoid;
+            overflow: hidden;
+            border: 2px solid #e8ecff;
+        }
+
+        .fiche-header {
+            background: linear-gradient(135deg, #75C2F6 0%, #1D5D9B 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fiche-header h2 {
+            font-size: 18pt;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .fiche-number {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 12pt;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ============ INFORMATIONS PATIENT ============ */
+        .patient-info-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e8f4f8 100%);
+            border-left: 6px solid #1D5D9B;
+            padding: 25px 30px;
+            margin: 0;
+        }
+
+        .patient-info-box h3 {
+            color: #1D5D9B;
+            font-size: 14pt;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #1D5D9B;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #1a2332;
+            font-size: 11pt;
+            font-weight: 600;
+        }
+
+        /* ============ BADGES ============ */
+        .badge {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-actif {
+            background: linear-gradient(135deg, #4A7C59 0%, #5a8c69 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(74, 124, 89, 0.3);
+        }
+
+        .badge-modifie, .badge-modifié {
+            background: linear-gradient(135deg, #D4A574 0%, #c89b5e 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+        }
+
+        .badge-inactif {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        /* ============ SECTIONS DE CONTENU ============ */
+        .content-section {
+            padding: 25px 30px;
+            border-bottom: 1px solid #e8ecff;
+        }
+
+        .content-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            color: #1D5D9B;
+            font-size: 13pt;
+            font-weight: 800;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #75C2F6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-content {
+            color: #1a2332;
+            line-height: 1.8;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #75C2F6;
+        }
+
+        /* ============ MESURES PHYSIQUES ============ */
+        .measures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .measure-box {
+            background: white;
+            border: 2px solid #e8ecff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(29, 93, 155, 0.08);
+        }
+
+        .measure-label {
+            font-size: 9pt;
+            color: #1D5D9B;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .measure-value {
+            font-size: 20pt;
+            font-weight: 900;
+            color: #1a2332;
+        }
+
+        .measure-unit {
+            font-size: 11pt;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* ============ IMC BOX ============ */
+        .imc-box {
+            background: linear-gradient(135deg, #d4e9da 0%, #c8e6c9 100%);
+            border: 3px solid #4A7C59;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 6px 20px rgba(74, 124, 89, 0.2);
+        }
+
+        .imc-label {
+            font-size: 11pt;
+            color: #2e7d32;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .imc-value {
+            font-size: 32pt;
+            font-weight: 900;
+            color: #1e5631;
+            line-height: 1;
+            margin: 10px 0;
+        }
+
+        .imc-category {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #2e7d32;
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        /* ============ GRILLE À DEUX COLONNES ============ */
+        .two-column-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* ============ SECTIONS PATIENT / MÉDECIN ============ */
+        .patient-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e8f4f8 100%);
+            border-left: 5px solid #1D5D9B;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .medecin-section {
+            background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+            border-left: 5px solid #304D30;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* ============ PIED DE PAGE PDF ============ */
+        .pdf-footer {
+            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            margin-top: 40px;
+            box-shadow: 0 -5px 30px rgba(26, 35, 50, 0.3);
+        }
+
+        .pdf-footer h3 {
+            font-size: 16pt;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .pdf-footer p {
+            margin: 8px 0;
+            opacity: 0.9;
+        }
+
+        .confidential-notice {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 9pt;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        /* ============ SÉPARATEUR DE PAGE ============ */
+        .page-break {
+            page-break-after: always;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ============ DATE D'EXPORT ============ */
+        .export-date {
+            text-align: right;
+            color: #666;
+            font-size: 10pt;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        /* ============ STATISTIQUES GLOBALES ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(29, 93, 155, 0.1);
+            border: 2px solid #e8ecff;
+        }
+
+        .stat-value {
+            font-size: 28pt;
+            font-weight: 900;
+            color: #1D5D9B;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 9pt;
+            color: #666;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        /* ============ BOUTON IMPRIMER ============ */
+        .print-button-container {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            z-index: 9999;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #1D5D9B 0%, #163A5F 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.4);
+        }
+
+        @media print {
+            .print-button-container {
+                display: none !important;
+            }
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .info-grid,
+            .measures-grid,
+            .two-column-grid,
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .print-button-container {
+                top: 80px;
+                right: 15px;
+            }
+
+            .btn-print {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="pdf-content">
+    <!-- Bouton Imprimer (masqué à l'impression) -->
+    <div class="print-button-container">
+        <button onclick="window.print()" class="btn-print">
+            <i class="fas fa-print"></i>
+            <span>Imprimer / Sauvegarder PDF</span>
+        </button>
+    </div>
+
+    <!-- Date d'export -->
+    <div class="export-date">
+        📅 Export généré le : {{ "now"|date("d/m/Y à H:i") }}
+    </div>
+
+    <!-- En-tête principal -->
+    <div class="pdf-header">
+        <h1>📋 EXPORT COMPLET</h1>
+        <div class="subtitle">Fiches Médicales - MEDINOVA</div>
+        <div class="export-info">
+            <strong>Nombre total de fiches :</strong> {{ fiches|length }}
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ fiches|length }}</div>
+            <div class="stat-label">Total Fiches</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ fiches|filter(f => f.statut == 'actif')|length }}</div>
+            <div class="stat-label">Actives</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ fiches|filter(f => f.statut == 'modifié')|length }}</div>
+            <div class="stat-label">Modifiées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ fiches|filter(f => f.imc is not null)|length }}</div>
+            <div class="stat-label">Avec IMC</div>
+        </div>
+    </div>
+
+    <!-- Boucle sur les fiches -->
+    {% for fiche in fiches %}
+    <div class="fiche-card">
+        <!-- En-tête de la fiche -->
+        <div class="fiche-header">
+            <h2>👤 {{ fiche.patient ? (fiche.patient.nom|upper ~ ' ' ~ fiche.patient.prenom) : 'Patient inconnu' }}</h2>
+            <div class="fiche-number">Fiche #{{ fiche.id }}</div>
+        </div>
+
+        <!-- Informations patient -->
+        <div class="patient-info-box">
+            <h3>📋 Informations Générales</h3>
+            <div class="info-grid">
+                {% if fiche.patient %}
+                    {% if fiche.patient.dateNaissance %}
+                    <div class="info-item">
+                        <span class="info-label">Date de naissance</span>
+                        <span class="info-value">{{ fiche.patient.dateNaissance|date("d/m/Y") }}</span>
+                    </div>
+                    {% endif %}
+                    {% if fiche.patient.email %}
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ fiche.patient.email }}</span>
+                    </div>
+                    {% endif %}
+                    {% if fiche.patient.telephone %}
+                    <div class="info-item">
+                        <span class="info-label">Téléphone</span>
+                        <span class="info-value">{{ fiche.patient.telephone }}</span>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+                <div class="info-item">
+                    <span class="info-label">Statut</span>
+                    <span class="info-value">
+                        <span class="badge badge-{{ fiche.statut|lower|replace({'é': 'e'}) }}">{{ fiche.statut|upper }}</span>
+                    </span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Créée le</span>
+                    <span class="info-value">{{ fiche.creeLe|date("d/m/Y à H:i") }}</span>
+                </div>
+
+                {% if fiche.modifieLe %}
+                <div class="info-item">
+                    <span class="info-label">Modifiée le</span>
+                    <span class="info-value">{{ fiche.modifieLe|date("d/m/Y à H:i") }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mesures physiques -->
+        {% if fiche.taille or fiche.poids %}
+        <div class="content-section">
+            <div class="section-title">📏 Mesures Physiques</div>
+            <div class="measures-grid">
+                {% if fiche.taille %}
+                <div class="measure-box">
+                    <div class="measure-label">Taille</div>
+                    <div class="measure-value">{{ fiche.taille }}</div>
+                    <div class="measure-unit">mètres</div>
+                </div>
+                {% endif %}
+
+                {% if fiche.poids %}
+                <div class="measure-box">
+                    <div class="measure-label">Poids</div>
+                    <div class="measure-value">{{ fiche.poids }}</div>
+                    <div class="measure-unit">kg</div>
+                </div>
+                {% endif %}
+
+                {% if fiche.imc %}
+                <div class="measure-box">
+                    <div class="measure-label">IMC</div>
+                    <div class="measure-value">{{ fiche.imc|number_format(2) }}</div>
+                    <div class="measure-unit">{{ fiche.categorieImc }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if fiche.imc %}
+            <div class="imc-box">
+                <div class="imc-label">Indice de Masse Corporelle</div>
+                <div class="imc-value">{{ fiche.imc|number_format(2) }}</div>
+                <div class="imc-category">{{ fiche.categorieImc }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Antécédents et Allergies -->
+        {% if fiche.antecedents or fiche.allergies %}
+        <div class="content-section">
+            <div class="two-column-grid">
+                {% if fiche.antecedents %}
+                <div>
+                    <div class="section-title">🏥 Antécédents Médicaux</div>
+                    <div class="section-content patient-section">{{ fiche.antecedents|nl2br }}</div>
+                </div>
+                {% endif %}
+
+                {% if fiche.allergies %}
+                <div>
+                    <div class="section-title">⚠️ Allergies</div>
+                    <div class="section-content patient-section">{{ fiche.allergies|nl2br }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Traitements en cours -->
+        {% if fiche.traitementEnCours %}
+        <div class="content-section">
+            <div class="section-title">💊 Traitements en Cours</div>
+            <div class="section-content patient-section">{{ fiche.traitementEnCours|nl2br }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Diagnostic et Prescriptions -->
+        {% if fiche.diagnostic or fiche.traitementPrescrit or fiche.observations %}
+        <div class="content-section">
+            <div class="section-title">🩺 Diagnostic et Prescriptions Médicales</div>
+            
+            {% if fiche.diagnostic %}
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #304D30; display: block; margin-bottom: 8px;">Diagnostic :</strong>
+                <div class="section-content medecin-section">{{ fiche.diagnostic|nl2br }}</div>
+            </div>
+            {% endif %}
+
+            {% if fiche.traitementPrescrit %}
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #304D30; display: block; margin-bottom: 8px;">Traitement Prescrit :</strong>
+                <div class="section-content medecin-section">{{ fiche.traitementPrescrit|nl2br }}</div>
+            </div>
+            {% endif %}
+
+            {% if fiche.observations %}
+            <div>
+                <strong style="color: #304D30; display: block; margin-bottom: 8px;">Observations :</strong>
+                <div class="section-content medecin-section">{{ fiche.observations|nl2br }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not loop.last %}
+    <div class="page-break"></div>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Pied de page PDF -->
+    <div class="pdf-footer">
+        <h3>🏥 MEDINOVA - Centre Médical</h3>
+        <p><strong>Document Confidentiel</strong></p>
+        <p>Usage strictement médical et professionnel</p>
+        <div class="confidential-notice">
+            ⚠️ Ce document contient des informations médicales confidentielles protégées par le secret médical.<br>
+            Toute divulgation non autorisée est strictement interdite et passible de poursuites.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        console.log('📄 Page d\'export PDF chargée');
+        console.log('📊 Nombre de fiches:', {{ fiches|length }});
+    </script>
+{% endblock %}

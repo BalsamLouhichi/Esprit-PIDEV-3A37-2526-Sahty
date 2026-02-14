@@ -1,3 +1,4 @@
+
 security:
     enable_authenticator_manager: true  # Nécessaire pour Symfony 5.4+
     

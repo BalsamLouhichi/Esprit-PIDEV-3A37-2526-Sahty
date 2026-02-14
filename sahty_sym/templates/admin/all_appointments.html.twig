@@ -1,0 +1,100 @@
+{# templates/admin/all_appointments.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Tous les rendez-vous - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-calendar-alt me-2"></i> Tous les rendez-vous</h1>
+        <a href="{{ path('admin_appointments_stats') }}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-pie me-1"></i> Voir les statistiques
+        </a>
+    </div>
+
+    <!-- Filtres période -->
+    <div class="filters mb-4">
+        <a href="{{ path('admin_appointments_stats', {'period': 'today'}) }}" 
+           class="btn btn-sm {{ current_period|default('month') == 'today' ? 'btn-primary' : 'btn-outline-secondary' }} me-1">
+            Aujourd'hui
+        </a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'week'}) }}" 
+           class="btn btn-sm {{ current_period|default('month') == 'week' ? 'btn-primary' : 'btn-outline-secondary' }} me-1">
+            Cette semaine
+        </a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'month'}) }}" 
+           class="btn btn-sm {{ current_period|default('month') == 'month' ? 'btn-primary' : 'btn-outline-secondary' }} me-1">
+            Ce mois
+        </a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'year'}) }}" 
+           class="btn btn-sm {{ current_period|default('month') == 'year' ? 'btn-primary' : 'btn-outline-secondary' }} me-1">
+            Cette année
+        </a>
+    </div>
+
+    <!-- Tableau des rendez-vous -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Médecin</th>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Statut</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>
+                                {% if appointment.patient %}
+                                    {{ appointment.patient.prenom }} {{ appointment.patient.nom }}
+                                {% else %}
+                                    <em>Non assigné</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if appointment.medecin %}
+                                    Dr. {{ appointment.medecin.prenom }} {{ appointment.medecin.nom }}
+                                {% else %}
+                                    <em>Non assigné</em>
+                                {% endif %}
+                            </td>
+                            <td>{{ appointment.dateRdv ? appointment.dateRdv|date('d/m/Y') : '-' }}</td>
+                            <td>{{ appointment.heureRdv ? appointment.heureRdv|date('H:i') : '-' }}</td>
+                            <td>
+                                {% if appointment.statut == 'Confirmé' %}
+                                    <span class="badge bg-success">Confirmé</span>
+                                {% elseif appointment.statut == 'En attente' %}
+                                    <span class="badge bg-warning text-dark">En attente</span>
+                                {% elseif appointment.statut == 'Annulé' %}
+                                    <span class="badge bg-danger">Annulé</span>
+                                {% elseif appointment.statut == 'Terminé' %}
+                                    <span class="badge bg-info">Terminé</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ appointment.statut }}</span>
+                                {% endif %}
+                            </td>
+                            
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">Aucun rendez-vous trouvé</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

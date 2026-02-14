@@ -1,151 +1,38 @@
-{% extends 'base.html.twig' %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Medinova{% endblock %}</title>
 
-{% block title %}MEDINOVA - Profile{% endblock %}
+    <!-- Bootstrap & Icons (CDN fallback) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" rel="stylesheet">
 
-{% block body %}
+    {% block stylesheets %}{% endblock %}
 
-<!-- Navbar -->
-<div class="container-fluid sticky-top bg-white shadow-sm">
-    <div class="container">
-        <nav class="navbar navbar-expand-lg navbar-light py-3">
-            <a href="{{ path('home') }}" class="navbar-brand">
-                <h1 class="m-0 text-primary">
-                    <i class="fa fa-clinic-medical me-2"></i>Medinova
-                </h1>
-            </a>
+    <style>
+        :root{--primary:#667eea;--primary-2:#764ba2}
+        .logout-btn{background:none;border:none;color:inherit;text-decoration:none}
+    </style>
+</head>
+<body>
 
-            <div class="collapse navbar-collapse">
-                <div class="navbar-nav ms-auto">
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img
-                                src="{{ user.photoProfil ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' }}"
-                                class="rounded-circle"
-                                width="32"
-                                height="32"
-                            >
-                            <span class="ms-2">{{ user.prenom }} {{ user.nom }}</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a href="{{ path('profile') }}" class="dropdown-item active">
-                                <i class="fas fa-user me-2"></i> My Profile
-                            </a>
-                            <a href="{{ path('logout') }}" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </div>
-</div>
+    {# Navbar partial #}
+    {% include 'partials/navbar.html.twig' %}
 
-<!-- Profile -->
-<div class="container-fluid py-5 profile-container">
-    <div class="container">
-        <div class="profile-card">
+    <main class="container mt-4">
+        {% block body %}{% endblock %}
+    </main>
 
-            <!-- Header -->
-            <div class="profile-header text-center">
-                <img
-                    src="{{ user.photoProfil ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300' }}"
-                    class="profile-avatar"
-                >
+    {# Footer partial #}
+    {% include 'partials/footer.html.twig' %}
 
-                {% set roleBadge = {
-                    'admin': 'badge-admin',
-                    'medecin': 'badge-medecin',
-                    'patient': 'badge-patient',
-                    'responsable_labo': 'badge-labo',
-                    'responsable_para': 'badge-para'
-                } %}
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>
 
-                <div class="role-badge {{ roleBadge[user.role] }}">
-                    {{ user.role|upper }}
-                </div>
-
-                <h2>{{ user.prenom }} {{ user.nom }}</h2>
-                <p>ID: MED{{ user.id|format('%08d') }}</p>
-
-                <a href="{{ path('profile_edit') }}" class="btn btn-edit-profile">
-                    <i class="fas fa-edit me-2"></i> Edit Profile
-                </a>
-            </div>
-
-            <!-- Body -->
-            <div class="profile-body">
-
-                <!-- Personal Info -->
-                <h4 class="profile-section-title">Personal Information</h4>
-
-                <div class="info-item">
-                    <span class="info-label">Email :</span>
-                    <span class="info-value">{{ user.email }}</span>
-                </div>
-
-                <div class="info-item">
-                    <span class="info-label">Phone :</span>
-                    <span class="info-value">{{ user.telephone ?? 'N/A' }}</span>
-                </div>
-
-                <div class="info-item">
-                    <span class="info-label">Birth Date :</span>
-                    <span class="info-value">
-                        {{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'N/A' }}
-                    </span>
-                </div>
-
-                <div class="info-item">
-                    <span class="info-label">Status :</span>
-                    <span class="info-value">
-                        {% if user.estActif %}
-                            <span class="text-success">Active</span>
-                        {% else %}
-                            <span class="text-danger">Inactive</span>
-                        {% endif %}
-                    </span>
-                </div>
-
-                <!-- PATIENT -->
-                {% if user.role == 'patient' and patient is defined %}
-                    <div class="patient-details mt-4">
-                        <h4 class="profile-section-title">Medical Info</h4>
-
-                        <div class="info-item">
-                            <span class="info-label">Gender :</span>
-                            <span class="info-value">
-                                {{ patient.sexe == 'M' ? 'Male' : 'Female' }}
-                            </span>
-                        </div>
-
-                        <div class="info-item">
-                            <span class="info-label">Blood Group :</span>
-                            <span class="info-value">{{ patient.groupeSanguin }}</span>
-                        </div>
-                    </div>
-                {% endif %}
-
-                <!-- MEDECIN -->
-                {% if user.role == 'medecin' and medecin is defined %}
-                    <div class="medecin-details mt-4">
-                        <h4 class="profile-section-title">Professional Info</h4>
-
-                        <div class="info-item">
-                            <span class="info-label">Speciality :</span>
-                            <span class="info-value">{{ medecin.specialite }}</span>
-                        </div>
-
-                        <div class="info-item">
-                            <span class="info-label">Experience :</span>
-                            <span class="info-value">{{ medecin.anneeExperience }} years</span>
-                        </div>
-                    </div>
-                {% endif %}
-
-            </div>
-        </div>
-    </div>
-</div>
-
-{% endblock %}

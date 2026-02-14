@@ -1,0 +1,306 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MEDINOVA - Consultation Rendez-vous{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1D5D9B;
+            --primary-light: #E8F4F8;
+            --primary-dark: #163A5F;
+            --secondary: #304D30;
+            --accent: #75C2F6;
+            --light: #F4F6FF;
+            --dark: #1A2332;
+            --danger: #C1666B;
+        }
+
+        .consultation-section {
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 45px rgba(29, 93, 155, 0.12);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .rdv-detail-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 15px 50px rgba(29, 93, 155, 0.12);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rdv-detail-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--danger) 0%, #B85860 100%);
+        }
+
+        .info-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid var(--light);
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+        }
+
+        .info-section h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: var(--dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(193, 102, 107, 0.3);
+        }
+
+        .doctor-box {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            padding: 25px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .doctor-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        .doctor-info h4 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .doctor-info p {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .reason-box {
+            background: linear-gradient(135deg, var(--light) 0%, rgba(117, 194, 246, 0.08) 100%);
+            padding: 20px;
+            border-radius: 14px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .reason-box p {
+            color: var(--dark);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px 30px;
+            border-radius: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--light);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="consultation-section">
+    <div class="page-header">
+        <h1><i class="fas fa-eye"></i> Consultation du Rendez-vous</h1>
+        <p>Rendez-vous annulé - Mode lecture seule</p>
+    </div>
+
+    <div class="rdv-detail-card">
+        <div class="info-section">
+            <h3><i class="fas fa-calendar-times"></i> Informations du Rendez-vous</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Date</span>
+                    <span class="info-value">{{ rdv.dateRdv|date('d/m/Y') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Heure</span>
+                    <span class="info-value">{{ rdv.heureRdv|date('H:i') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Statut</span>
+                    <span class="info-value">
+                        <span class="status-badge">{{ rdv.statut }}</span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Créé le</span>
+                    <span class="info-value">{{ rdv.creeLe|date('d/m/Y à H:i') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3><i class="fas fa-user-md"></i> Médecin</h3>
+            <div class="doctor-box">
+                <div class="doctor-avatar">
+                    {{ rdv.medecin.prenom|slice(0, 1) }}{{ rdv.medecin.nom|slice(0, 1) }}
+                </div>
+                <div class="doctor-info">
+                    <h4>Dr. {{ rdv.medecin.nom }} {{ rdv.medecin.prenom }}</h4>
+                    <p>{{ rdv.medecin.specialite|default('Médecin généraliste') }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if rdv.raison %}
+        <div class="info-section">
+            <h3><i class="fas fa-file-alt"></i> Motif de consultation</h3>
+            <div class="reason-box">
+                <p>{{ rdv.raison }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if rdv.ficheMedicale %}
+        <div class="info-section">
+            <h3><i class="fas fa-file-medical"></i> Fiche Médicale</h3>
+            <p style="color: var(--primary); font-weight: 600;">
+                <i class="fas fa-check-circle"></i> Une fiche médicale est associée à ce rendez-vous
+            </p>
+        </div>
+        {% endif %}
+
+        <div class="action-buttons">
+            <a href="{{ path('app_rdv_mes_rdv') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à mes RDV
+            </a>
+            {% if rdv.ficheMedicale %}
+            <a href="{{ path('app_fiche_medicale_show', {id: rdv.ficheMedicale.id}) }}" class="btn btn-primary">
+                <i class="fas fa-file-medical"></i> Voir la fiche médicale
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
