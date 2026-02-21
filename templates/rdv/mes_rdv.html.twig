@@ -1230,6 +1230,7 @@
                                     data-tooltip="Guidance IA"
                                     data-rdv-id="{{ rdv.id }}"
                                     data-target="ai-guidance-{{ rdv.id }}"
+                                    data-motif="{{ rdv.raison|default('')|e('html_attr') }}"
                                 >
                                     <i class="fas fa-brain"></i>
                                 </button>
@@ -1370,9 +1371,43 @@
         return '<ul>' + items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
     }
 
+    function normalizeSimple(text) {
+        return String(text || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isMotifLikelyInvalid(motifRaw) {
+        const motif = normalizeSimple(motifRaw);
+        if (!motif) return true;
+        if (motif.length < 8) return true;
+        if (/([a-z0-9])\1{4,}/.test(motif)) return true;
+
+        const words = motif.split(' ').filter(Boolean);
+        if (words.length < 2) return true;
+
+        const meaningless = new Set(['ok', 'test', 'valide', 'validation', 'bonjour', 'salut', 'rien']);
+        const usefulWords = words.filter((w) => !meaningless.has(w));
+        if (usefulWords.length < 2) return true;
+
+        const medicalKeywords = [
+            'douleur', 'fievre', 'toux', 'gorge', 'migraine', 'mal', 'vomissement', 'nausee',
+            'vertige', 'fatigue', 'diarrhee', 'allergie', 'respirer', 'essoufflement',
+            'palpitation', 'thoracique', 'abdominale', 'rhume', 'grippe', 'infection',
+            'saignement', 'tension', 'glycemie', 'suivi', 'controle'
+        ];
+        const hasMedicalHint = medicalKeywords.some((k) => motif.includes(k));
+        return !hasMedicalHint && words.length < 4;
+    }
+
     function renderGuidance(guidance) {
         const emergency = guidance.emergency || {};
-        const inputInsufficient = guidance.input_status === 'insufficient';
+        const motifSource = (guidance.sources && guidance.sources.motif) ? guidance.sources.motif : '';
+        const inputInsufficient = guidance.input_status === 'insufficient' || isMotifLikelyInvalid(motifSource);
         const emergencyDetected = !!emergency.detected;
         const badgeClass = inputInsufficient ? 'high' : (emergencyDetected ? 'high' : 'low');
         const badgeText = inputInsufficient
@@ -1384,27 +1419,27 @@
                 <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
                 <span class="ai-guidance-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
                 <p><strong>Important:</strong> ${escapeHtml(guidance.disclaimer || '')}</p>
-                <p><strong>Pourquoi</strong></p>
+                <p><strong>Motif detecte</strong></p>
                 ${renderList(emergency.reasons || [])}
-                <p><strong>Comment corriger le motif</strong></p>
+                <p><strong>Veuillez renseigner</strong></p>
                 ${renderList(guidance.general_recommendations)}
-                <p><strong>Exemples utiles</strong></p>
-                ${renderList(guidance.temporary_advice)}
             `;
         }
+
+        const tmp = Array.isArray(guidance.temporary_advice) ? guidance.temporary_advice : [];
+        const alerts = Array.isArray(guidance.safety_alerts) ? guidance.safety_alerts : [];
+        const actions = Array.isArray(emergency.actions) ? emergency.actions : [];
+        const shortAdvice = tmp.slice(0, 1);
+        const shortAlerts = alerts.slice(0, 1);
+        const shortActions = actions.slice(0, 1);
 
         return `
             <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
             <span class="ai-guidance-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
-            <p><strong>Important:</strong> ${escapeHtml(guidance.disclaimer || '')}</p>
-            <p><strong>Conseils temporaires</strong></p>
-            ${renderList(guidance.temporary_advice)}
-            <p><strong>Alertes de securite</strong></p>
-            ${renderList(guidance.safety_alerts)}
-            <p><strong>Recommandations generales</strong></p>
-            ${renderList(guidance.general_recommendations)}
-            <p><strong>Conduite a tenir urgence</strong></p>
-            ${renderList(emergency.actions || [])}
+            <p><strong>Resume:</strong> conseils simples en attendant la consultation.</p>
+            ${renderList(shortAdvice)}
+            ${shortAlerts.length ? `<p><strong>Point de vigilance</strong></p>${renderList(shortAlerts)}` : ''}
+            ${shortActions.length ? `<p><strong>A faire si aggravation</strong></p>${renderList(shortActions)}` : ''}
         `;
     }
 

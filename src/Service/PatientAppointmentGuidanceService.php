@@ -137,17 +137,17 @@ class PatientAppointmentGuidanceService
         string $reason
     ): array {
         return [
-            'disclaimer' => 'Motif insuffisant pour une guidance IA fiable.',
+            'disclaimer' => 'Motif insuffisant pour afficher une guidance pre-consultation.',
             'temporary_advice' => [
-                'Decrivez votre symptome principal (ex: douleur, fievre, toux, fatigue).',
-                'Precisez depuis quand le symptome a commence et son intensite.',
+                'Indiquez le symptome principal.',
+                'Precisez depuis quand il a commence et son intensite.',
             ],
             'safety_alerts' => [
-                'En cas de douleur thoracique, detresse respiratoire, perte de connaissance ou saignement important: urgences immediates.',
+                'En cas de douleur thoracique, detresse respiratoire, perte de connaissance ou saignement important: appelez le SAMU (190) en Tunisie.',
             ],
             'general_recommendations' => [
-                'Reformulez le motif avec une phrase medicale claire.',
-                'Evitez les mots de test (ex: "valide", "ok") dans le motif.',
+                'Reformulez votre motif en une phrase claire et medicale.',
+                'Evitez les mots de test (ex: ok, valide, test).',
             ],
             'emergency' => [
                 'detected' => false,
@@ -346,7 +346,7 @@ class PatientAppointmentGuidanceService
 
         $detected = $reasons !== [];
         if ($detected) {
-            $actions[] = 'Contactez immediatement les urgences (15 ou numero local) si les symptomes sont en cours/aggravation.';
+            $actions[] = 'Contactez immediatement le SAMU (190) en Tunisie si les symptomes sont en cours/aggravation.';
             $actions[] = 'Ne restez pas seul et evitez de conduire vous-meme.';
             $actions[] = 'Preparez la liste de vos traitements/allergies pour les urgences.';
         } else {
