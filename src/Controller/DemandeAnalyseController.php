@@ -67,7 +67,7 @@ class DemandeAnalyseController extends AbstractController
     }
     
     /**
-     * Vérifie si on est en mode test (pas d'utilisateur connecté)
+     * Vérifie si on est en mode test (pas d'utilisateur connecté) 
      */
     private function isTestMode(): bool
     {

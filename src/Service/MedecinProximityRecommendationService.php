@@ -43,7 +43,7 @@ class MedecinProximityRecommendationService
                 continue;
             }
 
-            $coords = $this->geocodeAddress($adresseCabinet);
+            $coords = $this->geocodeAddress($this->buildTunisiaAddressQuery($medecin));
             if ($coords === null) {
                 continue;
             }
@@ -95,6 +95,8 @@ class MedecinProximityRecommendationService
                     'q' => $address,
                     'format' => 'jsonv2',
                     'limit' => 1,
+                    'countrycodes' => 'tn',
+                    'addressdetails' => 1,
                 ],
                 'headers' => [
                     'User-Agent' => 'SahtySym/1.0 (doctor-proximity-recommendation)',
@@ -109,6 +111,12 @@ class MedecinProximityRecommendationService
             }
 
             $first = $payload[0];
+            $countryCode = mb_strtolower((string) ($first['address']['country_code'] ?? $first['country_code'] ?? ''));
+            if ($countryCode !== '' && $countryCode !== 'tn') {
+                $this->geocodeCache[$address] = null;
+                return null;
+            }
+
             $lat = isset($first['lat']) ? (float) $first['lat'] : null;
             $lng = isset($first['lon']) ? (float) $first['lon'] : null;
 
@@ -123,6 +131,23 @@ class MedecinProximityRecommendationService
             $this->geocodeCache[$address] = null;
             return null;
         }
+    }
+
+    private function buildTunisiaAddressQuery(Medecin $medecin): string
+    {
+        $parts = [];
+        $cabinet = trim((string) $medecin->getAdresseCabinet());
+        $ville = trim((string) $medecin->getVille());
+
+        if ($cabinet !== '') {
+            $parts[] = $cabinet;
+        }
+        if ($ville !== '') {
+            $parts[] = $ville;
+        }
+        $parts[] = 'Tunisia';
+
+        return implode(', ', $parts);
     }
 
     private function haversineDistanceKm(
