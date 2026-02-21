@@ -1111,7 +1111,6 @@
                                     </div>
                                 </div>
                                 <div class="recommendation-status" id="recommendationStatus">Chargement des recommandations...</div>
-                                <div class="recommendation-status" id="recommendationDebug" style="margin-top:6px;color:#c1666b;font-size:.8rem;"></div>
                                 <div class="recommendation-list" id="recommendationList"></div>
                             </div>
 
@@ -1276,7 +1275,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateError = document.getElementById('dateError');
     const timeError = document.getElementById('timeError');
     const recommendationStatus = document.getElementById('recommendationStatus');
-    const recommendationDebug = document.getElementById('recommendationDebug');
     const recommendationList = document.getElementById('recommendationList');
     const refreshRecommendationsBtn = document.getElementById('refreshRecommendationsBtn');
     const askGeoBtn = document.getElementById('askGeoBtn');
@@ -1288,25 +1286,6 @@ document.addEventListener('DOMContentLoaded', function() {
             recommendationStatus.textContent = message;
         }
     }
-
-    function setRecommendationDebug(message) {
-        if (recommendationDebug) {
-            recommendationDebug.textContent = message || '';
-        }
-    }
-
-    function appendRecommendationDebug(message) {
-        if (!recommendationDebug) return;
-        const current = recommendationDebug.textContent || '';
-        recommendationDebug.textContent = current ? `${current} | ${message}` : message;
-    }
-
-    window.addEventListener('error', function(e) {
-        appendRecommendationDebug(`JS error: ${e.message}`);
-    });
-    window.addEventListener('unhandledrejection', function(e) {
-        appendRecommendationDebug(`Promise error: ${e.reason && e.reason.message ? e.reason.message : 'unknown'}`);
-    });
 
     /* === Fonction pour afficher la liste déroulante === */
     function renderDropdown(filteredMedecins) {
@@ -1387,13 +1366,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 credentials: 'same-origin',
             });
             if (!response.ok) {
-                appendRecommendationDebug(`latest HTTP ${response.status}`);
                 return false;
             }
             const data = await response.json();
             return !!(data && data.success && data.location);
         } catch (e) {
-            appendRecommendationDebug(`latest fetch failed: ${e.message || 'error'}`);
             return false;
         }
     }
@@ -1409,8 +1386,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         recommendationStatus.textContent = 'Demande de permission de localisation...';
-        setRecommendationDebug('');
-
         try {
             const position = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -1420,12 +1395,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            const saveResponse = await fetch(ENDPOINT_LOCATION_SAVE, {
+            const saveUrl = new URL(ENDPOINT_LOCATION_SAVE, window.location.origin).toString();
+            const saveResponse = await fetch(saveUrl, {
                 method: 'POST',
-                credentials: 'same-origin',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
                 body: JSON.stringify({
                     latitude: position.coords.latitude,
@@ -1436,7 +1413,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!saveResponse.ok) {
                 recommendationStatus.textContent = 'Position détectée mais non enregistrée.';
-                appendRecommendationDebug(`save HTTP ${saveResponse.status}`);
                 return false;
             }
 
@@ -1447,7 +1423,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
             recommendationStatus.textContent = 'Impossible de récupérer votre position.';
-            appendRecommendationDebug(`geo error: ${error && error.message ? error.message : 'unknown'}`);
             return false;
         }
     }
@@ -1462,7 +1437,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadNearbyRecommendations() {
         recommendationStatus.textContent = 'Chargement des recommandations...';
-        setRecommendationDebug('');
         recommendationList.innerHTML = '';
         let timer = null;
 
@@ -1486,13 +1460,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 data = await response.json();
             } catch (e) {
                 recommendationStatus.textContent = 'Réponse API invalide (JSON).';
-                appendRecommendationDebug(`recommendation non-JSON HTTP ${response.status}`);
                 return;
             }
 
             if (!response.ok || !data.success) {
                 recommendationStatus.textContent = data.error || 'Recommandation indisponible pour le moment.';
-                appendRecommendationDebug(`recommendation HTTP ${response.status}`);
                 return;
             }
 
@@ -1501,7 +1473,6 @@ document.addEventListener('DOMContentLoaded', function() {
             recommendationStatus.textContent = (error && error.name === 'AbortError')
                 ? 'Recommandation trop lente (timeout). Vérifiez les adresses cabinet.'
                 : 'Impossible de charger les recommandations.';
-            appendRecommendationDebug(`recommendation fetch failed: ${error && error.message ? error.message : 'error'}`);
         } finally {
             if (timer) {
                 clearTimeout(timer);
@@ -1515,7 +1486,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             setRecommendationStatus('Rafraichissement...');
-            appendRecommendationDebug('click refresh');
             loadNearbyRecommendations();
         });
     }
@@ -1524,7 +1494,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             setRecommendationStatus('Activation position...');
-            appendRecommendationDebug('click geo');
             const ok = await requestAndSavePatientLocation();
             if (ok) {
                 await loadNearbyRecommendations();
@@ -1660,7 +1629,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateTimeline(2);
         });
     } else {
-        appendRecommendationDebug('Champ dateInput introuvable');
     }
 
     /* === Heure 09:00 → 17:00 === */
@@ -1682,7 +1650,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateTimeline(3);
         });
     } else {
-        appendRecommendationDebug('Champ timeInput introuvable');
     }
 
     /* === Motif === */
@@ -1750,11 +1717,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     } else {
-        appendRecommendationDebug('Formulaire rdvForm introuvable');
     }
 
     loadNearbyRecommendations();
-    appendRecommendationDebug('init done');
 
     console.log('🏥 MEDINOVA - Formulaire de rendez-vous avec recherche interactive chargé!');
     console.log(`📊 ${medecinsData.length} médecins disponibles`);
