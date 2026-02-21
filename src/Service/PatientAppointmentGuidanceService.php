@@ -39,6 +39,10 @@ class PatientAppointmentGuidanceService
 
         $fullContext = $this->normalize($motif . ' ' . $antecedents . ' ' . $allergies . ' ' . $traitements);
 
+        if ($this->isGenericFollowUpMotif($motifNormalized)) {
+            return $this->buildFollowUpGuidance($motif, $antecedents, $allergies, $traitements);
+        }
+
         $quality = $this->evaluateMotifQuality($motifNormalized);
         if (!$quality['valid']) {
             return $this->buildInsufficientInputGuidance(
@@ -48,6 +52,18 @@ class PatientAppointmentGuidanceService
                 $traitements,
                 $quality['reason']
             );
+        }
+
+        $motifSpecific = $this->buildMotifSpecificGuidance(
+            $motifNormalized,
+            $motif,
+            $antecedents,
+            $allergies,
+            $traitements,
+            $fullContext
+        );
+        if ($motifSpecific !== null) {
+            return $motifSpecific;
         }
 
         $aiResult = $this->generateWithAi($motif, $antecedents, $allergies, $traitements, $fullContext);
@@ -127,6 +143,161 @@ class PatientAppointmentGuidanceService
         }
 
         return ['valid' => true, 'reason' => ''];
+    }
+
+    private function isGenericFollowUpMotif(string $motifNormalized): bool
+    {
+        if ($motifNormalized === '') {
+            return false;
+        }
+
+        $followUpTerms = [
+            'suivi',
+            'suivi normal',
+            'controle',
+            'checkup',
+            'consultation de suivi',
+            'visite de controle',
+            'renouvellement',
+        ];
+        if (!$this->containsAny($motifNormalized, $followUpTerms)) {
+            return false;
+        }
+
+        $acuteTerms = [
+            'douleur', 'fievre', 'toux', 'vomissement', 'nausee', 'vertige',
+            'saignement', 'essoufflement', 'thoracique', 'abdominale', 'infection',
+        ];
+
+        return !$this->containsAny($motifNormalized, $acuteTerms);
+    }
+
+    private function buildFollowUpGuidance(
+        string $motif,
+        string $antecedents,
+        string $allergies,
+        string $traitements
+    ): array {
+        $alerts = [];
+        if (trim($allergies) !== '') {
+            $alerts[] = 'Signalez vos allergies au medecin au debut de la consultation.';
+        }
+
+        return [
+            'disclaimer' => 'Guidance informative avant une consultation de suivi. Ne remplace pas un avis medical.',
+            'temporary_advice' => [
+                'Prenez vos ordonnances et vos derniers resultats (analyses, imagerie, comptes rendus).',
+            ],
+            'safety_alerts' => $alerts,
+            'general_recommendations' => [
+                'Preparez 2-3 questions principales pour votre medecin.',
+                'Notez les changements depuis la derniere consultation (amelioration, aggravation, effets indesirables).',
+            ],
+            'emergency' => [
+                'detected' => false,
+                'level' => 'LOW',
+                'reasons' => [],
+                'actions' => ['Si un nouveau symptome important apparait, contactez rapidement le SAMU (190) en Tunisie.'],
+            ],
+            'sources' => [
+                'motif' => $motif,
+                'antecedents' => $antecedents,
+                'allergies' => $allergies,
+                'traitements' => $traitements,
+            ],
+            'input_status' => 'ok',
+        ];
+    }
+
+    /**
+     * Guidance deterministe orientee par motif (plus stable que la generation libre).
+     */
+    private function buildMotifSpecificGuidance(
+        string $motifNormalized,
+        string $motif,
+        string $antecedents,
+        string $allergies,
+        string $traitements,
+        string $fullContext
+    ): ?array {
+        if ($motifNormalized === '') {
+            return null;
+        }
+
+        $profiles = [
+            'respiratoire' => [
+                'keywords' => ['toux', 'gorge', 'rhume', 'grippe', 'essoufflement', 'respirer', 'sinus'],
+                'advice' => ['Hydratez-vous regulierement et notez la frequence de la toux/essoufflement.'],
+                'reco' => ['Precisez depuis quand les symptomes respiratoires ont commence et ce qui les aggrave.'],
+                'urgent' => ['Si essoufflement important ou douleur thoracique, contactez le SAMU (190) '],
+            ],
+            'digestif' => [
+                'keywords' => ['abdominale', 'abdomen', 'ventre', 'diarrhee', 'vomissement', 'nausee', 'gastro'],
+                'advice' => ['Fractionnez l alimentation et maintenez une hydratation orale frequente.'],
+                'reco' => ['Notez le nombre de selles/vomissements et la presence de sang ou fievre.'],
+                'urgent' => ['Si douleur abdominale intense persistante ou signes de dehydration, contactez le SAMU (190).'],
+            ],
+            'douleur' => [
+                'keywords' => ['douleur', 'migraine', 'mal de tete', 'cephalee', 'dos', 'lombaire', 'articulation'],
+                'advice' => ['Limitez les efforts et notez l intensite de la douleur (0-10) et sa duree.'],
+                'reco' => ['Indiquez les facteurs declenchants et ce qui soulage/aggrave la douleur.'],
+                'urgent' => ['Si douleur brutale inhabituelle avec malaise, contactez le SAMU (190).'],
+            ],
+            'dermatologie' => [
+                'keywords' => ['peau', 'eruption', 'rash', 'demangeaison', 'plaie', 'rougeur'],
+                'advice' => ['Evitez les nouveaux produits cutanes et gardez la zone propre et seche.'],
+                'reco' => ['Prenez une photo de l evolution de la lesion pour la consultation.'],
+                'urgent' => ['Si gonflement du visage, gene respiratoire ou extension rapide, contactez le SAMU (190).'],
+            ],
+            'cardio' => [
+                'keywords' => ['thoracique', 'palpitation', 'coeur', 'tension', 'hypertension'],
+                'advice' => ['Evitez l effort physique intense et reposez-vous en attendant la consultation.'],
+                'reco' => ['Notez l heure de debut des symptomes et les circonstances (repos/effort/stress).'],
+                'urgent' => ['Douleur thoracique oppressante ou essoufflement aigu: appelez le SAMU (190) immediatement.'],
+            ],
+            'gyneco' => [
+                'keywords' => ['gyneco', 'regles', 'menstru', 'pelvienne', 'grossesse', 'enceinte'],
+                'advice' => ['Notez la date des dernieres regles et l evolution des symptomes pelviens.'],
+                'reco' => ['Signalez tout saignement anormal, retard de regles ou douleur inhabituelle.'],
+                'urgent' => ['En cas de saignement abondant ou douleur intense, contactez le SAMU (190).'],
+            ],
+        ];
+
+        foreach ($profiles as $profile) {
+            if (!$this->containsAny($motifNormalized, $profile['keywords'])) {
+                continue;
+            }
+
+            $alerts = [];
+            if (trim($allergies) !== '') {
+                $alerts[] = 'Allergies declarees: informez le medecin avant toute prise de medicament.';
+            }
+            if ($alerts === []) {
+                $alerts[] = 'Evitez l automedication jusqu a l avis du medecin.';
+            }
+
+            return [
+                'disclaimer' => 'Guidance orientee selon votre motif. Ne remplace pas une consultation medicale.',
+                'temporary_advice' => $profile['advice'],
+                'safety_alerts' => $alerts,
+                'general_recommendations' => $profile['reco'],
+                'emergency' => [
+                    'detected' => false,
+                    'level' => 'LOW',
+                    'reasons' => [],
+                    'actions' => $profile['urgent'],
+                ],
+                'sources' => [
+                    'motif' => $motif,
+                    'antecedents' => $antecedents,
+                    'allergies' => $allergies,
+                    'traitements' => $traitements,
+                ],
+                'input_status' => 'ok',
+            ];
+        }
+
+        return null;
     }
 
     private function buildInsufficientInputGuidance(
@@ -263,7 +434,7 @@ class PatientAppointmentGuidanceService
         $traitementsNorm = $this->normalize($traitements);
 
         if ($allergiesNorm !== '') {
-            $alerts[] = 'Allergies declarees detectees: evitez toute automedication non validee medicalement.';
+            $alerts[] = 'Allergies declarees detectees: informez le medecin avant toute adaptation de traitement.';
         }
 
         if ($this->containsAny($allergiesNorm, ['penicilline', 'amoxicilline']) && $this->containsAny($context, ['angine', 'infection'])) {
@@ -420,6 +591,7 @@ class PatientAppointmentGuidanceService
             "Regles:\n".
             "- Conseils clairs, concrets, non prescriptifs.\n".
             "- Detecter urgence seulement si signaux forts.\n".
+            "- Reponse breve: 1 a 2 elements max par liste.\n".
             "- Langue: francais.",
             $motif !== '' ? $motif : '(non renseigne)',
             $antecedents !== '' ? $antecedents : '(non renseigne)',

@@ -1267,8 +1267,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropdownList = document.getElementById('dropdownList');
     const doctorDetailsCard = document.getElementById('doctorDetailsCard');
     const noResults = document.getElementById('noResults');
-    const dateInput = document.getElementById('dateInput');
-    const timeInput = document.getElementById('timeInput');
+    const dateInput = document.getElementById('dateInput') || document.querySelector('input[name$="[dateRdv]"]');
+    const timeInput = document.getElementById('timeInput') || document.querySelector('input[name$="[heureRdv]"]');
     const reasonInput = document.getElementById('reasonInput');
     const form = document.getElementById('rdvForm');
     const submitBtn = document.getElementById('submitBtn');
