@@ -31,12 +31,24 @@ class PatientAppointmentGuidanceService
     public function generate(RendezVous $rendezVous): array
     {
         $motif = trim((string) ($rendezVous->getRaison() ?? ''));
+        $motifNormalized = $this->normalize($motif);
         $fiche = $this->resolveRelevantFiche($rendezVous);
         $antecedents = trim((string) ($fiche?->getAntecedents() ?? ''));
         $allergies = trim((string) ($fiche?->getAllergies() ?? ''));
         $traitements = trim((string) ($fiche?->getTraitementEnCours() ?? ''));
 
         $fullContext = $this->normalize($motif . ' ' . $antecedents . ' ' . $allergies . ' ' . $traitements);
+
+        $quality = $this->evaluateMotifQuality($motifNormalized);
+        if (!$quality['valid']) {
+            return $this->buildInsufficientInputGuidance(
+                $motif,
+                $antecedents,
+                $allergies,
+                $traitements,
+                $quality['reason']
+            );
+        }
 
         $aiResult = $this->generateWithAi($motif, $antecedents, $allergies, $traitements, $fullContext);
         if ($aiResult !== null) {
@@ -52,6 +64,7 @@ class PatientAppointmentGuidanceService
                     'allergies' => $allergies,
                     'traitements' => $traitements,
                 ],
+                'input_status' => 'ok',
             ];
         }
 
@@ -72,6 +85,83 @@ class PatientAppointmentGuidanceService
                 'allergies' => $allergies,
                 'traitements' => $traitements,
             ],
+            'input_status' => 'ok',
+        ];
+    }
+
+    /**
+     * @return array{valid: bool, reason: string}
+     */
+    private function evaluateMotifQuality(string $motifNormalized): array
+    {
+        if ($motifNormalized === '') {
+            return ['valid' => false, 'reason' => 'Motif vide'];
+        }
+
+        if (mb_strlen($motifNormalized, 'UTF-8') < 8) {
+            return ['valid' => false, 'reason' => 'Motif trop court'];
+        }
+
+        if (preg_match('/([a-z0-9])\1{4,}/', $motifNormalized) === 1) {
+            return ['valid' => false, 'reason' => 'Texte repetitif detecte'];
+        }
+
+        $words = array_values(array_filter(explode(' ', $motifNormalized), static fn (string $w): bool => $w !== ''));
+        if (count($words) < 2) {
+            return ['valid' => false, 'reason' => 'Motif peu descriptif'];
+        }
+
+        $meaningless = ['ok', 'test', 'valide', 'validation', 'bonjour', 'salut', 'rien'];
+        if (count(array_diff($words, $meaningless)) < 2) {
+            return ['valid' => false, 'reason' => 'Motif non medical'];
+        }
+
+        $medicalKeywords = [
+            'douleur', 'fievre', 'toux', 'gorge', 'migraine', 'maux', 'mal', 'vomissement',
+            'nausee', 'vertige', 'fatigue', 'diarrhee', 'constipation', 'allergie', 'respirer',
+            'essoufflement', 'palpitation', 'thoracique', 'abdominale', 'dos', 'rhume', 'grippe',
+            'infection', 'plaie', 'saignement', 'pression', 'tension', 'glycemie', 'suivi', 'controle',
+        ];
+        if (!$this->containsAny($motifNormalized, $medicalKeywords) && count($words) < 4) {
+            return ['valid' => false, 'reason' => 'Motif insuffisamment medical'];
+        }
+
+        return ['valid' => true, 'reason' => ''];
+    }
+
+    private function buildInsufficientInputGuidance(
+        string $motif,
+        string $antecedents,
+        string $allergies,
+        string $traitements,
+        string $reason
+    ): array {
+        return [
+            'disclaimer' => 'Motif insuffisant pour une guidance IA fiable.',
+            'temporary_advice' => [
+                'Decrivez votre symptome principal (ex: douleur, fievre, toux, fatigue).',
+                'Precisez depuis quand le symptome a commence et son intensite.',
+            ],
+            'safety_alerts' => [
+                'En cas de douleur thoracique, detresse respiratoire, perte de connaissance ou saignement important: urgences immediates.',
+            ],
+            'general_recommendations' => [
+                'Reformulez le motif avec une phrase medicale claire.',
+                'Evitez les mots de test (ex: "valide", "ok") dans le motif.',
+            ],
+            'emergency' => [
+                'detected' => false,
+                'level' => 'LOW',
+                'reasons' => [$reason],
+                'actions' => ['Mettez a jour le motif pour obtenir une guidance pre-consultation plus precise.'],
+            ],
+            'sources' => [
+                'motif' => $motif,
+                'antecedents' => $antecedents,
+                'allergies' => $allergies,
+                'traitements' => $traitements,
+            ],
+            'input_status' => 'insufficient',
         ];
     }
 

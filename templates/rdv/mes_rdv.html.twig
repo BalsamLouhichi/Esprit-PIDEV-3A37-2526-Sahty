@@ -1372,9 +1372,26 @@
 
     function renderGuidance(guidance) {
         const emergency = guidance.emergency || {};
+        const inputInsufficient = guidance.input_status === 'insufficient';
         const emergencyDetected = !!emergency.detected;
-        const badgeClass = emergencyDetected ? 'high' : 'low';
-        const badgeText = emergencyDetected ? 'Urgence detectee' : 'Pas d urgence detectee';
+        const badgeClass = inputInsufficient ? 'high' : (emergencyDetected ? 'high' : 'low');
+        const badgeText = inputInsufficient
+            ? 'Motif insuffisant'
+            : (emergencyDetected ? 'Urgence detectee' : 'Pas d urgence detectee');
+
+        if (inputInsufficient) {
+            return `
+                <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
+                <span class="ai-guidance-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+                <p><strong>Important:</strong> ${escapeHtml(guidance.disclaimer || '')}</p>
+                <p><strong>Pourquoi</strong></p>
+                ${renderList(emergency.reasons || [])}
+                <p><strong>Comment corriger le motif</strong></p>
+                ${renderList(guidance.general_recommendations)}
+                <p><strong>Exemples utiles</strong></p>
+                ${renderList(guidance.temporary_advice)}
+            `;
+        }
 
         return `
             <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
