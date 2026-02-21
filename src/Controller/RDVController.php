@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\RendezVous;
 use App\Entity\FicheMedicale;
 use App\Entity\Patient;
+use App\Entity\Medecin;
 use App\Form\RendezVousType;
 use App\Repository\MedecinRepository;
 use App\Repository\RendezVousRepository;
@@ -88,9 +89,15 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
+        $medecinsActifs = $medecinRepository->findBy(['estActif' => true]);
+
         return $this->render('rdv/prendre.html.twig', [
             'form' => $form->createView(),
-            'medecins' => $medecinRepository->findBy(['estActif' => true]),
+            'medecins' => $medecinsActifs,
+            'medecins_json' => array_map(
+                fn (Medecin $medecin) => $this->buildMedecinPayload($medecin),
+                $medecinsActifs
+            ),
         ]);
     }
 
@@ -209,6 +216,20 @@ class RDVController extends AbstractController
             'rdv' => $rdv,
             'medecins' => $medecinRepository->findBy(['estActif' => true]),
         ]);
+    }
+
+    private function buildMedecinPayload(Medecin $medecin): array
+    {
+        return [
+            'id' => $medecin->getId(),
+            'nom' => $medecin->getNom(),
+            'prenom' => $medecin->getPrenom(),
+            'specialite' => $medecin->getSpecialite(),
+            'anneeExperience' => $medecin->getAnneeExperience(),
+            'grade' => $medecin->getGrade(),
+            'nomEtablissement' => $medecin->getNomEtablissement(),
+            'adresseCabinet' => $medecin->getAdresseCabinet(),
+        ];
     }
 
     /**

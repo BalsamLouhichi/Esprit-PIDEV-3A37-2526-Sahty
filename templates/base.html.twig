@@ -35,6 +35,184 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% if app.user and is_granted('ROLE_PATIENT') %}
+    <style>
+        .geo-toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 1080;
+            background: rgba(26, 35, 50, 0.94);
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+        .geo-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .geo-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.42);
+            z-index: 1075;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .geo-modal {
+            width: 100%;
+            max-width: 460px;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.26);
+            border: 1px solid #dbeafe;
+            padding: 18px;
+        }
+        .geo-modal-title {
+            font-weight: 800;
+            color: #163a5f;
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+        }
+        .geo-modal-text {
+            color: #334155;
+            font-size: 0.93rem;
+            margin-bottom: 12px;
+        }
+        .geo-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+    </style>
+    <script>
+        (function () {
+            const endpoint = '{{ path('api_patient_location_save') }}';
+            function showGeoToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'geo-toast';
+                toast.innerHTML = '<i class="fas fa-location-dot"></i><span>' + message + '</span>';
+                document.body.appendChild(toast);
+                requestAnimationFrame(() => toast.classList.add('show'));
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 220);
+                }, 2600);
+            }
+
+            function closeGeoModal() {
+                const el = document.getElementById('geoModalOverlay');
+                if (el) el.remove();
+            }
+
+            function showGeoModal() {
+                if (document.getElementById('geoModalOverlay')) return;
+                const overlay = document.createElement('div');
+                overlay.id = 'geoModalOverlay';
+                overlay.className = 'geo-modal-overlay';
+                overlay.innerHTML = `
+                    <div class="geo-modal" role="dialog" aria-modal="true" aria-labelledby="geoModalTitle">
+                        <div class="geo-modal-title" id="geoModalTitle">
+                            Activer votre position
+                        </div>
+                        <div class="geo-modal-text">
+                            Nous utilisons votre position pour recommander les medecins les plus proches.
+                        </div>
+                        <div class="geo-modal-actions">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="geoLaterBtn">Plus tard</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="geoAllowBtn">Activer</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const laterBtn = document.getElementById('geoLaterBtn');
+                const allowBtn = document.getElementById('geoAllowBtn');
+
+                if (laterBtn) {
+                    laterBtn.addEventListener('click', function () {
+                        closeGeoModal();
+                    });
+                }
+                if (allowBtn) {
+                    allowBtn.addEventListener('click', requestAndSaveLocation);
+                }
+            }
+
+            async function requestAndSaveLocation() {
+                if (!('geolocation' in navigator)) {
+                    showGeoToast('Geolocalisation non supportee');
+                    closeGeoModal();
+                    return;
+                }
+
+                if (!window.isSecureContext) {
+                    showGeoToast('Geolocalisation disponible sur HTTPS ou localhost');
+                    closeGeoModal();
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    async function (position) {
+                        try {
+                            const payload = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                            };
+
+                            const response = await fetch(endpoint, {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                                body: JSON.stringify(payload),
+                            });
+
+                            if (response.ok) {
+                                showGeoToast('Position detectee');
+                            } else {
+                                showGeoToast('Echec enregistrement position');
+                            }
+                        } catch (e) {
+                            showGeoToast('Erreur lors de la sauvegarde position');
+                        } finally {
+                            closeGeoModal();
+                        }
+                    },
+                    function () {
+                        showGeoToast('Permission de localisation refusee');
+                        closeGeoModal();
+                    },
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 10000,
+                        maximumAge: 0,
+                    }
+                );
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', showGeoModal);
+            } else {
+                showGeoModal();
+            }
+        })();
+    </script>
+    {% endif %}
     {% block javascripts %}{% endblock %}
 </body>
 </html>
