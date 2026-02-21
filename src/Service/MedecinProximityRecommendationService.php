@@ -21,7 +21,13 @@ class MedecinProximityRecommendationService
      * @param Medecin[] $medecins
      * @return array<int, array<string, mixed>>
      */
-    public function recommendNearest(array $medecins, float $patientLat, float $patientLng, int $limit = 5): array
+    public function recommendNearest(
+        array $medecins,
+        float $patientLat,
+        float $patientLng,
+        int $limit = 5,
+        ?float $maxDistanceKm = null
+    ): array
     {
         // Evite des requetes geocoding trop longues quand la base contient beaucoup de medecins.
         $medecins = array_slice($medecins, 0, 15);
@@ -48,6 +54,10 @@ class MedecinProximityRecommendationService
                 $coords['lat'],
                 $coords['lng']
             );
+
+            if ($maxDistanceKm !== null && $distanceKm > $maxDistanceKm) {
+                continue;
+            }
 
             $results[] = [
                 'id' => $medecin->getId(),

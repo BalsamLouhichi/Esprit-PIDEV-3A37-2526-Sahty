@@ -1475,7 +1475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             recommendationStatus.textContent = 'Recherche des médecins proches...';
             const controller = new AbortController();
             timer = setTimeout(() => controller.abort(), 8000);
-            const response = await fetch(`${ENDPOINT_RECOMMENDATION}?limit=5`, {
+            const response = await fetch(`${ENDPOINT_RECOMMENDATION}?limit=3&max_km=25`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
                 credentials: 'same-origin',

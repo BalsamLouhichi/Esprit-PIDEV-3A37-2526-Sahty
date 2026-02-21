@@ -55,7 +55,11 @@ class MedecinRecommendationApiController extends AbstractController
             );
         }
 
-        $limit = max(1, min(10, (int) $request->query->get('limit', 5)));
+        $limit = max(1, min(10, (int) $request->query->get('limit', 3)));
+        $maxDistanceKm = (float) $request->query->get('max_km', 25);
+        if ($maxDistanceKm <= 0) {
+            $maxDistanceKm = 25.0;
+        }
         $specialite = mb_strtolower(trim((string) $request->query->get('specialite', '')));
 
         $medecins = $medecinRepository->findBy(['estActif' => true]);
@@ -73,7 +77,8 @@ class MedecinRecommendationApiController extends AbstractController
             $medecins,
             $patientLat,
             $patientLng,
-            $limit
+            $limit,
+            $maxDistanceKm
         );
 
         return new JsonResponse([
