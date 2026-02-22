@@ -11,6 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'patient')]
 class Patient extends Utilisateur
 {
+    public const ROLE_SIMPLE_PATIENT = 'patient';
+
     #[ORM\Column(length: 10, nullable: true)]
     private ?string $groupeSanguin = null;
 
@@ -32,7 +34,6 @@ class Patient extends Utilisateur
     #[ORM\OneToMany(targetEntity: RendezVous::class, mappedBy: 'patient', fetch: 'EXTRA_LAZY')]
     private Collection $rendezVous;
 
-
     public function __construct()
     {
         parent::__construct();
@@ -50,7 +51,6 @@ class Patient extends Utilisateur
     {
         $this->groupeSanguin = $groupeSanguin;
         return $this;
-
     }
 
     public function getContactUrgence(): ?string
@@ -59,7 +59,6 @@ class Patient extends Utilisateur
     }
 
     public function setContactUrgence(?string $contactUrgence): self
-
     {
         $this->contactUrgence = $contactUrgence;
         return $this;
@@ -71,7 +70,6 @@ class Patient extends Utilisateur
     }
 
     public function setSexe(?string $sexe): self
-
     {
         $this->sexe = $sexe;
         return $this;
@@ -100,7 +98,6 @@ class Patient extends Utilisateur
             if ($ficheMedicale->getPatient() === $this) {
                 $ficheMedicale->setPatient(null);
             }
-
         }
         return $this;
     }
@@ -145,5 +142,4 @@ class Patient extends Utilisateur
         $interval = $now->diff($this->getDateNaissance());
         return $interval->y;
     }
-
 }

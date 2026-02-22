@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demande #{{ demande.id }} - Responsable laboratoire{% endblock %}
+
+{% block stylesheets %}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="mb-4">
+        <h1 class="h3">Demande #{{ demande.id }}</h1>
+        <p class="text-muted mb-0">Laboratoire: {{ laboratoire.nom }} - {{ laboratoire.ville }}</p>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('warning') %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Patient:</strong> {{ demande.patient ? demande.patient.nomComplet : '-' }}</p>
+                    <p class="mb-2"><strong>Medecin:</strong> {{ demande.medecin ? demande.medecin.nomComplet : '-' }}</p>
+                    <p class="mb-2"><strong>Type bilan:</strong> {{ demande.typeBilan }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Statut:</strong> {{ demande.resultatPdf ? 'envoye' : 'en_attente' }}</p>
+                    <p class="mb-2"><strong>Demande:</strong> {{ demande.dateDemande ? demande.dateDemande|date('d/m/Y H:i') : '-' }}</p>
+                    <p class="mb-2"><strong>Resultat:</strong>
+                        {% if demande.resultatPdf %}
+                            <a href="{{ asset(demande.resultatPdf) }}" target="_blank">Voir PDF</a>
+                        {% else %}
+                            <span class="text-muted">Non disponible</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="_token" value="{{ csrf_token('resp-labo-update' ~ demande.id) }}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="statut">Statut</label>
+                    <select class="form-select" id="statut" name="statut">
+                        {% set currentStatut = demande.resultatPdf ? 'envoye' : 'en_attente' %}
+                        <option value="en_attente" {{ currentStatut == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                        <option value="envoye" {{ currentStatut == 'envoye' ? 'selected' : '' }}>Envoye</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="resultat_pdf">Resultat d'analyse (PDF)</label>
+                    <input class="form-control" type="file" id="resultat_pdf" name="resultat_pdf" accept="application/pdf">
+                    <small class="text-muted">Un PDF sera envoye automatiquement au patient et au medecin (si present).</small>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <a class="btn btn-secondary" href="{{ path('app_demande_analyse_index') }}">Retour</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

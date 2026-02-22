@@ -1,0 +1,219 @@
+{# templates/labo/labo.html.twig #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>MEDINOVA - Laboratories</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    {# CSS / assets #}
+    <link href="{{ asset('img/favicon.ico') }}" rel="icon">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link href="{{ asset('lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css') }}" rel="stylesheet" />
+
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    {# Custom Labo CSS (comme ton html) #}
+    <style>
+        .labo-card{background:white;border-radius:10px;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,.1);transition:transform .3s,box-shadow .3s;height:100%}
+        .labo-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,.15)}
+        .labo-img{height:250px;width:100%;object-fit:cover}
+        .labo-icon{width:70px;height:70px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:-35px auto 20px;color:white;font-size:30px}
+        .labo-location{color:var(--secondary);font-weight:600}
+        .labo-services{background:var(--light);padding:10px 15px;border-radius:5px;margin-top:15px}
+        .labo-services ul{list-style:none;padding-left:0;margin-bottom:0}
+        .labo-services li{padding:5px 0;border-bottom:1px dashed #ddd}
+        .labo-services li:last-child{border-bottom:none}
+        .labo-services i{color:var(--primary);margin-right:8px}
+        .feature-box{background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 15px rgba(0,0,0,.05);height:100%;transition:transform .3s}
+        .feature-box:hover{transform:translateY(-5px)}
+        .feature-icon{width:80px;height:80px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:white;font-size:35px}
+    </style>
+</head>
+
+<body>
+
+{# ✅ Réutiliser ton header #}
+{% include 'partials/header.html.twig' %}
+
+{# ===== Header banner ===== #}
+<div class="container-fluid bg-primary py-5 mb-5">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-1 text-white mb-4">Our Laboratories</h1>
+                <p class="fs-4 text-white mb-4">State-of-the-art diagnostic facilities with accurate and timely results</p>
+                <div class="d-flex justify-content-center">
+                    <a href="#laboratories" class="btn btn-light btn-lg py-3 px-5 me-4">View Laboratories</a>
+                    <a href="#appointment" class="btn btn-dark btn-lg py-3 px-5">Book Appointment</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ===== Features ===== #}
+<div class="container-fluid py-5">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon"><i class="fa fa-flask"></i></div>
+                    <h4 class="mb-3">Advanced Equipment</h4>
+                    <p class="mb-3">We use the latest medical equipment and technology for accurate diagnostics and reliable results.</p>
+                    <a href="#!" class="text-primary">Read More <i class="fa fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon"><i class="fa fa-user-md"></i></div>
+                    <h4 class="mb-3">Expert Pathologists</h4>
+                    <p class="mb-3">Our team of certified pathologists and technicians ensure precision in every test.</p>
+                    <a href="#!" class="text-primary">Read More <i class="fa fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-box">
+                    <div class="feature-icon"><i class="fa fa-bolt"></i></div>
+                    <h4 class="mb-3">Quick Results</h4>
+                    <p class="mb-3">Get your test results quickly through our online portal or mobile app.</p>
+                    <a href="#!" class="text-primary">Read More <i class="fa fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ===== Laboratories ===== #}
+<div class="container-fluid py-5" id="laboratories">
+    <div class="container">
+        <div class="text-center mx-auto mb-5" style="max-width: 600px;">
+            <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">Our Laboratories</h5>
+            <h1 class="display-4">Find a Laboratory Near You</h1>
+            <p class="mb-0">We have multiple laboratory locations across the city for your convenience.</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <form method="get" class="row g-3 justify-content-center">
+                    <div class="col-md-4">
+                        <label class="form-label" for="filter_name">Laboratory name</label>
+                        <input class="form-control" id="filter_name" name="name" type="text" value="{{ filter_name|default('') }}" placeholder="Search by name">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filter_ville">Location</label>
+                        <select class="form-select" id="filter_ville" name="ville">
+                            <option value="">All</option>
+                            {% for city in filter_villes|default([]) %}
+                                <option value="{{ city }}" {{ filter_ville == city ? 'selected' : '' }}>{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filter_type_bilan">Type bilan</label>
+                        <select class="form-select" id="filter_type_bilan" name="type_bilan">
+                            <option value="">All</option>
+                            {% for type in filter_type_bilans|default([]) %}
+                                <option value="{{ type }}" {{ filter_type_bilan == type ? 'selected' : '' }}>{{ type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" type="submit">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4" id="lab-cards">
+            {% include 'laboratoire/_lab_cards.html.twig' with { laboratoires: laboratoires } %}
+        </div>
+    </div>
+</div>
+
+
+
+{# ✅ Réutiliser ton footer #}
+{% include 'partials/footer.html.twig' %}
+
+<!-- Back to Top -->
+<a href="#!" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+<script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+<script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
+<script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
+<script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
+<script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('filter_name');
+    const citySelect = document.getElementById('filter_ville');
+    const typeSelect = document.getElementById('filter_type_bilan');
+    const cardsContainer = document.getElementById('lab-cards');
+
+    let debounceTimer;
+
+    const buildQuery = () => {
+        const params = new URLSearchParams();
+        if (nameInput && nameInput.value.trim() !== '') {
+            params.set('name', nameInput.value.trim());
+        }
+        if (citySelect && citySelect.value.trim() !== '') {
+            params.set('ville', citySelect.value.trim());
+        }
+        if (typeSelect && typeSelect.value.trim() !== '') {
+            params.set('type_bilan', typeSelect.value.trim());
+        }
+        return params.toString();
+    };
+
+    const fetchCards = () => {
+        const query = buildQuery();
+        const url = query ? `{{ path('app_labo_filter') }}?${query}` : `{{ path('app_labo_filter') }}`;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.text())
+            .then(html => {
+                if (cardsContainer) {
+                    cardsContainer.innerHTML = html;
+                }
+            })
+            .catch(() => {
+                if (cardsContainer) {
+                    cardsContainer.innerHTML = '<div class="col-12"><p class="text-center text-muted">Unable to load results.</p></div>';
+                }
+            });
+    };
+
+    const scheduleFetch = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchCards, 300);
+    };
+
+    if (nameInput) {
+        nameInput.addEventListener('input', scheduleFetch);
+    }
+    if (citySelect) {
+        citySelect.addEventListener('change', scheduleFetch);
+    }
+    if (typeSelect) {
+        typeSelect.addEventListener('change', scheduleFetch);
+    }
+});
+</script>
+</body>
+</html>

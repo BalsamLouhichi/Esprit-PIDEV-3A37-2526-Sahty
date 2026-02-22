@@ -5,12 +5,14 @@ namespace App\Entity;
 use App\Repository\ResponsableLaboratoireRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+// src/Entity/ResponsableLaboratoire.php
 #[ORM\Entity(repositoryClass: ResponsableLaboratoireRepository::class)]
 #[ORM\Table(name: 'responsable_laboratoire')]
 class ResponsableLaboratoire extends Utilisateur
 {
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $laboratoireId = null;
+    #[ORM\OneToOne(inversedBy: 'responsable', targetEntity: Laboratoire::class)]
+    #[ORM\JoinColumn(name: 'laboratoire_id', referencedColumnName: 'id', nullable: true)]
+    private ?Laboratoire $laboratoire = null;
 
     public function __construct()
     {
@@ -18,14 +20,20 @@ class ResponsableLaboratoire extends Utilisateur
         $this->setRole(self::ROLE_SIMPLE_RESPONSABLE_LABO);
     }
 
-    public function getLaboratoireId(): ?int
+    public function getLaboratoire(): ?Laboratoire
     {
-        return $this->laboratoireId;
+        return $this->laboratoire;
     }
 
-    public function setLaboratoireId(?int $laboratoireId): self
+    public function setLaboratoire(?Laboratoire $laboratoire): self
     {
-        $this->laboratoireId = $laboratoireId;
+        $this->laboratoire = $laboratoire;
         return $this;
+    }
+
+    // Helper method to get the ID directly
+    public function getLaboratoireId(): ?int
+    {
+        return $this->laboratoire?->getId();
     }
 }

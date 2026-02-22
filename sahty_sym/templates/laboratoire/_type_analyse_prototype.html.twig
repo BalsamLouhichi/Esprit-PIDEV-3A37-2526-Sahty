@@ -1,0 +1,58 @@
+{# templates/labo/_type_analyse_prototype.html.twig #}
+
+<div class="row g-3">
+    <div class="col-md-6">
+        {{ form_row(form.typeAnalyse, {
+            label: 'Type d\'analyse *',
+            attr: { 
+                class: 'form-select form-select-lg type-analyse-select',
+                'data-live-search': 'true'
+            }
+        }) }}
+    </div>
+    
+    <div class="col-md-6">
+        <div class="form-check form-switch mt-4 pt-2">
+            {{ form_widget(form.disponible, {
+                attr: { 
+                    class: 'form-check-input',
+                    role: 'switch'
+                }
+            }) }}
+            {{ form_label(form.disponible, 'Disponible', {
+                label_attr: { class: 'form-check-label fw-bold' }
+            }) }}
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        {{ form_row(form.prix, {
+            label: 'Prix (DT)',
+            attr: { 
+                class: 'form-control form-control-lg',
+                placeholder: '0.00'
+            }
+        }) }}
+    </div>
+    
+    <div class="col-md-4">
+        {{ form_row(form.delaiResultatHeures, {
+            label: 'Délai (heures)',
+            attr: { 
+                class: 'form-control form-control-lg',
+                placeholder: '24'
+            }
+        }) }}
+    </div>
+    
+    <div class="col-md-4">
+        {{ form_row(form.conditions, {
+            label: 'Conditions',
+            attr: { 
+                class: 'form-control form-control-lg',
+                rows: 1,
+                placeholder: 'Conditions spécifiques...'
+            }
+        }) }}
+    </div>
+</div>

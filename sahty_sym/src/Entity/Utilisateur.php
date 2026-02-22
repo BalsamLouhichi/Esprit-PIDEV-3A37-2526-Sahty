@@ -43,7 +43,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     protected ?string $email = null;
 
-    #[ORM\Column(name: 'password', length: 255)]
+    #[ORM\Column(name: 'password', length: 255, nullable: true)]
     protected ?string $password = null;
 
     #[ORM\Column(length: 30)]
@@ -124,7 +124,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->getRoleSymfony() === $roleSymfony;
     }
 
-    public function getPassword(): string
+    public function getPassword(): ?string
     {
         return $this->password;
     }
@@ -154,7 +154,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this; 
     }
 
-    public function setPassword(string $password): self 
+    public function setPassword(?string $password): self 
     { 
         $this->password = $password; 
         return $this; 

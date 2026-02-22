@@ -1,0 +1,514 @@
+{# templates/demande_analyse/edit.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>MEDINOVA - Modifier la Demande d'Analyse</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    {# Favicon #}
+    <link href="{{ asset('img/favicon.ico') }}" rel="icon">
+
+    {# Google Web Fonts #}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    {# Icons #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    {# Bootstrap + Template CSS #}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    <style>
+        .edit-header {
+            background: linear-gradient(rgba(29, 42, 77, 0.9), rgba(29, 42, 77, 0.9)), url('{{ asset("img/lab-banner.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            padding: 100px 0 80px;
+        }
+        
+        .edit-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group-custom {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb, 13, 110, 253), 0.25);
+        }
+        
+        .info-box {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .info-box h5 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .btn-action {
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-update { background: var(--primary); color: white; }
+        .btn-cancel { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .test-mode-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            background: #ffc107;
+            color: #000;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .current-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .current-info i {
+            color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .edit-header {
+                padding: 70px 0 50px;
+            }
+            
+            .edit-card {
+                padding: 25px;
+            }
+            
+            .test-mode-indicator {
+                top: 70px;
+                right: 10px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{# ✅ Topbar + Navbar #}
+{% include 'partials/header.html.twig' %}
+
+{# Mode test indicator #}
+{% if test_mode is defined and test_mode %}
+    <div class="test-mode-indicator">
+        <i class="fas fa-flask me-1"></i> MODE TEST
+    </div>
+{% endif %}
+
+{# ===========================
+   Header
+   =========================== #}
+<div class="container-fluid edit-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 mb-3">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_home') }}" class="text-white">Accueil</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_demande_analyse_mes_demandes') }}" class="text-white">Mes Demandes</a>
+                        </li>
+                        <li class="breadcrumb-item text-white active" aria-current="page">
+                            Modifier la Demande #{{ demande_analyse.id }}
+                        </li>
+                    </ol>
+                </nav>
+
+                <h1 class="display-3 text-white mb-4">Modifier la Demande</h1>
+                
+                <p class="text-white fs-5 mb-4">
+                    Mettez à jour les informations de votre demande d'analyse
+                </p>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 text-white">
+                    <span>
+                        <i class="fa fa-hashtag text-primary me-2"></i>
+                        ID: #{{ demande_analyse.id }}
+                    </span>
+                    
+                    <span>
+                        <i class="fa fa-calendar text-primary me-2"></i>
+                        Créée le: {{ demande_analyse.dateDemande|date('d/m/Y H:i') }}
+                    </span>
+                    
+                    {% if demande_analyse.resultatPdf %}
+                    <span class="badge bg-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Statut: Envoye
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ===========================
+   Content
+   =========================== #}
+<div class="container-fluid py-5">
+    <div class="container">
+        
+        {# Informations actuelles #}
+        <div class="row mb-5">
+            <div class="col-lg-12">
+                <div class="info-box">
+                    <h5><i class="fas fa-info-circle me-2"></i> Informations actuelles</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="current-info">
+                                <i class="fas fa-user-md"></i>
+                                <div>
+                                    <small class="text-muted">Patient</small>
+                                    <div class="fw-bold">{{ demande_analyse.patient.nomComplet ?? 'Non spécifié' }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="current-info">
+                                <i class="fas fa-hospital"></i>
+                                <div>
+                                    <small class="text-muted">Laboratoire</small>
+                                    <div class="fw-bold">{{ demande_analyse.laboratoire.nom ?? 'Non spécifié' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="current-info">
+                                <i class="fas fa-flag"></i>
+                                <div>
+                                    <small class="text-muted">Statut</small>
+                                    <div class="fw-bold">
+                                        {% if demande_analyse.resultatPdf %}
+                                            <span class="badge bg-success">Envoye</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">En attente</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="current-info">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div>
+                                    <small class="text-muted">Priorité</small>
+                                    <div class="fw-bold">
+                                        {% if demande_analyse.priorite == 'urgent' %}
+                                            <span class="badge bg-danger">Urgent</span>
+                                        {% elseif demande_analyse.priorite == 'haute' %}
+                                            <span class="badge bg-warning">Haute</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">Normale</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if demande_analyse.notes %}
+                    <div class="current-info mt-3">
+                        <i class="fas fa-sticky-note"></i>
+                        <div>
+                            <small class="text-muted">Notes actuelles</small>
+                            <div class="fw-bold">{{ demande_analyse.notes|nl2br }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Formulaire de modification #}
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="edit-card">
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+                    
+                    <div class="row">
+                        {# Type de bilan #}
+                        <div class="col-md-12">
+                            <div class="form-group-custom">
+                                {{ form_label(form.type_bilan, 'Type de bilan *', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.type_bilan, {'attr': {
+                                    'class': 'form-control',
+                                    'placeholder': 'Ex: Bilan sanguin complet, Bilan lipidique...'
+                                }}) }}
+                                <div class="form-text">Décrivez le type d'analyse souhaité</div>
+                                {{ form_errors(form.type_bilan) }}
+                            </div>
+                        </div>
+                        
+                        {# Laboratoire #}
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                {{ form_label(form.laboratoire, 'Laboratoire *', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.laboratoire, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.laboratoire) }}
+                            </div>
+                        </div>
+                        
+                        {# Priorité #}
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                {{ form_label(form.priorite, 'Priorité *', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.priorite, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.priorite) }}
+                            </div>
+                        </div>
+                        
+                        {# Médecin (optionnel) #}
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                {{ form_label(form.medecin, 'Médecin prescripteur', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.medecin, {'attr': {'class': 'form-select'}}) }}
+                                <div class="form-text">Optionnel - laissez vide si aucun médecin</div>
+                                {{ form_errors(form.medecin) }}
+                            </div>
+                        </div>
+                        
+                        {# Date programmée #}
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                {{ form_label(form.programme_le, 'Date et heure souhaitées', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.programme_le, {'attr': {'class': 'form-control datetime-picker'}}) }}
+                                <div class="form-text">Optionnel - laissez vide si pas de préférence</div>
+                                {{ form_errors(form.programme_le) }}
+                            </div>
+                        </div>
+                        
+                        {# Notes #}
+                        <div class="col-md-12">
+                            <div class="form-group-custom">
+                                {{ form_label(form.notes, 'Notes complémentaires', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.notes, {'attr': {
+                                    'class': 'form-control',
+                                    'rows': 5,
+                                    'placeholder': 'Informations supplémentaires, symptômes, allergies, traitements en cours...'
+                                }}) }}
+                                {{ form_errors(form.notes) }}
+                            </div>
+                        </div>
+                        
+                        
+                        {# Champ patient pour admins/médecins #}
+                        {% if form.patient is defined %}
+                        <div class="col-md-12">
+                            <div class="form-group-custom">
+                                {{ form_label(form.patient, 'Patient *', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.patient, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.patient) }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {# Boutons d'action #}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-3">
+                                <button type="submit" class="btn btn-action btn-update">
+                                    <i class="fas fa-save"></i> Mettre à jour
+                                </button>
+                                
+                                <a href="{{ path('app_demande_analyse_mes_demandes') }}" class="btn btn-action btn-cancel">
+                                    <i class="fas fa-times"></i> Annuler
+                                </a>
+                                
+                                {% if demande_analyse.resultatPdf is null %}
+                                    <button type="button" 
+                                            class="btn btn-action btn-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{# Modal de suppression #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette demande d'analyse ?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cette action est irréversible. Toutes les données de la demande seront définitivement supprimées.
+                </div>
+                <p><strong>Détails de la demande :</strong></p>
+                <ul>
+                    <li>ID: #{{ demande_analyse.id }}</li>
+                    <li>Type: {{ demande_analyse.typeBilan }}</li>
+                    <li>Laboratoire: {{ demande_analyse.laboratoire.nom ?? 'Non spécifié' }}</li>
+                    <li>Date: {{ demande_analyse.dateDemande|date('d/m/Y H:i') }}</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <form method="post" action="{{ path('app_demande_analyse_delete', {'id': demande_analyse.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ demande_analyse.id) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Footer #}
+{% include 'partials/footer.html.twig' %}
+
+{# Back to Top #}
+<a href="#!" class="btn btn-lg btn-primary btn-lg-square back-to-top">
+    <i class="bi bi-arrow-up"></i>
+</a>
+
+{# JS #}
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+<script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du formulaire
+    const form = document.querySelector('form.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    }
+    
+    // Date picker amélioré
+    const dateInputs = document.querySelectorAll('.datetime-picker');
+    dateInputs.forEach(input => {
+        // S'assurer que la date est au format correct
+        if (input.value) {
+            const date = new Date(input.value);
+            input.value = date.toISOString().slice(0, 16); // Format YYYY-MM-DDTHH:mm
+        }
+        
+        // Limiter aux dates futures
+        const today = new Date().toISOString().slice(0, 16);
+        input.min = today;
+    });
+    
+    // Confirmation avant suppression via modal
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            // Logique supplémentaire si nécessaire
+        });
+    }
+    
+    // Mode test indicator
+    {% if test_mode is defined and test_mode %}
+        const testIndicator = document.querySelector('.test-mode-indicator');
+        if (testIndicator) {
+            testIndicator.addEventListener('click', function() {
+                alert('Mode test activé :\n\n' +
+                      '• Modification en mode test\n' +
+                      '• Les données sont mises à jour normalement\n' +
+                      '• Suppression possible uniquement pour "En attente"\n' +
+                      '• En production, vérifications supplémentaires');
+            });
+        }
+    {% endif %}
+    
+    // Avertissement si la demande n'est plus modifiable
+    {% if demande_analyse.resultatPdf %}
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                if (!confirm('Attention ! Cette demande a le statut "Envoye".\n\nÊtes-vous sûr de vouloir la modifier ? Certains changements pourraient ne pas être autorisés.')) {
+                    e.preventDefault();
+                }
+            });
+        }
+    {% endif %}
+});
+</script>
+
+</body>
+</html>

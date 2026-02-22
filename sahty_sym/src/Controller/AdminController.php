@@ -9,12 +9,19 @@ use App\Entity\RendezVous;
 use App\Entity\FicheMedicale;
 use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
+use App\Entity\Laboratoire;
+use App\Entity\TypeAnalyse;
+use App\Entity\DemandeAnalyse;
+use App\Entity\LaboratoireTypeAnalyse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use App\Repository\UtilisateurRepository;
 use App\Repository\RendezVousRepository;
 use App\Repository\FicheMedicaleRepository;
 use App\Repository\PatientRepository;
 use App\Repository\MedecinRepository;
+use App\Repository\LaboratoireRepository;
+use App\Repository\TypeAnalyseRepository;
+use App\Repository\DemandeAnalyseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,7 +49,9 @@ class AdminController extends AbstractController
         RendezVousRepository $rdvRepo,
         FicheMedicaleRepository $ficheRepo,
         MedecinRepository $medecinRepo,
-        PatientRepository $patientRepo
+        PatientRepository $patientRepo,
+        LaboratoireRepository $laboratoireRepo,
+        DemandeAnalyseRepository $demandeRepo
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
@@ -52,8 +61,31 @@ class AdminController extends AbstractController
         $totalPatients = $this->userRepo->count(['role' => 'patient']);
         $totalResponsableLabo = $this->userRepo->count(['role' => 'responsable_labo']);
         $totalResponsablePara = $this->userRepo->count(['role' => 'responsable_para']);
+        $totalLaboratoires = $laboratoireRepo->count([]);
+        $totalDemandesAnalyse = $demandeRepo->count([]);
         $totalInactive = $this->userRepo->count(['estActif' => false]);
         $totalActive = $totalUsers - $totalInactive;
+
+        // AJOUT: Statistiques pour la sidebar
+        $totalRendezVous = $rdvRepo->count([]);
+        $totalEvenements = $this->em->createQueryBuilder()
+            ->select('COUNT(e.id)')
+            ->from('App\Entity\Evenement', 'e')
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        $totalFichesMedicales = $ficheRepo->count([]);
+
+        // Statistiques des demandes d'analyse
+        $demandesEnAttente = $demandeRepo->count(['statut' => 'en_attente']);
+        $demandesEnCours = $demandeRepo->count(['statut' => 'en_cours']);
+        $demandesTerminees = $demandeRepo->count(['statut' => 'termine']);
+        
+        // Laboratoires récents
+        $recentLaboratoires = $laboratoireRepo->findBy([], ['cree_le' => 'DESC'], 5);
+        
+        // Demandes d'analyse récentes
+        $recentDemandes = $demandeRepo->findBy([], ['date_demande' => 'DESC'], 5);
 
         // Pourcentages de distribution
         $doctorsPercent = $totalUsers > 0 ? round(($totalMedecins / $totalUsers) * 100) : 0;
@@ -117,6 +149,13 @@ class AdminController extends AbstractController
             'totalActive' => $totalActive,
             'totalResponsableLabo' => $totalResponsableLabo,
             'totalResponsablePara' => $totalResponsablePara,
+            'totalLaboratoires' => $totalLaboratoires,
+            'totalDemandesAnalyse' => $totalDemandesAnalyse,
+            'totalRendezVous' => $totalRendezVous, // AJOUT
+            'totalEvenements' => $totalEvenements, // AJOUT
+            'totalFichesMedicales' => $totalFichesMedicales, // AJOUT
+            'recent_laboratoires' => $recentLaboratoires,
+            'recent_demandes_analyse' => $recentDemandes,
             'stats' => [
                 'total_users' => $totalUsers,
                 'active_doctors' => $totalMedecins,
@@ -125,6 +164,13 @@ class AdminController extends AbstractController
                 'todays_patients' => $rdvRepo->count(['dateRdv' => new \DateTime()]),
                 'available_doctors' => $totalMedecins,
                 'weekly_appointments' => $this->getWeeklyAppointmentsData($rdvRepo),
+                'demandes_en_attente' => $demandesEnAttente,
+                'demandes_en_cours' => $demandesEnCours,
+                'demandes_terminees' => $demandesTerminees,
+                'analyses_en_cours' => $demandesEnCours,
+                'analyses_terminees' => $demandesTerminees,
+                'commandes_en_attente' => 0, // À ajouter si nécessaire
+                'demandes_evenements' => 0, // À ajouter si nécessaire
             ],
             'charts' => [
                 'months' => $months,
@@ -160,6 +206,978 @@ class AdminController extends AbstractController
             'medical_records_count' => $medicalRecordsCount,
             'app_name' => 'Sahty',
             'app_version' => '1.0.0',
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES LABORATOIRES ====================
+
+    #[Route('/laboratoires', name: 'laboratoires')]
+    public function laboratoires(Request $request, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        // Récupérer les paramètres de filtrage
+        $search = $request->query->get('search');
+        $ville = $request->query->get('ville');
+        $disponible = $request->query->get('disponible');
+        
+        // Construire les critères de recherche
+        $criteria = [];
+        if ($ville) {
+            $criteria['ville'] = $ville;
+        }
+        if ($disponible !== null && $disponible !== '') {
+            $criteria['disponible'] = (bool)$disponible;
+        }
+        
+        // Récupérer les laboratoires avec ou sans recherche textuelle
+        if ($search) {
+            // Recherche textuelle (nom, ville, adresse)
+            $laboratoires = $laboratoireRepo->createQueryBuilder('l')
+                ->where('l.nom LIKE :search')
+                ->orWhere('l.ville LIKE :search')
+                ->orWhere('l.adresse LIKE :search')
+                ->setParameter('search', '%' . $search . '%')
+                ->orderBy('l.nom', 'ASC')
+                ->getQuery()
+                ->getResult();
+        } else {
+            // Filtrage simple
+            $laboratoires = $laboratoireRepo->findBy($criteria, ['nom' => 'ASC']);
+        }
+        
+        // Récupérer la liste unique des villes pour le filtre
+        $villes = $laboratoireRepo->createQueryBuilder('l')
+            ->select('DISTINCT l.ville')
+            ->where('l.ville IS NOT NULL')
+            ->orderBy('l.ville', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return $this->render('admin/laboratoires/index.html.twig', [
+            'laboratoires' => $laboratoires,
+            'villes' => $villes,
+            'searchQuery' => $search,
+            'selectedVille' => $ville,
+            'selectedDisponible' => $disponible,
+        ]);
+    }
+    
+    #[Route('/laboratoire/new', name: 'laboratoire_new')]
+    public function laboratoireNew(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_laboratoire_new');
+            }
+
+            $data = $request->request;
+            
+            $laboratoire = new Laboratoire();
+            $laboratoire->setNom($data->get('nom'));
+            $laboratoire->setVille($data->get('ville'));
+            $laboratoire->setAdresse($data->get('adresse'));
+            $laboratoire->setTelephone($data->get('telephone'));
+            $laboratoire->setEmail($data->get('email'));
+            $laboratoire->setDescription($data->get('description'));
+            $laboratoire->setNumeroAgrement($data->get('numeroAgrement'));
+            $laboratoire->setLatitude($data->get('latitude') ? (float)$data->get('latitude') : null);
+            $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
+            $laboratoire->setDisponible($data->get('disponible') ? true : false);
+            
+            // Gestion du responsable
+            $responsableId = $data->get('responsable_id');
+            if ($responsableId) {
+                $responsable = $this->userRepo->find($responsableId);
+                if ($responsable instanceof ResponsableLaboratoire) {
+                    $laboratoire->setResponsable($responsable);
+                }
+            }
+
+            $this->em->persist($laboratoire);
+            $this->em->flush();
+
+            $this->addFlash('success', 'Laboratoire créé avec succès.');
+            return $this->redirectToRoute('admin_laboratoire_view', ['id' => $laboratoire->getId()]);
+        }
+
+        // Récupérer les responsables disponibles
+        $responsables = $this->userRepo->findBy(['role' => 'responsable_labo', 'estActif' => true]);
+
+        return $this->render('admin/laboratoires/form.html.twig', [
+            'laboratoire' => null,
+            'responsables' => $responsables,
+        ]);
+    }
+
+    #[Route('/laboratoire/{id}', name: 'laboratoire_view', requirements: ['id' => '\d+'])]
+    public function laboratoireView(int $id, LaboratoireRepository $laboratoireRepo, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $laboratoire = $laboratoireRepo->find($id);
+        if (!$laboratoire) {
+            throw $this->createNotFoundException('Laboratoire non trouvé');
+        }
+
+        // Récupérer les demandes d'analyse pour ce laboratoire
+        $demandes = $demandeRepo->findBy(['laboratoire' => $laboratoire], ['date_demande' => 'DESC'], 10);
+
+        return $this->render('admin/laboratoires/view.html.twig', [
+            'laboratoire' => $laboratoire,
+            'demandes' => $demandes,
+        ]);
+    }
+
+    #[Route('/laboratoire/{id}/edit', name: 'laboratoire_edit', requirements: ['id' => '\d+'])]
+    public function laboratoireEdit(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $laboratoire = $laboratoireRepo->find($id);
+        if (!$laboratoire) {
+            throw $this->createNotFoundException('Laboratoire non trouvé');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_laboratoire_edit', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            
+            $laboratoire->setNom($data->get('nom'));
+            $laboratoire->setVille($data->get('ville'));
+            $laboratoire->setAdresse($data->get('adresse'));
+            $laboratoire->setTelephone($data->get('telephone'));
+            $laboratoire->setEmail($data->get('email'));
+            $laboratoire->setDescription($data->get('description'));
+            $laboratoire->setNumeroAgrement($data->get('numeroAgrement'));
+            $laboratoire->setLatitude($data->get('latitude') ? (float)$data->get('latitude') : null);
+            $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
+            $laboratoire->setDisponible($data->get('disponible') ? true : false);
+            
+            // Gestion du responsable
+            $responsableId = $data->get('responsable_id');
+            if ($responsableId) {
+                $responsable = $this->userRepo->find($responsableId);
+                if ($responsable instanceof ResponsableLaboratoire) {
+                    $laboratoire->setResponsable($responsable);
+                }
+            } else {
+                $laboratoire->setResponsable(null);
+            }
+
+            $this->em->flush();
+
+            $this->addFlash('success', 'Laboratoire mis à jour avec succès.');
+            return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
+        }
+
+        // Récupérer les responsables disponibles
+        $responsables = $this->userRepo->findBy(['role' => 'responsable_labo', 'estActif' => true]);
+
+        return $this->render('admin/laboratoires/form.html.twig', [
+            'laboratoire' => $laboratoire,
+            'responsables' => $responsables,
+        ]);
+    }
+
+    #[Route('/laboratoire/{id}/delete', name: 'laboratoire_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function laboratoireDelete(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $laboratoire = $laboratoireRepo->find($id);
+        if (!$laboratoire) {
+            $this->addFlash('danger', 'Laboratoire non trouvé.');
+            return $this->redirectToRoute('admin_laboratoires');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete-laboratoire' . $laboratoire->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
+        }
+
+        // Vérifier s'il y a des demandes d'analyse associées
+        if ($laboratoire->getDemandeAnalyses()->count() > 0) {
+            $this->addFlash('danger', 'Impossible de supprimer ce laboratoire car il a des demandes d\'analyse associées.');
+            return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
+        }
+
+        $this->em->remove($laboratoire);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Laboratoire supprimé avec succès.');
+        return $this->redirectToRoute('admin_laboratoires');
+    }
+
+    #[Route('/laboratoire/{id}/toggle-disponibilite', name: 'laboratoire_toggle_disponibilite', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function laboratoireToggleDisponibilite(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $laboratoire = $laboratoireRepo->find($id);
+        if (!$laboratoire) {
+            $this->addFlash('danger', 'Laboratoire non trouvé.');
+            return $this->redirectToRoute('admin_laboratoires');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('toggle-laboratoire' . $laboratoire->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
+        }
+
+        $laboratoire->setDisponible(!$laboratoire->isDisponible());
+        $this->em->flush();
+
+        $status = $laboratoire->isDisponible() ? 'disponible' : 'indisponible';
+        $this->addFlash('success', "Laboratoire marqué comme $status.");
+        return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
+    }
+
+   #[Route('/laboratoires/stats', name: 'laboratoires_stats')]
+    public function laboratoiresStats(LaboratoireRepository $laboratoireRepo, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $laboratoires = $laboratoireRepo->findAll();
+        
+        $stats = [
+            'total' => count($laboratoires),
+            'disponibles' => 0,
+            'indisponibles' => 0,
+            'avec_responsable' => 0,
+            'sans_responsable' => 0,
+            'total_demandes' => 0,
+            'demandes_par_labo' => [],
+            'top_laboratoires' => [],
+        ];
+
+        foreach ($laboratoires as $labo) {
+            // Disponibilité
+            if ($labo->isDisponible()) {
+                $stats['disponibles']++;
+            } else {
+                $stats['indisponibles']++;
+            }
+
+            // Responsable
+            if ($labo->getResponsable()) {
+                $stats['avec_responsable']++;
+            } else {
+                $stats['sans_responsable']++;
+            }
+
+            // Demandes
+            $nbDemandes = $labo->getDemandeAnalyses()->count();
+            $stats['total_demandes'] += $nbDemandes;
+            
+            // Pour le graphique des demandes par laboratoire
+            $stats['demandes_par_labo'][] = [
+                'nom' => $labo->getNom(),
+                'count' => $nbDemandes
+            ];
+
+            // Pour le top laboratoires (avec toutes les infos)
+            if ($nbDemandes > 0) {
+                $responsable = $labo->getResponsable();
+                $stats['top_laboratoires'][] = [
+                    'id' => $labo->getId(),
+                    'nom' => $labo->getNom(),
+                    'ville' => $labo->getVille(),
+                    'count' => $nbDemandes,
+                    'responsable' => $responsable ? [
+                        'prenom' => $responsable->getPrenom(),
+                        'nom' => $responsable->getNom()
+                    ] : null
+                ];
+            }
+        }
+
+        // Trier les top laboratoires par nombre de demandes décroissant
+        usort($stats['top_laboratoires'], fn($a, $b) => $b['count'] <=> $a['count']);
+        $stats['top_laboratoires'] = array_slice($stats['top_laboratoires'], 0, 5);
+
+        return $this->render('admin/laboratoires/stats.html.twig', [
+            'stats' => $stats
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES TYPES D'ANALYSE ====================
+
+    #[Route('/types-analyse', name: 'type_analyse_list')]
+    public function typeAnalyseList(TypeAnalyseRepository $typeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $types = $typeRepo->findBy([], ['nom' => 'ASC']);
+
+        return $this->render('admin/type_analyse/index.html.twig', [
+            'types' => $types,
+        ]);
+    }
+
+    #[Route('/type-analyse/new', name: 'type_analyse_new')]
+    public function typeAnalyseNew(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_type_analyse_new');
+            }
+
+            $data = $request->request;
+            
+            $type = new TypeAnalyse();
+            $type->setNom($data->get('nom'));
+            $type->setDescription($data->get('description'));
+            $type->setActif($data->get('actif') ? true : false);
+            $type->setCategorie($data->get('categorie'));
+
+            $this->em->persist($type);
+            $this->em->flush();
+
+            $this->addFlash('success', 'Type d\'analyse créé avec succès.');
+            return $this->redirectToRoute('admin_type_analyse_list');
+        }
+
+        return $this->render('admin/type_analyse/form.html.twig', [
+            'type' => null,
+        ]);
+    }
+
+    #[Route('/type-analyse/{id}/edit', name: 'type_analyse_edit', requirements: ['id' => '\d+'])]
+    public function typeAnalyseEdit(Request $request, int $id, TypeAnalyseRepository $typeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $type = $typeRepo->find($id);
+        if (!$type) {
+            throw $this->createNotFoundException('Type d\'analyse non trouvé');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_type_analyse_edit', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            
+            $type->setNom($data->get('nom'));
+            $type->setDescription($data->get('description'));
+            $type->setActif($data->get('actif') ? true : false);
+            $type->setCategorie($data->get('categorie'));
+
+            $this->em->flush();
+
+            $this->addFlash('success', 'Type d\'analyse mis à jour avec succès.');
+            return $this->redirectToRoute('admin_type_analyse_list');
+        }
+
+        return $this->render('admin/type_analyse/form.html.twig', [
+            'type' => $type,
+        ]);
+    }
+
+    #[Route('/type-analyse/{id}/delete', name: 'type_analyse_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function typeAnalyseDelete(Request $request, int $id, TypeAnalyseRepository $typeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $type = $typeRepo->find($id);
+        if (!$type) {
+            $this->addFlash('danger', 'Type d\'analyse non trouvé.');
+            return $this->redirectToRoute('admin_type_analyse_list');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete-type-analyse' . $type->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_type_analyse_list');
+        }
+
+        // Vérifier s'il est utilisé par des laboratoires
+        if ($type->getLaboratoireTypeAnalyses()->count() > 0) {
+            $this->addFlash('danger', 'Ce type d\'analyse est utilisé par des laboratoires et ne peut pas être supprimé.');
+            return $this->redirectToRoute('admin_type_analyse_list');
+        }
+
+        $this->em->remove($type);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Type d\'analyse supprimé avec succès.');
+        return $this->redirectToRoute('admin_type_analyse_list');
+    }
+    
+    #[Route('/types-analyse/stats', name: 'type_analyse_stats')]
+    public function typeAnalyseStats(TypeAnalyseRepository $typeRepo, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        // Récupérer tous les types d'analyse
+        $types = $typeRepo->findAll();
+        
+        // Statistiques globales
+        $stats = [
+            'total' => count($types),
+            'actifs' => 0,
+            'inactifs' => 0,
+            'total_laboratoires' => $laboratoireRepo->count([]),
+            'types_par_laboratoire' => [],
+            'top_types' => [],
+            'repartition_actifs' => [],
+            'par_categorie' => [],
+            'nb_categories' => 0,
+            'sans_laboratoire' => 0,
+            'avec_laboratoire' => 0,
+            'moyenne_par_type' => 0,
+            'max_associations' => 0,
+        ];
+        
+        $typesCount = [];
+        $categoriesCount = [];
+        $totalAssociations = 0;
+        
+        foreach ($types as $type) {
+            // Compter les actifs/inactifs
+            if ($type->isActif()) {
+                $stats['actifs']++;
+            } else {
+                $stats['inactifs']++;
+            }
+            
+            // Compter par catégorie
+            $categorie = $type->getCategorie() ?: 'Sans catégorie';
+            if (!isset($categoriesCount[$categorie])) {
+                $categoriesCount[$categorie] = 0;
+            }
+            $categoriesCount[$categorie]++;
+            
+            // Compter les associations avec laboratoires
+            $nbLabos = $type->getLaboratoireTypeAnalyses()->count();
+            $totalAssociations += $nbLabos;
+            
+            if ($nbLabos > 0) {
+                $stats['avec_laboratoire']++;
+                $stats['max_associations'] = max($stats['max_associations'], $nbLabos);
+                
+                $typesCount[] = [
+                    'nom' => $type->getNom(),
+                    'categorie' => $type->getCategorie(),
+                    'actif' => $type->isActif(),
+                    'count' => $nbLabos
+                ];
+            } else {
+                $stats['sans_laboratoire']++;
+            }
+        }
+        
+        // Calcul de la moyenne
+        $stats['moyenne_par_type'] = $stats['total'] > 0 ? round($totalAssociations / $stats['total'], 1) : 0;
+        
+        // Trier les types par popularité
+        usort($typesCount, fn($a, $b) => $b['count'] <=> $a['count']);
+        $stats['top_types'] = array_slice($typesCount, 0, 5);
+        
+        // Préparer les données pour les catégories
+        $stats['par_categorie'] = [];
+        foreach ($categoriesCount as $categorie => $count) {
+            $stats['par_categorie'][] = [
+                'categorie' => $categorie,
+                'count' => $count
+            ];
+        }
+        $stats['nb_categories'] = count($categoriesCount);
+        
+        // Préparer les données pour les graphiques
+        $stats['repartition_actifs'] = [
+            ['statut' => 'Actifs', 'count' => $stats['actifs']],
+            ['statut' => 'Inactifs', 'count' => $stats['inactifs']]
+        ];
+        
+        return $this->render('admin/type_analyse/stats.html.twig', [
+            'stats' => $stats
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES DEMANDES D'ANALYSE ====================
+
+    #[Route('/demandes-analyse', name: 'demande_analyse_list')]
+    public function demandeAnalyseList(Request $request, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $statut = $request->query->get('statut');
+        $laboratoire = $request->query->get('laboratoire');
+        
+        $criteria = [];
+        if ($statut) {
+            $criteria['statut'] = $statut;
+        }
+        if ($laboratoire) {
+            $criteria['laboratoire'] = $laboratoire;
+        }
+        
+        $demandes = $demandeRepo->findBy($criteria, ['date_demande' => 'DESC']);
+
+        return $this->render('admin/demande_analyse/index.html.twig', [
+            'demandes' => $demandes,
+            'selected_statut' => $statut,
+            'selected_laboratoire' => $laboratoire,
+        ]);
+    }
+
+    #[Route('/demande-analyse/new', name: 'demande_analyse_new')]
+    public function demandeAnalyseNew(Request $request, LaboratoireRepository $laboratoireRepo, PatientRepository $patientRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_demande_analyse_new');
+            }
+
+            $data = $request->request;
+            
+            $demande = new DemandeAnalyse();
+            
+            // Patient
+            $patientId = $data->get('patient_id');
+            if ($patientId) {
+                $patient = $patientRepo->find($patientId);
+                $demande->setPatient($patient);
+            }
+            
+            // Laboratoire
+            $laboratoireId = $data->get('laboratoire_id');
+            if ($laboratoireId) {
+                $laboratoire = $laboratoireRepo->find($laboratoireId);
+                $demande->setLaboratoire($laboratoire);
+            }
+            
+            $demande->setTypeBilan($data->get('type_bilan'));
+            $demande->setStatut($data->get('statut') ?? 'en_attente');
+            $demande->setPriorite($data->get('priorite') ?? 'Normale');
+            $demande->setNotes($data->get('notes'));
+            
+            // Analyses (sous forme de tableau)
+            $analyses = $data->get('analyses', []);
+            $demande->setAnalyses($analyses);
+            
+            // Programme le
+            if ($data->get('programme_le')) {
+                try {
+                    $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
+                } catch (\Exception $e) {}
+            }
+            
+            // Envoyé le
+            if ($data->get('envoye_le')) {
+                try {
+                    $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
+                } catch (\Exception $e) {}
+            }
+
+            // Upload du résultat PDF
+            /** @var UploadedFile $pdfFile */
+            $pdfFile = $request->files->get('resultat_pdf');
+            if ($pdfFile instanceof UploadedFile) {
+                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                }
+                $filename = uniqid('resultat_') . '.' . $pdfFile->guessExtension();
+                $pdfFile->move($uploadsDir, $filename);
+                $demande->setResultatPdf($filename);
+            }
+
+            $this->em->persist($demande);
+            $this->em->flush();
+
+            $this->addFlash('success', 'Demande d\'analyse créée avec succès.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $demande->getId()]);
+        }
+
+        // Récupérer les laboratoires et patients pour les listes déroulantes
+        $laboratoires = $laboratoireRepo->findBy(['disponible' => true], ['nom' => 'ASC']);
+        $patients = $patientRepo->findBy([], ['nom' => 'ASC', 'prenom' => 'ASC']);
+
+        return $this->render('admin/demande_analyse/form.html.twig', [
+            'demande' => null,
+            'laboratoires' => $laboratoires,
+            'patients' => $patients,
+        ]);
+    }
+
+    #[Route('/demande-analyse/{id}', name: 'demande_analyse_view', requirements: ['id' => '\d+'])]
+    public function demandeAnalyseView(int $id, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $demande = $demandeRepo->find($id);
+        if (!$demande) {
+            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+        }
+
+        return $this->render('admin/demande_analyse/view.html.twig', [
+            'demande' => $demande,
+        ]);
+    }
+
+    #[Route('/demande-analyse/{id}/edit', name: 'demande_analyse_edit', requirements: ['id' => '\d+'])]
+    public function demandeAnalyseEdit(Request $request, int $id, DemandeAnalyseRepository $demandeRepo, LaboratoireRepository $laboratoireRepo, PatientRepository $patientRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $demande = $demandeRepo->find($id);
+        if (!$demande) {
+            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_demande_analyse_edit', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            
+            // Patient
+            $patientId = $data->get('patient_id');
+            if ($patientId) {
+                $patient = $patientRepo->find($patientId);
+                $demande->setPatient($patient);
+            }
+            
+            // Laboratoire
+            $laboratoireId = $data->get('laboratoire_id');
+            if ($laboratoireId) {
+                $laboratoire = $laboratoireRepo->find($laboratoireId);
+                $demande->setLaboratoire($laboratoire);
+            }
+            
+            $demande->setTypeBilan($data->get('type_bilan'));
+            $demande->setStatut($data->get('statut'));
+            $demande->setPriorite($data->get('priorite'));
+            $demande->setNotes($data->get('notes'));
+            
+            // Analyses (sous forme de tableau)
+            $analyses = $data->get('analyses', []);
+            $demande->setAnalyses($analyses);
+            
+            // Programme le
+            if ($data->get('programme_le')) {
+                try {
+                    $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
+                } catch (\Exception $e) {}
+            } else {
+                $demande->setProgrammeLe(null);
+            }
+            
+            // Envoyé le
+            if ($data->get('envoye_le')) {
+                try {
+                    $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
+                } catch (\Exception $e) {}
+            } else {
+                $demande->setEnvoyeLe(null);
+            }
+
+            // Upload du résultat PDF
+            /** @var UploadedFile $pdfFile */
+            $pdfFile = $request->files->get('resultat_pdf');
+            if ($pdfFile instanceof UploadedFile) {
+                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                }
+                $filename = uniqid('resultat_') . '.' . $pdfFile->guessExtension();
+                $pdfFile->move($uploadsDir, $filename);
+                $demande->setResultatPdf($filename);
+            }
+
+            $this->em->flush();
+
+            $this->addFlash('success', 'Demande d\'analyse mise à jour avec succès.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+        }
+
+        // Récupérer les laboratoires et patients pour les listes déroulantes
+        $laboratoires = $laboratoireRepo->findBy([], ['nom' => 'ASC']);
+        $patients = $patientRepo->findBy([], ['nom' => 'ASC', 'prenom' => 'ASC']);
+
+        return $this->render('admin/demande_analyse/form.html.twig', [
+            'demande' => $demande,
+            'laboratoires' => $laboratoires,
+            'patients' => $patients,
+        ]);
+    }
+
+    #[Route('/demande-analyse/{id}/delete', name: 'demande_analyse_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function demandeAnalyseDelete(Request $request, int $id, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $demande = $demandeRepo->find($id);
+        if (!$demande) {
+            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            return $this->redirectToRoute('admin_demande_analyse_list');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete-demande-analyse' . $demande->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+        }
+
+        $this->em->remove($demande);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Demande d\'analyse supprimée avec succès.');
+        return $this->redirectToRoute('admin_demande_analyse_list');
+    }
+
+    #[Route('/demande-analyse/{id}/update-statut', name: 'demande_analyse_update_statut', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function demandeAnalyseUpdateStatut(Request $request, int $id, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $demande = $demandeRepo->find($id);
+        if (!$demande) {
+            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            return $this->redirectToRoute('admin_demande_analyse_list');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('update-demande-statut' . $demande->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+        }
+
+        $newStatut = $request->request->get('statut');
+        $demande->setStatut($newStatut);
+        
+        // Mettre à jour les dates en fonction du statut
+        if ($newStatut === 'en_cours') {
+            $demande->setProgrammeLe(new \DateTime());
+        } elseif ($newStatut === 'termine') {
+            $demande->setEnvoyeLe(new \DateTime());
+        }
+
+        $this->em->flush();
+
+        $this->addFlash('success', 'Statut de la demande mis à jour avec succès.');
+        return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+    }
+
+    #[Route('/demande-analyse/{id}/upload-resultat', name: 'demande_analyse_upload_resultat', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function demandeAnalyseUploadResultat(Request $request, int $id, DemandeAnalyseRepository $demandeRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $demande = $demandeRepo->find($id);
+        if (!$demande) {
+            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            return $this->redirectToRoute('admin_demande_analyse_list');
+        }
+
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('upload-resultat' . $demande->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+        }
+
+        /** @var UploadedFile $pdfFile */
+        $pdfFile = $request->files->get('resultat_pdf');
+        if ($pdfFile instanceof UploadedFile) {
+            $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+            if (!is_dir($uploadsDir)) {
+                @mkdir($uploadsDir, 0777, true);
+            }
+            $filename = uniqid('resultat_') . '.' . $pdfFile->guessExtension();
+            $pdfFile->move($uploadsDir, $filename);
+            
+            // Supprimer l'ancien fichier s'il existe
+            $oldFile = $demande->getResultatPdf();
+            if ($oldFile && file_exists($uploadsDir . '/' . $oldFile)) {
+                unlink($uploadsDir . '/' . $oldFile);
+            }
+            
+            $demande->setResultatPdf($filename);
+            $demande->setStatut('termine');
+            $demande->setEnvoyeLe(new \DateTime());
+            
+            $this->em->flush();
+            
+            $this->addFlash('success', 'Résultat uploadé avec succès.');
+        } else {
+            $this->addFlash('danger', 'Veuillez sélectionner un fichier PDF.');
+        }
+
+        return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+    }
+
+    #[Route('/demandes-analyse/stats', name: 'demande_analyse_stats')]
+    public function demandeAnalyseStats(DemandeAnalyseRepository $demandeRepo, LaboratoireRepository $laboratoireRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        // Récupérer toutes les demandes
+        $demandes = $demandeRepo->findAll();
+        
+        // Statistiques globales
+        $stats = [
+            'total' => count($demandes),
+            'en_attente' => 0,
+            'en_cours' => 0,
+            'termine' => 0,
+            'annule' => 0,
+            'priorite_haute' => 0,
+            'priorite_moyenne' => 0,
+            'priorite_normale' => 0,
+            'total_patients' => 0,
+            'total_laboratoires' => $laboratoireRepo->count([]),
+            'demandes_par_mois' => [],
+            'demandes_par_laboratoire' => [],
+            'top_patients' => [],
+            'delai_moyen_traitement' => 0,
+        ];
+        
+        // Tableaux pour les calculs
+        $patientsCount = [];
+        $laboratoiresCount = [];
+        $totalDelai = 0;
+        $nbTermines = 0;
+        
+        foreach ($demandes as $demande) {
+            // Compter par statut
+            switch ($demande->getStatut()) {
+                case 'en_attente':
+                    $stats['en_attente']++;
+                    break;
+                case 'en_cours':
+                    $stats['en_cours']++;
+                    break;
+                case 'termine':
+                    $stats['termine']++;
+                    // Calcul du délai de traitement
+                    if ($demande->getDateDemande() && $demande->getEnvoyeLe()) {
+                        $delai = $demande->getDateDemande()->diff($demande->getEnvoyeLe())->days;
+                        $totalDelai += $delai;
+                        $nbTermines++;
+                    }
+                    break;
+                case 'annule':
+                    $stats['annule']++;
+                    break;
+            }
+            
+            // Compter par priorité
+            switch ($demande->getPriorite()) {
+                case 'Haute':
+                    $stats['priorite_haute']++;
+                    break;
+                case 'Moyenne':
+                    $stats['priorite_moyenne']++;
+                    break;
+                default:
+                    $stats['priorite_normale']++;
+                    break;
+            }
+            
+            // Compter par mois
+            $mois = $demande->getDateDemande()->format('m/Y');
+            if (!isset($stats['demandes_par_mois'][$mois])) {
+                $stats['demandes_par_mois'][$mois] = 0;
+            }
+            $stats['demandes_par_mois'][$mois]++;
+            
+            // Compter par laboratoire
+            $laboratoire = $demande->getLaboratoire();
+            if ($laboratoire) {
+                $labId = $laboratoire->getId();
+                if (!isset($laboratoiresCount[$labId])) {
+                    $laboratoiresCount[$labId] = [
+                        'nom' => $laboratoire->getNom(),
+                        'count' => 0
+                    ];
+                }
+                $laboratoiresCount[$labId]['count']++;
+            }
+            
+            // Compter par patient
+            $patient = $demande->getPatient();
+            if ($patient) {
+                $patientId = $patient->getId();
+                if (!isset($patientsCount[$patientId])) {
+                    $patientsCount[$patientId] = [
+                        'id' => $patientId,
+                        'nom' => $patient->getNom(),
+                        'prenom' => $patient->getPrenom(),
+                        'count' => 0
+                    ];
+                }
+                $patientsCount[$patientId]['count']++;
+            }
+        }
+        
+        // Calcul du délai moyen de traitement
+        $stats['delai_moyen_traitement'] = $nbTermines > 0 ? round($totalDelai / $nbTermines, 1) : 0;
+        
+        // Compter les patients uniques
+        $stats['total_patients'] = count($patientsCount);
+        
+        // Formater les demandes par mois pour le graphique
+        $stats['demandes_par_mois'] = array_map(function($mois, $count) {
+            return ['mois' => $mois, 'count' => $count];
+        }, array_keys($stats['demandes_par_mois']), array_values($stats['demandes_par_mois']));
+        
+        // Trier par mois (ordre chronologique)
+        usort($stats['demandes_par_mois'], function($a, $b) {
+            return strtotime('01/' . $a['mois']) <=> strtotime('01/' . $b['mois']);
+        });
+        
+        // Formater les demandes par laboratoire
+        $stats['demandes_par_laboratoire'] = array_values($laboratoiresCount);
+        usort($stats['demandes_par_laboratoire'], fn($a, $b) => $b['count'] <=> $a['count']);
+        
+        // Top patients
+        $stats['top_patients'] = array_values($patientsCount);
+        usort($stats['top_patients'], fn($a, $b) => $b['count'] <=> $a['count']);
+        $stats['top_patients'] = array_slice($stats['top_patients'], 0, 5);
+        
+        // Calcul des pourcentages
+        if ($stats['total'] > 0) {
+            $stats['pourcentage_attente'] = round($stats['en_attente'] / $stats['total'] * 100, 1);
+            $stats['pourcentage_cours'] = round($stats['en_cours'] / $stats['total'] * 100, 1);
+            $stats['pourcentage_termine'] = round($stats['termine'] / $stats['total'] * 100, 1);
+            $stats['pourcentage_annule'] = round($stats['annule'] / $stats['total'] * 100, 1);
+        } else {
+            $stats['pourcentage_attente'] = 0;
+            $stats['pourcentage_cours'] = 0;
+            $stats['pourcentage_termine'] = 0;
+            $stats['pourcentage_annule'] = 0;
+        }
+        
+        return $this->render('admin/demande_analyse/stats.html.twig', [
+            'stats' => $stats
         ]);
     }
 
@@ -910,8 +1928,6 @@ class AdminController extends AbstractController
         ]);
     }
 
-   
-
     #[Route('/appointments/{id}/update-status', name: 'update_appointment_status', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function updateAppointmentStatus(Request $request, int $id, RendezVousRepository $rdvRepo): Response
     {
@@ -1315,7 +2331,11 @@ class AdminController extends AbstractController
             }
 
             if ($user instanceof ResponsableLaboratoire) {
-                $user->setLaboratoireId($data->get('laboratoireId') ? (int)$data->get('laboratoireId') : null);
+                $laboratoireId = $data->get('laboratoire_id');
+                if ($laboratoireId) {
+                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
+                    $user->setLaboratoire($laboratoire);
+                }
             }
 
             if ($user instanceof ResponsableParapharmacie) {
@@ -1329,8 +2349,12 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_users');
         }
 
+        // Récupérer les laboratoires pour le formulaire
+        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
+
         return $this->render('admin/user_form.html.twig', [
             'user' => null,
+            'laboratoires' => $laboratoires,
         ]);
     }
 
@@ -1425,7 +2449,13 @@ class AdminController extends AbstractController
             }
 
             if ($user instanceof ResponsableLaboratoire) {
-                $user->setLaboratoireId($data->get('laboratoireId') ? (int)$data->get('laboratoireId') : null);
+                $laboratoireId = $data->get('laboratoire_id');
+                if ($laboratoireId) {
+                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
+                    $user->setLaboratoire($laboratoire);
+                } else {
+                    $user->setLaboratoire(null);
+                }
             }
 
             if ($user instanceof ResponsableParapharmacie) {
@@ -1437,8 +2467,12 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_users');
         }
 
+        // Récupérer les laboratoires pour le formulaire
+        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
+
         return $this->render('admin/user_form.html.twig', [
             'user' => $user,
+            'laboratoires' => $laboratoires,
         ]);
     }
 

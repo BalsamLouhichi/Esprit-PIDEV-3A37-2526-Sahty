@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des types d'analyse - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Gestion des types d'analyse</h4>
+                <div>
+                    <a href="{{ path('admin_type_analyse_stats') }}" class="btn btn-info me-2">
+                        <i class="fas fa-chart-bar"></i> Statistiques
+                    </a>
+                    <a href="{{ path('admin_type_analyse_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nouveau type d'analyse
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des types d'analyse -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Description</th>
+                                    <th>Catégorie</th>
+                                    <th>Statut</th>
+                                    <th>Laboratoires associés</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type in types %}
+                                    <tr>
+                                        <td>#{{ type.id }}</td>
+                                        <td class="fw-bold">{{ type.nom }}</td>
+                                        <td>
+                                            {% if type.description %}
+                                                {{ type.description|slice(0, 50) ~ (type.description|length > 50 ? '...' : '') }}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if type.categorie %}
+                                                {{ type.categorie }}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if type.actif %}
+                                                <span class="badge bg-success">Actif</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactif</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set nbLabos = type.laboratoireTypeAnalyses|length %}
+                                            {% if nbLabos > 0 %}
+                                                <span class="badge bg-info">{{ nbLabos }} laboratoire(s)</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ path('admin_type_analyse_edit', {'id': type.id}) }}" 
+                                                   class="btn btn-warning" title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-danger" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteModal{{ type.id }}"
+                                                        title="Supprimer"
+                                                        {% if type.laboratoireTypeAnalyses|length > 0 %}disabled{% endif %}>
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Modal de confirmation de suppression -->
+                                            <div class="modal fade" id="deleteModal{{ type.id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Confirmer la suppression</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body text-start">
+                                                            <p>Êtes-vous sûr de vouloir supprimer le type d'analyse <strong>{{ type.nom }}</strong> ?</p>
+                                                            {% if type.laboratoireTypeAnalyses|length > 0 %}
+                                                                <div class="alert alert-warning mt-2">
+                                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                                    Ce type d'analyse est associé à {{ type.laboratoireTypeAnalyses|length }} laboratoire(s) et ne peut pas être supprimé.
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                            {% if type.laboratoireTypeAnalyses|length == 0 %}
+                                                                <form method="post" action="{{ path('admin_type_analyse_delete', {'id': type.id}) }}" style="display: inline;">
+                                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete-type-analyse' ~ type.id) }}">
+                                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                                </form>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <i class="fas fa-flask fa-3x mb-3 text-muted"></i>
+                                            <p class="mb-0">Aucun type d'analyse trouvé</p>
+                                            <div class="mt-3">
+                                                <a href="{{ path('admin_type_analyse_stats') }}" class="btn btn-info me-2">
+                                                    <i class="fas fa-chart-bar"></i> Voir les statistiques
+                                                </a>
+                                                <a href="{{ path('admin_type_analyse_new') }}" class="btn btn-primary">
+                                                    <i class="fas fa-plus"></i> Créer un type d'analyse
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

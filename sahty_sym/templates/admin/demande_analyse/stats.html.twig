@@ -1,0 +1,385 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Compact mais lisible */
+    .stat-card {
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-card .card-body {
+        padding: 0.75rem !important;
+    }
+    .stat-icon {
+        font-size: 1.8rem;
+        opacity: 0.3;
+    }
+    .chart-container {
+        height: 230px !important;
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+    .chart-container canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 180px !important;
+        }
+    }
+    .table-sm td, .table-sm th {
+        padding: 0.4rem 0.5rem !important;
+        font-size: 0.8rem;
+    }
+    .badge-stat {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .row.g-2 > [class*="col-"] {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+    .card-header {
+        padding: 0.5rem 0.75rem !important;
+    }
+    .text-small {
+        font-size: 0.7rem;
+    }
+    .kpi-label {
+        font-size: 0.7rem;
+        opacity: 0.7;
+    }
+    .kpi-value {
+        font-size: 1.3rem;
+        line-height: 1.2;
+    }
+    .stat-card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="row mb-2">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-1"></i>Statistiques
+                </h5>
+                <a href="{{ path('admin_demande_analyse_list') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes KPI -->
+    <div class="row g-2 mb-3">
+        <div class="col-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="kpi-label">Total</div>
+                            <div class="kpi-value">{{ stats.total|default(0) }}</div>
+                        </div>
+                        <i class="fas fa-file-medical stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="kpi-label">Patients</div>
+                            <div class="kpi-value">{{ stats.total_patients|default(0) }}</div>
+                        </div>
+                        <i class="fas fa-users stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="kpi-label">Labos</div>
+                            <div class="kpi-value">{{ stats.total_laboratoires|default(0) }}</div>
+                        </div>
+                        <i class="fas fa-flask stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="kpi-label">Délai</div>
+                            <div class="kpi-value">{{ stats.delai_moyen_traitement|default(0) }} <small style="font-size: 0.7rem;">j</small></div>
+                        </div>
+                        <i class="fas fa-clock stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 graphiques côte à côte -->
+    <div class="row g-2 mb-3">
+        <!-- Statuts -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-1"></i> Statuts</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="row g-1 mt-2 text-center">
+                        <div class="col-6">
+                            <span class="badge bg-warning mb-1">{{ stats.pourcentage_attente|default(0) }}%</span>
+                            <div class="text-small">Attente</div>
+                            <strong>{{ stats.en_attente|default(0) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="badge bg-primary mb-1">{{ stats.pourcentage_cours|default(0) }}%</span>
+                            <div class="text-small">Cours</div>
+                            <strong>{{ stats.en_cours|default(0) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="badge bg-success mb-1">{{ stats.pourcentage_termine|default(0) }}%</span>
+                            <div class="text-small">Terminé</div>
+                            <strong>{{ stats.termine|default(0) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="badge bg-danger mb-1">{{ stats.pourcentage_annule|default(0) }}%</span>
+                            <div class="text-small">Annulé</div>
+                            <strong>{{ stats.annule|default(0) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Priorités -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-1"></i> Priorités</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                    <div class="row g-1 mt-2 text-center">
+                        <div class="col-4">
+                            <span class="badge bg-danger mb-1">{{ stats.priorite_haute|default(0) }}</span>
+                            <div class="text-small">Haute</div>
+                        </div>
+                        <div class="col-4">
+                            <span class="badge bg-warning mb-1">{{ stats.priorite_moyenne|default(0) }}</span>
+                            <div class="text-small">Moyenne</div>
+                        </div>
+                        <div class="col-4">
+                            <span class="badge bg-info mb-1">{{ stats.priorite_normale|default(0) }}</span>
+                            <div class="text-small">Normale</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Évolution mensuelle -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-1"></i> Évolution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <!-- Mini légende pour l'évolution -->
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            {% for item in stats.demandes_par_mois|default([]) %}
+                                {{ item.mois|default('')|slice(0,3) }}{{ not loop.last ? ' · ' }}
+                            {% endfor %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableaux -->
+    <div class="row g-2">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-flask me-1"></i>Top 3 laboratoires</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-2">Laboratoire</th>
+                                <th class="text-center">Nb</th>
+                                <th class="text-center pe-2">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for labo in stats.demandes_par_laboratoire|slice(0, 3) %}
+                                <tr>
+                                    <td class="ps-2">{{ labo.nom|default('N/A') }}</td>
+                                    <td class="text-center"><span class="badge bg-primary">{{ labo.count|default(0) }}</span></td>
+                                    <td class="text-center pe-2">{{ ((labo.count|default(0) / stats.total|default(1)) * 100)|round }}%</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="3" class="text-center py-2">-</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-user me-1"></i>Top 3 patients</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-2">Patient</th>
+                                <th class="text-center">Nb</th>
+                                <th class="text-center pe-2">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in stats.top_patients|slice(0, 3) %}
+                                <tr>
+                                    <td class="ps-2">{{ patient.prenom|default('')[:1] }}. {{ patient.nom|default('N/A') }}</td>
+                                    <td class="text-center"><span class="badge bg-info">{{ patient.count|default(0) }}</span></td>
+                                    <td class="text-center pe-2">{{ ((patient.count|default(0) / stats.total|default(1)) * 100)|round }}%</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="3" class="text-center py-2">-</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique des statuts
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['En attente', 'En cours', 'Terminé', 'Annulé'],
+            datasets: [{
+                data: [{{ stats.en_attente|default(0) }}, {{ stats.en_cours|default(0) }}, {{ stats.termine|default(0) }}, {{ stats.annule|default(0) }}],
+                backgroundColor: ['#ffc107', '#0d6efd', '#198754', '#dc3545'],
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: { 
+                legend: { display: false },
+                tooltip: { enabled: true, bodyFont: { size: 10 } }
+            }
+        }
+    });
+
+    // Graphique des priorités
+    new Chart(document.getElementById('priorityChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Haute', 'Moyenne', 'Normale'],
+            datasets: [{
+                data: [{{ stats.priorite_haute|default(0) }}, {{ stats.priorite_moyenne|default(0) }}, {{ stats.priorite_normale|default(0) }}],
+                backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0'],
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: { 
+                legend: { display: false },
+                tooltip: { enabled: true, bodyFont: { size: 10 } }
+            }
+        }
+    });
+
+    // Graphique mensuel
+    new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [{% for item in stats.demandes_par_mois|default([]) %}'{{ item.mois|default('')|slice(0,3) }}'{{ not loop.last ? ',' }}{% endfor %}],
+            datasets: [{
+                data: [{% for item in stats.demandes_par_mois|default([]) %}{{ item.count|default(0) }}{{ not loop.last ? ',' }}{% endfor %}],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.1)',
+                borderWidth: 2,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { 
+                legend: { display: false },
+                tooltip: { enabled: true, bodyFont: { size: 10 } }
+            },
+            scales: { 
+                x: { 
+                    display: true,
+                    ticks: { font: { size: 8 } },
+                    grid: { display: false }
+                },
+                y: { 
+                    display: true,
+                    beginAtZero: true,
+                    ticks: { font: { size: 8 }, stepSize: 1 },
+                    grid: { color: '#eee' }
+                } 
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

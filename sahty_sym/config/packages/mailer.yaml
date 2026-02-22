@@ -1,3 +1,10 @@
 framework:
     mailer:
-        dsn: '%env(MAILER_DSN)%'
+        # Transports disponibles
+        transports:
+            # Transport SMTP Gmail pour envoi réel
+            main: '%env(MAILER_DSN)%'
+        
+        # Options par défaut
+        envelope:
+            sender: 'maramouerghi1234@gmail.com'

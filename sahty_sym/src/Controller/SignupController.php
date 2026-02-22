@@ -7,23 +7,35 @@ use App\Entity\Patient;
 use App\Entity\Medecin;
 use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
+use App\Entity\Laboratoire;
 use App\Form\SignupType;
+use App\Security\RecaptchaVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class SignupController extends AbstractController
 {
-    #[Route('/signup', name: 'app_sign')] // Correction du nom de route
+    #[Route('/signup', name: 'app_sign')]
     public function signup(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        SluggerInterface $slugger,
+        RecaptchaVerifier $recaptchaVerifier,
+        #[Autowire('%env(float:RECAPTCHA_MIN_SCORE)%')] float $recaptchaMinScore
     ): Response {
-        // Créer le formulaire sans entité spécifique
+        // Si l'utilisateur est déjà connecté, rediriger vers son profil
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_profile');
+        }
+
+        // Créer le formulaire
         $form = $this->createForm(SignupType::class);
         $form->handleRequest($request);
 
@@ -42,11 +54,29 @@ class SignupController extends AbstractController
                 ]);
             }
 
-            // Instanciation dynamique selon le rôle choisi
+            $recaptchaToken = $request->request->get('g-recaptcha-response');
+            $recaptchaToken = is_string($recaptchaToken) ? $recaptchaToken : null;
+            if (!$recaptchaVerifier->verifyV3($recaptchaToken, 'signup', $recaptchaMinScore, $request->getClientIp())) {
+                $details = $recaptchaVerifier->getLastError();
+                $message = 'Veuillez valider le reCAPTCHA.';
+                if (!empty($details['reason'])) {
+                    $message .= ' (' . $details['reason'] . ')';
+                }
+                if (!empty($details['errorCodes']) && is_array($details['errorCodes'])) {
+                    $message .= ' [' . implode(', ', $details['errorCodes']) . ']';
+                }
+                $this->addFlash('error', $message);
+                return $this->render('signup/signup.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            // Création de l'utilisateur selon le rôle
             switch ($roleSelected) {
                 case 'admin':
                     $user = new Administrateur();
                     break;
+                    
                 case 'medecin':
                     $user = new Medecin();
                     
@@ -63,18 +93,40 @@ class SignupController extends AbstractController
                     // Gestion du document PDF
                     $documentPdfFile = $request->files->get('document_pdf');
                     if ($documentPdfFile) {
-                        $newFilename = uniqid().'.'.$documentPdfFile->guessExtension();
-                        $documentPdfFile->move(
-                            $this->getParameter('kernel.project_dir').'/public/uploads/documents',
-                            $newFilename
-                        );
-                        $user->setDocumentPdf('/uploads/documents/'.$newFilename);
+                        $originalFilename = pathinfo($documentPdfFile->getClientOriginalName(), PATHINFO_FILENAME);
+                        $safeFilename = $slugger->slug($originalFilename);
+                        $newFilename = $safeFilename . '-' . uniqid() . '.' . $documentPdfFile->guessExtension();
+                        
+                        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/documents';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+                        
+                        $documentPdfFile->move($uploadDir, $newFilename);
+                        $user->setDocumentPdf('uploads/documents/' . $newFilename);
                     }
                     break;
                     
                 case 'responsable_labo':
                     $user = new ResponsableLaboratoire();
-                    $user->setLaboratoireId((int)$request->request->get('laboratoire_id', 0));
+                    
+                    // Association avec un laboratoire existant
+                    $laboratoireId = (int)$request->request->get('laboratoire_id', 0);
+                    
+                    if ($laboratoireId > 0) {
+                        $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
+                        if ($laboratoire) {
+                            $user->setLaboratoire($laboratoire);
+                            if ($laboratoire->hasResponsable()) {
+                                $this->addFlash('warning', 'Ce laboratoire a déjà un responsable.');
+                            }
+                        } else {
+                            $this->addFlash('error', 'Le laboratoire sélectionné n\'existe pas.');
+                            return $this->render('signup/signup.html.twig', [
+                                'form' => $form->createView(),
+                            ]);
+                        }
+                    }
                     break;
                     
                 case 'responsable_para':
@@ -93,46 +145,53 @@ class SignupController extends AbstractController
                     break;
             }
 
-            // Remplissage des champs communs depuis le formulaire
+            // Champs communs
             $user->setPrenom($form->get('prenom')->getData())
                  ->setNom($form->get('nom')->getData())
                  ->setEmail($form->get('email')->getData())
                  ->setTelephone($form->get('telephone')->getData())
-                 ->setRole($roleSelected);
+                 ->setRole($roleSelected)
+                 ->setEstActif(true);
 
             // Date de naissance
             if ($form->get('dateNaissance')->getData()) {
                 $user->setDateNaissance($form->get('dateNaissance')->getData());
             }
 
-            // Hash du mot de passe
+            // Mot de passe
             $hashedPassword = $passwordHasher->hashPassword($user, $password);
             $user->setPassword($hashedPassword);
 
-            // Gestion de la photo de profil
+            // Photo de profil
             $photoProfilFile = $form->get('photoProfil')->getData();
             if ($photoProfilFile) {
-                $newFilename = uniqid().'.'.$photoProfilFile->guessExtension();
-                $photoProfilFile->move(
-                    $this->getParameter('kernel.project_dir').'/public/uploads/photos',
-                    $newFilename
-                );
-                $user->setPhotoProfil('/uploads/photos/'.$newFilename);
+                $originalFilename = pathinfo($photoProfilFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoProfilFile->guessExtension();
+                
+                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/photos';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                $photoProfilFile->move($uploadDir, $newFilename);
+                $user->setPhotoProfil('uploads/photos/' . $newFilename);
             }
 
             try {
                 $em->persist($user);
                 $em->flush();
 
-                $this->addFlash('success', 'Votre compte a été créé avec succès !');
+                $this->addFlash('success', 'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.');
                 return $this->redirectToRoute('app_login');
                 
             } catch (\Exception $e) {
                 // Gestion des erreurs (email déjà existant, etc.)
-                if (strpos($e->getMessage(), 'UNIQ_EMAIL') !== false) {
+                if (strpos($e->getMessage(), 'UNIQ') !== false || 
+                    strpos($e->getMessage(), 'Duplicate entry') !== false) {
                     $this->addFlash('error', 'Cet email est déjà utilisé. Veuillez en choisir un autre.');
                 } else {
-                    $this->addFlash('error', 'Une erreur est survenue lors de la création du compte.');
+                    $this->addFlash('error', 'Une erreur est survenue lors de la création du compte : ' . $e->getMessage());
                 }
                 
                 return $this->render('signup/signup.html.twig', [

@@ -17,7 +17,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class HomeController extends AbstractController
 {
-    #[Route('/', name: 'home')]
+    #[Route('/', name: 'app_home')]
     public function index(): Response
     {
         return $this->render('home/index.html.twig');
@@ -26,10 +26,11 @@ class HomeController extends AbstractController
    
 
 
-    #[Route('/forgot', name: 'app_forgot_password')]
+    #[Route('/forgot', name: 'app_forgot_password_old')]
     public function forgot(): Response
     {
-        return $this->render('forgot_password.html.twig');
+        // Redirection vers la nouvelle route
+        return $this->redirectToRoute('app_forgot_password');
     }
 
     #[Route('/admin_dashboard', name: 'admin_dashboard')]

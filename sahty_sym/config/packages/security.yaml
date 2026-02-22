@@ -1,4 +1,3 @@
-
 security:
     enable_authenticator_manager: true  # Nécessaire pour Symfony 5.4+
     
@@ -12,6 +11,8 @@ security:
             entity:
                 class: App\Entity\Utilisateur
                 property: email
+        oauth:
+            id: App\Security\GoogleUserProvider
 
     firewalls:
         dev:
@@ -22,21 +23,8 @@ security:
             pattern: ^/
             lazy: true
             provider: app_user_provider
-            
-            # Configuration du formulaire de login
-            form_login:
-                login_path: app_login              # Nom de la route, pas le chemin
-                check_path: app_login              # Même route pour la validation
-                username_parameter: _username      # Nom du paramètre dans le formulaire
-                password_parameter: _password      # Nom du paramètre dans le formulaire
-                enable_csrf: true                  # Activer la protection CSRF
-                csrf_parameter: _csrf_token        # Nom du paramètre CSRF
-                csrf_token_id: authenticate        # ID du token CSRF
-                success_handler: App\Security\AuthenticationSuccessHandler  # Gestionnaire personnalisé
-                failure_path: app_login            # Redirection en cas d'échec
-                
-            
 
+            custom_authenticator: App\Security\LoginFormAuthenticator
 
             
             # Configuration de la déconnexion
@@ -52,6 +40,8 @@ security:
                 always_remember_me: false
                 remember_me_parameter: _remember_me
 
+
+
     access_control:
         # Pages publiques (accessibles sans connexion)
         - { path: ^/login$, roles: PUBLIC_ACCESS, methods: [GET, POST] }
@@ -59,15 +49,23 @@ security:
         - { path: ^/register$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }  
         - { path: ^/forgot, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password$, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password/, roles: PUBLIC_ACCESS }
         
-        
-            # Page d'accueil
+        # Routes OAuth2 - PUBLIQUES pour permettre la connexion
+        - { path: ^/connect/google$, roles: PUBLIC_ACCESS }
+        - { path: ^/connect/google/check$, roles: PUBLIC_ACCESS }
+        - { path: ^/google/select-role$, roles: PUBLIC_ACCESS }
+        - { path: ^/google/confirm-role$, roles: PUBLIC_ACCESS }
+        - { path: ^/oauth/authenticate$, roles: PUBLIC_ACCESS }
         
         # Pages protégées par rôle
         - { path: ^/admin/, roles: ROLE_ADMIN }
         - { path: ^/medecin/, roles: ROLE_MEDECIN }
         - { path: ^/patient/, roles: ROLE_PATIENT }
         - { path: ^/laboratoire/, roles: ROLE_RESPONSABLE_LABO }
+        - { path: ^/laboratoire/new$, roles: ROLE_RESPONSABLE_LABO }
+        - { path: ^/laboratoire/, roles: ROLE_PATIENT }
         - { path: ^/parapharmacie/, roles: ROLE_RESPONSABLE_PARA }
         
         # Toutes les autres pages nécessitent une connexion

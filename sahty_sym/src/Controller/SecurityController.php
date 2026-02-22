@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\ResponsableLaboratoire;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,15 +19,19 @@ class SecurityController extends AbstractController
             if ($this->isGranted('ROLE_ADMIN')) {
                 return $this->redirectToRoute('admin_index');
             }
-           
+
             // ✅ Autres utilisateurs
             return $this->redirectToRoute('app_profile');
         }
 
+        // Récupérer l'erreur de login s'il y en a une
+        $error = $authenticationUtils->getLastAuthenticationError();
+        $lastUsername = $authenticationUtils->getLastUsername();
+
         return $this->render('securityL/login.html.twig', [
-            'last_username' => $authenticationUtils->getLastUsername(),
-            'error' => $authenticationUtils->getLastAuthenticationError(),
-        ]); 
+            'last_username' => $lastUsername,
+            'error' => $error,
+        ]);
     }
 
     #[Route('/logout', name: 'app_logout')]
@@ -41,12 +46,37 @@ class SecurityController extends AbstractController
         // 🔐 Sécurité
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
-      
-       
-
         return $this->render('profile/index.html.twig', [
             'user' => $this->getUser(),
         ]);
     }
-   
+
+    #[Route('/login/redirect', name: 'app_login_redirect')]
+    public function loginRedirect(): Response
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('admin');
+        }
+
+        if ($this->isGranted('ROLE_RESPONSABLE_LABO')) {
+            $user = $this->getUser();
+            if ($user instanceof ResponsableLaboratoire && !$user->getLaboratoire()) {
+                return $this->redirectToRoute('app_labo_new');
+            }
+
+            return $this->redirectToRoute('app_demande_analyse_index');
+        }
+
+        if ($this->isGranted('ROLE_MEDECIN')) {
+            return $this->redirectToRoute('app_demande_analyse_index');
+        }
+
+        if ($this->isGranted('ROLE_PATIENT')) {
+            return $this->redirectToRoute('app_labo_index');
+        }
+
+        return $this->redirectToRoute('app_profile');
+    }
 }

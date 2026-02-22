@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription - {{ evenement.titre }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .container-wrapper {
+            max-width: 900px;
+        }
+
+        /* Header Section */
+        .inscription-header {
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 2.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+            transform: translateX(-5px);
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        /* Event Summary Box */
+        .event-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0 0 10px 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .summary-item i {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        /* Form Controls */
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+
+        .form-control,
+        .form-select {
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background-color: #f9fafb;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background-color: white;
+            outline: none;
+        }
+
+        /* Error Styling */
+        .is-invalid {
+            border-color: #dc3545 !important;
+            background-color: #fff8f9;
+        }
+
+        .is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+            font-weight: 500;
+        }
+
+        /* Alert Styling */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-danger {
+            background-color: #fff5f5;
+            color: #802c2c;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-success {
+            background-color: #f0fdf4;
+            color: #166534;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background-color: #fffbf0;
+            color: #92400e;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-info {
+            background-color: #f0f9ff;
+            color: #0c4a6e;
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-heading {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .alert-list li {
+            padding: 0.3rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .alert-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.95rem 2.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* Grid Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* Price Calculation */
+        .price-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed #d0d5e0;
+        }
+
+        .price-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .price-label {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .price-value {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .price-total {
+            background: white;
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .total-label {
+            display: block;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .total-amount {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #DC3545;
+        }
+
+        .total-amount.free {
+            color: #28a745;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .inscription-header,
+            .form-container {
+                padding: 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .btn-submit,
+            .btn-cancel {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Loading State */
+        .btn-submit.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .btn-submit.loading::after {
+            content: "";
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/header.html.twig' %}
+
+    <div class="container container-wrapper py-5">
+        <!-- Flash Messages -->
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert-heading">
+                        {% if label == 'error' %}
+                            <i class="fas fa-exclamation-circle"></i> Erreur
+                        {% elseif label == 'success' %}
+                            <i class="fas fa-check-circle"></i> Succès
+                        {% elseif label == 'warning' %}
+                            <i class="fas fa-info-circle"></i> Attention
+                        {% else %}
+                            <i class="fas fa-info-circle"></i> Information
+                        {% endif %}
+                    </div>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <!-- Header -->
+        <div class="inscription-header">
+            <a href="{{ path('app_evenement_show', {'id': evenement.id}) }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Retour à l'événement
+            </a>
+            <h1 class="header-title">
+                <i class="fas fa-pen-fancy"></i> Inscription à l'événement
+            </h1>
+            <p class="header-subtitle">Complétez ce formulaire pour confirmer votre participation</p>
+        </div>
+
+        <!-- Event Summary -->
+        <div class="event-summary">
+            <div class="summary-row">
+                <div class="summary-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ evenement.dateDebut|date('d F Y') }} à {{ evenement.dateDebut|date('H:i') }}</span>
+                </div>
+                <div class="summary-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ evenement.lieu ?: 'En ligne' }}</span>
+                </div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-item">
+                    <i class="fas fa-heartbeat"></i>
+                    <strong>{{ evenement.titre }}</strong>
+                </div>
+                <div class="summary-item">
+                    <i class="fas fa-users"></i>
+                    <span id="places-info">Places restantes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inscription Form -->
+        <div class="form-container">
+            {% if form.vars.errors|length > 0 %}
+                <div class="alert alert-danger">
+                    <div class="alert-heading">
+                        <i class="fas fa-exclamation-triangle"></i> Veuillez corriger les erreurs suivantes
+                    </div>
+                    {% if form.vars.errors|length > 0 %}
+                        <ul class="alert-list">
+                            {% for error in form.vars.errors %}
+                                <li>{{ error.message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ path('app_inscription_evenement_new', {'evenementId': evenement.id}) }}" class="needs-validation" novalidate>
+                <!-- User Type & Profile Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-user-check"></i> Votre profil
+                    </h3>
+                    
+                    <div class="form-row full">
+                        <div>
+                            {{ form_label(form.userType) }}
+                            {{ form_widget(form.userType, {
+                                'attr': {
+                                    'class': 'form-select' ~ (form.userType.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'id': 'userType'
+                                }
+                            }) }}
+                            {% if form.userType.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.userType.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Professional Info (Hidden by default) -->
+                    <div id="professional-fields" style="display: none;">
+                        <div class="form-row">
+                            <div>
+                                {{ form_label(form.numeroOrdre) }}
+                                {{ form_widget(form.numeroOrdre, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.numeroOrdre.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'placeholder': 'Ex: RPPS123456789'
+                                    }
+                                }) }}
+                                {% if form.numeroOrdre.vars.errors %}
+                                    <div class="invalid-feedback" style="display: block;">
+                                        {% for error in form.numeroOrdre.vars.errors %}
+                                            {{ error.message }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ form_label(form.specialite) }}
+                                {{ form_widget(form.specialite, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.specialite.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'placeholder': 'Ex: Cardiologie'
+                                    }
+                                }) }}
+                                {% if form.specialite.vars.errors %}
+                                    <div class="invalid-feedback" style="display: block;">
+                                        {% for error in form.specialite.vars.errors %}
+                                            {{ error.message }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-id-card"></i> Informations personnelles
+                    </h3>
+
+                    <div class="form-row">
+                        <div>
+                            {{ form_label(form.prenom) }}
+                            {{ form_widget(form.prenom, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.prenom.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'Votre prénom',
+                                    'value': form.prenom.vars.value ?: (app.user ? app.user.prenom : '')
+                                }
+                            }) }}
+                            {% if form.prenom.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.prenom.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ form_label(form.nom) }}
+                            {{ form_widget(form.nom, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.nom.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'Votre nom',
+                                    'value': form.nom.vars.value ?: (app.user ? app.user.nom : '')
+                                }
+                            }) }}
+                            {% if form.nom.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.nom.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            {{ form_label(form.email) }}
+                            {{ form_widget(form.email, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.email.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'votre@email.com',
+                                    'type': 'email',
+                                    'value': form.email.vars.value ?: (app.user ? app.user.email : '')
+                                }
+                            }) }}
+                            {% if form.email.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.email.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ form_label(form.telephone) }}
+                            {{ form_widget(form.telephone, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.telephone.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': '+216 20 123 456',
+                                    'type': 'tel'
+                                }
+                            }) }}
+                            {% if form.telephone.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.telephone.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Organization Information Section -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-building"></i> Informations professionnelles
+                    </h3>
+
+                    <div class="form-row">
+                        <div>
+                            {{ form_label(form.etablissement) }}
+                            {{ form_widget(form.etablissement, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.etablissement.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'Nom de votre établissement ou entreprise'
+                                }
+                            }) }}
+                            {% if form.etablissement.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.etablissement.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div>
+                            {{ form_label(form.commentaires) }}
+                            {{ form_widget(form.commentaires, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.commentaires.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'Informations complémentaires...',
+                                    'rows': '3'
+                                }
+                            }) }}
+                            {% if form.commentaires.vars.errors %}
+                                <div class="invalid-feedback" style="display: block;">
+                                    {% for error in form.commentaires.vars.errors %}
+                                        {{ error.message }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Section -->
+                {% if evenement.tarif and evenement.tarif > 0 %}
+                    <div class="price-section">
+                        <div class="price-row">
+                            <span class="price-label">Tarif de base</span>
+                            <span class="price-value" id="base-price">{{ evenement.tarif|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                        <div class="price-total">
+                            <span class="total-label">Montant à payer</span>
+                            <span class="total-amount" id="total-price">{{ evenement.tarif|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="price-section">
+                        <div class="price-total">
+                            <span class="total-label">Événement gratuit</span>
+                            <span class="total-amount free">Gratuit</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Hidden Fields -->
+                {{ form_widget(form.montant) }}
+                {{ form_widget(form.reference) }}
+                {{ form_rest(form) }}
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{{ path('app_evenement_show', {'id': evenement.id}) }}" class="btn-cancel">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-check"></i> Confirmer l'inscription
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Information Box -->
+        <div class="alert alert-info">
+            <div class="alert-heading">
+                <i class="fas fa-shield-alt"></i> Sécurité et confidentialité
+            </div>
+            <p class="mb-2">
+                Vos données personnelles sont traitées de manière confidentielle et ne seront utilisées 
+                que pour cette inscription. Un email de confirmation vous sera envoyé.
+            </p>
+            <p class="mb-0">
+                Avez-vous des questions ? 
+                <a href="mailto:contact@medinova.com" style="color: #0c4a6e; font-weight: 600; text-decoration: none;">Contactez-nous</a>
+            </p>
+        </div>
+    </div>
+
+    {% include 'partials/footer.html.twig' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userTypeSelect = document.getElementById('userType');
+            const professionalFields = document.getElementById('professional-fields');
+            const montantInput = document.querySelector('[name="inscription_evenement[montant]"]');
+            const basePrice = parseFloat('{{ evenement.tarif ?? 0 }}');
+
+            // Show/hide professional fields based on user type
+            if (userTypeSelect) {
+                userTypeSelect.addEventListener('change', function() {
+                    const isProfessional = ['medecin', 'pharmacien', 'laboratoire'].includes(this.value);
+                    professionalFields.style.display = isProfessional ? 'block' : 'none';
+                });
+
+                // Trigger on page load if already selected
+                if (userTypeSelect.value) {
+                    userTypeSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // Update price based on user type
+            if (userTypeSelect && montantInput) {
+                userTypeSelect.addEventListener('change', function() {
+                    const priceMultipliers = {
+                        'patient': 1,
+                        'medecin': 0.8, // 20% discount
+                        'pharmacien': 0.8,
+                        'laboratoire': 0.8,
+                        'visiteur': 1.2 // 20% premium
+                    };
+
+                    const multiplier = priceMultipliers[this.value] || 1;
+                    const newPrice = (basePrice * multiplier).toFixed(2);
+                    
+                    montantInput.value = newPrice;
+
+                    // Update display
+                    const totalPriceElement = document.getElementById('total-price');
+                    if (totalPriceElement && basePrice > 0) {
+                        totalPriceElement.textContent = (newPrice).toLocaleString('fr-TN', {
+                            style: 'currency',
+                            currency: 'TND'
+                        });
+                    }
+                });
+            }
+
+            // Form validation
+            const form = document.querySelector('form.needs-validation');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            }
+
+            // Smooth scrolling to first error
+            window.addEventListener('load', function() {
+                const firstError = document.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

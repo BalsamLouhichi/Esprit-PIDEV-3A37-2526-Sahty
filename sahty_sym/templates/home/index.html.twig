@@ -1,16 +1,36 @@
-{% extends 'base.html.twig' %}
+{# templates/home/index.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahty - Votre santé mentale au quotidien</title>
 
-{% block title %}MEDINOVA - Votre Santé, Notre Priorité{% endblock %}
+    <!-- CSS -->
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
 
-{% block stylesheets %}
-    {{ parent() }}
+    <!-- Libs CSS -->
+    <link href="{{ asset('lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css') }}" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Font Awesome 6 (for MEDINOVA icons) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
     <style>
-        /* ============ PALETTE DE COULEURS MEDINOVA ============ */
+        /* ============ PALETTE DE COULEURS ============ */
         :root {
             --primary: #1D5D9B;
             --primary-light: #E8F4F8;
@@ -37,14 +57,15 @@
             overflow-x: hidden;
         }
 
-        /* ============ HERO SECTION ============ */
+        /* Hero Section - Fusion des deux styles */
         .hero-section {
-            min-height: 90vh;
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--secondary) 100%);
-            position: relative;
-            overflow: hidden;
+            color: white;
+            min-height: 90vh;
             display: flex;
             align-items: center;
+            position: relative;
+            overflow: hidden;
             padding: 80px 0;
         }
 
@@ -66,42 +87,10 @@
             50% { opacity: 0.6; }
         }
 
-        .hero-section::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background-image: 
-                radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.3), transparent),
-                radial-gradient(2px 2px at 60% 70%, rgba(255, 255, 255, 0.3), transparent),
-                radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
-            background-size: 200px 200px, 300px 300px, 150px 150px;
-            animation: particlesFloat 40s linear infinite;
-        }
-
-        @keyframes particlesFloat {
-            to {
-                background-position: 200px 200px, 240px 260px, 330px 470px;
-            }
-        }
-
         .hero-content {
             position: relative;
             z-index: 1;
             animation: fadeInUp 1s ease;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .hero-title {
@@ -118,7 +107,6 @@
             background: linear-gradient(135deg, var(--accent) 0%, white 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: inline-block;
         }
 
         .hero-subtitle {
@@ -126,7 +114,6 @@
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: 40px;
             font-weight: 500;
-            line-height: 1.6;
         }
 
         .hero-buttons {
@@ -148,39 +135,6 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .hero-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .hero-btn:hover::before {
-            width: 400px;
-            height: 400px;
-        }
-
-        .hero-btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-btn i {
-            position: relative;
-            z-index: 1;
-            transition: transform 0.3s ease;
-        }
-
-        .hero-btn:hover i {
-            transform: translateX(5px);
         }
 
         .btn-primary-hero {
@@ -206,23 +160,6 @@
             transform: translateY(-5px);
         }
 
-        .hero-image {
-            position: relative;
-            z-index: 1;
-            animation: fadeInRight 1s ease 0.3s both;
-        }
-
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
         .hero-image img {
             width: 100%;
             max-width: 600px;
@@ -235,11 +172,10 @@
             50% { transform: translateY(-20px); }
         }
 
-        /* ============ FEATURES SECTION ============ */
+        /* Features Cards - Fusion */
         .features-section {
             padding: 100px 0;
             background: linear-gradient(135deg, var(--light) 0%, white 100%);
-            position: relative;
         }
 
         .section-header {
@@ -263,15 +199,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
-            letter-spacing: -1px;
-        }
-
-        .section-description {
-            font-size: 1.2rem;
-            color: var(--dark);
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.8;
         }
 
         .features-grid {
@@ -285,32 +212,13 @@
             border-radius: 25px;
             padding: 45px 35px;
             box-shadow: 0 15px 45px rgba(29, 93, 155, 0.1);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            position: relative;
-            overflow: hidden;
+            transition: all 0.4s ease;
             border: 2px solid rgba(117, 194, 246, 0.1);
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
-            transform: scaleX(0);
-            transition: transform 0.4s ease;
-        }
-
-        .feature-card:hover::before {
-            transform: scaleX(1);
         }
 
         .feature-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 25px 60px rgba(29, 93, 155, 0.15);
-            border-color: rgba(117, 194, 246, 0.3);
         }
 
         .feature-icon {
@@ -325,12 +233,10 @@
             color: white;
             margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(29, 93, 155, 0.3);
-            transition: all 0.3s ease;
         }
 
         .feature-card:hover .feature-icon {
             transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 15px 40px rgba(29, 93, 155, 0.4);
         }
 
         .feature-title {
@@ -343,28 +249,15 @@
         .feature-description {
             color: var(--dark);
             line-height: 1.8;
-            font-weight: 500;
             opacity: 0.8;
         }
 
-        /* ============ STATS SECTION ============ */
+        /* Stats Section */
         .stats-section {
             padding: 80px 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             position: relative;
             overflow: hidden;
-        }
-
-        .stats-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 30% 50%, rgba(117, 194, 246, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(48, 77, 48, 0.2) 0%, transparent 50%);
         }
 
         .stats-grid {
@@ -393,10 +286,9 @@
             color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        /* ============ CTA SECTION ============ */
+        /* CTA Section */
         .cta-section {
             padding: 100px 0;
             background: linear-gradient(135deg, var(--light) 0%, white 100%);
@@ -412,33 +304,11 @@
             box-shadow: 0 20px 60px rgba(29, 93, 155, 0.2);
         }
 
-        .cta-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            animation: ctaGlow 8s ease-in-out infinite;
-        }
-
-        @keyframes ctaGlow {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(10%, 10%); }
-        }
-
-        .cta-content {
-            position: relative;
-            z-index: 1;
-        }
-
         .cta-title {
             font-size: 3rem;
             font-weight: 900;
             color: white;
             margin-bottom: 20px;
-            letter-spacing: -1px;
         }
 
         .cta-description {
@@ -450,47 +320,26 @@
             margin-right: auto;
         }
 
-        /* ============ RESPONSIVE ============ */
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .hero-btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .cta-card {
-                padding: 50px 30px;
-            }
-
-            .cta-title {
-                font-size: 2rem;
-            }
+        /* Card hover effect from Sahty */
+        .card-hover {
+            transition: all 0.35s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
         }
 
-        /* ============ ANIMATIONS ============ */
+        .icon-circle {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        /* Animations */
         .fade-in {
             opacity: 0;
             transform: translateY(30px);
@@ -501,256 +350,405 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            .hero-buttons {
+                flex-direction: column;
+            }
+            .hero-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .cta-card {
+                padding: 50px 30px;
+            }
+            .cta-title {
+                font-size: 2rem;
+            }
+        }
     </style>
-{% endblock %}
+</head>
+<body>
 
-{% block body %}
+    {% include 'partials/navbar.html.twig' %}
 
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <div class="hero-content">
-                    <h1 class="hero-title">
-                        Votre <span class="highlight">Santé</span>,<br>
-                        Notre <span class="highlight">Priorité</span>
-                    </h1>
-                    <p class="hero-subtitle">
-                        Prenez rendez-vous en ligne avec nos médecins spécialistes. 
-                        Une plateforme moderne pour une santé optimale.
-                    </p>
-                    <div class="hero-buttons">
-                        {% if app.user %}
-                            {% if is_granted('ROLE_PATIENT') %}
-                                <a href="{{ path('app_rdv_prendre') }}" class="hero-btn btn-primary-hero">
-                                    <span>Prendre Rendez-vous</span>
-                                    <i class="fas fa-calendar-plus"></i>
-                                </a>
-                                <a href="{{ path('app_rdv_mes_rdv') }}" class="hero-btn btn-secondary-hero">
-                                    <span>Mes Rendez-vous</span>
+    <!-- Hero Section (MEDINOVA style) -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1 class="hero-title">
+                            Votre <span class="highlight">Santé</span>,<br>
+                            Notre <span class="highlight">Priorité</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            Prenez soin de votre santé mentale avec des tests rapides, 
+                            des résultats clairs et des conseils personnalisés.
+                        </p>
+                        <div class="hero-buttons">
+                            {% if app.user %}
+                                {% if is_granted('ROLE_PATIENT') %}
+                                    <a href="{{ path('app_rdv_prendre') }}" class="hero-btn btn-primary-hero">
+                                        <span>Prendre Rendez-vous</span>
+                                        <i class="fas fa-calendar-plus"></i>
+                                    </a>
+                                    <a href="{{ path('app_rdv_mes_rdv') }}" class="hero-btn btn-secondary-hero">
+                                        <span>Mes Rendez-vous</span>
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                {% elseif is_granted('ROLE_MEDECIN') %}
+                                    <a href="{{ path('app_medecin_rdv_liste') }}" class="hero-btn btn-primary-hero">
+                                        <span>Mes Consultations</span>
+                                        <i class="fas fa-stethoscope"></i>
+                                    </a>
+                                    <a href="{{ path('app_fiche_medicale_index') }}" class="hero-btn btn-secondary-hero">
+                                        <span>Fiches Patients</span>
+                                        <i class="fas fa-folder-open"></i>
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
+                                    <span>Commencer un quiz</span>
                                     <i class="fas fa-arrow-right"></i>
                                 </a>
-                            {% elseif is_granted('ROLE_MEDECIN') %}
-                                <a href="{{ path('app_medecin_rdv_liste') }}" class="hero-btn btn-primary-hero">
-                                    <span>Mes Consultations</span>
-                                    <i class="fas fa-stethoscope"></i>
-                                </a>
-                                <a href="{{ path('app_fiche_medicale_index') }}" class="hero-btn btn-secondary-hero">
-                                    <span>Fiches Patients</span>
-                                    <i class="fas fa-folder-open"></i>
+                                <a href="{{ path('app_login') }}" class="hero-btn btn-secondary-hero">
+                                    <span>Se Connecter</span>
+                                    <i class="fas fa-sign-in-alt"></i>
                                 </a>
                             {% endif %}
-                        {% else %}
-                            <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
-                                <span>Commencer Maintenant</span>
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                            <a href="{{ path('app_login') }}" class="hero-btn btn-secondary-hero">
-                                <span>Se Connecter</span>
-                                <i class="fas fa-sign-in-alt"></i>
-                            </a>
-                        {% endif %}
+                        </div>
+                        <small class="d-block mt-4 opacity-75">
+                            Déjà +1 200 personnes ont commencé leur parcours bien-être avec Sahty
+                        </small>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image">
+                        <img src="https://cdni.iconscout.com/illustration/premium/thumb/doctor-consultation-illustration-download-in-svg-png-gif-file-formats--medical-checkup-health-care-pack-professionals-illustrations-4632862.png" 
+                             alt="Sahty Healthcare">
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="hero-image">
-                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/doctor-consultation-illustration-download-in-svg-png-gif-file-formats--medical-checkup-health-care-pack-professionals-illustrations-4632862.png" 
-                         alt="MEDINOVA Healthcare">
+        </div>
+    </section>
+
+    <!-- Features Section (3 cards - Sahty style) -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <p class="section-subtitle">Comment ça marche</p>
+                <h2 class="section-title">Trois étapes simples</h2>
+            </div>
+            <div class="row g-4 text-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-lg card-hover">
+                        <div class="card-body p-5">
+                            <div class="icon-circle bg-primary text-white">
+                                <i class="bi bi-journal-text display-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Évaluation rapide</h4>
+                            <p class="text-muted">
+                                Répondez en 5 à 10 minutes à des questions simples et valides scientifiquement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-lg card-hover">
+                        <div class="card-body p-5">
+                            <div class="icon-circle bg-warning text-dark">
+                                <i class="bi bi-lightbulb display-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Conseils adaptés</h4>
+                            <p class="text-muted">
+                                Recevez des recommandations personnalisées selon vos réponses.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 border-0 shadow-lg card-hover">
+                        <div class="card-body p-5">
+                            <div class="icon-circle bg-success text-white">
+                                <i class="bi bi-chat-dots display-4"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Suivi discret</h4>
+                            <p class="text-muted">
+                                Historique privé, progression visible, rappels bienveillants.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Features Section -->
-<section class="features-section">
-    <div class="container">
-        <div class="section-header fade-in">
-            <p class="section-subtitle">Nos Services</p>
-            <h2 class="section-title">Pourquoi Choisir MEDINOVA ?</h2>
-            <p class="section-description">
-                Une plateforme complète pour gérer votre santé avec simplicité et efficacité
-            </p>
-        </div>
+    <!-- Pourquoi Sahty (from Sahty version) -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Pourquoi choisir Sahty ?</h2>
+                <p class="lead text-muted">Une application pensée pour vous accompagner</p>
+            </div>
 
-        <div class="features-grid">
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-calendar-check"></i>
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6">
+                    <img src="{{ asset('img/Bien-être.jpg') }}" 
+                         class="img-fluid rounded-4 shadow-lg" 
+                         alt="Bien-être mental">
                 </div>
-                <h3 class="feature-title">Prise de RDV en Ligne</h3>
-                <p class="feature-description">
-                    Réservez vos consultations en quelques clics, 24h/24 et 7j/7. 
-                    Choisissez votre médecin et votre créneau horaire.
-                </p>
-            </div>
 
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-user-md"></i>
-                </div>
-                <h3 class="feature-title">Médecins Qualifiés</h3>
-                <p class="feature-description">
-                    Accédez à un réseau de médecins spécialistes expérimentés et 
-                    certifiés pour tous vos besoins de santé.
-                </p>
-            </div>
+                <div class="col-lg-6">
+                    <ul class="list-unstyled fs-5">
+                        <li class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
+                            <strong>Anonymat garanti</strong> — aucune information personnelle obligatoire
+                        </li>
+                        <li class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
+                            <strong>Résultats immédiats</strong> — compréhensibles et sans jargon
+                        </li>
+                        <li class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
+                            <strong>Conseils concrets</strong> — exercices, habitudes, quand consulter un professionnel
+                        </li>
+                        <li class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
+                            <strong>Gratuit et sans pub</strong> — pour votre bien-être, pas pour le profit
+                        </li>
+                    </ul>
 
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-file-medical"></i>
-                </div>
-                <h3 class="feature-title">Dossier Médical Digital</h3>
-                <p class="feature-description">
-                    Consultez votre historique médical, vos ordonnances et vos 
-                    résultats d'examens en toute sécurité.
-                </p>
-            </div>
-
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-bell"></i>
-                </div>
-                <h3 class="feature-title">Rappels Automatiques</h3>
-                <p class="feature-description">
-                    Recevez des notifications pour vos rendez-vous à venir et 
-                    ne manquez plus jamais une consultation.
-                </p>
-            </div>
-
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3 class="feature-title">Sécurité Garantie</h3>
-                <p class="feature-description">
-                    Vos données de santé sont protégées par un cryptage de 
-                    niveau bancaire et conformes au RGPD.
-                </p>
-            </div>
-
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-headset"></i>
-                </div>
-                <h3 class="feature-title">Support 24/7</h3>
-                <p class="feature-description">
-                    Notre équipe est disponible à tout moment pour répondre à 
-                    vos questions et vous accompagner.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="stats-section">
-    <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number" data-target="1250">0</div>
-                <div class="stat-label">Patients Satisfaits</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" data-target="85">0</div>
-                <div class="stat-label">Médecins Experts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" data-target="15">0</div>
-                <div class="stat-label">Spécialités Médicales</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" data-target="98">0</div>
-                <div class="stat-label">% Satisfaction</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- CTA Section -->
-<section class="cta-section">
-    <div class="container">
-        <div class="cta-card">
-            <div class="cta-content">
-                <h2 class="cta-title">Prêt à Prendre Soin de Votre Santé ?</h2>
-                <p class="cta-description">
-                    Rejoignez des milliers de patients qui font confiance à MEDINOVA 
-                    pour leurs besoins de santé quotidiens.
-                </p>
-                {% if not app.user %}
-                    <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
-                        <span>Créer Mon Compte Gratuitement</span>
-                        <i class="fas fa-user-plus"></i>
+                    <a href="{{ path('app_sign') }}" class="btn btn-primary btn-lg mt-4 px-5">
+                        Je veux tester maintenant →
                     </a>
-                {% else %}
-                    <a href="{{ path('app_rdv_prendre') }}" class="hero-btn btn-primary-hero">
-                        <span>Prendre Un Rendez-vous</span>
-                        <i class="fas fa-calendar-plus"></i>
-                    </a>
-                {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<script>
-// Intersection Observer pour les animations au scroll
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
+    <!-- Features Grid (MEDINOVA style - 6 cards) -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <p class="section-subtitle">Nos Services</p>
+                <h2 class="section-title">Une plateforme complète</h2>
+                <p class="section-description">
+                    Tous les outils pour gérer votre santé mentale au quotidien
+                </p>
+            </div>
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="feature-title">Prise de RDV en Ligne</h3>
+                    <p class="feature-description">
+                        Réservez vos consultations en quelques clics, 24h/24 et 7j/7.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3 class="feature-title">Médecins Qualifiés</h3>
+                    <p class="feature-description">
+                        Accédez à un réseau de spécialistes en santé mentale.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <h3 class="feature-title">Dossier Médical Digital</h3>
+                    <p class="feature-description">
+                        Consultez votre historique et vos évaluations en sécurité.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 class="feature-title">Rappels Automatiques</h3>
+                    <p class="feature-description">
+                        Recevez des notifications pour vos rendez-vous.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Sécurité Garantie</h3>
+                    <p class="feature-description">
+                        Vos données sont protégées et confidentielles.
+                    </p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="feature-title">Support 24/7</h3>
+                    <p class="feature-description">
+                        Notre équipe est disponible pour vous accompagner.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section (MEDINOVA style) -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="1250">0</div>
+                    <div class="stat-label">Utilisateurs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="85">0</div>
+                    <div class="stat-label">Professionnels</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="15">0</div>
+                    <div class="stat-label">Spécialités</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="98">0</div>
+                    <div class="stat-label">% Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section (merged) -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2 class="cta-title">Prêt à prendre soin de vous ?</h2>
+                    <p class="cta-description">
+                        Commencez maintenant. C'est gratuit, rapide et sans engagement.
+                    </p>
+                    {% if not app.user %}
+                        <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
+                            <span>Créer Mon Compte</span>
+                            <i class="fas fa-user-plus"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_rdv_prendre') }}" class="hero-btn btn-primary-hero">
+                            <span>Prendre Rendez-vous</span>
+                            <i class="fas fa-calendar-plus"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+
+    <script>
+        // Intersection Observer pour les animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Compteur animé pour les statistiques
+        function animateCounter(element) {
+            const target = parseInt(element.getAttribute('data-target'));
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    element.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    element.textContent = target + (element.parentElement.querySelector('.stat-label').textContent.includes('%') ? '%' : '+');
+                }
+            };
+
+            updateCounter();
         }
-    });
-}, observerOptions);
 
-document.querySelectorAll('.fade-in').forEach(el => {
-    observer.observe(el);
-});
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target.querySelector('.stat-number');
+                    animateCounter(counter);
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
 
-// Compteur animé pour les statistiques
-function animateCounter(element) {
-    const target = parseInt(element.getAttribute('data-target'));
-    const duration = 2000;
-    const increment = target / (duration / 16);
-    let current = 0;
+        document.querySelectorAll('.stat-card').forEach(card => {
+            statsObserver.observe(card);
+        });
 
-    const updateCounter = () => {
-        current += increment;
-        if (current < target) {
-            element.textContent = Math.floor(current);
-            requestAnimationFrame(updateCounter);
-        } else {
-            element.textContent = target + (element.parentElement.querySelector('.stat-label').textContent.includes('%') ? '%' : '+');
-        }
-    };
+        console.log('🏥 Sahty - Page d\'accueil chargée avec succès!');
+    </script>
 
-    updateCounter();
-}
-
-// Observer pour les statistiques
-const statsObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const counter = entry.target.querySelector('.stat-number');
-            animateCounter(counter);
-            statsObserver.unobserve(entry.target);
-        }
-    });
-}, { threshold: 0.5 });
-
-document.querySelectorAll('.stat-card').forEach(card => {
-    statsObserver.observe(card);
-});
-
-console.log('🏥 MEDINOVA - Page d\'accueil chargée avec succès!');
-console.log('🎨 Design Premium activé');
-</script>
-
-{% endblock %}
+</body>
+</html>

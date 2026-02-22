@@ -4,6 +4,31 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    report.sender: '%env(REPORT_SENDER)%'
+    report.recipients: '%env(REPORT_RECIPIENTS)%'
+    fraud.thresholds:
+        max_requests_per_day: 10
+        max_appointments_per_day: 5
+        max_accounts_per_phone: 2
+        max_cancellations_30d: 5
+        max_cancel_rate_30d: 0.5
+        min_appointments_for_cancel_rate: 5
+        abnormal_hours_start: 0
+        abnormal_hours_end: 6
+        abnormal_hours_min_actions_30d: 3
+    fraud.score_weights:
+        shared_phone: 15
+        high_daily_demands: 20
+        high_daily_appointments: 15
+        high_cancel_rate: 25
+        abnormal_hours: 10
+    prediction.config:
+        since_days: 30
+        churn_no_activity_boost: 60
+        churn_days_weight: 40
+        churn_days_cap: 90
+        demand_score_per_request: 20
+        cancel_min_count: 3
 
 
 services:
@@ -20,6 +45,33 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    App\Security\RecaptchaVerifier:
+        arguments:
+            $secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+            $enabled: '%env(bool:RECAPTCHA_ENABLED)%'
+
+    App\Security\LoginFormAuthenticator:
+        arguments:
+            $recaptchaMinScore: '%env(float:RECAPTCHA_MIN_SCORE)%'
+
+    App\Service\FraudDetectionService:
+        arguments:
+            $thresholds: '%fraud.thresholds%'
+            $weights: '%fraud.score_weights%'
+
+    App\Service\UserPredictionService:
+        arguments:
+            $config: '%prediction.config%'
+
+    App\Command\MonthlyReportCommand:
+        arguments:
+            $reportSender: '%report.sender%'
+            $reportRecipients: '%report.recipients%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

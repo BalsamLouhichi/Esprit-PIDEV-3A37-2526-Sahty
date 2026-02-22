@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>MEDINOVA - Connexion</title>
+    <title>SAHTY - Connexion</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
@@ -117,6 +117,7 @@
                 <form method="post" action="{{ path('app_login') }}" id="loginForm">
                     {# Protection CSRF #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    <input type="hidden" name="g-recaptcha-response" id="recaptcha_token_login">
 
                     <div class="form-group">
                         <label for="inputEmail"><i class="fas fa-envelope"></i> Adresse email</label>
@@ -149,7 +150,7 @@
                         </div>
                     </div>
 
-                    <!-- REMARQUE: Le lien "Mot de passe oublié" est maintenant EN DEHORS du formulaire -->
+                   
                 </form>
 
                 <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
@@ -176,14 +177,17 @@
                 </div>
 
                 {# Boutons de connexion sociale #}
+                
+
                 <div class="social-login">
-                    <button type="button" class="btn-google"><i class="fab fa-google"></i> Se connecter avec Google</button>
-                    <button type="button" class="btn-apple"><i class="fab fa-apple"></i> Se connecter avec Apple</button>
+                    <a href="{{ path('connect_google') }}" class="btn-google">
+                        <i class="fab fa-google"></i> Connexion avec Google
+                    </a>
                 </div>
 
                 <div class="register-link-container">
                     <p>Nouveau sur Medinova ?</p>
-                    <a href="{{ path('app_signup') }}" class="register-link">
+                    <a href="{{ path('app_sign') }}" class="register-link">
                         Créer un compte gratuit <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -191,6 +195,7 @@
         </div>
     </div>
 
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Afficher/Masquer le mot de passe
@@ -237,6 +242,38 @@
                 document.querySelector('button[form="loginForm"]').click();
             }
         });
+
+        // reCAPTCHA v3
+        (function() {
+            const form = document.getElementById('loginForm');
+            const tokenInput = document.getElementById('recaptcha_token_login');
+
+            if (!form || !tokenInput) {
+                return;
+            }
+
+            form.addEventListener('submit', function(e) {
+                if (tokenInput.value) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                if (typeof grecaptcha === 'undefined') {
+                    alert('reCAPTCHA indisponible. Veuillez reessayer.');
+                    return;
+                }
+
+                grecaptcha.ready(function() {
+                    grecaptcha.execute('{{ recaptcha_site_key }}', { action: 'login' }).then(function(token) {
+                        tokenInput.value = token;
+                        form.submit();
+                    }).catch(function() {
+                        alert('reCAPTCHA a echoue. Veuillez reessayer.');
+                    });
+                });
+            });
+        })();
     </script>
 </body>
 </html>

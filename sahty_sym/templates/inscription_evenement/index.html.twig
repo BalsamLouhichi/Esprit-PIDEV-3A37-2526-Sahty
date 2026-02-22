@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription à {{ evenement.titre }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# Google Fonts #}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    {# FontAwesome #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+
+    {# Bootstrap #}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+
+    {# Flatpickr #}
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+
+    {# Main CSS #}
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    <style>
+        /* Variables de style */
+        :root {
+            --primary: #0d6efd;
+            --secondary: #6c757d;
+            --success: #198754;
+            --info: #0dcaf0;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+
+        /* Formulaire */
+        .form-control, .form-select {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+            outline: none;
+        }
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--dark);
+        }
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Card pour les informations événement */
+        .event-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .event-info-card .card-body {
+            padding: 2rem;
+        }
+        .price-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.5em 0.8em;
+            font-weight: 500;
+        }
+        .badge-online { background: var(--success); }
+        .badge-inperson { background: var(--primary); }
+        .badge-hybrid { background: var(--info); }
+
+        /* Sections du formulaire */
+        .form-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        }
+        .section-title {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Résumé de prix */
+        .price-summary {
+            background: var(--light);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+        }
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .price-total {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Type de participant */
+        .participant-type-option {
+            border: 2px solid #dee2e6;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            height: 100%;
+        }
+        .participant-type-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .participant-type-option.active {
+            border-color: var(--primary);
+            background-color: rgba(13,110,253,0.05);
+        }
+        .participant-type-option i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 1rem;
+            }
+            .participant-type-option {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{# Header #}
+{% include 'partials/header.html.twig' %}
+
+<!-- Main Content -->
+<div class="container-fluid py-5 bg-light">
+    <div class="container">
+
+        <!-- Header avec bouton retour -->
+        <div class="row mb-5">
+            <div class="col-md-8">
+                <h1 class="display-6 fw-bold mb-3 text-dark">
+                    <i class="fas fa-user-plus text-primary me-2"></i>
+                    S'inscrire à l'événement
+                </h1>
+                <p class="text-muted mb-0">Complétez le formulaire ci-dessous pour vous inscrire</p>
+            </div>
+            <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <a href="{{ path('app_evenement_show', {'id': evenement.id}) }}" 
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour aux détails
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Colonne gauche : Formulaire -->
+            <div class="col-lg-8">
+                <!-- Informations événement -->
+                <div class="event-info-card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="fw-bold mb-2 text-white">{{ evenement.titre }}</h3>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="badge {% if evenement.mode == 'en_ligne' %}badge-online{% elseif evenement.mode == 'presentiel' %}badge-inperson{% else %}badge-hybrid{% endif %}">
+                                        <i class="fas fa-{% if evenement.mode == 'en_ligne' %}video{% elseif evenement.mode == 'presentiel' %}map-marker-alt{% else %}desktop{% endif %} me-1"></i>
+                                        {{ evenement.mode|replace({'_': ' '})|title }}
+                                    </span>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ evenement.dateDebut|date('d/m/Y') }}
+                                    </span>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="price-badge">
+                                    {% if evenement.tarif %}
+                                        <span class="h4 fw-bold">{{ evenement.tarif }} €</span>
+                                        <div class="small">Tarif de base</div>
+                                    {% else %}
+                                        <span class="h4 fw-bold">Gratuit</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'inscription -->
+                <div class="card">
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate', 'id': 'inscriptionForm'}}) }}
+                        
+                        <!-- Section 1 : Type de participant -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-user-tag me-2"></i>Profil du participant
+                            </h4>
+                            <div class="mb-4">
+                                {{ form_label(form.userType, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.userType, {'attr': {'class': 'form-select user-type-select'}}) }}
+                                {{ form_errors(form.userType) }}
+                                <div class="form-text text-muted mt-1">
+                                    Votre type de profil détermine le tarif applicable.
+                                </div>
+                            </div>
+
+                            <!-- Options visuelles des types -->
+                            <div class="row g-3 mb-4" id="participantTypeOptions">
+                                <div class="col-md-4">
+                                    <div class="participant-type-option" data-type="patient">
+                                        <i class="fas fa-user-injured text-primary"></i>
+                                        <h6 class="fw-bold mb-2">Patient</h6>
+                                        <p class="small text-muted mb-2">-5€ de réduction</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="participant-type-option" data-type="medecin">
+                                        <i class="fas fa-user-md text-danger"></i>
+                                        <h6 class="fw-bold mb-2">Médecin</h6>
+                                        <p class="small text-muted mb-2">Tarif normal</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="participant-type-option" data-type="visiteur">
+                                        <i class="fas fa-user-graduate text-success"></i>
+                                        <h6 class="fw-bold mb-2">Étudiant</h6>
+                                        <p class="small text-muted mb-2">-10€ de réduction</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2 : Informations personnelles -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-user-circle me-2"></i>Informations personnelles
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.nom) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_label(form.prenom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.prenom) }}
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-3">
+                                <div class="col-md-6">
+                                    {{ form_label(form.email, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.email) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_label(form.telephone, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.telephone) }}
+                                </div>
+                            </div>
+
+                            <!-- Champs professionnels (masqués par défaut) -->
+                            <div class="row g-3 mt-3" id="professionalFields" style="display: none;">
+                                <div class="col-md-6">
+                                    {{ form_label(form.numeroOrdre, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.numeroOrdre, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.numeroOrdre) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_label(form.etablissement, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.etablissement, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.etablissement) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 3 : Informations complémentaires -->
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle me-2"></i>Informations complémentaires
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ form_label(form.specialite, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.specialite, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.specialite) }}
+                                </div>
+                                <div class="col-md-12">
+                                    {{ form_label(form.commentaires, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.commentaires, {'attr': {'class': 'form-control form-textarea'}}) }}
+                                    {{ form_errors(form.commentaires) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Champs cachés -->
+                        {{ form_widget(form.montant) }}
+                        {{ form_widget(form.reference) }}
+
+                        <!-- Résumé du prix -->
+                        <div class="price-summary mb-4">
+                            <h5 class="fw-bold mb-3">Récapitulatif</h5>
+                            <div class="price-item">
+                                <span>Événement :</span>
+                                <span class="fw-semibold">{{ evenement.titre }}</span>
+                            </div>
+                            <div class="price-item">
+                                <span>Tarif de base :</span>
+                                <span>{{ evenement.tarif ? evenement.tarif ~ ' €' : 'Gratuit' }}</span>
+                            </div>
+                            <div class="price-item" id="reductionRow" style="display: none;">
+                                <span>Réduction :</span>
+                                <span class="text-success" id="reductionValue">-0 €</span>
+                            </div>
+                            <div class="price-item" id="totalRow">
+                                <span>Total à payer :</span>
+                                <span class="price-total" id="totalPrice">
+                                    {{ evenement.tarif ? evenement.tarif ~ ' €' : 'Gratuit' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('app_evenement_show', {'id': evenement.id}) }}" 
+                               class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-check-circle me-2"></i>S'inscrire maintenant
+                            </button>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne droite : Informations -->
+            <div class="col-lg-4">
+                <!-- Card d'informations -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Informations importantes
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-semibold mb-2">Confirmation</h6>
+                            <p class="small text-muted mb-0">
+                                Vous recevrez un email de confirmation avec les détails de connexion.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-semibold mb-2">Paiement</h6>
+                            <p class="small text-muted mb-0">
+                                Le paiement peut être effectué en ligne ou sur place selon l'événement.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="fw-semibold mb-2">Annulation</h6>
+                            <p class="small text-muted mb-0">
+                                Annulation possible jusqu'à 48h avant l'événement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de contact -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-question-circle text-primary me-2"></i>
+                            Besoin d'aide ?
+                        </h5>
+                        <p class="text-muted small">
+                            Contactez notre équipe de support :
+                        </p>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                <a href="mailto:support@medinova.com" class="text-decoration-none">
+                                    support@medinova.com
+                                </a>
+                            </li>
+                            <li>
+                                <i class="fas fa-phone text-primary me-2"></i>
+                                <a href="tel:+0123456789" class="text-decoration-none">
+                                    +01 23 45 67 89
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+{% include 'partials/footer.html.twig' %}
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeSelect = document.querySelector('.user-type-select');
+    const participantTypeOptions = document.querySelectorAll('.participant-type-option');
+    const professionalFields = document.getElementById('professionalFields');
+    const reductionRow = document.getElementById('reductionRow');
+    const reductionValue = document.getElementById('reductionValue');
+    const totalPrice = document.getElementById('totalPrice');
+    const montantInput = document.querySelector('#inscription_evenement_montant');
+    const evenementId = {{ evenement.id }};
+    
+    // Tarif de base
+    const tarifBase = {{ evenement.tarif ?? 25 }};
+    
+    // Gérer la sélection visuelle des types
+    participantTypeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const selectedType = this.getAttribute('data-type');
+            
+            // Mettre à jour le select
+            userTypeSelect.value = selectedType;
+            
+            // Mettre à jour les styles
+            participantTypeOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Afficher/masquer les champs professionnels
+            if (selectedType === 'medecin' || selectedType === 'pharmacien') {
+                professionalFields.style.display = 'flex';
+            } else {
+                professionalFields.style.display = 'none';
+            }
+            
+ 
+            calculerPrix(selectedType);
+        });
+    });
+    
+    
+    userTypeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+    
+        participantTypeOptions.forEach(opt => {
+            opt.classList.remove('active');
+            if (opt.getAttribute('data-type') === selectedType) {
+                opt.classList.add('active');
+            }
+        });
+     
+        if (selectedType === 'medecin' || selectedType === 'pharmacien') {
+            professionalFields.style.display = 'flex';
+        } else {
+            professionalFields.style.display = 'none';
+        }
+        
+       
+        calculerPrix(selectedType);
+    });
+    
+
+    function calculerPrix(userType) {
+        let reduction = 0;
+        let prixFinal = tarifBase;
+        
+    
+        switch(userType) {
+            case 'patient':
+                reduction = 5;
+                break;
+            case 'visiteur':
+                reduction = 10;
+                break;
+            default:
+                reduction = 0;
+        }
+        
+        prixFinal = Math.max(0, tarifBase - reduction);
+        
+       
+        if (reduction > 0) {
+            reductionRow.style.display = 'flex';
+            reductionValue.textContent = `-${reduction} €`;
+        } else {
+            reductionRow.style.display = 'none';
+        }
+        
+        totalPrice.textContent = prixFinal > 0 ? `${prixFinal} €` : 'Gratuit';
+        
+       
+        montantInput.value = prixFinal;
+    }
+    
+
+    const form = document.getElementById('inscriptionForm');
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    if (userTypeSelect.value) {
+        const event = new Event('change');
+        userTypeSelect.dispatchEvent(event);
+    }
+});
+</script>
+
+</body>
+</html>
