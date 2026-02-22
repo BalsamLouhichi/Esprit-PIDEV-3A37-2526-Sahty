@@ -472,6 +472,26 @@
             gap: 0.75rem;
         }
 
+        .recommendation-box {
+            background: #eef4ff;
+            border: 1px solid #dbe8ff;
+            border-radius: 18px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .recommendation-box h6 {
+            margin: 0 0 0.35rem 0;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .recommendation-box p {
+            margin: 0;
+            color: var(--gray-700);
+            font-size: 0.92rem;
+        }
+
         @media (max-width: 768px) {
             .page-wrapper {
                 padding: 1rem;
@@ -568,6 +588,48 @@
                         <h2>Trouvez un Laboratoire Près de Chez Vous</h2>
                         <p>Nous avons plusieurs laboratoires à travers la ville pour votre commodité.</p>
                     </div>
+
+                    {% if patient_ville %}
+                        <div class="recommendation-box">
+                            <h6>
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Recommandations personnalisees
+                            </h6>
+                            <p>
+                                Ville du patient detectee: <strong>{{ patient_ville }}</strong>.
+                                Les laboratoires de la meme ville sont affiches en priorite.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    {% if recommended_laboratoires is defined and recommended_laboratoires|length > 0 %}
+                        <div class="mb-4">
+                            <h5 class="mb-3">Laboratoires recommandes</h5>
+                            <div class="lab-grid">
+                                {% for laboratoire in recommended_laboratoires %}
+                                    <div class="labo-card">
+                                        <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=200&fit=crop&auto=format" alt="Laboratoire mÃ©dical" class="labo-img">
+                                        <div class="labo-icon">
+                                            <i class="fa fa-flask"></i>
+                                        </div>
+                                        <div class="labo-content">
+                                            <h3>{{ laboratoire.nom }}</h3>
+                                            <div class="labo-location">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span>{{ laboratoire.ville }}{% if laboratoire.adresse is defined %}, {{ laboratoire.adresse }}{% endif %}</span>
+                                            </div>
+                                            <div class="labo-footer">
+                                                <a href="{{ path('app_labo_show', {'id': laboratoire.id}) }}" class="btn-view">
+                                                    <i class="fas fa-eye"></i>
+                                                    Voir détails
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
 
                     {# Filter Section #}
                     <div class="filter-section">

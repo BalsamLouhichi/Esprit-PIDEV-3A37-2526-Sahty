@@ -155,6 +155,26 @@ class LaboratoireRepository extends ServiceEntityRepository
     }
 
     /**
+     * Recommande les laboratoires les plus proches selon la ville du patient.
+     * Priorite:
+     * 1) Meme ville
+     * 2) Autres villes (ordre alphabetique)
+     */
+    public function findRecommendedForVille(string $ville, int $limit = 6): array
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.disponible = :disponible')
+            ->setParameter('disponible', true)
+            ->addOrderBy('CASE WHEN LOWER(l.ville) = LOWER(:ville) THEN 0 ELSE 1 END', 'ASC')
+            ->addOrderBy('l.ville', 'ASC')
+            ->addOrderBy('l.nom', 'ASC')
+            ->setParameter('ville', trim($ville))
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Trouve les laboratoires disponibles
      */
     public function findDisponibles(): array

@@ -100,6 +100,24 @@ class ProfileEditType extends AbstractType
                     ])
                 ]
             ])
+            ->add('ville', TextType::class, [
+                'label' => 'Ville',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Votre ville'
+                ],
+                'constraints' => [
+                    new Assert\Length([
+                        'max' => 120,
+                        'maxMessage' => 'La ville ne peut pas depasser {{ limit }} caracteres'
+                    ]),
+                    new Assert\Regex([
+                        'pattern' => '/^[a-zA-ZÀ-ÿ\s\-\']+$/u',
+                        'message' => 'La ville ne peut contenir que des lettres, espaces et tirets'
+                    ])
+                ]
+            ])
             ->add('dateNaissance', DateType::class, [
                 'label' => 'Date de naissance',
                 'required' => false,

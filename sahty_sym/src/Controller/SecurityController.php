@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ResponsableLaboratoire;
+use App\Entity\ResponsableParapharmacie;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,13 +16,7 @@ class SecurityController extends AbstractController
     {
         // ✅ Si l'utilisateur est déjà connecté
         if ($this->getUser()) {
-            // 🔐 Si c'est un administrateur, rediriger vers le dashboard admin
-            if ($this->isGranted('ROLE_ADMIN')) {
-                return $this->redirectToRoute('admin_index');
-            }
-
-            // ✅ Autres utilisateurs
-            return $this->redirectToRoute('app_profile');
+            return $this->redirectToRoute('app_login_redirect');
         }
 
         // Récupérer l'erreur de login s'il y en a une
@@ -68,7 +63,20 @@ class SecurityController extends AbstractController
 
             return $this->redirectToRoute('app_demande_analyse_index');
         }
-        
+
+        // MODIFICATION : Redirection pour responsable parapharmacie
+        if ($this->isGranted('ROLE_RESPONSABLE_PARA')) {
+            $user = $this->getUser();   // ⚠️ tu dois l’ajouter ici
+
+            if ($user instanceof ResponsableParapharmacie) {
+
+                if ($user->isPremiereConnexion() || !$user->getParapharmacie()) {
+                    return $this->redirectToRoute('app_responsable_para_configurer');
+                }
+
+                return $this->redirectToRoute('app_responsable_dashboard');
+            }
+        }
 
         if ($this->isGranted('ROLE_MEDECIN')) {
             return $this->redirectToRoute('app_demande_analyse_index');

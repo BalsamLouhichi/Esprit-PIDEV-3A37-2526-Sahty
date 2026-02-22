@@ -4,6 +4,13 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
+    app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
+    app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
+    app.fastapi_ai.model: '%env(FASTAPI_AI_MODEL)%'
+    app.fastapi_ai.use_ollama: '%env(bool:FASTAPI_AI_USE_OLLAMA)%'
+    app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
+    app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
 
 
 services:
@@ -20,6 +27,16 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Integration\FastApiLabAiClient:
+        arguments:
+            $endpoint: '%app.fastapi_ai.endpoint%'
+            $ocrEngine: '%app.fastapi_ai.ocr_engine%'
+            $lang: '%app.fastapi_ai.lang%'
+            $model: '%app.fastapi_ai.model%'
+            $useOllama: '%app.fastapi_ai.use_ollama%'
+            $timeout: '%app.fastapi_ai.timeout%'
+            $apiKey: '%app.fastapi_ai.api_key%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -20,14 +20,7 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
-        $user = $token->getUser();
-
-        // Rediriger selon le rôle
-        if (in_array('ROLE_ADMIN', $user->getRoles())) {
-            $url = $this->router->generate('admin_index');
-        } else {
-            $url = $this->router->generate('app_profile');
-        }
+        $url = $this->router->generate('app_login_redirect');
 
         return new RedirectResponse($url);
     }
