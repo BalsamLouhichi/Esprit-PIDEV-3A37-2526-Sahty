@@ -1,0 +1,217 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demandes d'analyse - Responsable laboratoire{% endblock %}
+
+{% block stylesheets %}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    <style>
+        .page-hero {
+            background: linear-gradient(135deg, #0f172a, #1d4ed8);
+            color: #fff;
+            border-radius: 18px;
+            padding: 24px 28px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+        }
+        .filter-card {
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+            border: none;
+        }
+        .stat-card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        }
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        .table-modern thead {
+            background: #0f172a;
+            color: #fff;
+        }
+        .table-modern tbody tr {
+            transition: background 0.2s ease;
+        }
+        .table-modern tbody tr:hover {
+            background: #f1f5f9;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="page-hero mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Demandes d'analyse</h1>
+                {% if laboratoire %}
+                    <div class="text-white-50">Laboratoire: {{ laboratoire.nom }} - {{ laboratoire.ville }}</div>
+                {% endif %}
+            </div>
+            <div class="text-white-50">Connecte</div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a class="btn btn-outline-primary" href="{{ path('app_responsable_labo_edit') }}">Modifier mon laboratoire</a>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('warning') %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Filtres</h5>
+                    <form method="get" class="row g-3">
+                        <input type="hidden" name="sort" id="sort" value="{{ sort|default('date') }}">
+                        <input type="hidden" name="dir" id="dir" value="{{ dir|default('desc') }}">
+                        <div class="col-md-3">
+                            <label class="form-label" for="statut">Statut</label>
+                            <select class="form-select" id="statut" name="statut">
+                                <option value="">Tous</option>
+                                {% for value, label in {
+                                    'en_attente': 'En attente',
+                                    'envoye': 'Envoye'
+                                } %}
+                                    <option value="{{ value }}" {{ statut_filter == value ? 'selected' : '' }}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="type_bilan">Type de bilan</label>
+                            <select class="form-select" id="type_bilan" name="type_bilan">
+                                <option value="">Tous</option>
+                                {% for type in type_bilan_options %}
+                                    <option value="{{ type }}" {{ type_bilan_filter == type ? 'selected' : '' }}>{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6"></div>
+                        <div class="col-12 d-flex gap-2">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="stats-cards">
+        {% include 'responsable_labo/_stats_cards.html.twig' with { stats: stats } %}
+    </div>
+
+    <div class="table-responsive" id="demandes-table">
+        <table class="table table-striped align-middle table-modern">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="patient">
+                            Patient{% if sort == 'patient' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="medecin">
+                            Medecin{% if sort == 'medecin' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="type_bilan">
+                            Type bilan{% if sort == 'type_bilan' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="statut">
+                            Statut{% if sort == 'statut' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="date">
+                            Date{% if sort == 'date' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="btn btn-link text-white p-0 js-sort" data-sort="resultat">
+                            Resultat{% if sort == 'resultat' %} {{ dir == 'asc' ? '▲' : '▼' }}{% endif %}
+                        </button>
+                    </th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% include 'responsable_labo/_demandes_table.html.twig' with { demandes: demandes } %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form ? form.querySelectorAll('select') : [];
+    const sortInput = document.getElementById('sort');
+    const dirInput = document.getElementById('dir');
+    const sortButtons = document.querySelectorAll('.js-sort');
+    let debounceTimer;
+
+    const fetchResults = () => {
+        if (!form) return;
+        const params = new URLSearchParams(new FormData(form));
+        const url = `{{ path('app_responsable_labo_demandes_filter') }}?${params.toString()}`;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#demandes-table tbody');
+                if (tableBody) {
+                    tableBody.innerHTML = data.table;
+                }
+                const statsContainer = document.getElementById('stats-cards');
+                if (statsContainer) {
+                    statsContainer.innerHTML = data.stats;
+                }
+            })
+            .catch(() => {
+                const tableBody = document.querySelector('#demandes-table tbody');
+                if (tableBody) {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Erreur de chargement.</td></tr>';
+                }
+            });
+    };
+
+    const scheduleFetch = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchResults, 250);
+    };
+
+    inputs.forEach(input => {
+        input.addEventListener('change', scheduleFetch);
+    });
+
+    sortButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const nextSort = this.getAttribute('data-sort');
+            if (!sortInput || !dirInput) return;
+
+            if (sortInput.value === nextSort) {
+                dirInput.value = dirInput.value === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortInput.value = nextSort;
+                dirInput.value = 'asc';
+            }
+
+            fetchResults();
+        });
+    });
+});
+</script>
+{% endblock %}

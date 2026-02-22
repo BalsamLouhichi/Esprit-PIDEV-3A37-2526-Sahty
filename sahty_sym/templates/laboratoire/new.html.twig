@@ -1,0 +1,796 @@
+{# templates/labo/new.html.twig #}
+
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit|default(false) ? 'Modifier le laboratoire' : 'Ajouter un laboratoire' }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# CSS Medinova #}
+    <link href="{{ asset('img/favicon.ico') }}" rel="icon">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ asset('lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    {# Select2 CSS pour les selects améliorés #}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    {# Custom Labo CSS #}
+    <style>
+        .labo-card{background:white;border-radius:10px;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,.1);transition:transform .3s,box-shadow .3s;height:100%}
+        .labo-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,.15)}
+        .labo-img{height:250px;width:100%;object-fit:cover}
+        .labo-icon{width:70px;height:70px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:-35px auto 20px;color:white;font-size:30px}
+        .labo-location{color:var(--secondary);font-weight:600}
+        .labo-services{background:var(--light);padding:10px 15px;border-radius:5px;margin-top:15px}
+        .labo-services ul{list-style:none;padding-left:0;margin-bottom:0}
+        .labo-services li{padding:5px 0;border-bottom:1px dashed #ddd}
+        .labo-services li:last-child{border-bottom:none}
+        .labo-services i{color:var(--primary);margin-right:8px}
+        .feature-box{background:white;padding:30px;border-radius:10px;text-align:center;box-shadow:0 0 15px rgba(0,0,0,.05);height:100%;transition:transform .3s}
+        .feature-box:hover{transform:translateY(-5px)}
+        .feature-icon{width:80px;height:80px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:white;font-size:35px}
+        
+        /* CSS spécifique au formulaire */
+        .labo-form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(var(--primary-rgb, 19, 197, 221), 0.1);
+        }
+        
+        .form-control-lg {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control-lg:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(19, 197, 221, 0.25);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(19, 197, 221, 0.25);
+        }
+        
+        label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-text {
+            font-size: 0.85rem;
+        }
+        
+        .btn-lg {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .alert-info {
+            background-color: rgba(var(--primary-rgb, 19, 197, 221), 0.1);
+            border-color: rgba(var(--primary-rgb, 19, 197, 221), 0.2);
+            color: var(--dark);
+        }
+        
+        .card.border-primary {
+            border-width: 2px;
+        }
+        
+        .card-header.bg-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        }
+        
+        /* Styles pour la collection des types d'analyse */
+        .type-analyse-item {
+            transition: all 0.3s ease;
+        }
+        
+        .type-analyse-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(19, 197, 221, 0.1);
+        }
+        
+        .type-analyse-item .card-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .type-analyse-item .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        /* Styles spécifiques pour les champs de la collection */
+        .type-analyse-item .form-control,
+        .type-analyse-item .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .type-analyse-item .form-control:focus,
+        .type-analyse-item .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(19, 197, 221, 0.25);
+        }
+        
+        /* Styles pour Select2 */
+        .select2-container--bootstrap-5 .select2-selection {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            min-height: 48px;
+        }
+        
+        .select2-container--bootstrap-5 .select2-selection:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(19, 197, 221, 0.25);
+        }
+        
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        @media (max-width: 768px) {
+            .labo-form-card {
+                padding: 2rem !important;
+            }
+            
+            .btn-lg {
+                padding: 0.6rem 1.5rem;
+            }
+            
+            .type-analyse-item .col-md-6,
+            .type-analyse-item .col-md-4 {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    
+    <!-- Header Start -->
+    <div class="container-fluid bg-primary py-5 mb-5">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h1 class="display-4 text-white mb-3">
+                        {{ is_edit|default(false) ? 'Modifier le laboratoire' : 'Ajouter un nouveau laboratoire' }}
+                    </h1>
+                    <p class="text-white-50 mb-0">
+                        {{ is_edit|default(false)
+                            ? 'Mettez a jour les informations de votre laboratoire.'
+                            : 'Remplissez les informations pour creer un nouveau laboratoire dans notre systeme.'
+                        }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Header End -->
+
+    <!-- Form Section Start -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="labo-form-card p-4 p-md-5 mb-5">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                            <div>
+                                <h3 class="mb-1 text-primary">Informations du laboratoire</h3>
+                                <div class="text-muted">Les champs marqués * sont obligatoires</div>
+                            </div>
+
+                            <a href="{{ return_path|default(path('app_labo_index')) }}" class="btn btn-outline-primary">
+                                <i class="fa fa-arrow-left me-2"></i>Retour à la liste
+                            </a>
+                        </div>
+
+                        {# Flash messages #}
+                        {% for label, messages in app.flashes %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ label }} alert-dismissible fade show mb-4" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {{ form_start(form, { attr: { class: 'row g-4', id: 'labo-form' } }) }}
+
+                            {# --- Informations de base --- #}
+                            <div class="col-md-6">
+                                {{ form_row(form.nom, {
+                                    label: 'Nom du laboratoire *',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Ex: Laboratoire Central Medinova'
+                                    }
+                                }) }}
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form_row(form.ville, {
+                                    label: 'Ville *',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Ex: Tunis'
+                                    }
+                                }) }}
+                            </div>
+
+                            {# --- Adresse complète --- #}
+                            <div class="col-12">
+                                {{ form_row(form.adresse, {
+                                    label: 'Adresse complète',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Ex: 123 Rue Médicale, Centre-ville'
+                                    }
+                                }) }}
+                            </div>
+
+                            {# --- Coordonnées de contact --- #}
+                            <div class="col-md-6">
+                                {{ form_row(form.telephone, {
+                                    label: 'Téléphone principal *',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: '+216 XX XXX XXX'
+                                    }
+                                }) }}
+                            </div>
+
+                            {# --- Email - seulement s'il existe dans le formulaire --- #}
+                            {% if form.email is defined %}
+                            <div class="col-md-6">
+                                {{ form_row(form.email, {
+                                    label: 'Email',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'contact@laboratoire.com'
+                                    }
+                                }) }}
+                            </div>
+                            {% endif %}
+
+                            {# --- Statut --- #}
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form_widget(form.disponible, {
+                                        attr: { 
+                                            class: 'form-check-input',
+                                            role: 'switch'
+                                        }
+                                    }) }}
+                                    {{ form_label(form.disponible, 'Laboratoire disponible', {
+                                        label_attr: { class: 'form-check-label fw-bold' }
+                                    }) }}
+                                </div>
+                            </div>
+
+                            {# --- Description - seulement si elle existe --- #}
+                            {% if form.description is defined %}
+                            <div class="col-md-6">
+                                {{ form_row(form.description, {
+                                    label: 'Description courte',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Description courte du laboratoire...'
+                                    }
+                                }) }}
+                            </div>
+                            {% endif %}
+                            
+                            {# --- Géolocalisation (optionnelle) --- #}
+                            <div class="col-md-6">
+                                {{ form_row(form.latitude, {
+                                    label: 'Latitude',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Ex: 36.8065'
+                                    }
+                                }) }}
+                                <div class="form-text text-muted mt-1">
+                                    <i class="fa fa-info-circle me-1"></i>
+                                    Optionnel - pour la géolocalisation sur la carte
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                {{ form_row(form.longitude, {
+                                    label: 'Longitude',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        placeholder: 'Ex: 10.1815'
+                                    }
+                                }) }}
+                                <div class="form-text text-muted mt-1">
+                                    <i class="fa fa-info-circle me-1"></i>
+                                    Optionnel - pour la géolocalisation sur la carte
+                                </div>
+                            </div>
+
+                            {# --- Services - seulement s'il existe --- #}
+                            {% if form.services is defined %}
+                            <div class="col-12">
+                                {{ form_row(form.services, {
+                                    label: 'Services proposés',
+                                    attr: { 
+                                        class: 'form-control form-control-lg',
+                                        rows: 3,
+                                        placeholder: 'Liste des services: Analyses sanguines, Tests génétiques...'
+                                    }
+                                }) }}
+                            </div>
+                            {% endif %}
+
+                            {# --- Image - seulement si elle existe --- #}
+                            {% if form.image is defined %}
+                            <div class="col-12">
+                                {{ form_row(form.image, {
+                                    label: 'Image du laboratoire',
+                                    attr: { 
+                                        class: 'form-control form-control-lg'
+                                    }
+                                }) }}
+                                <div class="form-text text-muted mt-1">
+                                    <i class="fa fa-image me-1"></i>
+                                    Téléchargez une photo représentative du laboratoire (format: JPG, PNG)
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {# --- Section des forfaits médicaux - seulement si ces champs existent --- #}
+                            {% if form.forfait_zoi_life is defined or form.forfait_zoi_pulse is defined or form.tests_specialises is defined %}
+                            <div class="col-12">
+                                <div class="card border-primary mb-4">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fa fa-heartbeat me-2"></i>Forfaits médicaux proposés</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            {% if form.forfait_zoi_life is defined %}
+                                            <div class="col-md-6">
+                                                {{ form_row(form.forfait_zoi_life, {
+                                                    label: 'Forfait Zoi Life',
+                                                    attr: { 
+                                                        class: 'form-control',
+                                                        placeholder: 'Description du forfait Zoi Life...'
+                                                    }
+                                                }) }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if form.forfait_zoi_pulse is defined %}
+                                            <div class="col-md-6">
+                                                {{ form_row(form.forfait_zoi_pulse, {
+                                                    label: 'Forfait Zoi Pulse',
+                                                    attr: { 
+                                                        class: 'form-control',
+                                                        placeholder: 'Description du forfait Zoi Pulse...'
+                                                    }
+                                                }) }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if form.tests_specialises is defined %}
+                                            <div class="col-12">
+                                                {{ form_row(form.tests_specialises, {
+                                                    label: 'Tests spécialisés supplémentaires',
+                                                    attr: { 
+                                                        class: 'form-control',
+                                                        rows: 2,
+                                                        placeholder: 'Méthylation ADN, Échographie vasculaire...'
+                                                    }
+                                                }) }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {# --- Section des types d'analyse --- #}
+                            <div class="col-12">
+                                <div class="card border-primary mb-4">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0"><i class="fa fa-flask me-2"></i>Types d'analyse proposés</h5>
+                                        <button type="button" class="btn btn-sm btn-light" id="add-type-analyse-btn">
+                                            <i class="fa fa-plus me-1"></i>Ajouter un type d'analyse
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="type-analyse-collection" 
+                                            data-prototype="{{ include('laboratoire/_type_analyse_prototype.html.twig', { form: form.laboratoireTypeAnalyses.vars.prototype })|e('html_attr') }}"
+                                            data-index="{{ form.laboratoireTypeAnalyses|length }}">
+                                            
+                                            {% for typeAnalyseForm in form.laboratoireTypeAnalyses %}
+                                                <div class="type-analyse-item card mb-3" data-index="{{ loop.index0 }}">
+                                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">Type d'analyse #{{ loop.index }}</h6>
+                                                        <button type="button" class="btn btn-sm btn-danger remove-type-analyse">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                {{ form_row(typeAnalyseForm.typeAnalyse, {
+                                                                    label: 'Type d\'analyse *',
+                                                                    attr: { 
+                                                                        class: 'form-select form-select-lg type-analyse-select',
+                                                                        'data-live-search': 'true'
+                                                                    }
+                                                                }) }}
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <div class="form-check form-switch mt-4 pt-2">
+                                                                    {{ form_widget(typeAnalyseForm.disponible, {
+                                                                        attr: { 
+                                                                            class: 'form-check-input',
+                                                                            role: 'switch'
+                                                                        }
+                                                                    }) }}
+                                                                    {{ form_label(typeAnalyseForm.disponible, 'Disponible', {
+                                                                        label_attr: { class: 'form-check-label fw-bold' }
+                                                                    }) }}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-4">
+                                                                {{ form_row(typeAnalyseForm.prix, {
+                                                                    label: 'Prix (DT)',
+                                                                    attr: { 
+                                                                        class: 'form-control form-control-lg',
+                                                                        placeholder: '0.00'
+                                                                    }
+                                                                }) }}
+                                                            </div>
+                                                            
+                                                            <div class="col-md-4">
+                                                                {{ form_row(typeAnalyseForm.delaiResultatHeures, {
+                                                                    label: 'Délai (heures)',
+                                                                    attr: { 
+                                                                        class: 'form-control form-control-lg',
+                                                                        placeholder: '24'
+                                                                    }
+                                                                }) }}
+                                                            </div>
+                                                            
+                                                            <div class="col-md-4">
+                                                                {{ form_row(typeAnalyseForm.conditions, {
+                                                                    label: 'Conditions',
+                                                                    attr: { 
+                                                                        class: 'form-control form-control-lg',
+                                                                        rows: 1,
+                                                                        placeholder: 'Conditions spécifiques...'
+                                                                    }
+                                                                }) }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-info mb-0" id="no-type-analyse-message">
+                                                    <i class="fa fa-info-circle me-2"></i>
+                                                    Aucun type d'analyse n'a été ajouté. Cliquez sur "Ajouter un type d'analyse" pour commencer.
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# --- Boutons d'action --- #}
+                            <div class="col-12 d-flex justify-content-between mt-4 pt-4 border-top">
+                                <a href="{{ return_path|default(path('app_labo_index')) }}" class="btn btn-lg btn-outline-secondary px-5">
+                                    <i class="fa fa-times me-2"></i>Annuler
+                                </a>
+                                <button class="btn btn-lg btn-primary px-5" type="submit">
+                                    <i class="fa fa-save me-2"></i>{{ is_edit|default(false) ? 'Enregistrer les modifications' : 'Enregistrer le laboratoire' }}
+                                </button>
+                            </div>
+
+                        {{ form_end(form) }}
+                    </div>
+
+                    {# Information supplémentaire #}
+                    <div class="alert alert-info mb-0">
+                        <div class="d-flex">
+                            <i class="fa fa-lightbulb text-primary fs-4 me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">Conseils pour remplir le formulaire</h6>
+                                <p class="mb-0">
+                                    • Remplissez tous les champs obligatoires (*) pour une meilleure visibilité<br>
+                                    • Ajoutez une description précise pour aider les patients à vous trouver<br>
+                                    • Les coordonnées géographiques permettent l'affichage sur la carte interactive<br>
+                                    • Un numéro de téléphone valide est essentiel pour les prises de rendez-vous<br>
+                                    • Ajoutez les types d'analyse disponibles avec leurs prix et délais
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Form Section End -->
+
+    <!-- Footer Start -->
+    {% include 'partials/footer.html.twig' %}
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#!" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# JavaScript Libraries Medinova #}
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+    <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+    
+    {# Select2 JS pour les selects améliorés #}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script>
+        // Validation en temps réel
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('labo-form');
+            if (form) {
+                const requiredFields = form.querySelectorAll('[required]');
+                
+                requiredFields.forEach(field => {
+                    field.addEventListener('blur', function() {
+                        if (!this.value.trim()) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        }
+                    });
+                });
+                
+                // Géolocalisation automatique si les champs existent
+                const adresseField = document.querySelector('#labo_adresse');
+                const latitudeField = document.querySelector('#labo_latitude');
+                const longitudeField = document.querySelector('#labo_longitude');
+                const villeField = document.querySelector('#labo_ville');
+                
+                if (adresseField && latitudeField && longitudeField) {
+                    const geolocationBtn = document.createElement('button');
+                    geolocationBtn.type = 'button';
+                    geolocationBtn.className = 'btn btn-sm btn-outline-primary mt-2';
+                    geolocationBtn.innerHTML = '<i class="fa fa-map-marker-alt me-1"></i> Récupérer la géolocalisation';
+                    
+                    adresseField.parentNode.appendChild(geolocationBtn);
+                    
+                    geolocationBtn.addEventListener('click', function() {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                                latitudeField.value = position.coords.latitude.toFixed(6);
+                                longitudeField.value = position.coords.longitude.toFixed(6);
+                                
+                                // Vous pouvez ajouter ici une API de géocodage inverse si nécessaire
+                                alert('Coordonnées géographiques récupérées avec succès!');
+                            }, function(error) {
+                                alert('Impossible de récupérer la géolocalisation: ' + error.message);
+                            });
+                        } else {
+                            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                        }
+                    });
+                }
+            }
+
+            // Gestion de la collection dynamique des types d'analyse
+            const collectionContainer = document.getElementById('type-analyse-collection');
+            const addButton = document.getElementById('add-type-analyse-btn');
+            const noItemsMessage = document.getElementById('no-type-analyse-message');
+            
+            if (collectionContainer && addButton) {
+                let index = parseInt(collectionContainer.dataset.index) || 0;
+                
+                addButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Supprimer le message "aucun élément" s'il existe
+                    if (noItemsMessage) {
+                        noItemsMessage.remove();
+                    }
+                    
+                    // Récupérer le prototype HTML
+                    const prototypeHtml = collectionContainer.dataset.prototype;
+                    
+                    // Créer un conteneur pour l'élément
+                    const itemContainer = document.createElement('div');
+                    itemContainer.className = 'type-analyse-item card mb-3';
+                    itemContainer.setAttribute('data-index', index);
+                    itemContainer.innerHTML = `
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Type d'analyse #${index + 1}</h6>
+                            <button type="button" class="btn btn-sm btn-danger remove-type-analyse">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            ${prototypeHtml.replace(/__type_analyse_prototype__/g, index)}
+                        </div>
+                    `;
+                    
+                    // Ajouter au conteneur
+                    collectionContainer.appendChild(itemContainer);
+                    
+                    // Mettre à jour les attributs name/id dans le formulaire
+                    const itemForm = itemContainer.querySelector('.card-body');
+                    itemForm.querySelectorAll('input, select, textarea, label').forEach(element => {
+                        if (element.name) {
+                            element.name = element.name.replace(/__name__/g, index);
+                        }
+                        if (element.id) {
+                            element.id = element.id.replace(/__name__/g, index);
+                        }
+                        if (element.htmlFor) {
+                            element.htmlFor = element.htmlFor.replace(/__name__/g, index);
+                        }
+                        if (element.getAttribute('for')) {
+                            element.setAttribute('for', element.getAttribute('for').replace(/__name__/g, index));
+                        }
+                    });
+                    
+                    // Ajouter le gestionnaire d'événement pour le bouton supprimer
+                    const removeButton = itemContainer.querySelector('.remove-type-analyse');
+                    removeButton.addEventListener('click', function() {
+                        itemContainer.remove();
+                        // Réindexer les éléments restants
+                        reindexItems();
+                    });
+                    
+                    // Initialiser Select2 pour le nouveau select
+                    // Dans votre bloc javascripts, modifiez l'initialisation de Select2
+                    if ($ && $.fn.select2) {
+                        $('.type-analyse-select').select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            placeholder: 'Sélectionnez un type d\'analyse',
+                            allowClear: true,
+                            language: {
+                                noResults: function() {
+                                    return "Aucun résultat trouvé";
+                                },
+                                searching: function() {
+                                    return "Recherche en cours...";
+                                }
+                            }
+                        });
+                    }
+                    
+                    index++;
+                });
+                
+                // Fonction pour réindexer les éléments
+                function reindexItems() {
+                    const items = collectionContainer.querySelectorAll('.type-analyse-item');
+                    if (items.length === 0 && noItemsMessage && !collectionContainer.contains(noItemsMessage)) {
+                        collectionContainer.appendChild(noItemsMessage);
+                    }
+                    
+                    items.forEach((item, i) => {
+                        item.setAttribute('data-index', i);
+                        const title = item.querySelector('.card-header h6');
+                        if (title) {
+                            title.textContent = `Type d'analyse #${i + 1}`;
+                        }
+                        
+                        // Mettre à jour les noms des champs
+                        const inputs = item.querySelectorAll('input, select, textarea');
+                        inputs.forEach(input => {
+                            if (input.name && input.name.includes('laboratoireTypeAnalyses')) {
+                                const newName = input.name.replace(/laboratoireTypeAnalyses\[\d+\]/, `laboratoireTypeAnalyses[${i}]`);
+                                input.name = newName;
+                            }
+                            if (input.id && input.id.includes('laboratoire_laboratoireTypeAnalyses')) {
+                                const newId = input.id.replace(/laboratoire_laboratoireTypeAnalyses_\d+_/, `laboratoire_laboratoireTypeAnalyses_${i}_`);
+                                input.id = newId;
+                            }
+                        });
+                        
+                        // Mettre à jour les labels
+                        const labels = item.querySelectorAll('label');
+                        labels.forEach(label => {
+                            if (label.htmlFor && label.htmlFor.includes('laboratoire_laboratoireTypeAnalyses')) {
+                                const newFor = label.htmlFor.replace(/laboratoire_laboratoireTypeAnalyses_\d+_/, `laboratoire_laboratoireTypeAnalyses_${i}_`);
+                                label.htmlFor = newFor;
+                            }
+                        });
+                    });
+                    
+                    index = items.length;
+                }
+                
+                // Ajouter les gestionnaires d'événements aux boutons supprimer existants
+                document.querySelectorAll('.remove-type-analyse').forEach(button => {
+                    button.addEventListener('click', function() {
+                        this.closest('.type-analyse-item').remove();
+                        reindexItems();
+                    });
+                });
+                
+                // Initialiser Select2 sur les sélecteurs existants
+                if ($ && $.fn.select2) {
+                    $('.type-analyse-select').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Sélectionnez un type d\'analyse',
+                        allowClear: true
+                    });
+                }
+            }
+            
+            // Validation du formulaire avant soumission
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    const form = this.closest('form');
+                    if (form) {
+                        // Valider que tous les champs requis sont remplis
+                        const requiredFields = form.querySelectorAll('[required]');
+                        let isValid = true;
+                        
+                        requiredFields.forEach(field => {
+                            if (!field.value.trim()) {
+                                field.classList.add('is-invalid');
+                                isValid = false;
+                                
+                                // Scroll vers le premier champ invalide
+                                if (isValid === false) {
+                                    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            e.preventDefault();
+                            alert('Veuillez remplir tous les champs obligatoires marqués d\'un astérisque (*).');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

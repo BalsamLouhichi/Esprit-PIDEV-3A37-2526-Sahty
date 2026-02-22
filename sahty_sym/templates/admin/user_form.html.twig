@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if user %}Edit User{% else %}Create User{% endif %} - Sahty</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Glassmorphism Container */
+        .glass-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Header */
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .form-header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        /* User Info Bar */
+        .user-bar {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .welcome-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .welcome-text i {
+            color: #667eea;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-name {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Content */
+        .form-content {
+            padding: 40px;
+        }
+
+        /* Back Button */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: #f7f9fc;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(-5px);
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-label i {
+            color: #667eea;
+            margin-right: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper .toggle-password {
+            left: auto;
+            right: 15px;
+            cursor: pointer;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #fafbfc;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .form-control:hover, .form-select:hover {
+            border-color: #a0aec0;
+            background: white;
+        }
+
+        /* Checkbox */
+        .checkbox-wrapper {
+            grid-column: span 2;
+            background: #f7f9fc;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .checkbox-custom.checked {
+            background: #667eea;
+            border-color: #667eea;
+        }
+
+        .checkbox-custom i {
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .checkbox-custom.checked i {
+            opacity: 1;
+        }
+
+        .checkbox-label {
+            color: #4a5568;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Role Sections */
+        .role-section {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #f7f9fc 0%, #ffffff 100%);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .role-section h3 {
+            color: #2d3748;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-section h3 i {
+            color: #667eea;
+        }
+
+        /* File Input */
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            background: #f7f9fc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 16px;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-input-label i {
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .file-input-label:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        /* Buttons */
+        .form-actions {
+            grid-column: span 2;
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f7f9fc;
+            border-color: #cbd5e0;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .help-text i {
+            color: #667eea;
+            font-size: 0.7rem;
+        }
+
+        /* Alert */
+        .alert {
+            grid-column: span 2;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .alert-danger {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .checkbox-wrapper,
+            .role-section,
+            .form-actions {
+                grid-column: span 1;
+            }
+
+            .form-header {
+                padding: 30px 20px;
+            }
+
+            .form-header h1 {
+                font-size: 2rem;
+            }
+
+            .form-content {
+                padding: 20px;
+            }
+
+            .user-bar {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Loading Animation */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success Animation */
+        @keyframes checkmark {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .success-icon {
+            animation: checkmark 0.5s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <!-- Header -->
+        <div class="form-header">
+            <div class="header-icon">
+                <i class="fas fa-{% if user %}edit{% else %}user-plus{% endif %}"></i>
+            </div>
+            <h1>{% if user %}Edit User{% else %}Create New User{% endif %}</h1>
+            <p>{% if user %}Update user information{% else %}Fill in the details to create a new user{% endif %}</p>
+        </div>
+
+        <!-- User Info Bar -->
+        <div class="user-bar">
+            <div class="welcome-text">
+                <i class="fas fa-hand-wave"></i>
+                <span>Welcome back, {{ app.user.nom ?? 'Admin' }}</span>
+            </div>
+            <div class="user-profile">
+                <span class="user-name">{{ app.user.email ?? 'admin@sahty.com' }}</span>
+                <div class="user-avatar">
+                    {{ (app.user.nom ?? 'A')[:1]|upper }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="form-content">
+            <!-- Back Button -->
+            <a href="{{ path('admin_users') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                Back to Users List
+            </a>
+
+            <!-- Form -->
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="_token" value="{{ csrf_token('form') }}">
+                
+                <div class="form-grid">
+                    <!-- First Name -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> First Name <span style="color: #f56565;">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                name="prenom" 
+                                class="form-control"
+                                value="{{ user ? user.prenom : '' }}"
+                                placeholder="John"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> Last Name <span style="color: #f56565;">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                name="nom" 
+                                class="form-control"
+                                value="{{ user ? user.nom : '' }}"
+                                placeholder="Doe"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address <span style="color: #f56565;">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                class="form-control"
+                                value="{{ user ? user.email : '' }}"
+                                placeholder="john.doe@example.com"
+                                required>
+                        </div>
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            The email must be unique
+                        </div>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i> Role <span style="color: #f56565;">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-chevron-down" style="pointer-events: none;"></i>
+                            <select id="role" name="role" class="form-select" required>
+                                <option value="">Select a role...</option>
+                                <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Administrator</option>
+                                <option value="medecin" {% if user and user.role == 'medecin' %}selected{% endif %}>Doctor (Médecin)</option>
+                                <option value="patient" {% if user and user.role == 'patient' %}selected{% endif %}>Patient</option>
+                                <option value="responsable_labo" {% if user and user.role == 'responsable_labo' %}selected{% endif %}>Lab Manager</option>
+                                <option value="responsable_para" {% if user and user.role == 'responsable_para' %}selected{% endif %}>Pharmacy Manager</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i> Password {% if not user %}<span style="color: #f56565;">*</span>{% endif %}
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-control"
+                                placeholder="••••••••"
+                                {% if not user %}required{% endif %}>
+                            <i class="fas fa-eye toggle-password" onclick="togglePassword()" style="cursor: pointer;"></i>
+                        </div>
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            {% if user %}
+                                Leave empty to keep current password
+                            {% else %}
+                                Minimum 8 characters
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Telephone -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-phone"></i> Telephone
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-phone"></i>
+                            <input 
+                                type="text" 
+                                name="telephone" 
+                                class="form-control"
+                                value="{{ user ? user.telephone : '' }}"
+                                placeholder="+221 77 123 45 67">
+                        </div>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i> Date of Birth
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-calendar"></i>
+                            <input 
+                                type="date" 
+                                name="dateNaissance" 
+                                class="form-control"
+                                value="{{ user and user.dateNaissance ? user.dateNaissance|date('Y-m-d') : '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Profile Photo URL -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-image"></i> Profile Photo URL
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-image"></i>
+                            <input 
+                                type="text" 
+                                name="photoProfil" 
+                                class="form-control"
+                                value="{{ user ? user.photoProfil : '' }}"
+                                placeholder="https://example.com/photo.jpg">
+                        </div>
+                        <div class="help-text">
+                            <i class="fas fa-upload"></i>
+                            Or upload a file below
+                        </div>
+                    </div>
+
+                    <!-- Profile Photo Upload -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload Photo
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="photoUpload" name="photoUpload" accept="image/*">
+                            <div class="file-input-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose a file...</span>
+                            </div>
+                        </div>
+                        {% if user and user.photoProfil %}
+                            <div class="help-text mt-2">
+                                <i class="fas fa-image"></i>
+                                Current: <a href="{{ user.photoProfil }}" target="_blank" style="color: #667eea;">View</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Active Status -->
+                    <div class="checkbox-wrapper">
+                        <div class="checkbox-custom" id="activeCheckbox" onclick="toggleCheckbox()">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <input type="checkbox" id="estActif" name="estActif" style="display: none;" {% if not user or user.estActif %}checked{% endif %}>
+                        <label class="checkbox-label" onclick="toggleCheckbox()">
+                            <i class="fas fa-check-circle" style="color: #48bb78; margin-right: 5px;"></i>
+                            Active Account
+                        </label>
+                    </div>
+
+                    <!-- Role-specific sections -->
+                    <div id="medecin-fields" class="role-section" style="display: none;">
+                        <h3><i class="fas fa-user-md"></i> Doctor Information</h3>
+                        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group">
+                                <label class="form-label">Spécialité</label>
+                                <input type="text" name="specialite" class="form-control" 
+                                       value="{{ user and user.specialite ? user.specialite : '' }}"
+                                       placeholder="Cardiology">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Years Experience</label>
+                                <input type="number" name="anneeExperience" class="form-control" 
+                                       value="{{ user and user.anneeExperience ? user.anneeExperience : '' }}"
+                                       placeholder="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Grade</label>
+                                <input type="text" name="grade" class="form-control" 
+                                       value="{{ user and user.grade ? user.grade : '' }}"
+                                       placeholder="Professor">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Office Address</label>
+                                <input type="text" name="adresseCabinet" class="form-control" 
+                                       value="{{ user and user.adresseCabinet ? user.adresseCabinet : '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Office Phone</label>
+                                <input type="text" name="telephoneCabinet" class="form-control" 
+                                       value="{{ user and user.telephoneCabinet ? user.telephoneCabinet : '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Institution</label>
+                                <input type="text" name="nomEtablissement" class="form-control" 
+                                       value="{{ user and user.nomEtablissement ? user.nomEtablissement : '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Emergency Number</label>
+                                <input type="text" name="numeroUrgence" class="form-control" 
+                                       value="{{ user and user.numeroUrgence ? user.numeroUrgence : '' }}">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Availability</label>
+                                <textarea name="disponibilite" class="form-control" rows="3" 
+                                          placeholder="Monday-Friday 9am-5pm">{{ user and user.disponibilite ? user.disponibilite : '' }}</textarea>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Document PDF (CV/Diploma)</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="documentPdf" accept=".pdf">
+                                    <div class="file-input-label">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <span>Choose PDF file...</span>
+                                    </div>
+                                </div>
+                                {% if user and user.documentPdf %}
+                                    <div class="help-text mt-2">
+                                        <i class="fas fa-file-pdf"></i>
+                                        Current: <a href="{{ user.documentPdf }}" target="_blank" style="color: #667eea;">View</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="patient-fields" class="role-section" style="display: none;">
+                        <h3><i class="fas fa-user-injured"></i> Patient Information</h3>
+                        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group">
+                                <label class="form-label">Blood Type</label>
+                                <select name="groupeSanguin" class="form-select">
+                                    <option value="">Select...</option>
+                                    <option value="A+" {% if user and user.groupeSanguin == 'A+' %}selected{% endif %}>A+</option>
+                                    <option value="A-" {% if user and user.groupeSanguin == 'A-' %}selected{% endif %}>A-</option>
+                                    <option value="B+" {% if user and user.groupeSanguin == 'B+' %}selected{% endif %}>B+</option>
+                                    <option value="B-" {% if user and user.groupeSanguin == 'B-' %}selected{% endif %}>B-</option>
+                                    <option value="O+" {% if user and user.groupeSanguin == 'O+' %}selected{% endif %}>O+</option>
+                                    <option value="O-" {% if user and user.groupeSanguin == 'O-' %}selected{% endif %}>O-</option>
+                                    <option value="AB+" {% if user and user.groupeSanguin == 'AB+' %}selected{% endif %}>AB+</option>
+                                    <option value="AB-" {% if user and user.groupeSanguin == 'AB-' %}selected{% endif %}>AB-</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Emergency Contact</label>
+                                <input type="text" name="contactUrgence" class="form-control" 
+                                       value="{{ user and user.contactUrgence ? user.contactUrgence : '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Gender</label>
+                                <select name="sexe" class="form-select">
+                                    <option value="">Select...</option>
+                                    <option value="male" {% if user and user.sexe == 'male' %}selected{% endif %}>Male</option>
+                                    <option value="female" {% if user and user.sexe == 'female' %}selected{% endif %}>Female</option>
+                                    <option value="other" {% if user and user.sexe == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="resp-labo-fields" class="role-section" style="display: none;">
+                        <h3><i class="fas fa-flask"></i> Laboratory Manager Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Laboratory ID</label>
+                            <input type="number" name="laboratoireId" class="form-control" 
+                                   value="{{ user and user.laboratoireId ? user.laboratoireId : '' }}"
+                                   placeholder="12345">
+                        </div>
+                    </div>
+
+                    <div id="resp-para-fields" class="role-section" style="display: none;">
+                        <h3><i class="fas fa-capsules"></i> Pharmacy Manager Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Pharmacy ID</label>
+                            <input type="number" name="parapharmacieId" class="form-control" 
+                                   value="{{ user and user.parapharmacieId ? user.parapharmacieId : '' }}"
+                                   placeholder="12345">
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if user %}Update User{% else %}Create User{% endif %}
+                        </button>
+                        <a href="{{ path('admin_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Role sections toggle
+        (function(){
+            const roleEl = document.getElementById('role');
+            const sections = {
+                'medecin': document.getElementById('medecin-fields'),
+                'patient': document.getElementById('patient-fields'),
+                'responsable_labo': document.getElementById('resp-labo-fields'),
+                'responsable_para': document.getElementById('resp-para-fields')
+            };
+
+            function update() {
+                const val = roleEl.value;
+                Object.keys(sections).forEach(k => {
+                    const el = sections[k];
+                    if (el) {
+                        el.style.display = (k === val) ? 'block' : 'none';
+                    }
+                });
+            }
+
+            if (roleEl) {
+                roleEl.addEventListener('change', update);
+                update();
+            }
+        })();
+
+        // Password visibility toggle
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.querySelector('.toggle-password');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Custom checkbox
+        function toggleCheckbox() {
+            const checkbox = document.getElementById('estActif');
+            const customCheckbox = document.getElementById('activeCheckbox');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                customCheckbox.classList.add('checked');
+            } else {
+                customCheckbox.classList.remove('checked');
+            }
+        }
+
+        // Initialize checkbox state
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('estActif');
+            const customCheckbox = document.getElementById('activeCheckbox');
+            
+            if (checkbox.checked) {
+                customCheckbox.classList.add('checked');
+            }
+
+            // File input label update
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function(e) {
+                    const label = this.nextElementSibling.querySelector('span');
+                    if (this.files.length > 0) {
+                        label.textContent = this.files[0].name;
+                    } else {
+                        label.textContent = 'Choose a file...';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

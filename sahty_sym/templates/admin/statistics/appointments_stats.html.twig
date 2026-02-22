@@ -1,0 +1,418 @@
+{# templates/admin/statistics/appointments_stats.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des rendez-vous - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* En-tête */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 24px; color: #333; }
+        .btn {
+            background: #4361ee;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        
+        /* Filtres */
+        .filters {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter {
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #666;
+            background: #f0f0f0;
+        }
+        .filter.active {
+            background: #4361ee;
+            color: white;
+        }
+        
+        /* Date range */
+        .date-range {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .date-range input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .date-range button {
+            background: #4361ee;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Info période */
+        .period-info {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        
+        /* Grille statistiques */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        .card-small {
+            font-size: 13px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* Mini cartes */
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        /* Graphiques */
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .chart-container {
+            height: 250px;
+        }
+        
+        /* Listes */
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .item-name { font-weight: 500; color: #333; }
+        .item-value {
+            background: #f0f0f0;
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+        }
+        
+        /* Progress bars */
+        .progress-item { margin-bottom: 10px; }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        .progress-bg {
+            height: 5px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4361ee;
+            border-radius: 3px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .charts { grid-template-columns: 1fr; }
+            .mini-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 576px) {
+            .grid { grid-template-columns: 1fr; }
+            .mini-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- En-tête -->
+    <div class="header">
+        <h1>📊 Statistiques des rendez-vous</h1>
+        <a href="{{ path('admin_all_appointments') }}" class="btn">← Retour aux rendez-vous</a>
+    </div>
+
+    <!-- Filtres période -->
+    <div class="filters">
+        <a href="{{ path('admin_appointments_stats', {'period': 'today'}) }}" class="filter {{ current_period|default('month') == 'today' ? 'active' : '' }}">Aujourd'hui</a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'week'}) }}" class="filter {{ current_period|default('month') == 'week' ? 'active' : '' }}">Cette semaine</a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'month'}) }}" class="filter {{ current_period|default('month') == 'month' ? 'active' : '' }}">Ce mois</a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'year'}) }}" class="filter {{ current_period|default('month') == 'year' ? 'active' : '' }}">Cette année</a>
+        <a href="{{ path('admin_appointments_stats', {'period': 'custom'}) }}" class="filter {{ current_period|default('month') == 'custom' ? 'active' : '' }}">Personnalisé</a>
+    </div>
+
+    <!-- Date range personnalisé -->
+    {% if current_period|default('month') == 'custom' %}
+    <div class="date-range">
+        <input type="date" id="startDate" value="{{ start_date|default('now'|date_modify('-30 days')|date('Y-m-d')) }}">
+        <span>à</span>
+        <input type="date" id="endDate" value="{{ end_date|default('now'|date('Y-m-d')) }}">
+        <button onclick="applyCustomRange()">Appliquer</button>
+    </div>
+    {% endif %}
+
+    <!-- Info période -->
+    <div class="period-info">
+        📅 Période : {{ stats.periode_actuelle|default('Cette période') }}
+        {% if start_date is defined and end_date is defined and current_period|default('month') == 'custom' %}
+            (du {{ start_date|date('d/m/Y') }} au {{ end_date|date('d/m/Y') }})
+        {% endif %}
+        | Total : {{ stats.total|default(0) }} rendez-vous
+    </div>
+
+    <!-- 4 statistiques principales -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">TOTAL PÉRIODE</div>
+            <div class="card-value">{{ stats.total|default(0) }}</div>
+            <div class="card-small">Global: {{ stats.total_global|default(0) }}</div>
+        </div>
+        <div class="card">
+            <div class="card-title">CONFIRMÉS</div>
+            <div class="card-value">{{ stats.confirmes|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_confirmes|default(0) }}%</div>
+        </div>
+        <div class="card">
+            <div class="card-title">EN ATTENTE</div>
+            <div class="card-value">{{ stats.en_attente|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_attente|default(0) }}%</div>
+        </div>
+        <div class="card">
+            <div class="card-title">ANNULÉS</div>
+            <div class="card-value">{{ stats.annules|default(0) }}</div>
+            <div class="card-small">{{ stats.taux_annulation|default(0) }}%</div>
+        </div>
+    </div>
+
+    <!-- Mini cartes -->
+    <div class="mini-grid">
+        <div class="card">
+            <div class="card-title">AUJOURD'HUI</div>
+            <div class="card-value">{{ stats.aujourdhui|default(0) }}</div>
+            <div class="card-small">{{ stats.restants_aujourdhui|default(0) }} restants</div>
+        </div>
+        <div class="card">
+            <div class="card-title">CETTE SEMAINE</div>
+            <div class="card-value">{{ stats.semaine|default(0) }}</div>
+            <div class="card-small">Moy. {{ stats.moyenne_journaliere|default(0) }}/jour</div>
+        </div>
+        <div class="card">
+            <div class="card-title">CE MOIS</div>
+            <div class="card-value">{{ stats.mois|default(0) }}</div>
+            <div class="card-small">Projection: {{ stats.projection_mois|default(0) }}</div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts">
+        <div class="chart-card">
+            <div class="chart-title">📈 Évolution</div>
+            <div class="chart-container">
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">🥧 Par statut</div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top médecins -->
+    <div class="mini-grid">
+        <div class="card">
+            <div class="card-title">🏆 TOP 5 MÉDECINS</div>
+            <ul class="list">
+                {% for medecin in stats.top_medecins|default([]) %}
+                <li class="list-item">
+                    <span class="item-name">Dr. {{ medecin.prenom }} {{ medecin.nom }}</span>
+                    <span class="item-value">{{ medecin.count }}</span>
+                </li>
+                {% else %}
+                <li class="list-item">Aucune donnée</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Délais -->
+        <div class="card">
+            <div class="card-title">⏱ DÉLAI D'ATTENTE</div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 24px; font-weight: bold;">{{ stats.delai_moyen|default(0) }}</div>
+                    <div>Moyen</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">{{ stats.delai_min|default(0) }}</div>
+                    <div>Min</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ stats.delai_max|default(0) }}</div>
+                    <div>Max</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fréquentation -->
+        <div class="card">
+            <div class="card-title">📊 FRÉQUENTATION</div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">{{ stats.taux_presence|default(0) }}%</div>
+                    <div>Présence</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ stats.taux_absence|default(0) }}%</div>
+                    <div>Absence</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function applyCustomRange() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        if (start && end) {
+            window.location.href = "{{ path('admin_appointments_stats') }}?period=custom&start_date=" + start + "&end_date=" + end;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Graphique évolution
+        const evolLabels = {{ stats.evolution_labels|default(['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'])|json_encode|raw }};
+        const evolData = {{ stats.evolution_data|default([0,0,0,0,0,0,0])|json_encode|raw }};
+        
+        const evolCtx = document.getElementById('evolutionChart')?.getContext('2d');
+        if (evolCtx && evolData.some(v => v > 0)) {
+            new Chart(evolCtx, {
+                type: 'line',
+                data: {
+                    labels: evolLabels,
+                    datasets: [{
+                        data: evolData,
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67,97,238,0.1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Graphique statuts
+        const statusData = [
+            {{ stats.confirmes|default(0) }},
+            {{ stats.en_attente|default(0) }},
+            {{ stats.termines|default(0) }},
+            {{ stats.annules|default(0) }}
+        ];
+        
+        const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+        if (statusCtx && statusData.some(v => v > 0)) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Confirmés', 'En attente', 'Terminés', 'Annulés'],
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    cutout: '60%'
+                }
+            });
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}

@@ -1,0 +1,1109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MEDINOVA - Mes Consultations{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============ PALETTE DE COULEURS MÉDICALE PROFESSIONNELLE ============ */
+        :root {
+            --mughal-green: #304D30;
+            --prussian-blue: #163A5F;
+            --teal-blue: #1D5D9B;
+            --pastel-blue: #75C2F6;
+            --light-silver: #F4F6FF;
+            
+            --primary: #1D5D9B;
+            --primary-light: #E8F4F8;
+            --primary-dark: #163A5F;
+            
+            --secondary: #304D30;
+            --secondary-light: #4A7C59;
+            --secondary-dark: #1E3A1E;
+            
+            --accent: #75C2F6;
+            --accent-light: #B4E4FF;
+            
+            --light: #F4F6FF;
+            --light-alt: #E8EAF6;
+            
+            --dark: #1A2332;
+            --dark-light: #2C3E50;
+            
+            --success: #4A7C59;
+            --success-light: #D4E9DA;
+            --danger: #C1666B;
+            --danger-light: #F8E8E9;
+            --warning: #D4A574;
+            --warning-light: #F9F0E7;
+            --info: #75C2F6;
+            --info-light: #E8F4F8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, var(--light-alt) 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(29, 93, 155, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(48, 77, 48, 0.08) 0%, transparent 40%),
+                linear-gradient(135deg, transparent 0%, rgba(117, 194, 246, 0.05) 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+            animation: backgroundPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, rgba(29, 93, 155, 0.2), transparent),
+                radial-gradient(2px 2px at 60% 70%, rgba(48, 77, 48, 0.2), transparent),
+                radial-gradient(1px 1px at 50% 50%, rgba(117, 194, 246, 0.15), transparent);
+            background-size: 200px 200px, 300px 300px, 150px 150px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            animation: particlesFloat 40s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes particlesFloat {
+            to {
+                background-position: 200px 200px, 240px 260px, 330px 470px;
+            }
+        }
+
+        .rdv-section {
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ============ HEADER ============ */
+        .page-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 30px;
+            padding: 50px 40px;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 8px 32px rgba(29, 93, 155, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(29, 93, 155, 0.08) 0%, transparent 70%);
+            animation: headerGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10%, 10%) scale(1.1); }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            letter-spacing: -1px;
+        }
+
+        .header-title h1 i {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(29, 93, 155, 0.3));
+        }
+
+        .header-title p {
+            color: var(--dark-light);
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* ============ FILTERS & SEARCH ============ */
+        .filters-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 15px 45px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            animation: slideInUp 0.6s ease 0.2s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filters-wrapper {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 16px 50px 16px 22px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            border-radius: 16px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(29, 93, 155, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.2rem;
+            pointer-events: none;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            background: white;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(29, 93, 155, 0.2);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        /* ============ STATS CARDS ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px 30px;
+            text-align: center;
+            box-shadow: 
+                0 15px 45px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            animation: fadeInUp 0.6s ease;
+            animation-fill-mode: both;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 25px 60px rgba(29, 93, 155, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card.total .stat-icon {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        .stat-card.attente .stat-icon {
+            background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.3);
+        }
+
+        .stat-card.confirme .stat-icon {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(74, 124, 89, 0.3);
+        }
+
+        .stat-card.annule .stat-icon {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(193, 102, 107, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .stat-card p {
+            color: var(--dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.85rem;
+        }
+
+        /* ============ RDV CARDS ============ */
+        .rdv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+        }
+
+        .rdv-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 
+                0 15px 50px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            animation: fadeInUp 0.6s ease;
+            animation-fill-mode: both;
+        }
+
+        .rdv-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .rdv-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 
+                0 25px 70px rgba(29, 93, 155, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .rdv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rdv-date-time {
+            flex: 1;
+        }
+
+        .rdv-date {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .rdv-date i {
+            color: var(--primary);
+        }
+
+        .rdv-time {
+            font-size: 1.1rem;
+            color: var(--dark-light);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rdv-time i {
+            color: var(--primary);
+        }
+
+        .rdv-status {
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .status-en-attente {
+            background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
+            color: var(--dark);
+        }
+
+        .status-confirmé, .status-confirme {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .status-annulé, .status-annule {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+        }
+
+        .patient-info {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .patient-info:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.15);
+        }
+
+        .patient-avatar {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 8px 25px rgba(48, 77, 48, 0.3);
+            text-transform: uppercase;
+        }
+
+        .patient-details {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .patient-meta {
+            font-size: 0.9rem;
+            color: var(--dark-light);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .patient-meta i {
+            color: var(--primary);
+        }
+
+        .rdv-reason {
+            background: linear-gradient(135deg, var(--light) 0%, rgba(117, 194, 246, 0.08) 100%);
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .rdv-reason strong {
+            display: block;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .rdv-reason p {
+            color: var(--dark);
+            margin: 0;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .rdv-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ BUTTONS ============ */
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            text-decoration: none;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .btn-icon-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+        }
+
+        .btn-icon-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-icon-info {
+            background: linear-gradient(135deg, var(--info) 0%, var(--accent) 100%);
+            color: white;
+        }
+
+        /* Tooltip */
+        .btn-icon[data-tooltip] {
+            position: relative;
+        }
+
+        .btn-icon[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: rgba(26, 35, 50, 0.95);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+        }
+
+        .btn-icon[data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ============ ALERTS ============ */
+        .alert {
+            padding: 20px 28px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-weight: 600;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+            animation: alertSlide 0.5s ease;
+            border-left: 5px solid;
+        }
+
+        @keyframes alertSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%);
+            color: var(--secondary-dark);
+            border-left-color: var(--success);
+        }
+
+        .alert-danger, .alert-error {
+            background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
+            color: #8B2E2E;
+            border-left-color: var(--danger);
+        }
+
+        .alert i {
+            font-size: 1.6rem;
+        }
+
+        /* ============ EMPTY STATE ============ */
+        .empty-state {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 100px 50px;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(29, 93, 155, 0.15);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .empty-state-icon {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 35px;
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.2) 0%, var(--light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--primary);
+            box-shadow: 0 15px 40px rgba(29, 93, 155, 0.2);
+            animation: emptyIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes emptyIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .empty-state h3 {
+            color: var(--dark);
+            font-size: 2rem;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .empty-state p {
+            color: var(--dark-light);
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rdv-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-wrapper {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rdv-section {
+                padding: 20px 10px;
+            }
+
+            .page-header {
+                padding: 35px 25px;
+            }
+
+            .header-title h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+            border: 2px solid var(--light);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="rdv-section">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1><i class="fas fa-stethoscope"></i> Mes Consultations</h1>
+                    <p>Gérez vos rendez-vous et suivez vos patients</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        <!-- Filters & Search -->
+        <div class="filters-section">
+            <form method="GET" action="{{ path('app_medecin_rdv_liste') }}" class="filters-wrapper" id="searchForm">
+                <div class="search-box">
+                    <input type="text" 
+                           name="search" 
+                           id="searchInput"
+                           placeholder="🔍 Rechercher un patient (nom, prénom, motif)..." 
+                           value="{{ search_term|default('') }}"
+                           autocomplete="off">
+                    <i class="fas fa-search"></i>
+                </div>
+                
+                {# Conserver le filtre de statut lors de la recherche #}
+                <input type="hidden" name="statut" value="{{ statut_filtre|default('tous') }}">
+                
+                <div class="filter-buttons">
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'tous', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('tous') == 'tous' ? 'active' : '' }}">
+                        <i class="fas fa-list"></i> Tous
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'en attente', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'en attente' ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> En attente
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'Confirmé', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'Confirmé' ? 'active' : '' }}">
+                        <i class="fas fa-check-circle"></i> Confirmés
+                    </a>
+                    <a href="{{ path('app_medecin_rdv_liste', {statut: 'Annulé', search: search_term|default('')}) }}" 
+                       class="filter-btn {{ statut_filtre|default('') == 'Annulé' ? 'active' : '' }}">
+                        <i class="fas fa-times-circle"></i> Annulés
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        {% if rendez_vous is not empty %}
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>{{ rendez_vous|length }}</h3>
+                    <p>Total RDV</p>
+                </div>
+                <div class="stat-card attente">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>{{ rendez_vous|filter(r => r.statut == 'en attente')|length }}</h3>
+                    <p>En attente</p>
+                </div>
+                <div class="stat-card confirme">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>{{ rendez_vous|filter(r => r.statut == 'Confirmé')|length }}</h3>
+                    <p>Confirmés</p>
+                </div>
+                <div class="stat-card annule">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h3>{{ rendez_vous|filter(r => r.statut == 'Annulé')|length }}</h3>
+                    <p>Annulés</p>
+                </div>
+            </div>
+
+            <!-- RDV Cards Grid -->
+            <div class="rdv-grid">
+                {% for rdv in rendez_vous %}
+                    <div class="rdv-card">
+                        <div class="rdv-header">
+                            <div class="rdv-date-time">
+                                <div class="rdv-date">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ rdv.dateRdv|date('d/m/Y') }}
+                                </div>
+                                <div class="rdv-time">
+                                    <i class="fas fa-clock"></i>
+                                    {{ rdv.heureRdv|date('H:i') }}
+                                </div>
+                            </div>
+                            <span class="rdv-status status-{{ rdv.statut|lower|replace({' ': '-'}) }}">
+                                {{ rdv.statut }}
+                            </span>
+                        </div>
+
+                        <div class="patient-info">
+                            <div class="patient-avatar">
+                                {{ rdv.patient.prenom|slice(0, 1) }}{{ rdv.patient.nom|slice(0, 1) }}
+                            </div>
+                            <div class="patient-details">
+                                <div class="patient-name">{{ rdv.patient.nom }} {{ rdv.patient.prenom }}</div>
+                                <div class="patient-meta">
+                                    <i class="fas fa-phone"></i>
+                                    {{ rdv.patient.telephone|default('Non renseigné') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if rdv.raison %}
+                            <div class="rdv-reason">
+                                <strong>📝 Motif de consultation</strong>
+                                <p>{{ rdv.raison }}</p>
+                            </div>
+                        {% endif %}
+
+                        <div class="rdv-actions">
+                            {# Bouton Confirmer : uniquement si en attente #}
+                            {% if rdv.statut == 'en attente' %}
+                                <form action="{{ path('app_medecin_rdv_confirmer', {id: rdv.id}) }}" 
+                                      method="post" 
+                                      style="display:inline;">
+                                    <button type="submit" 
+                                            class="btn-icon btn-icon-success" 
+                                            data-tooltip="Confirmer">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {# Bouton Annuler : uniquement si pas déjà annulé #}
+                            {% if rdv.statut != 'Annulé' %}
+                                <form action="{{ path('app_medecin_rdv_annuler', {id: rdv.id}) }}" 
+                                      method="post" 
+                                      style="display:inline;"
+                                      onsubmit="return confirm('⚠️ Voulez-vous vraiment annuler ce rendez-vous ?')">
+                                    <button type="submit" 
+                                            class="btn-icon btn-icon-danger" 
+                                            data-tooltip="Annuler">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                
+                                {# ✅ Bouton Fiche médicale : uniquement si RDV non annulé #}
+                                <a href="{{ path('app_medecin_fiche_medicale', {rdvId: rdv.id}) }}" 
+                                   class="btn-icon btn-icon-primary" 
+                                   data-tooltip="Fiche médicale">
+                                    <i class="fas fa-file-medical"></i>
+                                </a>
+                            {% endif %}
+                            
+                            {# Bouton Détails : toujours visible #}
+                            <a href="{{ path('app_medecin_rdv_details', {id: rdv.id}) }}" 
+                               class="btn-icon btn-icon-info" 
+                               data-tooltip="Détails">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <h3>Aucun rendez-vous trouvé</h3>
+                <p>
+                    {% if search_term|default('') %}
+                        Aucun résultat pour "{{ search_term }}"
+                    {% else %}
+                        Vous n'avez aucun rendez-vous pour le moment
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // ✅ Auto-dismiss alerts
+    document.querySelectorAll('.alert').forEach(alert => {
+        setTimeout(() => {
+            alert.style.transition = 'all 0.5s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateX(100%)';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+
+    // ✅ Recherche en temps réel avec debounce
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+
+    if (searchInput && searchForm) {
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            
+            // Attendre 500ms après la dernière frappe avant de soumettre
+            searchTimeout = setTimeout(() => {
+                searchForm.submit();
+            }, 500);
+        });
+
+        // Soumettre immédiatement sur Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                searchForm.submit();
+            }
+        });
+
+        // Effet visuel sur la recherche active
+        if (searchInput.value.trim() !== '') {
+            searchInput.style.borderColor = 'var(--primary)';
+            searchInput.style.boxShadow = '0 0 0 4px rgba(29, 93, 155, 0.15)';
+        }
+    }
+
+    // ✅ Animate counters
+    function animateCounter(element) {
+        const target = parseInt(element.textContent);
+        if (isNaN(target)) return;
+        
+        const duration = 1000;
+        const increment = target / (duration / 16);
+        let current = 0;
+
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                element.textContent = Math.floor(current);
+                requestAnimationFrame(updateCounter);
+            } else {
+                element.textContent = target;
+            }
+        };
+
+        updateCounter();
+    }
+
+    const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counter = entry.target.querySelector('h3');
+                if (counter) {
+                    animateCounter(counter);
+                }
+                statObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.stat-card').forEach(card => {
+        statObserver.observe(card);
+    });
+
+    console.log('🏥 MEDINOVA - Espace Médecin chargé avec succès!');
+</script>
+{% endblock %}

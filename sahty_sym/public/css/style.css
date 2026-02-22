@@ -68,6 +68,10 @@
 .navbar-light .navbar-nav .nav-link:hover,
 .navbar-light .navbar-nav .nav-link.active {
     color: var(--primary);
+<<<<<<< HEAD
+=======
+
+>>>>>>> e23fba5105d312b8212e6caa974587931fa34e05
 }
 
 @media (min-width: 992px) {

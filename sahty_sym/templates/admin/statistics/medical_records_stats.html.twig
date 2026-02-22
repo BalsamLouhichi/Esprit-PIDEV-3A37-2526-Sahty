@@ -1,0 +1,463 @@
+{# templates/admin/statistics/medical_records_stats.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des fiches médicales - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* En-tête */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 24px; color: #333; }
+        .btn {
+            background: #4361ee;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        
+        /* Info période */
+        .period-info {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        
+        /* Grille statistiques */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        .card-small {
+            font-size: 13px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* Mini cartes */
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        /* Graphiques */
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .chart-container {
+            height: 250px;
+        }
+        
+        /* Listes */
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .item-name { font-weight: 500; color: #333; }
+        .item-value {
+            background: #f0f0f0;
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+        }
+        
+        /* Progress bars */
+        .progress-item { margin-bottom: 10px; }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        .progress-bg {
+            height: 5px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4361ee;
+            border-radius: 3px;
+        }
+        
+        /* Badges IMC */
+        .badge-imc {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-imc.maigreur { background: #fff3d6; color: #b45b0a; }
+        .badge-imc.normal { background: #e3faf5; color: #087f5b; }
+        .badge-imc.surpoids { background: #e6f0ff; color: #1a5fb0; }
+        .badge-imc.obesite { background: #ffe8ec; color: #b80c3b; }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .charts { grid-template-columns: 1fr; }
+            .mini-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 576px) {
+            .grid { grid-template-columns: 1fr; }
+            .mini-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- En-tête -->
+    <div class="header">
+        <h1>📊 Statistiques des fiches médicales</h1>
+        <a href="{{ path('admin_all_medical_records') }}" class="btn">← Retour aux fiches</a>
+    </div>
+
+    <!-- Info période -->
+    <div class="period-info">
+        📅 Total : {{ stats.total|default(0) }} fiches médicales
+    </div>
+
+    <!-- 4 statistiques principales -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">TOTAL FICHES</div>
+            <div class="card-value">{{ stats.total|default(0) }}</div>
+            <div class="card-small">Toutes périodes confondues</div>
+        </div>
+        <div class="card">
+            <div class="card-title">FICHES ACTIVES</div>
+            <div class="card-value">{{ stats.actives|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_actives|default(0) }}% du total</div>
+        </div>
+        <div class="card">
+            <div class="card-title">FICHES INACTIVES</div>
+            <div class="card-value">{{ stats.inactives|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_inactives|default(0) }}% du total</div>
+        </div>
+        <div class="card">
+            <div class="card-title">AVEC IMC</div>
+            <div class="card-value">{{ stats.avec_imc|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_avec_imc|default(0) }}% du total</div>
+        </div>
+    </div>
+
+    <!-- Mini cartes : Répartition IMC -->
+    <div class="mini-grid">
+        <div class="card">
+            <div class="card-title">MAIGREUR</div>
+            <div class="card-value">{{ stats.imc_maigreur|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_maigreur|default(0) }}% des fiches avec IMC</div>
+        </div>
+        <div class="card">
+            <div class="card-title">NORMAL</div>
+            <div class="card-value">{{ stats.imc_normal|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_normal|default(0) }}% des fiches avec IMC</div>
+        </div>
+        <div class="card">
+            <div class="card-title">SURPOIDS</div>
+            <div class="card-value">{{ stats.imc_surpoids|default(0) }}</div>
+            <div class="card-small">{{ stats.pourcentage_surpoids|default(0) }}% des fiches avec IMC</div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts">
+        <div class="chart-card">
+            <div class="chart-title">🥧 Répartition IMC</div>
+            <div class="chart-container">
+                <canvas id="imcChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">📊 Statut des fiches</div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top patients et statistiques détaillées -->
+    <div class="mini-grid">
+        <!-- Top 5 patients -->
+        <div class="card">
+            <div class="card-title">🏆 TOP 5 PATIENTS</div>
+            <ul class="list">
+                {% for patient in stats.top_patients|default([]) %}
+                <li class="list-item">
+                    <span class="item-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                    <span class="item-value">{{ patient.count }} fiches</span>
+                </li>
+                {% else %}
+                <li class="list-item">Aucune donnée</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- IMC Moyen -->
+        <div class="card">
+            <div class="card-title">📏 IMC MOYEN</div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 36px; font-weight: bold; color: #4361ee;">{{ stats.imc_moyen|default(0) }}</div>
+                    <div>Moyenne</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">{{ stats.imc_min|default(0) }}</div>
+                    <div>Min</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ stats.imc_max|default(0) }}</div>
+                    <div>Max</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Répartition par mois -->
+        <div class="card">
+            <div class="card-title">📅 CRÉATIONS PAR MOIS</div>
+            <ul class="list">
+                {% for stat in stats.creations_par_mois|default([]) %}
+                <li class="list-item">
+                    <span class="item-name">{{ stat.mois }}</span>
+                    <span class="item-value">{{ stat.count }} fiches</span>
+                </li>
+                {% else %}
+                <li class="list-item">Aucune donnée</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Statistiques complémentaires -->
+    <div class="mini-grid">
+        <div class="card">
+            <div class="card-title">📋 FICHES AVEC TRAITEMENT</div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 36px; font-weight: bold; color: #4361ee;">{{ stats.avec_traitement|default(0) }}</div>
+                    <div>Avec prescription</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #666;">{{ stats.sans_traitement|default(0) }}</div>
+                    <div>Sans prescription</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🔬 FICHES AVEC DIAGNOSTIC</div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <div style="font-size: 36px; font-weight: bold; color: #4361ee;">{{ stats.avec_diagnostic|default(0) }}</div>
+                    <div>Avec diagnostic</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: bold; color: #666;">{{ stats.sans_diagnostic|default(0) }}</div>
+                    <div>Sans diagnostic</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📊 RÉPARTITION IMC</div>
+            {% set imc_values = [
+                stats.imc_maigreur|default(0),
+                stats.imc_normal|default(0),
+                stats.imc_surpoids|default(0),
+                stats.imc_obesite|default(0)
+            ] %}
+            {% set max_imc_cat = 0 %}
+            {% for value in imc_values %}
+                {% if value > max_imc_cat %}
+                    {% set max_imc_cat = value %}
+                {% endif %}
+            {% endfor %}
+            
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span>Maigreur</span>
+                    <span>{{ stats.imc_maigreur|default(0) }}</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: {{ max_imc_cat > 0 ? (stats.imc_maigreur|default(0) / max_imc_cat * 100)|round : 0 }}%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span>Normal</span>
+                    <span>{{ stats.imc_normal|default(0) }}</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: {{ max_imc_cat > 0 ? (stats.imc_normal|default(0) / max_imc_cat * 100)|round : 0 }}%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span>Surpoids</span>
+                    <span>{{ stats.imc_surpoids|default(0) }}</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: {{ max_imc_cat > 0 ? (stats.imc_surpoids|default(0) / max_imc_cat * 100)|round : 0 }}%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span>Obésité</span>
+                    <span>{{ stats.imc_obesite|default(0) }}</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: {{ max_imc_cat > 0 ? (stats.imc_obesite|default(0) / max_imc_cat * 100)|round : 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Graphique IMC
+        const imcData = [
+            {{ stats.imc_maigreur|default(0) }},
+            {{ stats.imc_normal|default(0) }},
+            {{ stats.imc_surpoids|default(0) }},
+            {{ stats.imc_obesite|default(0) }}
+        ];
+        
+        const imcCtx = document.getElementById('imcChart')?.getContext('2d');
+        if (imcCtx && imcData.some(v => v > 0)) {
+            new Chart(imcCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Maigreur', 'Normal', 'Surpoids', 'Obésité'],
+                    datasets: [{
+                        data: imcData,
+                        backgroundColor: ['#ffc107', '#28a745', '#17a2b8', '#dc3545'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        } else if (imcCtx) {
+            imcCtx.font = '14px Arial';
+            imcCtx.fillStyle = '#999';
+            imcCtx.textAlign = 'center';
+            imcCtx.fillText('Aucune donnée IMC', imcCtx.canvas.width/2, imcCtx.canvas.height/2);
+        }
+
+        // Graphique statut
+        const statusData = [
+            {{ stats.actives|default(0) }},
+            {{ stats.inactives|default(0) }}
+        ];
+        
+        const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+        if (statusCtx && statusData.some(v => v > 0)) {
+            new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Fiches actives', 'Fiches inactives'],
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: ['#28a745', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        } else if (statusCtx) {
+            statusCtx.font = '14px Arial';
+            statusCtx.fillStyle = '#999';
+            statusCtx.textAlign = 'center';
+            statusCtx.fillText('Aucune donnée de statut', statusCtx.canvas.width/2, statusCtx.canvas.height/2);
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}

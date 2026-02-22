@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recherche semantique produits{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <h1 class="mb-3">Recherche semantique</h1>
+           
+
+            <form method="get" action="{{ path('app_recherche_produits') }}" class="card p-3 shadow-sm">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        placeholder="Decrivez votre symptome ou besoin"
+                        value="{{ searchTerm }}"
+                    >
+                    <button type="submit" class="btn btn-primary">Rechercher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if searchTerm is not empty %}
+        <div class="row justify-content-center mb-3">
+            <div class="col-lg-10">
+                <div class="alert alert-info mb-2">
+                    <strong>Recherche:</strong> {{ searchTerm }}
+                </div>
+
+                {% if matchedIntents is defined and matchedIntents is not empty %}
+                    <div class="mb-2">
+                        <small class="text-muted">Intentions detectees:</small>
+                        {% for intent in matchedIntents %}
+                            <span class="badge bg-info text-dark me-1">{{ intent }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if semanticKeywords is defined and semanticKeywords is not empty %}
+                    <div class="mb-3">
+                        <small class="text-muted">Mots-cles utilises:</small>
+                        {% for keyword in semanticKeywords|slice(0, 15) %}
+                            <span class="badge bg-light text-dark border me-1">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {% if results is empty %}
+                    <div class="alert alert-warning">Aucun produit trouve pour cette demande.</div>
+                {% else %}
+                    <div class="row g-3">
+                        {% for produit in results %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 shadow-sm">
+                                    {% if produit.image %}
+                                        <img
+                                            src="{{ asset('uploads/images/produits/' ~ produit.image) }}"
+                                            class="card-img-top"
+                                            alt="{{ produit.nom }}"
+                                            style="height: 180px; object-fit: contain;"
+                                        >
+                                    {% endif %}
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ produit.nom }}</h5>
+                                        {% if produit.categorie %}
+                                            <p class="mb-1"><span class="badge bg-secondary">{{ produit.categorie }}</span></p>
+                                        {% endif %}
+                                        {% if produit.description %}
+                                            <p class="card-text text-muted small">{{ produit.description|striptags|slice(0, 120) }}...</p>
+                                        {% endif %}
+                                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                                            <strong>{{ produit.prix|number_format(2, ',', ' ') }} EUR</strong>
+                                            <a href="{{ path('app_produit_details', {'id': produit.id}) }}" class="btn btn-outline-primary btn-sm">Voir</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

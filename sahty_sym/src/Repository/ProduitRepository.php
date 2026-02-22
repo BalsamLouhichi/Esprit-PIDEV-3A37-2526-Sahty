@@ -31,6 +31,53 @@ class ProduitRepository extends ServiceEntityRepository
     }
 
     /**
+     * Recherche semantique basique a partir d'une liste de mots-clés enrichis.
+     *
+     * @param string[] $keywords
+     */
+    public function semanticSearch(array $keywords, int $limit = 30): array
+    {
+        $keywords = array_values(array_filter(array_unique(array_map(
+            static fn (string $k) => trim(mb_strtolower($k)),
+            $keywords
+        ))));
+
+        if (empty($keywords)) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('p');
+        $orX = $qb->expr()->orX();
+        $scoreParts = [];
+
+        foreach ($keywords as $i => $keyword) {
+            $param = 'k' . $i;
+            $like = '%' . $keyword . '%';
+
+            $orX->add("LOWER(p.nom) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.description, '')) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.categorie, '')) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.marque, '')) LIKE :$param");
+
+            $scoreParts[] = "(CASE WHEN LOWER(p.nom) LIKE :$param THEN 6 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.categorie, '')) LIKE :$param THEN 4 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.marque, '')) LIKE :$param THEN 3 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.description, '')) LIKE :$param THEN 2 ELSE 0 END)";
+
+            $qb->setParameter($param, $like);
+        }
+
+        $qb->where($orX);
+        $qb->andWhere('(p.estActif = true OR p.estActif IS NULL)');
+        $qb->addSelect(implode(' + ', $scoreParts) . ' AS HIDDEN relevance');
+        $qb->orderBy('relevance', 'DESC');
+        $qb->addOrderBy('p.nom', 'ASC');
+        $qb->setMaxResults($limit);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Trouver les produits par catégorie
      */
     public function findByCategorie(string $categorie): array
@@ -125,6 +172,18 @@ public function findTopSellingByParapharmacie($parapharmacieId, $limit = 10)
             ->setParameter('parapharmacieId', $parapharmacieId)
             ->setParameter('search', '%' . $searchTerm . '%')
             ->orderBy('p.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouver les produits avec un nom equivalent (insensible a la casse et aux espaces en bordure)
+     */
+    public function findByNormalizedName(string $nom): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('LOWER(TRIM(p.nom)) = LOWER(TRIM(:nom))')
+            ->setParameter('nom', $nom)
             ->getQuery()
             ->getResult();
     }

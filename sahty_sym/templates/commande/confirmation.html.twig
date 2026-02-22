@@ -6,6 +6,11 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        :root {
+            --theme-primary: var(--primary);
+            --theme-primary-dark: var(--primary-dark);
+        }
+
         .confirmation-container {
             max-width: 1300px;
             margin: 40px auto;
@@ -19,7 +24,7 @@
         }
         
         .confirmation-header {
-            background: linear-gradient(135deg, #0dcaf0 0%, #0bb6d9 100%);
+            background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -41,7 +46,7 @@
         }
         
         .section-card {
-            border-left: 4px solid #0dcaf0;
+            border-left: 4px solid var(--theme-primary);
             border-radius: 10px;
             transition: all 0.3s ease;
         }
@@ -52,8 +57,8 @@
         }
         
         .section-title {
-            color: #0dcaf0;
-            border-bottom: 2px solid #0dcaf0;
+            color: var(--theme-primary);
+            border-bottom: 2px solid var(--theme-primary);
             padding-bottom: 10px;
             margin-bottom: 20px;
             font-weight: 700;
@@ -111,7 +116,7 @@
             top: 0;
             bottom: 0;
             width: 2px;
-            background: #0dcaf0;
+            background: var(--theme-primary);
         }
         
         .timeline-item {
@@ -127,9 +132,9 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #0dcaf0;
+            background: var(--theme-primary);
             border: 3px solid white;
-            box-shadow: 0 0 0 2px #0dcaf0;
+            box-shadow: 0 0 0 2px var(--theme-primary);
         }
         
         @media (max-width: 768px) {
@@ -145,72 +150,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid py-2 border-bottom d-none d-lg-block">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6 text-center text-lg-start mb-2 mb-lg-0">
-                <div class="d-inline-flex align-items-center">
-                    <a class="text-decoration-none text-body pe-3" href="#!">
-                        <i class="bi bi-telephone me-2"></i>+012 345 6789
-                    </a>
-                    <span class="text-body">|</span>
-                    <a class="text-decoration-none text-body px-3" href="#!">
-                        <i class="bi bi-envelope me-2"></i>info@example.com
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-6 text-center text-lg-end">
-                <div class="d-inline-flex align-items-center">
-                    <a class="text-body px-2" href="#!"><i class="fab fa-facebook-f"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-twitter"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-linkedin-in"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-instagram"></i></a>
-                    <a class="text-body ps-2" href="#!"><i class="fab fa-youtube"></i></a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Topbar End -->
 
-<!-- Navbar Start -->
-<div class="container-fluid sticky-top bg-white shadow-sm">
-    <div class="container">
-        <nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0">
-            <a href="#" class="navbar-brand">
-                <h1 class="m-0 text-uppercase text-primary">
-                    <i class="fa fa-clinic-medical me-2"></i>Medinova
-                </h1>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarCollapse">
-                <div class="navbar-nav ms-auto py-0">
-                    <a href="#" class="nav-item nav-link active">Home</a>
-                    <a href="#" class="nav-item nav-link">About</a>
-                    <a href="#" class="nav-item nav-link">Service</a>
-                    <a href="#" class="nav-item nav-link">Laboratoire</a>
-                    <a href="#" class="nav-item nav-link">Parapharmacie</a>
-                    <a href="#" class="nav-item nav-link">Pricing</a>
-                   
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                        <div class="dropdown-menu m-0">
-                            <a href="#" class="dropdown-item">Blog Grid</a>
-                            <a href="#" class="dropdown-item">Blog Detail</a>
-                            <a href="#" class="dropdown-item">The Team</a>
-                            <a href="#" class="dropdown-item">Testimonial</a>
-                            <a href="#" class="dropdown-item">Appointment</a>
-                            <a href="#" class="dropdown-item">Search</a>
-                        </div>
-                    </div>
-                    <a href="#" class="nav-item nav-link">Contact</a>
-                </div>
-            </div>
-        </nav>
-    </div>
-</div>
 
 <div class="container confirmation-container">
     <div class="confirmation-card">
@@ -410,11 +350,7 @@
                     <i class="bi bi-arrow-left me-2"></i>Retour au produit
                 </a>
                 
-                <a href="{{ path('app_mes_commandes') }}" 
-   class="btn btn-lg"
-   style="background-color:#0dcaf0; border-color:#0dcaf0; color:white;">
-    <i class="bi bi-list-check me-2"></i>Suivre mes commandes
-</a>
+                
                 <button onclick="window.print()" 
                         class="btn btn-print btn-lg">
                     <i class="bi bi-printer me-2"></i>Imprimer

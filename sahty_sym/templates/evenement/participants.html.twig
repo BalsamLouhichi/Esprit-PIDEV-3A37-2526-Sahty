@@ -1,0 +1,928 @@
+{# templates/evenement/participants.html.twig #}
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahty - Participants à l'événement</title>
+    <meta name="description" content="Liste des participants à l'événement">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3a56d8;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #475569;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background-color: #f8fafc;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Hero Section - comme dans les autres pages */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(74, 108, 247, 0.95) 0%, rgba(58, 86, 216, 0.95) 100%), 
+                        url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23f8fafc' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(74, 108, 247, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Event Info Card */
+        .event-info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+
+        .event-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .event-meta-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 25px;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .event-meta-item i {
+            color: var(--primary);
+            margin-right: 8px;
+            width: 20px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            margin-bottom: 30px;
+        }
+
+        .filter-badge {
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .filter-badge:hover, .filter-badge.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Participants Table */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        .participants-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .participants-table thead th {
+            padding: 15px 20px;
+            background: #f8fafc;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+
+        .participants-table thead th:first-child {
+            border-radius: 15px 0 0 15px;
+        }
+
+        .participants-table thead th:last-child {
+            border-radius: 0 15px 15px 0;
+        }
+
+        .participants-table tbody tr {
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            border-radius: 15px;
+        }
+
+        .participants-table tbody tr:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            background: #fafbff;
+        }
+
+        .participants-table tbody td {
+            padding: 15px 20px;
+            vertical-align: middle;
+            border: none;
+        }
+
+        .participants-table tbody td:first-child {
+            border-radius: 15px 0 0 15px;
+        }
+
+        .participants-table tbody td:last-child {
+            border-radius: 0 15px 15px 0;
+        }
+
+        /* Participant Avatar */
+        .participant-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .participant-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-confirme {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-en_attente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-annule {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-paye {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-present {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-absent {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Presence Toggle */
+        .presence-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .presence-toggle:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .presence-toggle.present {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .presence-toggle.absent {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: var(--text);
+            margin: 0 3px;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.danger:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .action-btn.success:hover {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        /* Export Buttons */
+        .export-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .export-btn i {
+            margin-right: 8px;
+        }
+
+        .btn-excel {
+            background: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .btn-excel:hover {
+            background: #059669;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-pdf {
+            background: #ef4444;
+            color: white;
+            border: none;
+        }
+
+        .btn-pdf:hover {
+            background: #dc2626;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-print {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-print:hover {
+            background: var(--primary-dark);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        /* Pagination */
+        .pagination {
+            gap: 5px;
+        }
+
+        .page-link {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px !important;
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .page-item.active .page-link {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Custom Buttons */
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
+            color: white;
+        }
+
+        .btn-outline-primary-custom {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 23px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline-primary-custom:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .participant-row {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 60px 0;
+            }
+            
+            .hero-section h1 {
+                font-size: 2.2rem;
+            }
+            
+            .event-title {
+                font-size: 1.5rem;
+            }
+            
+            .table-container {
+                padding: 15px;
+                overflow-x: auto;
+            }
+            
+            .participants-table {
+                min-width: 800px;
+            }
+            
+            .export-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    {% include 'partials/header.html.twig' %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-7 hero-content">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ path('app_home') }}" class="text-white opacity-75">Accueil</a></li>
+                            <li class="breadcrumb-item"><a href="{{ path('evenements_evenement_list') }}" class="text-white opacity-75">Événements</a></li>
+                            <li class="breadcrumb-item"><a href="{{ path('evenements_evenement_view', {'id': evenement.id}) }}" class="text-white opacity-75">{{ evenement.titre|slice(0, 30) }}</a></li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">Participants</li>
+                        </ol>
+                    </nav>
+                    
+                    <h1 class="display-4 fw-bold mb-3">
+                        Liste des <span class="text-warning">participants</span>
+                    </h1>
+                    
+                    <p class="lead mb-4 opacity-90">
+                        Gérez les inscriptions et suivez la présence des participants à cet événement.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ path('evenements_evenement_view', {'id': evenement.id}) }}" class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="fas fa-arrow-left me-2"></i> Retour à l'événement
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-5 text-center d-none d-lg-block">
+                    <div class="floating">
+                        <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                             class="img-fluid rounded-4 shadow-lg" 
+                             alt="Participants" style="max-height: 300px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ participants|length }}</div>
+                        <p class="stat-label">Total inscriptions</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ participants|filter(p => p.statut == 'confirme' or p.statut == 'paye')|length }}</div>
+                        <p class="stat-label">Confirmés</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ participants|filter(p => p.present == true)|length }}</div>
+                        <p class="stat-label">Présents</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ participants|filter(p => p.statut == 'en_attente')|length }}</div>
+                        <p class="stat-label">En attente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Event Info Card -->
+    <section class="py-2">
+        <div class="container">
+            <div class="event-info-card">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="event-title fw-bold">{{ evenement.titre }}</h3>
+                        <div class="d-flex flex-wrap">
+                            <span class="event-meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ evenement.dateDebut|date('d/m/Y') }}
+                            </span>
+                            <span class="event-meta-item">
+                                <i class="far fa-clock"></i>
+                                {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}
+                            </span>
+                            <span class="event-meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ evenement.lieu|default('En ligne') }}
+                            </span>
+                            <span class="event-meta-item">
+                                <i class="fas fa-tag"></i>
+                                {{ evenement.type|default('Webinaire')|capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <div class="d-flex gap-2 justify-content-lg-end export-buttons">
+                            {# <a href="#" class="export-btn btn-excel" onclick="exportToExcel()">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a> #}
+                            {# <a href="#" class="export-btn btn-pdf" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a> #}
+                            <a href="#" class="export-btn btn-print" onclick="window.print()">
+                                <i class="fas fa-print"></i> Imprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Participants List -->
+    <section class="py-4">
+        <div class="container">
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="d-flex flex-wrap gap-2 mb-3 mb-lg-0">
+                            <span class="fw-semibold me-2">Filtres :</span>
+                            <button class="filter-badge active" data-filter="all">
+                                <i class="fas fa-users me-1"></i> Tous
+                            </button>
+                            <button class="filter-badge" data-filter="confirme">
+                                <i class="fas fa-check-circle me-1"></i> Confirmés
+                            </button>
+                            <button class="filter-badge" data-filter="en_attente">
+                                <i class="fas fa-clock me-1"></i> En attente
+                            </button>
+                            <button class="filter-badge" data-filter="paye">
+                                <i class="fas fa-credit-card me-1"></i> Payés
+                            </button>
+                            <button class="filter-badge" data-filter="present">
+                                <i class="fas fa-user-check me-1"></i> Présents
+                            </button>
+                            <button class="filter-badge" data-filter="absent">
+                                <i class="fas fa-user-times me-1"></i> Absents
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="searchInput" class="form-control border-start-0" 
+                                   placeholder="Rechercher un participant...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants Table -->
+            <div class="table-container">
+                {% if participants|length > 0 %}
+                    <table class="participants-table">
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Date d'inscription</th>
+                                <th>Statut</th>
+                                <th>Présence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantsTable">
+                            {% for participant in participants %}
+                                {% set utilisateur = participant.utilisateur %}
+                                <tr class="participant-row" 
+                                    data-statut="{{ participant.statut }}"
+                                    data-present="{{ participant.present ? 'present' : 'absent' }}"
+                                    data-nom="{{ utilisateur.nom|default('') }} {{ utilisateur.prenom|default('') }}"
+                                    data-email="{{ utilisateur.email|default('') }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="participant-avatar me-3">
+                                                {% if utilisateur.photoProfil is defined and utilisateur.photoProfil %}
+                                                    <img src="{{ asset('uploads/avatars/' ~ utilisateur.photoProfil) }}" alt="{{ utilisateur.prenom }}">
+                                                {% else %}
+                                                    {{ utilisateur.prenom|first|default('U') }}{{ utilisateur.nom|first|default('') }}
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">{{ utilisateur.prenom|default('') }} {{ utilisateur.nom|default('Inconnu') }}</div>
+                                                <small class="text-muted">{{ utilisateur.specialite|default('Participant') }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ utilisateur.email|default('Non renseigné') }}</td>
+                                    <td>
+                                        {% if utilisateur %}
+                                            {% if 'ROLE_MEDECIN' in utilisateur.roles %}
+                                                <span class="badge bg-primary">Médecin</span>
+                                            {% elseif 'ROLE_RESPONSABLE_LABO' in utilisateur.roles %}
+                                                <span class="badge bg-info">Laboratoire</span>
+                                            {% elseif 'ROLE_RESPONSABLE_PARA' in utilisateur.roles %}
+                                                <span class="badge bg-secondary">Para-pharmacie</span>
+                                            {% elseif 'ROLE_PATIENT' in utilisateur.roles %}
+                                                <span class="badge bg-success">Patient</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">Visiteur</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">Utilisateur inconnu</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ participant.dateInscription|date('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ participant.statut|replace({'_': ''}) }}">
+                                            {% if participant.statut == 'confirme' %}
+                                                <i class="fas fa-check-circle me-1"></i>Confirmé
+                                            {% elseif participant.statut == 'en_attente' %}
+                                                <i class="fas fa-clock me-1"></i>En attente
+                                            {% elseif participant.statut == 'paye' %}
+                                                <i class="fas fa-credit-card me-1"></i>Payé
+                                            {% elseif participant.statut == 'annule' %}
+                                                <i class="fas fa-times-circle me-1"></i>Annulé
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if participant.present %}
+                                            <span class="presence-toggle present"
+                                                  title="Participant présent">
+                                                <i class="fas fa-user-check"></i>
+                                            </span>
+                                        {% else %}
+                                            <span class="presence-toggle absent"
+                                                  title="Participant absent">
+                                                <i class="fas fa-user-slash"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ path('app_inscription_evenement_confirmation', {'id': participant.id}) }}" 
+                                               class="action-btn" title="Voir détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if participant.statut != 'annule' %}
+                                                <form method="post" 
+                                                      action="{{ path('app_inscription_evenement_annuler', {'id': participant.id}) }}" 
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette inscription ?');"
+                                                      style="display: inline;">
+                                                    <input type="hidden" name="_token" 
+                                                           value="{{ csrf_token('annuler' ~ participant.id) }}">
+                                                    <button type="submit" class="action-btn danger" title="Annuler l'inscription">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                            {% if participant.statut == 'en_attente' %}
+                                                <a href="{{ path('app_inscription_evenement_payer', {'id': participant.id}) }}" 
+                                                   class="action-btn success" title="Paiement">
+                                                    <i class="fas fa-credit-card"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if participants|length > 10 %}
+                        <div class="d-flex justify-content-center mt-4">
+                            <nav aria-label="Navigation">
+                                <ul class="pagination">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+                                    </li>
+                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <h4 class="fw-bold mb-3">Aucun participant pour le moment</h4>
+                        <p class="text-muted mb-4">
+                            Cet événement n'a pas encore de participants inscrits.
+                        </p>
+                        <a href="{{ path('evenements_evenement_view', {'id': evenement.id}) }}" class="btn btn-primary-custom">
+                            <i class="fas fa-arrow-left me-2"></i> Retour à l'événement
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    {% include 'partials/footer.html.twig' %}
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter functionality
+            const filterTabs = document.querySelectorAll('.filter-badge');
+            const participantRows = document.querySelectorAll('.participant-row');
+            
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    
+                    participantRows.forEach(row => {
+                        const statut = row.dataset.statut;
+                        const present = row.dataset.present;
+                        
+                        if (filter === 'all') {
+                            row.style.display = '';
+                        } else if (filter === 'present') {
+                            row.style.display = present === 'present' ? '' : 'none';
+                        } else if (filter === 'absent') {
+                            row.style.display = present === 'absent' ? '' : 'none';
+                        } else {
+                            row.style.display = statut === filter ? '' : 'none';
+                        }
+                    });
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    
+                    participantRows.forEach(row => {
+                        if (searchTerm === '') {
+                            row.style.display = '';
+                            return;
+                        }
+                        
+                        const nom = row.dataset.nom?.toLowerCase() || '';
+                        const email = row.dataset.email?.toLowerCase() || '';
+                        
+                        if (nom.includes(searchTerm) || email.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    
+                    // Reset active filter
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    document.querySelector('[data-filter="all"]').classList.add('active');
+                });
+            }
+            
+            // Animation on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            document.querySelectorAll('.participant-row').forEach(row => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(20px)';
+                row.style.transition = 'all 0.5s ease';
+                observer.observe(row);
+            });
+        });
+
+        // Export functions (simulated)
+        function exportToExcel() {
+            alert('Export Excel - Fonctionnalité à implémenter');
+        }
+
+        function exportToPDF() {
+            alert('Export PDF - Fonctionnalité à implémenter');
+        }
+    </script>
+</body>
+</html>

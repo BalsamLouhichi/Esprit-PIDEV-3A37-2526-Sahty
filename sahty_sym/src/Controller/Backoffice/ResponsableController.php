@@ -4,18 +4,25 @@
 namespace App\Controller\Backoffice;
 
 use App\Entity\Produit;
+use App\Entity\Commande;
 use App\Entity\Parapharmacie;
-use App\Entity\Commande;  // AJOUT IMPORTANT : importation de la classe Commande
+use App\Entity\ResponsableParapharmacie;
 use App\Form\ProduitType;
+use App\Service\ProductContentGenerator;
+use App\Service\ResponsableDailySummaryService;
 use App\Repository\ProduitRepository;
 use App\Repository\CommandeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 #[Route('/responsable')]
 class ResponsableController extends AbstractController
@@ -26,6 +33,27 @@ class ResponsableController extends AbstractController
     {
         $this->entityManager = $entityManager;
     }
+
+    /**
+     * Méthode helper pour récupérer la parapharmacie de l'utilisateur connecté
+     */
+    private function getCurrentParapharmacie(): Parapharmacie
+    {
+        $user = $this->getUser();
+        
+        if (!$user instanceof ResponsableParapharmacie) {
+            throw new AccessDeniedException('Accès réservé aux responsables de parapharmacie');
+        }
+
+        $parapharmacie = $user->getParapharmacie();
+        
+        if (!$parapharmacie) {
+            $this->addFlash('error', 'Vous n\'êtes pas associé à une parapharmacie. Veuillez contacter l\'administrateur.');
+            throw new AccessDeniedException('Aucune parapharmacie associée à ce compte');
+        }
+
+        return $parapharmacie;
+    }
     
     /**
      * Tableau de bord du responsable
@@ -33,15 +61,12 @@ class ResponsableController extends AbstractController
     #[Route('/dashboard', name: 'app_responsable_dashboard')]
     public function dashboard(
         CommandeRepository $commandeRepository,
-        ProduitRepository $produitRepository
+        ProduitRepository $produitRepository,
+        ResponsableDailySummaryService $dailySummaryService
     ): Response {
-        // Récupérer une parapharmacie par défaut (la première)
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -59,13 +84,21 @@ class ResponsableController extends AbstractController
         $totalProduits = $produitRepository->countByParapharmacie($parapharmacie->getId());
         
         $statsVentes = $commandeRepository->getStatsByParapharmacie($parapharmacie->getId());
+        $aiSummary = $dailySummaryService->generate(
+            $parapharmacie,
+            $commandesRecent,
+            $commandesEnAttente,
+            (int) $totalProduits,
+            is_array($statsVentes) ? $statsVentes : []
+        );
         
         return $this->render('backoffice/responsable/dashboard.html.twig', [
             'parapharmacie' => $parapharmacie,
             'commandesEnAttente' => count($commandesEnAttente),
             'commandesRecent' => $commandesRecent,
             'totalProduits' => $totalProduits,
-            'statsVentes' => $statsVentes
+            'statsVentes' => $statsVentes,
+            'aiSummary' => $aiSummary,
         ]);
     }
     
@@ -76,12 +109,9 @@ class ResponsableController extends AbstractController
     public function produits(
         ProduitRepository $produitRepository
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -101,12 +131,9 @@ class ResponsableController extends AbstractController
         Request $request,
         SluggerInterface $slugger
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -141,6 +168,11 @@ class ResponsableController extends AbstractController
             $this->entityManager->persist($produit);
             $this->entityManager->flush();
             
+            if ($ancienStatut !== 'confirmee' && $nouveauStatut === 'confirmee') {
+            }
+            
+            
+            
             $this->addFlash('success', 'Produit ajouté avec succès !');
             
             return $this->redirectToRoute('app_responsable_produits');
@@ -163,17 +195,15 @@ class ResponsableController extends AbstractController
         Request $request,
         SluggerInterface $slugger
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
+        // Vérifier que le produit appartient bien à cette parapharmacie
         if (!$produit->getParapharmacies()->contains($parapharmacie)) {
-            $this->addFlash('error', 'Ce produit n\'appartient pas à cette parapharmacie');
+            $this->addFlash('error', 'Ce produit n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_produits');
         }
         
@@ -194,6 +224,7 @@ class ResponsableController extends AbstractController
                         $newFilename
                     );
                     
+                    // Supprimer l'ancienne image
                     if ($produit->getImage()) {
                         $oldImage = $this->getParameter('produits_images_directory').'/'.$produit->getImage();
                         if (file_exists($oldImage)) {
@@ -230,21 +261,20 @@ class ResponsableController extends AbstractController
         Produit $produit,
         Request $request
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
+        // Vérifier que le produit appartient bien à cette parapharmacie
         if (!$produit->getParapharmacies()->contains($parapharmacie)) {
-            $this->addFlash('error', 'Ce produit n\'appartient pas à cette parapharmacie');
+            $this->addFlash('error', 'Ce produit n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_produits');
         }
         
         if ($this->isCsrfTokenValid('delete'.$produit->getId(), $request->request->get('_token'))) {
+            // Supprimer l'image associée
             if ($produit->getImage()) {
                 $imagePath = $this->getParameter('produits_images_directory').'/'.$produit->getImage();
                 if (file_exists($imagePath)) {
@@ -269,12 +299,9 @@ class ResponsableController extends AbstractController
         CommandeRepository $commandeRepository,
         Request $request
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -302,19 +329,18 @@ class ResponsableController extends AbstractController
     #[Route('/commande/{id}/statut', name: 'app_responsable_commande_statut', methods: ['POST'])]
     public function changerStatutCommande(
         Commande $commande,
-        Request $request
+        Request $request,
+        MailerInterface $mailer
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
+        // Vérifier que la commande appartient bien à cette parapharmacie
         if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
-            $this->addFlash('error', 'Cette commande n\'appartient pas à cette parapharmacie');
+            $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
         
@@ -322,10 +348,16 @@ class ResponsableController extends AbstractController
         $statutsValides = ['en_attente', 'confirmee', 'preparation', 'expediee', 'livree', 'annulee'];
         
         if (in_array($nouveauStatut, $statutsValides)) {
+            $ancienStatut = $commande->getStatut();
             $commande->setStatut($nouveauStatut);
             $commande->setDateModification(new \DateTime());
             
             $this->entityManager->flush();
+            
+            // Notify patient when order is accepted
+            if ($ancienStatut !== 'confirmee' && $nouveauStatut === 'confirmee') {
+                $this->notifierPatientCommandeAcceptee($commande, $mailer);
+            }
             
             $this->addFlash('success', 'Statut de la commande mis à jour');
         }
@@ -333,6 +365,31 @@ class ResponsableController extends AbstractController
         return $this->redirectToRoute('app_responsable_commandes');
     }
     
+    private function notifierPatientCommandeAcceptee(Commande $commande, MailerInterface $mailer): void
+    {
+        $emailClient = $commande->getEmail();
+        if (!$emailClient) {
+            return;
+        }
+
+        try {
+            $html = $this->renderView('emails/commande_acceptee_patient.html.twig', [
+                'commande' => $commande,
+                'parapharmacie' => $commande->getParapharmacie(),
+            ]);
+
+            $email = (new Email())
+                ->from('commandes@sahty.com')
+                ->to($emailClient)
+                ->subject('Votre commande #' . $commande->getNumero() . ' a ete acceptee')
+                ->html($html);
+
+            $mailer->send($email);
+        } catch (\Throwable $e) {
+            error_log('Erreur notification commande acceptee: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Détails d'une commande
      */
@@ -340,17 +397,15 @@ class ResponsableController extends AbstractController
     public function commandeDetails(
         Commande $commande
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
+        // Vérifier que la commande appartient bien à cette parapharmacie
         if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
-            $this->addFlash('error', 'Cette commande n\'appartient pas à cette parapharmacie');
+            $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
         
@@ -368,12 +423,9 @@ class ResponsableController extends AbstractController
         CommandeRepository $commandeRepository,
         ProduitRepository $produitRepository
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -396,12 +448,9 @@ class ResponsableController extends AbstractController
     public function parametres(
         Request $request
     ): Response {
-        $parapharmacie = $this->entityManager
-            ->getRepository(Parapharmacie::class)
-            ->findOneBy([]);
-        
-        if (!$parapharmacie) {
-            $this->addFlash('error', 'Aucune parapharmacie trouvée dans la base de données.');
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
         
@@ -417,6 +466,8 @@ class ResponsableController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->entityManager->flush();
             $this->addFlash('success', 'Paramètres mis à jour avec succès');
+            
+            return $this->redirectToRoute('app_responsable_parametres');
         }
         
         return $this->render('backoffice/responsable/parametres.html.twig', [
@@ -424,4 +475,47 @@ class ResponsableController extends AbstractController
             'parapharmacie' => $parapharmacie
         ]);
     }
+
+    /**
+     * Generer une fiche produit avec IA
+     */
+    #[Route('/produit/generer-fiche-ia', name: 'app_responsable_produit_generer_fiche_ia', methods: ['POST'])]
+    public function genererFicheIA(
+        Request $request,
+        ProductContentGenerator $productContentGenerator
+    ): JsonResponse {
+        try {
+            $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Acces non autorise',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Requete invalide',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $generated = $productContentGenerator->generate($payload);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json([
+            'success' => true,
+            'data' => $generated,
+        ]);
+    }
 }
+
+
+

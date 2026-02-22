@@ -1,0 +1,2086 @@
+﻿{% set app_name = app_name ?? 'Sahty' %}
+{% set app_version = app_version ?? '1.0.0' %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>{{ app_name }} - Admin Dashboard</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="Hospital Management System" name="description">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{{ asset('img/favicon.ico') }}">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-dark: #1d4ed8;
+            --secondary: #475569;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --info: #3b82f6;
+            --info-light: #dbeafe;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --light: #f8fafc;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            
+            --border-radius-sm: 0.375rem;
+            --border-radius-md: 0.5rem;
+            --border-radius-lg: 0.75rem;
+            --border-radius-xl: 1rem;
+            
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-700);
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-400);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-500);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: white;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-header h3 i {
+            color: var(--primary);
+        }
+
+        .sidebar-header small {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+            font-weight: 400;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .sidebar-menu {
+            padding: 1rem 0;
+            flex: 1;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 0.25rem 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--gray-600);
+            text-decoration: none;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .sidebar-menu a:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        .sidebar-menu a.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .sidebar-menu i {
+            width: 1.5rem;
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+        }
+
+        .sidebar-menu .badge {
+            margin-left: auto;
+            background: var(--gray-200);
+            color: var(--gray-700);
+            font-weight: 500;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+        }
+
+        /* Badge de couleur pour les nombres importants */
+        .badge-primary-custom {
+            background: var(--primary-light) !important;
+            color: var(--primary) !important;
+            font-weight: 600;
+        }
+        
+        .badge-success-custom {
+            background: var(--success-light) !important;
+            color: var(--success) !important;
+            font-weight: 600;
+        }
+        
+        .badge-warning-custom {
+            background: var(--warning-light) !important;
+            color: var(--warning) !important;
+            font-weight: 600;
+        }
+        
+        .badge-info-custom {
+            background: var(--info-light) !important;
+            color: var(--info) !important;
+            font-weight: 600;
+        }
+
+        /* Menu dÃ©roulant pour laboratoires */
+        .submenu {
+            list-style: none;
+            padding-left: 2.5rem !important;
+            margin: 0.25rem 0 !important;
+        }
+
+        .submenu li {
+            margin: 0.125rem 0 !important;
+        }
+
+        .submenu a {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.8125rem !important;
+        }
+
+        .sidebar-menu .collapse-arrow {
+            margin-left: auto;
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-menu a[aria-expanded="true"] .collapse-arrow {
+            transform: rotate(90deg);
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            background: white;
+        }
+
+        .sidebar-footer .btn {
+            width: 100%;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-700);
+            padding: 0.625rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .sidebar-footer .btn:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: var(--gray-50);
+        }
+
+        /* Topbar */
+        .topbar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .toggle-btn {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            font-size: 1.1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-btn:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info h6 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--border-radius-md);
+            object-fit: cover;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-menu {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: var(--gray-200);
+        }
+
+        /* Content Container */
+        .content-container {
+            padding: 1.5rem;
+        }
+
+        /* Alert */
+        .alert {
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-left: 4px solid transparent;
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: var(--success);
+            border-left-color: var(--success);
+        }
+
+        .alert-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-left-color: var(--danger);
+        }
+
+        .alert-warning {
+            background: var(--warning-light);
+            color: var(--warning);
+            border-left-color: var(--warning);
+        }
+
+        .alert-info {
+            background: var(--info-light);
+            color: var(--info);
+            border-left-color: var(--info);
+        }
+
+        .btn-close {
+            filter: none;
+            opacity: 0.5;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .stat-card-icon.primary { background: var(--primary); }
+        .stat-card-icon.success { background: var(--success); }
+        .stat-card-icon.warning { background: var(--warning); }
+        .stat-card-icon.danger { background: var(--danger); }
+        .stat-card-icon.info { background: var(--info); }
+
+        .stat-card-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .stat-card-content p {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .stat-card-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stat-card-change.positive {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .stat-card-change.negative {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .chart-container h5 {
+            margin: 0 0 1.5rem 0;
+            color: var(--gray-900);
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container h5 i {
+            color: var(--primary);
+        }
+
+        .chart {
+            height: 250px;
+            position: relative;
+        }
+
+        /* Progress */
+        .progress-container {
+            margin-bottom: 1.25rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .progress-label span:first-child {
+            font-weight: 500;
+        }
+
+        .progress-label span:last-child {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .progress {
+            height: 0.5rem;
+            background: var(--gray-100);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            border-radius: 1rem;
+        }
+
+        .progress-bar.bg-primary { background: var(--primary) !important; }
+        .progress-bar.bg-success { background: var(--success) !important; }
+        .progress-bar.bg-warning { background: var(--warning) !important; }
+        .progress-bar.bg-danger { background: var(--danger) !important; }
+
+        /* System Status Alert */
+        .system-status-alert {
+            background: var(--success-light);
+            border: 1px solid var(--success);
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .system-status-alert i {
+            font-size: 2rem;
+            color: var(--success);
+        }
+
+        .system-status-alert strong {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .system-status-alert p {
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .quick-stat-item {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 1.25rem;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .quick-stat-item:hover {
+            border-color: var(--primary-light);
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quick-stat-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-stat-item .text-primary { color: var(--primary); }
+        .quick-stat-item .text-success { color: var(--success); }
+        .quick-stat-item .text-warning { color: var(--warning); }
+        .quick-stat-item .text-danger { color: var(--danger); }
+        .quick-stat-item .text-info { color: var(--info); }
+
+        .quick-stat-item h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0.5rem 0;
+        }
+
+        .quick-stat-item small {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Table Container */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-header h5 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-header h5 i {
+            color: var(--primary);
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin: -0.5rem;
+            padding: 0.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 1rem 0.75rem;
+            color: var(--gray-500);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .table tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* User Avatar Small */
+        .user-avatar-sm {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--border-radius-md);
+            object-fit: cover;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge i {
+            font-size: 0.625rem;
+        }
+
+        .status-active {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .status-inactive {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .status-info {
+            background: var(--info-light);
+            color: var(--info);
+        }
+
+        /* Role Badge */
+        .role-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .role-badge.medecin { background: var(--success-light); color: var(--success); }
+        .role-badge.patient { background: var(--primary-light); color: var(--primary); }
+        .role-badge.labo { background: var(--info-light); color: var(--info); }
+        .role-badge.para { background: var(--warning-light); color: var(--warning); }
+        .role-badge.admin { background: var(--danger-light); color: var(--danger); }
+
+        /* Row Actions */
+        .row-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .row-action-btn {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .row-action-btn:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            transform: scale(1.1);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            margin: 1.5rem 0;
+        }
+
+        .filter-section h5 {
+            margin: 0 0 1rem 0;
+            color: var(--gray-900);
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-section h5 i {
+            color: var(--primary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-filter {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid var(--gray-200);
+            background: white;
+            color: var(--gray-700);
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn-filter:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .btn-filter.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-500);
+            font-size: 0.75rem;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            font-weight: 500;
+            border-radius: var(--border-radius-md);
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-outline-primary {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+
+        /* Activity List */
+        .activity-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.primary { background: var(--primary); }
+        .activity-icon.success { background: var(--success); }
+        .activity-icon.warning { background: var(--warning); }
+        .activity-icon.danger { background: var(--danger); }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-content h6 {
+            margin: 0 0 0.25rem 0;
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .activity-content p {
+            margin: 0;
+            color: var(--gray-500);
+            font-size: 0.8125rem;
+        }
+
+        .activity-time {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--gray-400);
+            font-size: 0.6875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+                box-shadow: var(--shadow-xl);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .content-container {
+                padding: 1rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h3><i class="fas fa-heartbeat"></i> {{ app_name }}</h3>
+        <small>SystÃ¨me de Gestion HospitaliÃ¨re</small>
+    </div>
+
+    <div class="sidebar-menu">
+        <ul>
+            <li>
+                <a href="{{ path('admin_index') }}" {% if app.request.attributes.get('_route') == 'admin_index' %}class="active"{% endif %}>
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Tableau de bord</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_users') }}" {% if app.request.attributes.get('_route') in ['admin_users', 'admin_user_new', 'admin_user_edit', 'admin_user_delete', 'admin_user_toggle_status'] %}class="active"{% endif %}>
+                    <i class="fas fa-users"></i>
+                    <span>Utilisateurs</span>
+                    <span class="badge badge-primary-custom">{{ totalUsers|default(0) }}</span>
+                </a>
+            </li>
+            
+            <!-- MENU LABORATOIRES AVEC SOUS-MENU DÃ‰ROULANT -->
+            <li>
+                <a href="#laboratoireSubmenu" data-bs-toggle="collapse" aria-expanded="{{ app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' ? 'true' : 'false' }}" class="{% if app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' %}active{% endif %}">
+                    <i class="fas fa-flask"></i>
+                    <span>Laboratoires</span>
+                    <span class="badge badge-info-custom">{{ totalLaboratoires|default(0) }}</span>
+                    <i class="fas fa-chevron-right collapse-arrow"></i>
+                </a>
+                <ul class="submenu collapse {% if app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' %}show{% endif %}" id="laboratoireSubmenu">
+                    <li>
+                        <a href="{{ path('app_labo_new') }}" {% if app.request.attributes.get('_route') == 'app_labo_new' %}class="active"{% endif %}>
+                            <i class="fas fa-list"></i>
+                            <span>Tous les laboratoires</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_laboratoire_new') }}" {% if app.request.attributes.get('_route') == 'admin_laboratoire_new' %}class="active"{% endif %}>
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter un laboratoire</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_type_analyse_list') }}" {% if app.request.attributes.get('_route') starts with 'admin_type_analyse' %}class="active"{% endif %}>
+                            <i class="fas fa-flask"></i>
+                            <span>Types d'analyse</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_demande_analyse_list') }}" {% if app.request.attributes.get('_route') starts with 'admin_demande_analyse' %}class="active"{% endif %}>
+                            <i class="fas fa-file-medical"></i>
+                            <span>Demandes d'analyse</span>
+                            <span class="badge badge-warning-custom">{{ stats.demandes_en_attente|default(0) }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_laboratoires_stats') }}" {% if app.request.attributes.get('_route') == 'admin_laboratoires_stats' %}class="active"{% endif %}>
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Statistiques</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <!-- MENU PARAPHARMACIES -->
+            <li>
+                <a href="#parapharmacieSubmenu" data-bs-toggle="collapse" aria-expanded="{{ app.request.attributes.get('_route') starts with 'admin_parapharmacie' ? 'true' : 'false' }}" class="{% if app.request.attributes.get('_route') starts with 'admin_parapharmacie' %}active{% endif %}">
+                    <i class="fas fa-capsules"></i>
+                    <span>Parapharmacies</span>
+                    <span class="badge badge-success-custom">{{ totalParapharmacies|default(0) }}</span>
+                    <i class="fas fa-chevron-right collapse-arrow"></i>
+                </a>
+                <ul class="submenu collapse {% if app.request.attributes.get('_route') starts with 'admin_parapharmacie' %}show{% endif %}" id="parapharmacieSubmenu">
+                    <li>
+                        <a href="#" {% if app.request.attributes.get('_route') in ['admin_parapharmacies', 'admin_parapharmacie_view', 'admin_parapharmacie_edit'] %}class="active"{% endif %}>
+                            <i class="fas fa-list"></i>
+                            <span>Toutes les parapharmacies</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" {% if app.request.attributes.get('_route') == 'admin_parapharmacie_new' %}class="active"{% endif %}>
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter une parapharmacie</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" {% if app.request.attributes.get('_route') starts with 'admin_produits_parapharmacie' %}class="active"{% endif %}>
+                            <i class="fas fa-box"></i>
+                            <span>Produits</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" {% if app.request.attributes.get('_route') starts with 'admin_commandes_parapharmacie' %}class="active"{% endif %}>
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Commandes</span>
+                            <span class="badge badge-warning-custom">{{ stats.commandes_en_attente|default(0) }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" {% if app.request.attributes.get('_route') == 'admin_parapharmacies_stats' %}class="active"{% endif %}>
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Statistiques</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <!-- MENU Ã‰VÃ‰NEMENTS - PARTIE ADMIN -->
+            <li>
+                <a href="#evenementSubmenu" data-bs-toggle="collapse" aria-expanded="{{ app.request.attributes.get('_route') starts with 'evenements_' ? 'true' : 'false' }}" class="{% if app.request.attributes.get('_route') starts with 'evenements_' %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Ã‰vÃ©nements</span>
+                    <span class="badge badge-success-custom">{{ totalEvenements|default(0) }}</span>
+                    <i class="fas fa-chevron-right collapse-arrow"></i>
+                </a>
+                <ul class="submenu collapse {% if app.request.attributes.get('_route') starts with 'evenements_' %}show{% endif %}" id="evenementSubmenu">
+                    
+                    <!-- Liste des Ã©vÃ©nements (admin) -->
+                    <li>
+                        <a href="{{ path('evenements_evenement_list') }}" {% if app.request.attributes.get('_route') == 'evenements_evenement_list' %}class="active"{% endif %}>
+                            <i class="fas fa-list"></i>
+                            <span>Tous les Ã©vÃ©nements</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Ajouter un Ã©vÃ©nement -->
+                    <li>
+                        <a href="{{ path('evenements_evenement_add') }}" {% if app.request.attributes.get('_route') == 'evenements_evenement_add' %}class="active"{% endif %}>
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter un Ã©vÃ©nement</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Demandes d'Ã©vÃ©nements (en attente d'approbation) -->
+                    <li>
+                        <a href="{{ path('evenements_admin_demandes_evenements') }}" {% if app.request.attributes.get('_route') == 'evenements_admin_demandes_evenements' %}class="active"{% endif %}>
+                            <i class="fas fa-clock"></i>
+                            <span>Demandes en attente</span>
+                            <span class="badge badge-warning-custom">{{ demandesEnAttente|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Dashboard admin -->
+                    <li>
+                        <a href="{{ path('evenements_dashboard') }}" {% if app.request.attributes.get('_route') == 'evenements_dashboard' %}class="active"{% endif %}>
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Statistiques</span>
+                        </a>
+                    </li>
+                    
+                   
+                    
+                    
+                    <!-- Gestion des groupes cibles -->
+                    <li>
+                        <a href="{{ path('groupe_cible_index') }}" {% if app.request.attributes.get('_route') == 'groupe_cible_index' %}class="active"{% endif %}>
+                            <i class="fas fa-users"></i>
+                            <span>Groupes cibles</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            
+            <!-- MENU RENDEZ-VOUS avec badge -->
+            <li>
+                <a href="{{ path('admin_all_appointments') }}" {% if app.request.attributes.get('_route') in ['admin_all_appointments', 'admin_view_appointment'] %}class="active"{% endif %}>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Rendez-vous</span>
+                    <span class="badge badge-primary-custom">{{ totalRendezVous|default(0) }}</span>
+                </a>
+            </li>
+            
+            <!-- MENU FICHES MÃ‰DICALES avec badge -->
+            <li>
+                <a href="{{ path('admin_all_medical_records') }}" {% if app.request.attributes.get('_route') in ['admin_all_medical_records', 'admin_view_medical_record', 'admin_edit_medical_record'] %}class="active"{% endif %}>
+                    <i class="fas fa-file-medical"></i>
+                    <span>Fiches mÃ©dicales</span>
+                    <span class="badge badge-info-custom">{{ totalFichesMedicales|default(0) }}</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Rapports</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    <span>ParamÃ¨tres</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sidebar-footer">
+        <a href="{{ path('app_logout') }}" class="btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>DÃ©connexion</span>
+        </a>
+    </div>
+</nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Topbar -->
+        <div class="topbar">
+            <button class="toggle-btn" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="user-menu">
+                <div class="user-info">
+                    <h6>{{ app.user.prenom is defined ? (app.user.prenom ~ ' ' ~ app.user.nom) : (app.user.email|split('@')[0]|default('Administrateur')) }}</h6>
+                    <small>{{ app.user.role|default('Admin')|replace({'_': ' '})|title }}</small>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        {% if app.user.photoProfil|default %}
+                            <img src="{{ asset(app.user.photoProfil) }}" alt="User" class="user-avatar">
+                        {% else %}
+                            <div class="user-avatar d-flex align-items-center justify-content-center">
+                                {{ app.user.prenom is defined ? (app.user.prenom[:1]|upper) : (app.user.email|split('@')[0][:1]|upper|default('A')) }}
+                            </div>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user"></i>Mon Profil
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-cog"></i>ParamÃ¨tres
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ path('app_logout') }}">
+                            <i class="fas fa-sign-out-alt"></i>DÃ©connexion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Container -->
+        <div class="content-container">
+            <!-- Alerts -->
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }} alert-dismissible fade show animate-slide-in" role="alert">
+                        <i class="fas fa-{{ label == 'success' ? 'check-circle' : (label == 'danger' ? 'exclamation-circle' : 'info-circle') }}"></i>
+                        <span>{{ message }}</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.1s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalUsers|default(0) }}</h3>
+                            <p>Total Utilisateurs</p>
+                        </div>
+                        <div class="stat-card-icon primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +12.5%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.2s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalMedecins|default(0) }}</h3>
+                            <p>MÃ©decins</p>
+                        </div>
+                        <div class="stat-card-icon success">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +5.2%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.3s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalPatients|default(0) }}</h3>
+                            <p>Patients</p>
+                        </div>
+                        <div class="stat-card-icon warning">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +3.1%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.4s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalActive|default(0) }}</h3>
+                            <p>Utilisateurs Actifs</p>
+                        </div>
+                        <div class="stat-card-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +8.3%
+                    </span>
+                </div>
+            </div>
+
+            <!-- Second Row Stats - Including Laboratory Stats -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.5s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalInactive|default(0) }}</h3>
+                            <p>Utilisateurs Inactifs</p>
+                        </div>
+                        <div class="stat-card-icon warning">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change negative">
+                        <i class="fas fa-arrow-down"></i> -2.4%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.6s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalLaboratoires|default(0) }}</h3>
+                            <p>Laboratoires</p>
+                        </div>
+                        <div class="stat-card-icon info">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +15.7%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.7s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ totalResponsableLabo|default(0) }}</h3>
+                            <p>Responsables Labo</p>
+                        </div>
+                        <div class="stat-card-icon info">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change positive">
+                        <i class="fas fa-arrow-up"></i> +10.2%
+                    </span>
+                </div>
+
+                <div class="stat-card animate-slide-in" style="animation-delay: 0.8s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-content">
+                            <h3>{{ stats.demandes_en_attente|default(0) }}</h3>
+                            <p>Demandes en attente</p>
+                        </div>
+                        <div class="stat-card-icon warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <span class="stat-card-change negative">
+                        <i class="fas fa-arrow-down"></i> -3.1%
+                    </span>
+                </div>
+            </div>
+
+            <!-- System Status & User Distribution -->
+            <div class="content-grid">
+                <div class="chart-container animate-slide-in" style="animation-delay: 0.9s;">
+                    <h5><i class="fas fa-server"></i> Ã‰tat du systÃ¨me</h5>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Charge serveur</span>
+                            <span>{{ system_status.server_load|default(0) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ system_status.server_load|default(0) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Utilisation BDD</span>
+                            <span>{{ system_status.database_usage|default(0) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ system_status.database_usage|default(0) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Stockage</span>
+                            <span>{{ system_status.storage|default(0) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ system_status.storage|default(0) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="system-status-alert">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>SystÃ¨me opÃ©rationnel</strong>
+                            <p>Tous les services fonctionnent normalement</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container animate-slide-in" style="animation-delay: 1s;">
+                    <h5><i class="fas fa-chart-pie"></i> RÃ©partition des utilisateurs</h5>
+                    <div class="chart">
+                        <canvas id="userDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Info -->
+            <div class="content-grid mt-4">
+                <div class="chart-container animate-slide-in" style="animation-delay: 1.1s;">
+                    <h5><i class="fas fa-bolt"></i> Actions rapides</h5>
+                    <div class="quick-stats">
+                        <div class="quick-stat-item">
+                            <i class="fas fa-calendar-plus text-primary"></i>
+                            <h4>{{ stats.pending_appointments|default(0) }}</h4>
+                            <small>Rendez-vous en attente</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-user-md text-success"></i>
+                            <h4>{{ stats.available_doctors|default(totalMedecins ?? 0) }}</h4>
+                            <small>MÃ©decins disponibles</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-ambulance text-warning"></i>
+                            <h4>{{ stats.emergency_cases|default(0) }}</h4>
+                            <small>Cas urgents</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-flask text-info"></i>
+                            <h4>{{ totalLaboratoires|default(0) }}</h4>
+                            <small>Laboratoires</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <a href="{{ path('admin_laboratoire_new') }}" class="btn btn-primary w-50">
+                            <i class="fas fa-plus-circle"></i> Nouveau labo
+                        </a>
+                        <a href="{{ path('admin_demande_analyse_new') }}" class="btn btn-outline-primary w-50">
+                            <i class="fas fa-file-medical"></i> Nouvelle demande
+                        </a>
+                    </div>
+                </div>
+
+                <div class="chart-container animate-slide-in" style="animation-delay: 1.2s;">
+                    <h5><i class="fas fa-info-circle"></i> Informations gÃ©nÃ©rales</h5>
+                    <div class="quick-stats">
+                        <div class="quick-stat-item">
+                            <i class="fas fa-file-medical text-info"></i>
+                            <h4>{{ totalFichesMedicales|default(0) }}</h4>
+                            <small>Fiches mÃ©dicales</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-calendar-check text-success"></i>
+                            <h4>{{ totalRendezVous|default(0) }}</h4>
+                            <small>Total rendez-vous</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-flask text-primary"></i>
+                            <h4>{{ stats.analyses_en_cours|default(0) }}</h4>
+                            <small>Analyses en cours</small>
+                        </div>
+                        <div class="quick-stat-item">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <h4>{{ stats.analyses_terminees|default(0) }}</h4>
+                            <small>Analyses terminÃ©es</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section animate-slide-in" style="animation-delay: 1.3s;">
+                <h5><i class="fas fa-filter"></i> Filtrer par type d'utilisateur</h5>
+                <div class="filter-buttons">
+                    <a href="{{ path('admin_users', {role: 'medecin'}) }}" class="btn-filter">
+                        <i class="fas fa-user-md me-1"></i> MÃ©decins ({{ totalMedecins|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'patient'}) }}" class="btn-filter">
+                        <i class="fas fa-user-injured me-1"></i> Patients ({{ totalPatients|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'responsable_labo'}) }}" class="btn-filter">
+                        <i class="fas fa-flask me-1"></i> Laboratoire ({{ totalResponsableLabo|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users', {role: 'responsable_para'}) }}" class="btn-filter">
+                        <i class="fas fa-capsules me-1"></i> Parapharmacie ({{ totalResponsablePara|default(0) }})
+                    </a>
+                    <a href="{{ path('admin_users') }}" class="btn-filter active">
+                        <i class="fas fa-list me-1"></i> Tous ({{ totalUsers|default(0) }})
+                    </a>
+                </div>
+            </div>
+
+            <!-- Laboratory Section - Recent Laboratories -->
+            <div class="content-grid mt-4">
+                <div class="table-container animate-slide-in" style="animation-delay: 1.4s;">
+                    <div class="table-header">
+                        <h5><i class="fas fa-flask"></i> Laboratoires rÃ©cents</h5>
+                        <a href="{{ path('admin_laboratoires') }}" class="btn btn-primary btn-sm">
+                            Voir tous <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Laboratoire</th>
+                                    <th>Ville</th>
+                                    <th>Responsable</th>
+                                    <th>TÃ©lÃ©phone</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for laboratoire in recent_laboratoires|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="user-avatar-sm" style="background: var(--info-light); color: var(--info);">
+                                                <i class="fas fa-flask"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ laboratoire.nom }}</div>
+                                                <small class="text-muted">{{ laboratoire.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ laboratoire.ville }}</td>
+                                    <td>
+                                        {% if laboratoire.responsable %}
+                                            <span>{{ laboratoire.responsable.prenom }} {{ laboratoire.responsable.nom }}</span>
+                                        {% else %}
+                                            <span class="text-muted">â€”</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ laboratoire.telephone }}</td>
+                                    <td>
+                                        <span class="status-badge {{ laboratoire.disponible ? 'status-active' : 'status-inactive' }}">
+                                            <i class="fas fa-{{ laboratoire.disponible ? 'check-circle' : 'times-circle' }}"></i>
+                                            {{ laboratoire.disponible ? 'Disponible' : 'Indisponible' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <a href="{{ path('admin_laboratoire_view', {id: laboratoire.id}) }}" class="row-action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('admin_laboratoire_edit', {id: laboratoire.id}) }}" class="row-action-btn" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ path('admin_demande_analyse_list', {laboratoire: laboratoire.id}) }}" class="row-action-btn" title="Voir les demandes">
+                                                <i class="fas fa-file-medical"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-flask fa-2x mb-2"></i>
+                                        <p class="mb-0">Aucun laboratoire trouvÃ©</p>
+                                        <a href="{{ path('admin_laboratoire_new') }}" class="btn btn-primary btn-sm mt-2">
+                                            <i class="fas fa-plus"></i> Ajouter un laboratoire
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Demandes d'analyse -->
+                <div class="table-container animate-slide-in" style="animation-delay: 1.5s;">
+                    <div class="table-header">
+                        <h5><i class="fas fa-file-medical"></i> Demandes d'analyse rÃ©centes</h5>
+                        <a href="{{ path('admin_demande_analyse_list') }}" class="btn btn-primary btn-sm">
+                            Voir toutes <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Laboratoire</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in recent_demandes_analyse|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if demande.patient and demande.patient.photoProfil %}
+                                                <img src="{{ asset(demande.patient.photoProfil) }}" alt="{{ demande.patient.prenom }}" class="user-avatar-sm">
+                                            {% else %}
+                                                <div class="user-avatar-sm">
+                                                    {{ demande.patient ? (demande.patient.prenom[:1]|upper ~ demande.patient.nom[:1]|upper) : '?' }}
+                                                </div>
+                                            {% endif %}
+                                            <span class="fw-medium">{{ demande.patient ? demande.patient.prenom ~ ' ' ~ demande.patient.nom : 'Patient inconnu' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if demande.laboratoire %}
+                                            <span class="fw-medium">{{ demande.laboratoire.nom }}</span>
+                                        {% else %}
+                                            <span class="text-muted">â€”</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ demande.typeBilan }}</td>
+                                    <td>{{ demande.dateDemande|date('d/m/Y') }}</td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {% if demande.statut == 'termine' %}status-active
+                                            {% elseif demande.statut == 'en_attente' %}status-pending
+                                            {% elseif demande.statut == 'en_cours' %}status-info
+                                            {% elseif demande.statut == 'annule' %}status-inactive
+                                            {% endif %}">
+                                            <i class="fas 
+                                                {% if demande.statut == 'termine' %}fa-check-circle
+                                                {% elseif demande.statut == 'en_attente' %}fa-clock
+                                                {% elseif demande.statut == 'en_cours' %}fa-spinner
+                                                {% elseif demande.statut == 'annule' %}fa-times-circle
+                                                {% endif %}">
+                                            </i>
+                                            {{ demande.statut|replace({'_': ' '})|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <a href="{{ path('admin_demande_analyse_view', {id: demande.id}) }}" class="row-action-btn" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if demande.statut != 'termine' %}
+                                            <a href="{{ path('admin_demande_analyse_edit', {id: demande.id}) }}" class="row-action-btn" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if demande.resultatPdf %}
+                                            <a href="{{ asset('uploads/resultats/' ~ demande.resultatPdf) }}" class="row-action-btn" title="TÃ©lÃ©charger rÃ©sultat" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-file-medical fa-2x mb-2"></i>
+                                        <p class="mb-0">Aucune demande d'analyse</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Appointments -->
+            <div class="content-grid mt-4">
+                <div class="table-container animate-slide-in" style="animation-delay: 1.6s;">
+                    <div class="table-header">
+                        <h5><i class="fas fa-calendar-check"></i> Rendez-vous rÃ©cents</h5>
+                        <a href="{{ path('admin_all_appointments') }}" class="btn btn-primary btn-sm">
+                            Voir tous <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>MÃ©decin</th>
+                                    <th>Date</th>
+                                    <th>Heure</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in recent_appointments|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if appointment.patient and appointment.patient.photoProfil %}
+                                                <img src="{{ asset(appointment.patient.photoProfil) }}" alt="{{ appointment.patient.prenom }}" class="user-avatar-sm">
+                                            {% else %}
+                                                <div class="user-avatar-sm">
+                                                    {{ appointment.patient ? (appointment.patient.prenom[:1]|upper ~ appointment.patient.nom[:1]|upper) : '?' }}
+                                                </div>
+                                            {% endif %}
+                                            <span class="fw-medium">{{ appointment.patient ? appointment.patient.prenom ~ ' ' ~ appointment.patient.nom : 'Patient inconnu' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if appointment.medecin %}
+                                            <div class="d-flex align-items-center gap-1">
+                                                <i class="fas fa-user-md text-success"></i>
+                                                Dr. {{ appointment.medecin.prenom }} {{ appointment.medecin.nom }}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">â€”</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ appointment.dateRdv ? appointment.dateRdv|date('d/m/Y') : 'â€”' }}</td>
+                                    <td>{{ appointment.heureRdv ? appointment.heureRdv|date('H:i') : 'â€”' }}</td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {% if appointment.statut == 'ConfirmÃ©' %}status-active
+                                            {% elseif appointment.statut == 'En attente' %}status-pending
+                                            {% elseif appointment.statut == 'AnnulÃ©' %}status-inactive
+                                            {% endif %}">
+                                            <i class="fas 
+                                                {% if appointment.statut == 'ConfirmÃ©' %}fa-check-circle
+                                                {% elseif appointment.statut == 'En attente' %}fa-clock
+                                                {% elseif appointment.statut == 'AnnulÃ©' %}fa-times-circle
+                                                {% endif %}">
+                                            </i>
+                                            {{ appointment.statut|capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                                        <p class="mb-0">Aucun rendez-vous rÃ©cent</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Users -->
+                <div class="table-container animate-slide-in" style="animation-delay: 1.7s;">
+                    <div class="table-header">
+                        <h5><i class="fas fa-users"></i> Utilisateurs rÃ©cents</h5>
+                        <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>RÃ´le</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if user.photoProfil %}
+                                                <img src="{{ asset(user.photoProfil) }}" alt="{{ user.prenom }}" class="user-avatar-sm">
+                                            {% else %}
+                                                <div class="user-avatar-sm">
+                                                    {{ user.prenom[:1]|upper }}{{ user.nom[:1]|upper }}
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-medium">{{ user.prenom }} {{ user.nom }}</div>
+                                                <small class="text-muted">{{ user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="role-badge 
+                                            {% if user.role == 'medecin' %}medecin
+                                            {% elseif user.role == 'patient' %}patient
+                                            {% elseif user.role == 'responsable_labo' %}labo
+                                            {% elseif user.role == 'responsable_para' %}para
+                                            {% else %}admin{% endif %}">
+                                            {% if user.role == 'medecin' %}MÃ©decin
+                                            {% elseif user.role == 'patient' %}Patient
+                                            {% elseif user.role == 'responsable_labo' %}Labo
+                                            {% elseif user.role == 'responsable_para' %}Parapharmacie
+                                            {% else %}Admin{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {% if user.estActif %}status-active
+                                            {% else %}status-inactive{% endif %}">
+                                            <i class="fas fa-{{ user.estActif ? 'check-circle' : 'times-circle' }}"></i>
+                                            {{ user.estActif ? 'Actif' : 'Inactif' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <a href="{{ path('admin_user_edit', {id: user.id}) }}" class="row-action-btn" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ path('admin_user_appointments', {id: user.id}) }}" class="row-action-btn" title="Rendez-vous">
+                                                <i class="fas fa-calendar-check"></i>
+                                            </a>
+                                            {% if user.role == 'patient' %}
+                                                <a href="{{ path('admin_patient_medical_records', {id: user.id}) }}" class="row-action-btn" title="Fiches mÃ©dicales">
+                                                    <i class="fas fa-file-medical"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if user.role == 'responsable_labo' %}
+                                                {% if user.laboratoire is not null %}
+                                                    <a href="{{ path('admin_laboratoire_view', {id: user.laboratoire.id}) }}" class="row-action-btn" title="Voir laboratoire">
+                                                        <i class="fas fa-flask"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="row-action-btn opacity-50" title="Laboratoire non assignÃ©" style="cursor: not-allowed;">
+                                                        <i class="fas fa-flask text-muted"></i>
+                                                    </span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="fas fa-users fa-2x mb-2"></i>
+                                        <p class="mb-0">Aucun utilisateur rÃ©cent</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Medical Records -->
+            <div class="content-grid mt-4">
+                <div class="table-container animate-slide-in" style="animation-delay: 1.8s;">
+                    <div class="table-header">
+                        <h5><i class="fas fa-file-medical"></i> Fiches mÃ©dicales rÃ©centes</h5>
+                        <a href="{{ path('admin_all_medical_records') }}" class="btn btn-primary btn-sm">
+                            Voir toutes <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Date</th>
+                                    <th>IMC</th>
+                                    <th>CatÃ©gorie</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in recent_medical_records|default([]) %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if record.patient and record.patient.photoProfil %}
+                                                <img src="{{ asset(record.patient.photoProfil) }}" alt="{{ record.patient.prenom }}" class="user-avatar-sm">
+                                            {% else %}
+                                                <div class="user-avatar-sm">
+                                                    {{ record.patient ? (record.patient.prenom[:1]|upper ~ record.patient.nom[:1]|upper) : '?' }}
+                                                </div>
+                                            {% endif %}
+                                            <span class="fw-medium">{{ record.patient ? record.patient.prenom ~ ' ' ~ record.patient.nom : 'Patient inconnu' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ record.creeLe ? record.creeLe|date('d/m/Y') : 'â€”' }}</td>
+                                    <td><span class="fw-medium">{{ record.imc ? record.imc|number_format(1) : 'â€”' }}</span></td>
+                                    <td>
+                                        {% if record.categorieImc %}
+                                            <span class="role-badge 
+                                                {% if record.categorieImc == 'Maigreur' %}warning
+                                                {% elseif record.categorieImc == 'Normal' %}success
+                                                {% elseif record.categorieImc == 'Surpoids' %}info
+                                                {% elseif record.categorieImc == 'ObÃ©sitÃ©' %}danger
+                                                {% endif %}">
+                                                {{ record.categorieImc }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">â€”</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge 
+                                            {% if record.statut == 'actif' %}status-active
+                                            {% else %}status-inactive{% endif %}">
+                                            <i class="fas fa-{{ record.statut == 'actif' ? 'check-circle' : 'times-circle' }}"></i>
+                                            {{ record.statut|capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="fas fa-file-medical fa-2x mb-2"></i>
+                                        <p class="mb-0">Aucune fiche mÃ©dicale rÃ©cente</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="animate-slide-in" style="animation-delay: 2s;">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p>&copy; {{ "now"|date("Y") }} {{ app_name }}. Tous droits rÃ©servÃ©s.</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p>Version {{ app_version }} | DerniÃ¨re mise Ã  jour: {{ "now"|date("d/m/Y") }}</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+
+            // User Distribution Chart
+            const userDistributionData = {
+                doctors: {{ user_distribution.doctors|default(15)|json_encode|raw }},
+                patients: {{ user_distribution.patients|default(75)|json_encode|raw }},
+                staff: {{ user_distribution.staff|default(8)|json_encode|raw }},
+                admin: {{ user_distribution.admin|default(2)|json_encode|raw }}
+            };
+
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.font.size = 12;
+
+            const ctx = document.getElementById('userDistributionChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['MÃ©decins', 'Patients', 'Staff', 'Administrateurs'],
+                        datasets: [{
+                            data: [
+                                userDistributionData.doctors,
+                                userDistributionData.patients,
+                                userDistributionData.staff,
+                                userDistributionData.admin
+                            ],
+                            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Progress bars animation
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+
+            // Auto-hide alerts
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+
+            // Tooltips
+            const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltips.forEach(tooltip => {
+                new bootstrap.Tooltip(tooltip);
+            });
+        });
+    </script>
+</body>
+</html>

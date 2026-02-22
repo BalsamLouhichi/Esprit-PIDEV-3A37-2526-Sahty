@@ -1,0 +1,444 @@
+{% extends 'base.html.twig' %}
+
+    <!-- Formulaire de Rendez-vous Start -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="row g-5">
+                <!-- Informations Personnelles -->
+                <div class="col-lg-12">
+                    <div class="form-section">
+                        <h3 class="mb-4"><i class="fas fa-user-circle text-primary me-2"></i> Vos Informations Personnelles</h3>
+                        {% if is_patient %}
+                            <div class="alert alert-info">
+                                {% if app.user %}
+                                    <p><strong>Patient connecté :</strong> 
+                                        {{ app.user.nom|default('') }} 
+                                        {{ app.user.prenom|default('') }}
+                                    </p>
+                                    {% if app.user.sexe is defined and app.user.sexe %}
+                                        <p><strong>Sexe :</strong> {{ app.user.sexe == 'M' ? 'Masculin' : 'Féminin' }}</p>
+                                    {% endif %}
+                                    {% if app.user.groupeSanguin is defined and app.user.groupeSanguin %}
+                                        <p><strong>Groupe sanguin :</strong> {{ app.user.groupeSanguin }}</p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="text-warning"><strong>Non connecté</strong></p>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Vous devez être connecté en tant que patient pour prendre un rendez-vous.
+                                <a href="#" class="btn btn-primary">Se connecter (à venir)</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if is_patient %}
+                    <div class="col-lg-12">
+                        <div class="form-section">
+                            <h3 class="mb-4"><i class="fas fa-user-md text-primary me-2"></i> Choix du Médecin</h3>
+                            <p class="text-muted mb-4">Sélectionnez le spécialiste adapté à vos besoins</p>
+                            
+                            {% if medecins is defined and medecins|length > 0 %}
+                                <div class="row g-4 mb-4" id="doctorSelection">
+                                    {% for medecin in medecins %}
+                                        <div class="col-md-4">
+                                            <div class="doctor-card card border h-100"
+                                                 data-id="{{ medecin.id }}">
+                                                <div class="card-body text-center p-4">
+                                                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" 
+                                                         style="width: 100px; height: 100px;">
+                                                        <i class="fas fa-user-md fa-3x text-primary"></i>
+                                                    </div>
+                                                    <h5 class="card-title">Dr {{ medecin.prenom }} {{ medecin.nom }}</h5>
+                                                    <p class="card-text text-muted">{{ medecin.specialite }}</p>
+                                                    <div class="mb-3">
+                                                        {% if medecin.anneeExperience %}
+                                                            <span class="badge bg-info">{{ medecin.anneeExperience }} ans d'expérience</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <p class="small text-muted mb-3">
+                                                        {% if medecin.grade %}{{ medecin.grade }}<br>{% endif %}
+                                                        {% if medecin.nomEtablissement %}{{ medecin.nomEtablissement }}{% endif %}
+                                                    </p>
+                                                    <button type="button" class="btn btn-outline-primary w-100 select-doctor-btn" data-id="{{ medecin.id }}">
+                                                        Sélectionner
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Aucun médecin disponible pour le moment.
+                                </div>
+                            {% endif %}
+
+                            <!-- Formulaire Symfony -->
+                            {{ form_start(form, {'attr': {'id': 'rdvForm', 'class': 'needs-validation'}}) }}
+                            
+                            <div class="row g-4">
+                                <!-- Champ médecin caché -->
+                                {{ form_widget(form.medecin, {'attr': {'class': 'd-none'}}) }}
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.dateRdv, 'Date du rendez-vous *', {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_widget(form.dateRdv, {'attr': {'class': 'form-control'}}) }}
+                                        <div class="invalid-feedback">
+                                            {{ form_errors(form.dateRdv) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.heureRdv, 'Heure du rendez-vous *', {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_widget(form.heureRdv, {'attr': {'class': 'form-control'}}) }}
+                                        <div class="invalid-feedback">
+                                            {{ form_errors(form.heureRdv) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form_label(form.raison, 'Motif de la consultation *', {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_widget(form.raison, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Décrivez brièvement la raison de votre visite...'}}) }}
+                                        <div class="invalid-feedback">
+                                            {{ form_errors(form.raison) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Champ patient caché (automatiquement rempli) -->
+                                {% if form.patient is defined %}
+                                    {{ form_widget(form.patient, {'attr': {'class': 'd-none'}}) }}
+                                {% endif %}
+                                
+                                <!-- Message d'alerte pour la sélection du médecin -->
+                                <div id="medecinAlert" class="alert alert-warning d-none">
+                                    <i class="fas fa-exclamation-circle"></i> Veuillez sélectionner un médecin.
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="consent" required>
+                                        <label class="form-check-label" for="consent">
+                                            Je consens au traitement de mes données personnelles conformément à la politique de confidentialité <span class="text-danger">*</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bouton de soumission -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg py-3 px-5" id="submitBtn">
+                                    <i class="fas fa-calendar-check me-2"></i> Confirmer le Rendez-vous
+                                </button>
+                                <p class="text-muted mt-3 small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Vous recevrez une confirmation par email. La consultation dure généralement 30 minutes.
+                                </p>
+                            </div>
+                            
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Formulaire de Rendez-vous End -->
+
+    <!-- FAQ Section Start -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">FAQ</h5>
+                <h1 class="display-6">Questions Fréquentes</h1>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    Puis-je annuler ou modifier mon rendez-vous ?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Oui, vous pouvez annuler ou modifier votre rendez-vous gratuitement jusqu'à 24 heures avant l'heure prévue. Contactez-nous par téléphone ou via votre espace patient.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Dois-je apporter quelque chose pour mon premier rendez-vous ?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Pour votre première visite, nous vous recommandons d'apporter :
+                                    <ul>
+                                        <li>Votre carte d'identité</li>
+                                        <li>Votre carte Vitale</li>
+                                        <li>Votre carte de mutuelle</li>
+                                        <li>Tous vos documents médicaux pertinents</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    Quels sont les modes de paiement acceptés ?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Nous acceptons les paiements par carte bancaire (CB, Visa, Mastercard), chèque, espèces et virement bancaire. Le tiers payant est accepté.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- FAQ Section End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light mt-5 py-5">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="d-inline-block text-primary text-uppercase border-bottom border-5 border-secondary mb-4">
+                        Nous Contacter</h4>
+                    <p class="mb-4">Votre santé est notre priorité. N'hésitez pas à nous contacter.</p>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt text-primary me-3"></i>123 Rue de la Santé, Paris</p>
+                    <p class="mb-2"><i class="fa fa-envelope text-primary me-3"></i>info@medinova.fr</p>
+                    <p class="mb-0"><i class="fa fa-phone-alt text-primary me-3"></i>+01 23 45 67 89</p>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="d-inline-block text-primary text-uppercase border-bottom border-5 border-secondary mb-4">
+                        Liens Rapides</h4>
+                    <div class="d-flex flex-column justify-content-start">
+                        <a class="text-light mb-2" href="{{ path('app_home') }}"><i class="fa fa-angle-right me-2"></i>Accueil</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>À Propos</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Nos Services</a>
+                        <a class="text-light mb-2" href="{{ path('app_rdv_prendre') }}"><i class="fa fa-angle-right me-2"></i>Rendez-vous</a>
+                        <a class="text-light" href="#"><i class="fa fa-angle-right me-2"></i>Contact</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="d-inline-block text-primary text-uppercase border-bottom border-5 border-secondary mb-4">
+                        Services</h4>
+                    <div class="d-flex flex-column justify-content-start">
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Consultation Générale</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Cardiologie</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Pédiatrie</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Dermatologie</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Modale de confirmation -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i> Rendez-vous Confirmé</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-calendar-check text-success fa-4x mb-3"></i>
+                        <h4 class="mb-3">Votre rendez-vous est confirmé !</h4>
+                        <p class="text-muted">Vous recevrez un email de confirmation.</p>
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ path('app_rdv_mes_rdv') }}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i> Voir mes rendez-vous
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary mt-2" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i> Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- Libraries JavaScript -->
+    <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+    <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
+    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+
+    <!-- Template Javascript -->
+    <script src="{{ asset('js/main.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sélection des médecins
+            const doctorCards = document.querySelectorAll('.doctor-card');
+            const selectButtons = document.querySelectorAll('.select-doctor-btn');
+            const medecinInput = document.getElementById('{{ form.medecin.vars.id }}');
+            const medecinAlert = document.getElementById('medecinAlert');
+            const form = document.getElementById('rdvForm');
+            
+            // Fonction pour sélectionner un médecin
+            function selectDoctor(id, nom, specialite) {
+                // Retirer la sélection précédente
+                doctorCards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.style.borderColor = '';
+                });
+                
+                selectButtons.forEach(btn => {
+                    btn.textContent = 'Sélectionner';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-primary');
+                });
+                
+                // Sélectionner la carte
+                const selectedCard = document.querySelector('.doctor-card[data-id="' + id + '"]');
+                const selectedBtn = selectedCard ? selectedCard.querySelector('.select-doctor-btn') : null;
+                
+                if (selectedCard && selectedBtn) {
+                    selectedCard.classList.add('selected');
+                    selectedCard.style.borderColor = '#0d6efd';
+                    selectedBtn.textContent = 'Sélectionné ✓';
+                    selectedBtn.classList.remove('btn-outline-primary');
+                    selectedBtn.classList.add('btn-success');
+                    
+                    // Mettre à jour le champ caché
+                    if (medecinInput) {
+                        medecinInput.value = id;
+                    }
+                    
+                    // Cacher l'alerte
+                    if (medecinAlert) {
+                        medecinAlert.classList.add('d-none');
+                    }
+                }
+            }
+            
+            // Gestion des clics sur les cartes
+            doctorCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('select-doctor-btn')) {
+                        const id = this.getAttribute('data-id');
+                        const nom = this.querySelector('.card-title') ? this.querySelector('.card-title').textContent : '';
+                        const specialite = this.querySelector('.card-text') ? this.querySelector('.card-text').textContent : '';
+                        selectDoctor(id, nom, specialite);
+                    }
+                });
+            });
+            
+            // Gestion des clics sur les boutons
+            selectButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const card = this.closest('.doctor-card');
+                    const id = card.getAttribute('data-id');
+                    const nom = card.querySelector('.card-title') ? card.querySelector('.card-title').textContent : '';
+                    const specialite = card.querySelector('.card-text') ? card.querySelector('.card-text').textContent : '';
+                    selectDoctor(id, nom, specialite);
+                });
+            });
+            
+            // Validation avant soumission
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Vérifier si un médecin est sélectionné
+                    if (medecinInput && !medecinInput.value) {
+                        e.preventDefault();
+                        if (medecinAlert) {
+                            medecinAlert.classList.remove('d-none');
+                            medecinAlert.scrollIntoView({ behavior: 'smooth' });
+                        }
+                        
+                        // Surligner les cartes médecin
+                        doctorCards.forEach(card => {
+                            card.style.border = '2px solid #ffc107';
+                        });
+                        return false;
+                    }
+                    
+                    // Vérifier le consentement
+                    const consentCheckbox = document.getElementById('consent');
+                    if (!consentCheckbox || !consentCheckbox.checked) {
+                        e.preventDefault();
+                        alert('Veuillez accepter le traitement de vos données personnelles.');
+                        return false;
+                    }
+                    
+                    // Vérifier la date (aujourd'hui ou futur)
+                    const dateInput = document.getElementById('{{ form.dateRdv.vars.id }}');
+                    if (dateInput) {
+                        const selectedDate = new Date(dateInput.value);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        if (selectedDate < today) {
+                            e.preventDefault();
+                            alert('La date doit être aujourd\'hui ou dans le futur.');
+                            dateInput.focus();
+                            return false;
+                        }
+                    }
+                    
+                    // Désactiver le bouton pour éviter les doubles clics
+                    const submitBtn = document.getElementById('submitBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Traitement en cours...';
+                    }
+                    
+                    // Le formulaire sera soumis normalement
+                });
+            }
+            
+            // Validation de la date
+            const dateInput = document.getElementById('{{ form.dateRdv.vars.id }}');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.setAttribute('min', today);
+                
+                dateInput.addEventListener('change', function() {
+                    if (this.value < today) {
+                        alert('La date doit être aujourd\'hui ou dans le futur');
+                        this.value = today;
+                    }
+                });
+            }
+            
+            // Messages flash
+            {% for message in app.flashes('success') %}
+                alert('{{ message }}');
+            {% endfor %}
+            
+            {% for message in app.flashes('error') %}
+                alert('{{ message }}');
+            {% endfor %}
+        });
+    </script>
+{% endblock %}

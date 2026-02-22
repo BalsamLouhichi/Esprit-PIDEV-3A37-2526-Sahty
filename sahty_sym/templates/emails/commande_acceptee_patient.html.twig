@@ -1,0 +1,23 @@
+{# templates/emails/commande_acceptee_patient.html.twig #}
+<div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+    <h2 style="margin: 0 0 12px; color: #1D5D9B;">Commande acceptee</h2>
+
+    <p>Bonjour {{ commande.nomClient }},</p>
+
+    <p>
+        Votre commande <strong>#{{ commande.numero }}</strong> a ete acceptee
+        par la parapharmacie <strong>{{ parapharmacie.nom }}</strong>.
+    </p>
+
+    <p>
+        Statut actuel: <strong>{{ commande.getStatutLibelle() }}</strong><br>
+        Date de mise a jour: <strong>{{ "now"|date("d/m/Y H:i") }}</strong>
+    </p>
+
+    <p>
+        Vous pouvez consulter vos commandes ici:
+        <a href="{{ url('app_mes_commandes') }}">Mes commandes</a>
+    </p>
+
+    <p style="margin-top: 18px;">Merci pour votre confiance.</p>
+</div>

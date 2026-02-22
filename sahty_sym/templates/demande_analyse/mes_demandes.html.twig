@@ -1,0 +1,518 @@
+{# templates/demande_analyse/mes_demandes.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>MEDINOVA - Mes Demandes d'Analyse</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    {# Favicon #}
+    <link href="{{ asset('img/favicon.ico') }}" rel="icon">
+
+    {# Google Web Fonts #}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    {# Icons #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    {# Bootstrap + Template CSS #}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    <style>
+        .demandes-header {
+            background: linear-gradient(rgba(29, 42, 77, 0.9), rgba(29, 42, 77, 0.9)), url('{{ asset("img/lab-banner.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            padding: 100px 0 80px;
+        }
+        
+        .demande-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: none;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        
+        .demande-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .demande-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .demande-id {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .demande-body {
+            padding: 25px;
+        }
+        
+        .demande-info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .demande-info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+        
+        .info-content h6 {
+            margin-bottom: 3px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .info-content p {
+            margin-bottom: 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .statut-badge {
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-en_attente { background: #fff3cd; color: #856404; }
+        .badge-envoye { background: #d4edda; color: #155724; }
+        
+        .priorite-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-normale { background: #e3f2fd; color: #1565c0; }
+        .badge-haute { background: #fff3e0; color: #ef6c00; }
+        .badge-urgent { background: #ffebee; color: #c62828; }
+        
+        .demande-actions {
+            padding: 20px;
+            background: var(--light);
+            border-radius: 0 0 15px 15px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+        
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: var(--primary);
+            font-size: 45px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn-view { background: var(--primary); color: white; }
+        .btn-edit { background: #ffc107; color: #212529; }
+        .btn-new { background: var(--secondary); color: white; }
+        .btn-all { background: var(--dark); color: white; }
+        
+        .test-mode-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            background: #ffc107;
+            color: #000;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .demandes-header {
+                padding: 70px 0 50px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .test-mode-indicator {
+                top: 70px;
+                right: 10px;
+                font-size: 0.7rem;
+            }
+        }
+        
+        .table-responsive {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+        
+        .table th {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+        
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05);
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(var(--primary-rgb), 0.05);
+        }
+        
+        .date-cell {
+            white-space: nowrap;
+        }
+        
+        .type-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .medecin-cell {
+            max-width: 180px;
+        }
+        
+        .no-medecin {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        .medecin-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .medecin-icon {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+{# ✅ Topbar + Navbar #}
+{% include 'partials/header.html.twig' %}
+
+{# Mode test indicator #}
+{% if test_mode is defined and test_mode %}
+    <div class="test-mode-indicator">
+        <i class="fas fa-flask me-1"></i> MODE TEST
+    </div>
+{% endif %}
+
+{# ===========================
+   Header
+   =========================== #}
+<div class="container-fluid demandes-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 mb-3">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_home') }}" class="text-white">Accueil</a>
+                        </li>
+                        <li class="breadcrumb-item text-white active" aria-current="page">
+                            Mes Demandes d'Analyse
+                        </li>
+                    </ol>
+                </nav>
+
+                <h1 class="display-3 text-white mb-4">Mes Demandes d'Analyse</h1>
+                
+                <p class="text-white fs-5 mb-4">
+                    Gérez et suivez toutes vos demandes d'analyse médicale en un seul endroit
+                </p>
+
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="text-white" id="mes-demandes-count">
+                        <i class="fa fa-chart-line text-primary me-2"></i>
+                        {% if demandes is not empty %}
+                            {{ demandes|length }} demande(s) trouvée(s)
+                        {% else %}
+                            Aucune demande pour le moment
+                        {% endif %}
+                    </span>
+                    
+                    <span class="text-white">
+                        <i class="fa fa-user text-primary me-2"></i>
+                        {% if app.user %}
+                            {{ app.user.nomComplet ?? app.user.email }}
+                        {% else %}
+                            Mode test (Patient par défaut)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ===========================
+   Content
+   =========================== #}
+<div class="container-fluid py-5">
+    <div class="container">
+        
+        {# Boutons d'action #}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    
+                    
+                    {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MEDECIN') %}
+                        <a href="{{ path('app_demande_analyse_index') }}" class="btn btn-action btn-all">
+                            <i class="fas fa-list"></i> Toutes les Demandes
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{{ path('app_labo_index') }}" class="btn btn-outline-primary btn-action">
+                        <i class="fas fa-hospital"></i> Voir Laboratoires
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {# Filtre par type de bilan #}
+        <div class="row mb-4">
+            <div class="col-lg-6 mx-auto">
+                <form method="get" id="mes-demandes-filter" class="d-flex gap-2 align-items-center justify-content-center">
+                    <label class="form-label mb-0" for="type_bilan">Type de bilan</label>
+                    <select class="form-select" id="type_bilan" name="type_bilan" style="max-width: 320px;">
+                        <option value="">Tous</option>
+                        {% for type in type_bilan_options %}
+                            <option value="{{ type }}" {{ type_bilan_filter == type ? 'selected' : '' }}>{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div id="mes-demandes-results">
+            {% include 'demande_analyse/_mes_demandes_results.html.twig' with { demandes: demandes } %}
+        </div>
+
+    </div>
+</div>
+
+{# Footer #}
+{% include 'partials/footer.html.twig' %}
+
+{# Back to Top #}
+<a href="#!" class="btn btn-lg btn-primary btn-lg-square back-to-top">
+    <i class="bi bi-arrow-up"></i>
+</a>
+
+{# JS #}
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+<script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const initDemandesHandlers = function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        const deleteForms = document.querySelectorAll('form[action*="/delete"]');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        const medecinCells = document.querySelectorAll('.medecin-cell');
+        medecinCells.forEach(cell => {
+            const medecinDiv = cell.querySelector('.medecin-info');
+            if (medecinDiv) {
+                cell.addEventListener('mouseenter', function() {
+                    this.style.cursor = 'help';
+                });
+
+                const medecinName = cell.querySelector('.fw-bold').textContent;
+                const specialite = cell.querySelector('.text-muted')?.textContent || 'Spécialité non spécifiée';
+
+                cell.setAttribute('title', `Médecin: ${medecinName}\nSpécialité: ${specialite}`);
+                new bootstrap.Tooltip(cell, {
+                    placement: 'top',
+                    trigger: 'hover'
+                });
+            }
+        });
+
+        const resultButtons = document.querySelectorAll('.js-result-pdf');
+        resultButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const status = this.getAttribute('data-status');
+                const pdfUrl = this.getAttribute('data-pdf');
+
+                if (status === 'en_attente') {
+                    alert('Le resultat n\'est pas encore disponible.');
+                    return;
+                }
+
+                if (!pdfUrl) {
+                    alert('Aucun resultat PDF n\'est disponible pour cette demande.');
+                    return;
+                }
+
+                window.open(pdfUrl, '_blank', 'noopener');
+            });
+        });
+    };
+
+    const filterForm = document.getElementById('mes-demandes-filter');
+    const filterSelect = document.getElementById('type_bilan');
+    const resultsContainer = document.getElementById('mes-demandes-results');
+    const countContainer = document.getElementById('mes-demandes-count');
+    let debounceTimer;
+
+    const fetchResults = () => {
+        if (!filterForm) return;
+        const params = new URLSearchParams(new FormData(filterForm));
+        const url = `{{ path('app_demande_analyse_mes_demandes_filter') }}?${params.toString()}`;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.json())
+            .then(data => {
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = data.html;
+                }
+                if (countContainer) {
+                    countContainer.innerHTML = data.count_text;
+                }
+                initDemandesHandlers();
+            })
+            .catch(() => {
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = '<div class="row"><div class="col-12 text-center text-muted">Erreur de chargement.</div></div>';
+                }
+            });
+    };
+
+    const scheduleFetch = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fetchResults, 250);
+    };
+
+    if (filterSelect) {
+        filterSelect.addEventListener('change', scheduleFetch);
+    }
+
+    initDemandesHandlers();
+    // Animation pour les cartes
+    const cards = document.querySelectorAll('.demande-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    
+    // Mode test indicator
+    {% if test_mode is defined and test_mode %}
+        const testIndicator = document.querySelector('.test-mode-indicator');
+        if (testIndicator) {
+            testIndicator.addEventListener('click', function() {
+                alert('Mode test activé :\n\n' +
+                      '• Pas besoin de connexion\n' +
+                      '• Utilisation d\'un patient par défaut\n' +
+                      '• Les données sont sauvegardées normalement\n' +
+                      '• En production, l\'authentification sera requise');
+            });
+        }
+    {% endif %}
+    
+});
+</script>
+
+
+</body>
+</html>

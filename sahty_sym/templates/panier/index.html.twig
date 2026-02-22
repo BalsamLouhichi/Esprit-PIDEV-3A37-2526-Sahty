@@ -1,250 +1,381 @@
 {# templates/panier/index.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon panier{% endblock %}
+{% block title %}Mon Panier - PharmOnline{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <style>
         :root {
-            --primary: #0dcaf0;
-            --primary-light: #e8f7ff;
-            --primary-dark: #0bb6d9;
-            --success: #198754;
-            --danger: #dc3545;
+            --primary-color: var(--primary);
+            --primary-hover: var(--primary-dark);
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
         }
-        
-        .panier-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+
+        .cart-container {
+            min-height: 70vh;
+            padding: 30px 0;
         }
-        
-        .panier-header {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 30px;
-            border-radius: 12px;
+
+        /* En-tête */
+        .cart-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            padding: 30px 0;
             margin-bottom: 30px;
-            border-left: 5px solid var(--primary);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(29, 93, 155, 0.22);
         }
-        
-        .panier-title {
-            color: var(--primary);
+
+        .cart-header h1 {
             font-weight: 700;
-            margin-bottom: 10px;
+            margin: 0;
         }
-        
-        .panier-vide {
+
+        /* Panier vide */
+        .empty-cart {
             text-align: center;
             padding: 60px 20px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin: 40px 0;
         }
-        
-        .panier-vide i {
-            font-size: 5rem;
-            color: #ccc;
+
+        .empty-cart-icon {
+            font-size: 100px;
+            color: #ddd;
             margin-bottom: 20px;
         }
-        
-        .panier-vide h3 {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
-        .panier-item {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            border: 1px solid #e9ecef;
-        }
-        
-        .panier-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(13, 202, 240, 0.15);
-            border-color: var(--primary);
-        }
-        
-        .item-image {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            background: #f8f9fa;
-        }
-        
-        .item-image-placeholder {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #adb5bd;
-        }
-        
-        .item-details {
-            flex: 1;
-        }
-        
-        .item-nom {
-            font-weight: 700;
+
+        .empty-cart h2 {
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 15px;
         }
-        
-        .item-pharmacie {
-            font-size: 0.9rem;
+
+        .empty-cart p {
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 25px;
         }
-        
-        .item-pharmacie i {
-            color: var(--primary);
-            margin-right: 5px;
-        }
-        
-        .item-prix {
+
+        .btn-shop-now {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
             font-weight: 600;
-            color: var(--primary);
-        }
-        
-        .item-total {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--success);
-        }
-        
-        .quantite-control {
-            display: flex;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
             gap: 10px;
+            transition: all 0.3s ease;
         }
-        
-        .quantite-input {
-            width: 70px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            padding: 5px;
+
+        .btn-shop-now:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(29, 93, 155, 0.3);
+            color: white;
         }
-        
-        .btn-quantite {
+
+        /* Articles du panier */
+        .cart-items {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .cart-item {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .item-image-placeholder {
+            color: #adb5bd;
+            font-size: 30px;
+        }
+
+        .item-details h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .item-details h3 a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .item-details h3 a:hover {
+            color: var(--primary-color);
+        }
+
+        .item-pharmacy {
+            display: inline-flex;
+            align-items: center;
+            background: #e9f9fc;
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .item-pharmacy i {
+            margin-right: 5px;
+        }
+
+        .item-price {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .item-subtotal {
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        /* Contrôle de quantité */
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+            width: fit-content;
+        }
+
+        .quantity-btn {
+            background: white;
+            border: none;
             width: 35px;
             height: 35px;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            background: white;
-            color: var(--primary);
+            font-size: 1.2rem;
             font-weight: bold;
+            color: #333;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .btn-quantite:hover {
-            background: var(--primary);
+
+        .quantity-btn:hover {
+            background: var(--primary-color);
             color: white;
         }
-        
-        .btn-supprimer {
-            color: var(--danger);
-            background: none;
+
+        .quantity-input {
+            width: 50px;
+            height: 35px;
+            text-align: center;
             border: none;
-            cursor: pointer;
+            border-left: 2px solid #dee2e6;
+            border-right: 2px solid #dee2e6;
+            font-weight: bold;
+            font-size: 1rem;
+            outline: none;
+            background: white;
+        }
+
+        /* Actions */
+        .btn-update {
+            background: #e9f9fc;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.9rem;
             transition: all 0.2s ease;
         }
-        
-        .btn-supprimer:hover {
-            color: #b02a37;
-            transform: scale(1.1);
+
+        .btn-update:hover {
+            background: var(--primary-color);
+            color: white;
         }
-        
-        .panier-recap {
+
+        .btn-delete {
+            background: #fee;
+            color: var(--danger-color);
+            border: 1px solid #ffcdd2;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Résumé */
+        .summary-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             position: sticky;
             top: 100px;
         }
-        
-        .recap-title {
-            font-weight: 700;
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
+
+        .summary-header {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
             margin-bottom: 20px;
         }
-        
-        .recap-ligne {
+
+        .summary-header h4 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .summary-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e9ecef;
+            padding: 10px 0;
+            border-bottom: 1px dashed #dee2e6;
         }
-        
-        .recap-total {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--success);
-            text-align: right;
-            margin: 20px 0;
+
+        .summary-row.total {
+            border-bottom: none;
+            border-top: 2px solid #dee2e6;
+            padding-top: 15px;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
         }
-        
-        .btn-commander {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+
+        .summary-value.total {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+        }
+
+        .btn-checkout {
+            background: linear-gradient(135deg, #28a745, #218838);
             color: white;
             border: none;
             padding: 15px;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 10px;
+            font-weight: 700;
             width: 100%;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-commander:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(13, 202, 240, 0.3);
-        }
-        
-        .btn-continuer {
-            display: block;
-            text-align: center;
-            padding: 12px;
-            border: 2px solid var(--primary);
-            border-radius: 8px;
-            color: var(--primary);
+            margin: 20px 0;
             text-decoration: none;
-            font-weight: 600;
-            margin-top: 15px;
+            display: inline-block;
+            text-align: center;
             transition: all 0.3s ease;
         }
-        
-        .btn-continuer:hover {
-            background: var(--primary);
+
+        .btn-checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40,167,69,0.3);
             color: white;
         }
-        
+
+        .btn-continue {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-continue:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-clear {
+            background: white;
+            color: var(--danger-color);
+            border: 2px solid var(--danger-color);
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Badge article count */
+        .badge-count {
+            background: white;
+            color: var(--primary-color);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .panier-item .row {
-                flex-direction: column;
+            .cart-header h1 {
+                font-size: 1.8rem;
             }
             
-            .item-image, .item-image-placeholder {
+            .item-image {
+                width: 80px;
+                height: 80px;
                 margin-bottom: 15px;
             }
             
-            .panier-recap {
+            .quantity-control {
+                margin: 10px 0;
+            }
+            
+            .summary-card {
                 margin-top: 30px;
                 position: static;
             }
@@ -253,245 +384,230 @@
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid py-2 border-bottom d-none d-lg-block">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6 text-center text-lg-start mb-2 mb-lg-0">
-                <div class="d-inline-flex align-items-center">
-                    <a class="text-decoration-none text-body pe-3" href="#!">
-                        <i class="bi bi-telephone me-2"></i>+012 345 6789
-                    </a>
-                    <span class="text-body">|</span>
-                    <a class="text-decoration-none text-body px-3" href="#!">
-                        <i class="bi bi-envelope me-2"></i>info@example.com
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-6 text-center text-lg-end">
-                <div class="d-inline-flex align-items-center">
-                    <a class="text-body px-2" href="#!"><i class="fab fa-facebook-f"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-twitter"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-linkedin-in"></i></a>
-                    <a class="text-body px-2" href="#!"><i class="fab fa-instagram"></i></a>
-                    <a class="text-body ps-2" href="#!"><i class="fab fa-youtube"></i></a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Navbar Start -->
-<div class="container-fluid sticky-top bg-white shadow-sm">
-    <div class="container">
-        <nav class="navbar navbar-expand-lg bg-white navbar-light py-3 py-lg-0">
-            <a href="#" class="navbar-brand">
-                <h1 class="m-0 text-uppercase text-primary">
-                    <i class="fa fa-clinic-medical me-2"></i>Medinova
+    <!-- En-tête du panier -->
+    <div class="cart-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1>
+                    <i class="bi bi-cart3 me-3"></i>
+                    Mon Panier
                 </h1>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarCollapse">
-                <div class="navbar-nav ms-auto py-0">
-                    <a href="#" class="nav-item nav-link active">Home</a>
-                    <a href="#" class="nav-item nav-link">About</a>
-                    <a href="#" class="nav-item nav-link">Service</a>
-                    <a href="#" class="nav-item nav-link">Laboratoire</a>
-                    <a href="#" class="nav-item nav-link">Parapharmacie</a>
-                    <a href="#" class="nav-item nav-link">Pricing</a>
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                        <div class="dropdown-menu m-0">
-                            <a href="#" class="dropdown-item">Blog Grid</a>
-                            <a href="#" class="dropdown-item">Blog Detail</a>
-                            <a href="#" class="dropdown-item">The Team</a>
-                            <a href="#" class="dropdown-item">Testimonial</a>
-                            <a href="#" class="dropdown-item">Appointment</a>
-                            <a href="#" class="dropdown-item">Search</a>
-                        </div>
-                    </div>
-                    <a href="#" class="nav-item nav-link">Contact</a>
-                    <a href="{{ path('app_panier') }}" class="nav-item nav-link position-relative">
-                        <i class="bi bi-cart3"></i>
-                        {% set panier = app.session.get('panier', []) %}
-                        {% if panier|length > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ panier|length }}
-                            </span>
-                        {% endif %}
-                    </a>
-                </div>
-            </div>
-        </nav>
-    </div>
-</div>
-
-<div class="panier-container">
-    {% for label, messages in app.flashes %}
-        {% for message in messages %}
-            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endfor %}
-
-    <div class="panier-header">
-        <h1 class="panier-title">
-            <i class="bi bi-cart3 me-2"></i>Mon panier
-        </h1>
-        <p class="text-muted mb-0">
-            {% if panier|length > 0 %}
-                Vous avez {{ panier|length }} produit(s) dans votre panier
-            {% else %}
-                Votre panier est vide
-            {% endif %}
-        </p>
-    </div>
-
-    {% if panier|length > 0 %}
-        <div class="row">
-            <div class="col-lg-8">
-                {% for item in panier %}
-                    <div class="panier-item" data-index="{{ loop.index0 }}">
-                        <div class="row align-items-center">
-                            <div class="col-md-2">
-                                {% if item.produit_image %}
-                                    <img src="{{ asset('uploads/images/produits/' ~ item.produit_image) }}" 
-                                         alt="{{ item.produit_nom }}"
-                                         class="item-image">
-                                {% else %}
-                                    <div class="item-image-placeholder">
-                                        <i class="bi bi-image" style="font-size: 2rem;"></i>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-4">
-                                <div class="item-details">
-                                    <h5 class="item-nom">{{ item.produit_nom }}</h5>
-                                    <p class="item-pharmacie mb-2">
-                                        <i class="bi bi-shop"></i>{{ item.pharmacie_nom }}
-                                    </p>
-                                    <p class="item-prix mb-0">
-                                        {{ item.prix|number_format(2, ',', ' ') }} € / unité
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <form action="{{ path('app_panier_modifier', {'index': loop.index0}) }}" method="post" class="quantite-form">
-                                    <div class="quantite-control">
-                                        <button type="button" class="btn-quantite" onclick="modifierQuantite({{ loop.index0 }}, -1)">-</button>
-                                        <input type="number" 
-                                               name="quantite" 
-                                               value="{{ item.quantite }}" 
-                                               min="1" 
-                                               max="99"
-                                               class="quantite-input"
-                                               id="quantite-{{ loop.index0 }}"
-                                               onchange="mettreAJourQuantite({{ loop.index0 }})">
-                                        <button type="button" class="btn-quantite" onclick="modifierQuantite({{ loop.index0 }}, 1)">+</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="item-total">
-                                    {{ (item.prix * item.quantite)|number_format(2, ',', ' ') }} €
-                                </div>
-                            </div>
-                            <div class="col-md-1 text-end">
-                                <a href="{{ path('app_panier_supprimer', {'index': loop.index0}) }}" 
-                                   class="btn-supprimer"
-                                   onclick="return confirm('Supprimer cet article du panier ?')">
-                                    <i class="bi bi-trash fs-5"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-                
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="{{ path('app_parapharmacie_list') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-2"></i>Continuer mes achats
-                    </a>
-                    <a href="{{ path('app_panier_vider') }}" class="btn btn-outline-danger" 
-                       onclick="return confirm('Vider le panier ?')">
-                        <i class="bi bi-trash me-2"></i>Vider le panier
-                    </a>
-                </div>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="panier-recap">
-                    <h4 class="recap-title">Récapitulatif</h4>
-                    
-                    <div class="recap-ligne">
-                        <span>Sous-total</span>
-                        <span class="fw-bold">{{ total|number_format(2, ',', ' ') }} €</span>
-                    </div>
-                    
-                    <div class="recap-ligne">
-                        <span>Frais de livraison</span>
-                        <span class="text-success">Gratuit</span>
-                    </div>
-                    
-                    <div class="recap-total">
-                        {{ total|number_format(2, ',', ' ') }} €
-                    </div>
-                    
-                    <a href="{{ path('app_commande_formulaire_panier') }}" class="btn-commander">
-                        <i class="bi bi-cart-check me-2"></i>Commander
-                    </a>
-                    
-                    <a href="{{ path('app_parapharmacie_list') }}" class="btn-continuer">
-                        <i class="bi bi-shop me-2"></i>Continuer mes achats
-                    </a>
-                </div>
+                {% if panier is not empty %}
+                    <span class="badge-count">
+                        {{ panier|length }} article(s)
+                    </span>
+                {% endif %}
             </div>
         </div>
-    {% else %}
-        <div class="panier-vide">
-            <i class="bi bi-cart-x"></i>
-            <h3>Votre panier est vide</h3>
-            <p class="text-muted mb-4">Découvrez nos produits et commencez vos achats</p>
-            <a href="{{ path('app_parapharmacie_list') }}" class="btn btn-primary btn-lg">
-                <i class="bi bi-shop me-2"></i>Voir les produits
-            </a>
-        </div>
-    {% endif %}
-</div>
+    </div>
 
+    <div class="container cart-container">
+        {% if panier is empty %}
+            <!-- Panier vide -->
+            <div class="empty-cart">
+                <div class="empty-cart-icon">
+                    <i class="bi bi-cart-x"></i>
+                </div>
+                <h2>Votre panier est vide</h2>
+                <p>Découvrez nos produits et commencez vos achats !</p>
+                <a href="{{ path('app_produits_list') }}" class="btn-shop-now">
+                    <i class="bi bi-shop me-2"></i>
+                    Découvrir nos produits
+                </a>
+            </div>
+        {% else %}
+            <div class="row">
+                <!-- Liste des articles -->
+                <div class="col-lg-8">
+                    <div class="cart-items">
+                        {% for item in panier %}
+                            <div class="cart-item" data-index="{{ loop.index0 }}">
+                                <div class="row align-items-center">
+                                    <!-- Image -->
+                                    <div class="col-md-2 col-12 mb-3 mb-md-0">
+                                        <div class="item-image mx-auto mx-md-0">
+                                            {% if item.produit_image %}
+                                                <img src="{{ asset('uploads/images/produits/' ~ item.produit_image) }}" 
+                                                     alt="{{ item.produit_nom }}"
+                                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/100x100?text=Image';">
+                                            {% else %}
+                                                <div class="item-image-placeholder">
+                                                    <i class="bi bi-image"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Détails -->
+                                    <div class="col-md-4 col-12 mb-3 mb-md-0">
+                                        <div class="item-details">
+                                            <h3>
+                                                <a href="{{ path('app_produit_details', {'id': item.produit_id}) }}">
+                                                    {{ item.produit_nom }}
+                                                </a>
+                                            </h3>
+                                            <div class="item-pharmacy">
+                                                <i class="bi bi-shop"></i>
+                                                {{ item.pharmacie_nom }}
+                                            </div>
+                                            <div class="item-price">
+                                                {{ item.prix|number_format(2, ',', ' ') }} €
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Quantité -->
+                                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                                        <form action="{{ path('app_panier_modifier', {'index': loop.index0}) }}" method="post" class="quantity-form" id="form-{{ loop.index0 }}">
+                                            <div class="quantity-control">
+                                                <button type="button" class="quantity-btn decrease-qty" data-index="{{ loop.index0 }}">−</button>
+                                                <input type="number" name="quantite" value="{{ item.quantite }}" min="1" max="99" class="quantity-input" data-index="{{ loop.index0 }}" readonly>
+                                                <button type="button" class="quantity-btn increase-qty" data-index="{{ loop.index0 }}">+</button>
+                                            </div>
+                                            <button type="submit" class="d-none" id="submit-{{ loop.index0 }}"></button>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Total et actions -->
+                                    <div class="col-md-3 col-6">
+                                        <div class="text-md-end">
+                                            <div class="item-subtotal mb-2">
+                                                {{ (item.prix * item.quantite)|number_format(2, ',', ' ') }} €
+                                            </div>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-update" onclick="document.getElementById('form-{{ loop.index0 }}').submit();" title="Mettre à jour">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                                <a href="{{ path('app_panier_supprimer', {'index': loop.index0}) }}" 
+                                                   class="btn btn-delete" 
+                                                   onclick="return confirm('Supprimer {{ item.produit_nom }} du panier ?')"
+                                                   title="Supprimer">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                                    <!-- NOUVEAU BOUTON COMMANDER AVEC TEXTE -->
+            <a href="{{ path('app_commander', {'id': item.produit_id, 'pharmacie': item.pharmacie_id, 'quantite': item.quantite}) }}" 
+               class="btn btn-success btn-sm">
+                Commander
+            </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Résumé de la commande -->
+                <div class="col-lg-4">
+                    <div class="summary-card">
+                        <div class="summary-header">
+                            <h4>
+                                <i class="bi bi-receipt me-2"></i>
+                                Récapitulatif
+                            </h4>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Sous-total ({{ panier|length }} articles)</span>
+                            <span class="summary-value">{{ total|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Frais de livraison</span>
+                            <span class="summary-value text-success">Gratuit</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>TVA (20%)</span>
+                            <span class="summary-value">{{ (total * 0.2)|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Total TTC</span>
+                            <span class="summary-value total">{{ total|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                        
+                     
+                        
+                      
+                        
+                        <a href="{{ path('app_panier_vider') }}" 
+                           class="btn-clear" 
+                           onclick="return confirm('Êtes-vous sûr de vouloir vider votre panier ?')">
+                            <i class="bi bi-trash me-2"></i>
+                            Vider le panier
+                        </a>
+
+                        <!-- Informations complémentaires -->
+                        <div class="mt-4 p-3 bg-light rounded small">
+                            <p class="mb-2">
+                                <i class="bi bi-shield-check text-success me-2"></i>
+                                Paiement sécurisé
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-truck text-primary me-2"></i>
+                                Livraison gratuite
+                            </p>
+                            <p class="mb-0">
+                                <i class="bi bi-arrow-repeat text-info me-2"></i>
+                                Retours gratuits sous 30 jours
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     <script>
-        function modifierQuantite(index, changement) {
-            const input = document.getElementById('quantite-' + index);
-            let nouvelleValeur = parseInt(input.value) + changement;
-            
-            if (nouvelleValeur < 1) nouvelleValeur = 1;
-            if (nouvelleValeur > 99) nouvelleValeur = 99;
-            
-            input.value = nouvelleValeur;
-            
-            // Soumettre le formulaire
-            const form = input.closest('.quantite-form');
-            form.submit();
-        }
-        
-        function mettreAJourQuantite(index) {
-            const input = document.getElementById('quantite-' + index);
-            let valeur = parseInt(input.value);
-            
-            if (isNaN(valeur) || valeur < 1) valeur = 1;
-            if (valeur > 99) valeur = 99;
-            
-            input.value = valeur;
-            
-            // Soumettre le formulaire
-            const form = input.closest('.quantite-form');
-            form.submit();
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion des boutons de quantité
+            document.querySelectorAll('.decrease-qty').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = this.dataset.index;
+                    const input = document.querySelector(`.quantity-input[data-index="${index}"]`);
+                    let value = parseInt(input.value);
+                    if (value > 1) {
+                        input.value = value - 1;
+                        // Soumettre automatiquement le formulaire
+                        document.getElementById(`submit-${index}`).click();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.increase-qty').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = this.dataset.index;
+                    const input = document.querySelector(`.quantity-input[data-index="${index}"]`);
+                    let value = parseInt(input.value);
+                    if (value < 99) {
+                        input.value = value + 1;
+                        // Soumettre automatiquement le formulaire
+                        document.getElementById(`submit-${index}`).click();
+                    }
+                });
+            });
+
+            // Animation lors de la suppression
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const item = this.closest('.cart-item');
+                    if (item) {
+                        item.style.opacity = '0.5';
+                    }
+                });
+            });
+
+            // Afficher les messages flash
+            {% for message in app.flashes('success') %}
+                setTimeout(() => {
+                    alert('{{ message }}');
+                }, 100);
+            {% endfor %}
+        });
     </script>
 {% endblock %}

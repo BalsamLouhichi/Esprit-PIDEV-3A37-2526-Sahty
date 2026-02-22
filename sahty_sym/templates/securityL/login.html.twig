@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>MEDINOVA - Connexion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { background:#f8f9fa; font-family:'Roboto',sans-serif; }
+        .login-container { padding: 80px 0; display:flex; justify-content:center; }
+        .login-card { background:#fff; padding:40px; border-radius:10px; width:100%; max-width:500px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+        .login-header { text-align:center; margin-bottom:30px; }
+        .login-header .login-icon { font-size:50px; color:#0d6efd; margin-bottom:15px; }
+        .login-header h1 { font-size:28px; margin-bottom:5px; }
+        .login-header p { color:#6c757d; margin-bottom:15px; }
+        .role-tags { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:15px; }
+        .role-tag { background:#e9ecef; padding:5px 10px; border-radius:20px; font-size:0.85rem; display:flex; align-items:center; gap:5px; }
+        .login-body { margin-top:20px; }
+        .form-group { margin-bottom:20px; position:relative; }
+        .form-group label { font-weight:500; }
+        .form-control { border-radius:50px; padding:10px 20px; }
+        .input-group-custom { position:relative; }
+        .input-group-custom .input-icon { position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#0d6efd; }
+        .input-group-custom input { padding-left:40px; }
+        .password-toggle { position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; color:#0d6efd; cursor:pointer; }
+        .btn-login { width:100%; padding:10px; border-radius:50px; background:#0d6efd; color:#fff; font-weight:500; display:flex; justify-content:center; align-items:center; gap:5px; border:none; }
+        .btn-login:hover { background:#0b5ed7; }
+        .register-link-container { text-align:center; margin-top:15px; }
+        .register-link { color:#0d6efd; text-decoration:none; font-weight:500; }
+        .register-link:hover { text-decoration:underline; }
+
+        /* Boutons de connexion sociale */
+        .social-login { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+        .btn-google, .btn-apple {
+            display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; border-radius:50px; font-weight:500; border:none; cursor:pointer; width:100%;
+            font-size:0.95rem;
+        }
+        .btn-google { background:#DB4437; color:#fff; }
+        .btn-google:hover { background:#c33d2f; }
+        .btn-apple { background:#000; color:#fff; }
+        .btn-apple:hover { background:#333; }
+
+        /* Lien mot de passe oublié - MODIFIÉ */
+        .forgot-password-container { 
+            text-align: center; 
+            margin: 15px 0; 
+            padding: 10px;
+        }
+        .forgot-password-link { 
+            color: #0d6efd; 
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+        .forgot-password-link:hover { 
+            text-decoration: none;
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Style pour le bouton de soumission externe */
+        .submit-button-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'partials/navbar.html.twig' %}
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon"><i class="fas fa-lock"></i></div>
+                <h1>Connexion sécurisée</h1>
+                <p>Accédez à votre espace personnel</p>
+
+                <div class="role-tags">
+                    <span class="role-tag"><i class="fas fa-user-injured"></i> Patient</span>
+                    <span class="role-tag"><i class="fas fa-user-md"></i> Médecin</span>
+                    <span class="role-tag"><i class="fas fa-flask"></i> Laboratoire</span>
+                    <span class="role-tag"><i class="fas fa-pills"></i> Parapharmacie</span>
+                </div>
+            </div>
+
+            <div class="login-body">
+                <!-- Affichage des messages flash et erreurs -->
+                {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% if error.messageKey == 'Invalid credentials.' %}
+                            Email ou mot de passe incorrect.
+                        {% else %}
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        {% endif %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endif %}
+
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+
+                <!-- Formulaire de connexion Symfony -->
+                <form method="post" action="{{ path('app_login') }}" id="loginForm">
+                    {# Protection CSRF #}
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                    <div class="form-group">
+                        <label for="inputEmail"><i class="fas fa-envelope"></i> Adresse email</label>
+                        <div class="input-group-custom">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="email" 
+                                   name="_username" 
+                                   value="{{ last_username|default('') }}" 
+                                   required 
+                                   autofocus 
+                                   class="form-control" 
+                                   id="inputEmail" 
+                                   placeholder="exemple@medinova.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputPassword"><i class="fas fa-lock"></i> Mot de passe</label>
+                        <div class="input-group-custom">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="password" 
+                                   name="_password" 
+                                   required 
+                                   class="form-control" 
+                                   id="inputPassword" 
+                                   placeholder="Votre mot de passe">
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- REMARQUE: Le lien "Mot de passe oublié" est maintenant EN DEHORS du formulaire -->
+                </form>
+
+                <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
+                <div class="forgot-password-container">
+                    <a href="{{ path('app_forgot_password') }}" 
+                       class="forgot-password-link"
+                       id="forgotPasswordLink">
+                        <i class="fas fa-key me-2"></i>
+                        <strong>Mot de passe oublié ?</strong>
+                    </a>
+                </div>
+
+                <!-- Bouton de soumission du formulaire -->
+                <div class="submit-button-container">
+                    <button type="submit" form="loginForm" class="btn-login">
+                        Se connecter <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </div>
+
+                <!-- Case à cocher "Se souvenir de moi" -->
+                <div class="form-check mb-3" style="margin-top: 15px;">
+                    <input type="checkbox" name="_remember_me" value="on" class="form-check-input" id="remember">
+                    <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                </div>
+
+                {# Boutons de connexion sociale #}
+                <div class="social-login">
+                    <button type="button" class="btn-google"><i class="fab fa-google"></i> Se connecter avec Google</button>
+                    <button type="button" class="btn-apple"><i class="fab fa-apple"></i> Se connecter avec Apple</button>
+                </div>
+
+                <div class="register-link-container">
+                    <p>Nouveau sur Medinova ?</p>
+                    <a href="{{ path('app_sign') }}" class="register-link">
+                        Créer un compte gratuit <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Afficher/Masquer le mot de passe
+        const togglePassword = document.getElementById('togglePassword');
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function () {
+                const passwordInput = document.getElementById('inputPassword');
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
+
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginCard = document.querySelector('.login-card');
+            loginCard.style.opacity = '0';
+            loginCard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                loginCard.style.transition = 'all 0.5s ease';
+                loginCard.style.opacity = '1';
+                loginCard.style.transform = 'translateY(0)';
+            }, 100);
+        });
+
+        // S'assurer que le lien "mot de passe oublié" fonctionne
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            console.log('Redirection vers la page de récupération de mot de passe');
+            // La navigation se fera normalement via l'attribut href
+        });
+
+        // Prévenir toute soumission accidentelle du formulaire
+        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                document.querySelector('button[form="loginForm"]').click();
+            }
+        });
+    </script>
+</body>
+</html>

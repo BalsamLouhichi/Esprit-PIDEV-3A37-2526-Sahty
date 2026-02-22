@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Demandes d'Événements - Sahty</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4e73df;
+            --primary-dark: #3a56c4;
+            --primary-light: #e8f1ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            color: #374151;
+        }
+
+        .page-container {
+            background: linear-gradient(135deg, #f6f9fc 0%, #f1f5f9 100%);
+            min-height: calc(100vh - 76px);
+            padding: 2rem 0;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .page-title {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-subtitle {
+            color: #6b7280;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.95rem;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #4b5563;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .form-select, .form-control {
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78, 115, 223, 0.3);
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: 2px solid #e5e7eb;
+            color: #6b7280;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            color: #374151;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.5rem;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem 1.5rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            padding: 0.35rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-primary {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-info {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .badge-secondary {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .btn-approve {
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .btn-approve:hover {
+            background: #10b981;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-reject {
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .btn-reject:hover {
+            background: #ef4444;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-view {
+            background: #e0e7ff;
+            color: #4f46e5;
+            border-radius: 8px;
+            padding: 0.5rem;
+            transition: all 0.2s;
+            border: none;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-view:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .stats-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stats-content h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .stats-content p {
+            margin: 0.25rem 0 0 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .demandeur-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .demandeur-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 1rem;
+            }
+            
+            .table thead th {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'partials/header.html.twig' %}
+
+    <div class="page-container">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="page-title">
+                            <i class="fas fa-clock"></i>
+                            Demandes d'Événements
+                        </h1>
+                        <p class="page-subtitle">
+                            Gérez les demandes d'événements soumises par les clients
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <a href="{{ path('evenements_evenement_list') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Retour aux événements
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>{{ demandes|length }}</h3>
+                            <p>Demandes en attente</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-icon" style="background: #fef3c7; color: #92400e;">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>
+                                {% set today = 'now'|date('Y-m-d') %}
+                                {% set todayDemandes = 0 %}
+                                {% for d in demandes %}
+                                    {% if d.creeLe|date('Y-m-d') == today %}
+                                        {% set todayDemandes = todayDemandes + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ todayDemandes }}
+                            </h3>
+                            <p>Soumises aujourd'hui</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-icon" style="background: #fee2e2; color: #991b1b;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stats-content">
+                            <h3>
+                                {% set demandeurs = [] %}
+                                {% for d in demandes %}
+                                    {% if d.createur.id not in demandeurs %}
+                                        {% set demandeurs = demandeurs|merge([d.createur.id]) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ demandeurs|length }}
+                            </h3>
+                            <p>Demandeurs distincts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="filter-card">
+                <form method="get" action="{{ path('evenements_admin_demandes_evenements') }}">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="filter-label">
+                                <i class="fas fa-search me-1"></i>
+                                Rechercher
+                            </label>
+                            <input type="text" 
+                                   name="recherche" 
+                                   value="{{ recherche|default('') }}" 
+                                   class="form-control" 
+                                   placeholder="Titre, description, demandeur...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="filter-label">
+                                <i class="fas fa-tag me-1"></i>
+                                Type d'événement
+                            </label>
+                            <select name="type" class="form-select">
+                                <option value="">Tous les types</option>
+                                <option value="webinaire" {{ type == 'webinaire' ? 'selected' }}>Webinaire</option>
+                                <option value="atelier" {{ type == 'atelier' ? 'selected' }}>Atelier</option>
+                                <option value="conference" {{ type == 'conference' ? 'selected' }}>Conférence</option>
+                                <option value="depistage" {{ type == 'depistage' ? 'selected' }}>Dépistage</option>
+                                <option value="groupe_parole" {{ type == 'groupe_parole' ? 'selected' }}>Groupe de parole</option>
+                                <option value="formation" {{ type == 'formation' ? 'selected' }}>Formation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-2"></i>
+                                    Filtrer
+                                </button>
+                                <a href="{{ path('evenements_admin_demandes_evenements') }}" class="btn btn-outline-secondary" title="Réinitialiser">
+                                    <i class="fas fa-undo-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Liste des demandes -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Événement</th>
+                                <th>Demandeur</th>
+                                <th>Date proposée</th>
+                                <th>Type / Mode</th>
+                                <th>Groupes cibles</th>
+                                <th>Soumis le</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for demande in demandes %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ demande.titre }}</div>
+                                        <small class="text-muted">{{ demande.description|slice(0, 60) }}{% if demande.description|length > 60 %}...{% endif %}</small>
+                                        <div class="mt-1">
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-clock me-1"></i>
+                                                En attente
+                                            </span>
+                                            {% if demande.placesMax %}
+                                                <span class="badge badge-secondary ms-1">
+                                                    <i class="fas fa-chair me-1"></i>
+                                                    {{ demande.placesMax }} places
+                                                </span>
+                                            {% endif %}
+                                            {% if demande.tarif and demande.tarif > 0 %}
+                                                <span class="badge badge-info ms-1">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    {{ demande.tarif }} TND
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="demandeur-info">
+                                            <div class="demandeur-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ demande.createur.prenom }} {{ demande.createur.nom }}</div>
+                                                <small class="text-muted">
+                                                    {% for role in demande.createur.roles %}
+                                                        {% if role starts with 'ROLE_' and role != 'ROLE_USER' %}
+                                                            {% if role == 'ROLE_MEDECIN' %}
+                                                                Médecin
+                                                            {% elseif role == 'ROLE_PATIENT' %}
+                                                                Patient
+                                                            {% elseif role == 'ROLE_RESPONSABLE_LABO' %}
+                                                                Responsable Laboratoire
+                                                            {% elseif role == 'ROLE_RESPONSABLE_PARA' %}
+                                                                Responsable Parapharmacie
+                                                            {% else %}
+                                                                {{ role|replace({'ROLE_': ''})|lower|title }}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        Membre
+                                                    {% endfor %}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="fw-medium">{{ demande.dateDebut|date('d/m/Y') }}</div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ demande.dateDebut|date('H:i') }} - {{ demande.dateFin|date('H:i') }}
+                                        </small>
+                                        {% set daysDiff = demande.dateDebut|date('U') - 'now'|date('U') %}
+                                        {% set daysRemaining = (daysDiff / 86400)|round(0, 'ceil') %}
+                                        {% if daysRemaining <= 7 %}
+                                            <div class="mt-1">
+                                                <span class="badge bg-warning bg-opacity-25 text-warning-emphasis">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    Dans {{ daysRemaining }} jour{% if daysRemaining > 1 %}s{% endif %}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td>
+                                        <span class="badge badge-primary mb-1">
+                                            <i class="fas fa-{{ demande.type == 'webinaire' ? 'video' : 
+                                                (demande.type == 'atelier' ? 'users' : 
+                                                (demande.type == 'conference' ? 'microphone' : 
+                                                (demande.type == 'depistage' ? 'stethoscope' : 
+                                                (demande.type == 'groupe_parole' ? 'comments' : 'calendar')))) }} me-1"></i>
+                                            {{ demande.type|replace({'_': ' '})|title }}
+                                        </span>
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-{{ demande.mode == 'presentiel' ? 'building' : 'globe' }} me-1"></i>
+                                                {{ demande.mode == 'presentiel' ? 'Présentiel' : 'Distanciel' }}
+                                                {% if demande.lieu %}
+                                                    • {{ demande.lieu }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    
+                                    <td>
+                                        {% if demande.groupeCibles|length > 0 %}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for groupe in demande.groupeCibles|slice(0, 2) %}
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                        {{ groupe.nom }}
+                                                    </span>
+                                                {% endfor %}
+                                                {% if demande.groupeCibles|length > 2 %}
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                        +{{ demande.groupeCibles|length - 2 }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Tous les groupes</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td>
+                                        <div class="fw-medium">{{ demande.creeLe|date('d/m/Y') }}</div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            {{ demande.creeLe|date('H:i') }}
+                                        </small>
+                                        {% set hoursDiff = 'now'|date('U') - demande.creeLe|date('U') %}
+                                        {% set hoursPassed = (hoursDiff / 3600)|round(0, 'floor') %}
+                                        {% if hoursPassed > 24 %}
+                                            <div class="mt-1">
+                                                <span class="badge bg-danger bg-opacity-10 text-danger">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    >24h
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td class="text-end">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <form method="post" 
+                                                  action="{{ path('evenements_evenement_approuver', {'id': demande.id}) }}" 
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('✅ Approuver cette demande ?\n\nL\'événement sera immédiatement visible par tous les utilisateurs concernés et les inscriptions seront ouvertes.')">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('approuver' ~ demande.id) }}">
+                                                <button type="submit" class="btn-approve">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    Approuver
+                                                </button>
+                                            </form>
+                                            
+                                            <form method="post" 
+                                                 action="{{ path('evenements_evenement_refuser', {'id': demande.id}) }}"
+
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('❌ Refuser cette demande ?\n\nCette action est irréversible. L\'événement sera marqué comme annulé et ne sera pas visible.')">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('refuser' ~ demande.id) }}">
+                                                <button type="submit" class="btn-reject">
+                                                    <i class="fas fa-times-circle"></i>
+                                                    Refuser
+                                                </button>
+                                            </form>
+                                            
+                                            <a href="{{ path('evenements_evenement_view', {'id': demande.id}) }}" 
+                                               class="btn-view"
+                                               title="Voir les détails complets">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                        
+                                        <!-- Lien rapide vers le profil du demandeur -->
+                                        <div class="mt-2">
+                                            <small>
+                                                {# <a href="{{ path('user_view', {'id': demande.createur.id}) }}" 
+                                                   class="text-decoration-none text-muted"
+                                                   title="Voir le profil du demandeur">
+                                                    <i class="fas fa-external-link-alt fa-xs me-1"></i>
+                                                    Voir profil
+                                                </a> #}
+                                            </small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="empty-state">
+                                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                            <h5 class="fw-semibold mb-2">Aucune demande en attente</h5>
+                                            <p class="text-muted mb-3">
+                                                {% if recherche or type %}
+                                                    Aucune demande ne correspond à vos critères de recherche.
+                                                {% else %}
+                                                    Les demandes d'événements soumises par les clients apparaîtront ici.
+                                                {% endif %}
+                                            </p>
+                                            {% if recherche or type %}
+                                                <a href="{{ path('demandes_evenements') }}" class="btn btn-outline-secondary">
+                                                    <i class="fas fa-times-circle me-2"></i>
+                                                    Effacer les filtres
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Info card - Processus d'approbation -->
+            <div class="mt-4">
+                <div class="alert alert-info bg-white border border-primary border-opacity-10 d-flex align-items-center" role="alert" style="border-radius: 12px;">
+                    <div class="me-3">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-info-circle fa-lg text-primary"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="fw-semibold mb-1">Processus d'approbation des événements</h6>
+                        <p class="mb-0 small text-muted">
+                            <span class="badge badge-success me-2">✓ Approuver</span> L'événement devient visible dans la liste publique et les inscriptions sont ouvertes. Le demandeur reçoit une notification.
+                            <br>
+                            <span class="badge badge-danger me-2 mt-1">✗ Refuser</span> L'événement est marqué comme annulé et n'apparaît pas dans les listes. Le demandeur reçoit une notification avec le motif du refus.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination (si nécessaire) -->
+            {% if demandes|length > 20 %}
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Navigation des pages">
+                    <ul class="pagination">
+                        <li class="page-item disabled">
+                            <span class="page-link border-0 bg-transparent text-muted">Précédent</span>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link bg-primary border-0 rounded-pill mx-1" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">1</span>
+                        </li>
+                        <li class="page-item">
+                            <span class="page-link border-0 bg-transparent text-muted">2</span>
+                        </li>
+                        <li class="page-item">
+                            <span class="page-link border-0 bg-transparent text-muted">3</span>
+                        </li>
+                        <li class="page-item">
+                            <span class="page-link border-0 bg-transparent text-muted">Suivant</span>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'partials/footer.html.twig' %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert:not(.alert-info)');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert) {
+                        alert.style.transition = 'opacity 0.5s ease';
+                        alert.style.opacity = '0';
+                        setTimeout(() => alert.remove(), 500);
+                    }
+                }, 5000);
+            });
+            
+            // Tooltips
+            const tooltips = document.querySelectorAll('[title]');
+            tooltips.forEach(element => {
+                element.addEventListener('mouseenter', function(e) {
+                    if (!this.getAttribute('data-bs-toggle')) {
+                        // Bootstrap tooltips could be initialized here if needed
+                    }
+                });
+            });
+            
+            // Highlight rows that have been waiting > 48h
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const hoursBadge = row.querySelector('.badge.bg-danger');
+                if (hoursBadge && hoursBadge.textContent.includes('>24h')) {
+                    row.style.backgroundColor = '#fff5f5';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

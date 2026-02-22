@@ -1,0 +1,90 @@
+{# templates/admin/all_medical_records.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Toutes les fiches médicales - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-file-medical me-2"></i> Toutes les fiches médicales</h1>
+        <a href="{{ path('admin_medical_records_stats') }}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-pie me-1"></i> Voir les statistiques
+        </a>
+    </div>
+
+    <!-- Tableau des fiches médicales -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date création</th>
+                            <th>IMC</th>
+                            <th>Catégorie IMC</th>
+                            <th>Statut</th>
+                           
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>
+                                {% if record.patient %}
+                                    <div class="d-flex align-items-center">
+                                        {% if record.patient.photoProfil %}
+                                            <img src="{{ asset(record.patient.photoProfil) }}" class="rounded-circle me-2" width="30" height="30" alt="">
+                                        {% else %}
+                                            <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width:30px; height:30px;">
+                                                <span class="text-white small">{{ record.patient.prenom[:1] }}{{ record.patient.nom[:1] }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <span>{{ record.patient.prenom }} {{ record.patient.nom }}</span>
+                                    </div>
+                                {% else %}
+                                    <em>Patient non assigné</em>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.creeLe ? record.creeLe|date('d/m/Y H:i') : '-' }}</td>
+                            <td>
+                                <span class="fw-bold">{{ record.imc ? record.imc|number_format(1) : '-' }}</span>
+                            </td>
+                            <td>
+                                {% if record.categorieImc %}
+                                    <span class="badge 
+                                        {% if record.categorieImc == 'Maigreur' %}bg-warning text-dark
+                                        {% elseif record.categorieImc == 'Normal' %}bg-success
+                                        {% elseif record.categorieImc == 'Surpoids' %}bg-info
+                                        {% elseif record.categorieImc == 'Obésité' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ record.categorieImc }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Non calculé</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if record.statut == 'actif' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ record.statut|capitalize }}
+                                </span>
+                            </td>
+                           
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-file-medical fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">Aucune fiche médicale trouvée</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

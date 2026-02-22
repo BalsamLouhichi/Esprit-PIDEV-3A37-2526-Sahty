@@ -2,13 +2,44 @@
 
 {% block title %}Parapharmacies et Produits{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .parapharma-title {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .parapharma-card {
+            border: 1px solid rgba(29, 93, 155, 0.18);
+        }
+
+        .parapharma-card .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff;
+            border-bottom: 0;
+            font-weight: 600;
+        }
+
+        .parapharma-card table thead th {
+            background: rgba(29, 93, 155, 0.12);
+            color: var(--primary-dark);
+            border-color: rgba(29, 93, 155, 0.2);
+        }
+
+        .parapharma-card table tbody tr:hover {
+            background: rgba(29, 93, 155, 0.05);
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
 <div class="container mt-5">
-    <h1 class="mb-4 text-center">Parapharmacies et leurs Produits</h1>
+    <h1 class="mb-4 text-center parapharma-title">Parapharmacies et leurs Produits</h1>
 
     {% for para in parapharmacies %}
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
+        <div class="card mb-4 shadow-sm parapharma-card">
+            <div class="card-header">
                 {{ para.nom }} - {{ para.adresse }}
             </div>
             <div class="card-body">
@@ -19,7 +50,7 @@
 
                 {% if para.getProduits()|length > 0 %}
                     <table class="table table-bordered table-striped table-hover mt-3">
-                        <thead class="table-dark">
+                        <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Nom</th>

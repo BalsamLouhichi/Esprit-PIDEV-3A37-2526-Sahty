@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
+use App\Entity\Produit;
+use App\Entity\Parapharmacie;
+use App\Repository\ParapharmacieRepository;
+use App\Repository\ProduitRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Repository\ParapharmacieRepository;
-use App\Repository\ProduitRepository;
-use App\Entity\Produit;
 
 final class ParapharmacieController extends AbstractController
 {
@@ -32,23 +33,55 @@ final class ParapharmacieController extends AbstractController
             'produits' => $produits,
         ]);
     }
-    
+
+    #[Route('/parapharmacie/{id}', name: 'app_parapharmacie_details', requirements: ['id' => '\d+'])]
+    public function detailsParapharmacie(Parapharmacie $parapharmacie): Response
+    {
+        return $this->render('parapharmacie/details.html.twig', [
+            'parapharmacie' => $parapharmacie,
+        ]);
+    }
+
     #[Route('/produit/{id}', name: 'app_produit_details')]
     public function details(
         Produit $produit,
-        ParapharmacieRepository $parapharmacieRepository
-    ): Response
-    {
-        // Récupérer toutes les parapharmacies
+        ParapharmacieRepository $parapharmacieRepository,
+        ProduitRepository $produitRepository
+    ): Response {
+        $pharmaciesAvecProduit = $parapharmacieRepository->findAllWithProductAndPrice($produit);
+        if (empty($pharmaciesAvecProduit)) {
+            $pharmaciesAvecProduit = $produit->getParapharmacies()->toArray();
+        }
+
+        // Offres multi-parapharmacies: meme nom de produit, IDs potentiellement differents
+        $pharmacieOffers = [];
+        $seenParapharmacies = [];
+        $sameNameProducts = $produitRepository->findByNormalizedName($produit->getNom());
+
+        foreach ($sameNameProducts as $sameProduct) {
+            foreach ($sameProduct->getParapharmacies() as $pharmacie) {
+                $pharmacieId = $pharmacie->getId();
+                if (!$pharmacieId || isset($seenParapharmacies[$pharmacieId])) {
+                    continue;
+                }
+
+                $pharmacieOffers[] = [
+                    'pharmacie' => $pharmacie,
+                    'produitId' => $sameProduct->getId(),
+                    'prix' => (float) $sameProduct->getPrix(),
+                ];
+                $seenParapharmacies[$pharmacieId] = true;
+            }
+        }
         $toutesParapharmacies = $parapharmacieRepository->findAll();
-        
-        // Récupérer la parapharmacie du produit actuel
-        $parapharmacieActuelle = $produit->getParapharmacie();
-        
+
         return $this->render('produit/search_results.html.twig', [
             'produit' => $produit,
+            'pharmaciesAvecProduit' => $pharmaciesAvecProduit,
+            'pharmacieOffers' => $pharmacieOffers,
             'toutesParapharmacies' => $toutesParapharmacies,
-            'parapharmacieActuelle' => $parapharmacieActuelle,
         ]);
     }
 }
+
+

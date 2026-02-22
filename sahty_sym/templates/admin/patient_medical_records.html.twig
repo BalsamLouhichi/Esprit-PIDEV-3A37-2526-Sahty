@@ -1,0 +1,209 @@
+
+
+{% block title %}Fiches médicales de {{ patient.prenom }} {{ patient.nom }} - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-medical mr-2"></i>
+                        Fiches médicales de {{ patient.prenom }} {{ patient.nom }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{{ path('admin_users') }}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info">
+                                    <i class="fas fa-file-medical"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total fiches</span>
+                                    <span class="info-box-number">{{ records|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Actives</span>
+                                    <span class="info-box-number">
+                                        {{ records|filter(r => r.statut == 'Actif')|length }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning">
+                                    <i class="fas fa-weight-scale"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">IMC moyen</span>
+                                    <span class="info-box-number">
+                                        {% set sum = 0 %}
+                                        {% set count = 0 %}
+                                        {% for r in records %}
+                                            {% if r.imc %}
+                                                {% set sum = sum + r.imc %}
+                                                {% set count = count + 1 %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {{ count > 0 ? (sum / count)|number_format(1) : 'N/A' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#addMedicalRecord">
+                                <i class="fas fa-plus-circle"></i> Ajouter une fiche
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date création</th>
+                                    <th>IMC</th>
+                                    <th>Catégorie IMC</th>
+                                    <th>Statut</th>
+                                    <th>Rendez-vous associé</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr>
+                                    <td>{{ record.id }}</td>
+                                    <td>{{ record.creeLe|date('d/m/Y H:i') }}</td>
+                                    <td>{{ record.imc ? record.imc|number_format(1) : 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if record.categorieImc == 'Maigreur' %}bg-warning
+                                            {% elseif record.categorieImc == 'Normal' %}bg-success
+                                            {% elseif record.categorieImc == 'Surpoids' %}bg-info
+                                            {% elseif record.categorieImc == 'Obésité' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ record.categorieImc|default('Non défini') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if record.statut == 'Actif' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ record.statut }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if record.rendezVous %}
+                                            <a href="{{ path('admin_view_appointment', {id: record.rendezVous.id}) }}">
+                                                #{{ record.rendezVous.id }}
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Non associé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ path('admin_view_medical_record', {id: record.id}) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('admin_edit_medical_record', {id: record.id}) }}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ path('admin_export_medical_record_pdf', {id: record.id}) }}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-file-medical fa-3x mb-3 text-muted"></i>
+                                        <p class="mb-0">Aucune fiche médicale trouvée</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for adding medical record -->
+<div class="modal fade" id="addMedicalRecord" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form action="{{ path('admin_add_medical_record', {patientId: patient.id}) }}" method="POST">
+                <input type="hidden" name="_token" value="{{ csrf_token('add-medical-record' ~ patient.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter une fiche médicale</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Taille (cm)</label>
+                                <input type="number" name="taille" class="form-control" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Poids (kg)</label>
+                                <input type="number" name="poids" class="form-control" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Antécédents</label>
+                        <textarea name="antecedents" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Allergies</label>
+                        <textarea name="allergies" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Traitement en cours</label>
+                        <textarea name="traitement_en_cours" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Diagnostic</label>
+                        <textarea name="diagnostic" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Traitement prescrit</label>
+                        <textarea name="traitement_prescrit" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Observations</label>
+                        <textarea name="observations" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer la fiche</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
