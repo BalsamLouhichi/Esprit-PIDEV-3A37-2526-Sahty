@@ -262,6 +262,82 @@
             color: white;
         }
 
+        .discover-zone {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #dbe4f0;
+        }
+
+        .discover-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid #dbe4f0;
+            text-decoration: none;
+            color: #334155;
+            background: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .discover-chip:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .discover-chip.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 8px 18px rgba(74, 108, 247, 0.25);
+        }
+
+        .match-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #065f46;
+        }
+
+        .conflict-alert {
+            margin-top: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid #fed7aa;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 0.82rem;
+            line-height: 1.35;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.45rem;
+        }
+
+        .custom-pagination .page-link {
+            border: none;
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 12px;
+            margin: 0 4px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .custom-pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -298,7 +374,7 @@
     {% include 'partials/header.html.twig' %}
 
     <!-- Hero Section -->
-    <section class="hero-section">
+    {# <section class="hero-section">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 hero-content">
@@ -331,7 +407,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> #}
 
     <!-- Stats Section -->
     <section class="py-5 bg-light">
@@ -430,8 +506,8 @@
                             <i class="fas fa-plus-circle me-2"></i> Proposer un événement
                         </a>
                     {% endif %}
-                    <a href="{{ path('evenements_client_events') }}" class="btn btn-outline-primary-custom">
-                        Voir tout <i class="fas fa-arrow-right ms-2"></i>
+                    <a href="{{ path('evenements_client_mes_inscriptions') }}" class="btn btn-outline-primary-custom">
+                        Mes inscriptions <i class="fas fa-arrow-right ms-2"></i>
                     </a>
                 </div>
             </div>
@@ -442,19 +518,19 @@
                     <div class="col-lg-8">
                         <div class="d-flex flex-wrap gap-2 mb-3 mb-lg-0">
                             <span class="fw-semibold me-2">Filtres :</span>
-                            <a href="{{ path('evenements_client_events') }}" class="filter-badge {% if not type %}active{% endif %}">
+                            <a href="{{ path('evenements_client_events', {'decouverte': decouverte_mode|default('recommandes'), 'tri': tri|default('date_asc'), 'recherche': recherche|default('')}) }}" class="filter-badge {% if not type %}active{% endif %}">
                                 <i class="fas fa-calendar me-1"></i> Tous
                             </a>
-                            <a href="{{ path('evenements_client_events', {type: 'webinaire'}) }}" class="filter-badge {% if type == 'webinaire' %}active{% endif %}">
+                            <a href="{{ path('evenements_client_events', {type: 'webinaire', 'decouverte': decouverte_mode|default('recommandes'), 'tri': tri|default('date_asc'), 'recherche': recherche|default('')}) }}" class="filter-badge {% if type == 'webinaire' %}active{% endif %}">
                                 <i class="fas fa-video me-1"></i> Webinaires
                             </a>
-                            <a href="{{ path('evenements_client_events', {type: 'atelier'}) }}" class="filter-badge {% if type == 'atelier' %}active{% endif %}">
+                            <a href="{{ path('evenements_client_events', {type: 'atelier', 'decouverte': decouverte_mode|default('recommandes'), 'tri': tri|default('date_asc'), 'recherche': recherche|default('')}) }}" class="filter-badge {% if type == 'atelier' %}active{% endif %}">
                                 <i class="fas fa-tools me-1"></i> Ateliers
                             </a>
-                            <a href="{{ path('evenements_client_events', {type: 'conference'}) }}" class="filter-badge {% if type == 'conference' %}active{% endif %}">
+                            <a href="{{ path('evenements_client_events', {type: 'conference', 'decouverte': decouverte_mode|default('recommandes'), 'tri': tri|default('date_asc'), 'recherche': recherche|default('')}) }}" class="filter-badge {% if type == 'conference' %}active{% endif %}">
                                 <i class="fas fa-microphone me-1"></i> Conférences
                             </a>
-                            <a href="{{ path('evenements_client_events', {type: 'formation'}) }}" class="filter-badge {% if type == 'formation' %}active{% endif %}">
+                            <a href="{{ path('evenements_client_events', {type: 'formation', 'decouverte': decouverte_mode|default('recommandes'), 'tri': tri|default('date_asc'), 'recherche': recherche|default('')}) }}" class="filter-badge {% if type == 'formation' %}active{% endif %}">
                                 <i class="fas fa-graduation-cap me-1"></i> Formations
                             </a>
                         </div>
@@ -462,6 +538,9 @@
                     <div class="col-lg-4">
                         <form method="get" action="{{ path('evenements_client_events') }}" class="d-flex">
                             <div class="input-group">
+                                <input type="hidden" name="type" value="{{ type|default('') }}">
+                                <input type="hidden" name="tri" value="{{ tri|default('date_asc') }}">
+                                <input type="hidden" name="decouverte" value="{{ decouverte_mode|default('recommandes') }}">
                                 <span class="input-group-text bg-white border-end-0">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
@@ -470,6 +549,29 @@
                                 <button type="submit" class="btn btn-primary">Chercher</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+                <div class="discover-zone">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="fw-semibold me-2">Mode découverte :</span>
+                        <a
+                            class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'recommandes' ? 'active' : '' }}"
+                            href="{{ path('evenements_client_events', {'decouverte': 'recommandes', 'type': type, 'recherche': recherche, 'tri': tri|default('date_asc')}) }}"
+                        >
+                            <i class="fas fa-star"></i> Recommandés pour moi
+                        </a>
+                        <a
+                            class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'nouveautes' ? 'active' : '' }}"
+                            href="{{ path('evenements_client_events', {'decouverte': 'nouveautes', 'type': type, 'recherche': recherche, 'tri': tri|default('date_asc')}) }}"
+                        >
+                            <i class="fas fa-bolt"></i> Nouveautés
+                        </a>
+                        <a
+                            class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'proches' ? 'active' : '' }}"
+                            href="{{ path('evenements_client_events', {'decouverte': 'proches', 'type': type, 'recherche': recherche, 'tri': tri|default('date_asc')}) }}"
+                        >
+                            <i class="fas fa-link"></i> Proches de mes inscriptions
+                        </a>
                     </div>
                 </div>
             </div>
@@ -565,6 +667,17 @@
                                     <p class="mb-3 text-truncate" style="max-width: 100%;">
                                         {{ evenement.description|slice(0, 100) }}{% if evenement.description|length > 100 %}...{% endif %}
                                     </p>
+                                    {% if evenement.relevanceScore is defined and evenement.relevanceScore > 0 %}
+                                        <span class="match-badge">
+                                            <i class="fas fa-magic"></i> Match {{ evenement.relevanceScore }}%
+                                        </span>
+                                    {% endif %}
+                                    {% if evenement.hasConflict is defined and evenement.hasConflict and evenement.conflictMessage is defined and evenement.conflictMessage %}
+                                        <div class="conflict-alert">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>{{ evenement.conflictMessage }}</span>
+                                        </div>
+                                    {% endif %}
                                     <div class="d-flex justify-content-between align-items-center mt-auto">
                                         <div>
                                             {% if evenement.tarif > 0 %}
@@ -671,8 +784,65 @@
                                             <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
                                                 <i class="fas fa-times me-1"></i> Annuler
                                             </button>
-                                            <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" class="d-inline">
+                                            <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" class="d-inline inscription-advanced-form">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
+                                                <div class="bg-white border rounded-3 p-3 mb-3">
+                                                    <h6 class="fw-bold mb-3">
+                                                        <i class="fas fa-sliders-h text-primary me-2"></i>
+                                                        Préférences d'inscription
+                                                    </h6>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Mode de présence</label>
+                                                        <select name="participation_mode" class="form-select form-select-sm">
+                                                            <option value="presentiel" {% if evenement.mode == 'presentiel' %}selected{% endif %}>Présentiel</option>
+                                                            <option value="en_ligne" {% if evenement.mode == 'en_ligne' %}selected{% endif %}>En ligne</option>
+                                                            <option value="hybride" {% if evenement.mode == 'hybride' %}selected{% endif %}>Hybride</option>
+                                                        </select>
+                                                        <small class="text-muted">Le mode final dépend de la configuration de l'événement.</small>
+                                                    </div>
+
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input js-bring-guests" type="checkbox" name="bring_guests" value="1" id="bringGuests{{ evenement.id }}">
+                                                        <label class="form-check-label" for="bringGuests{{ evenement.id }}">
+                                                            Je viens avec des accompagnants
+                                                        </label>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Nombre d'accompagnants</label>
+                                                        <input type="number" min="0" max="3" value="0" name="guests_count" class="form-control form-control-sm js-guests-count" disabled>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Préférence de place (présentiel)</label>
+                                                        <select name="zone_preference" class="form-select form-select-sm">
+                                                            <option value="">Aucune préférence</option>
+                                                            <option value="avant">Zone avant</option>
+                                                            <option value="milieu">Zone milieu</option>
+                                                            <option value="arriere">Zone arrière</option>
+                                                            <option value="proche_sortie">Proche sortie</option>
+                                                            <option value="accessibilite">Accessibilité prioritaire</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Besoins spécifiques</label>
+                                                        <textarea name="specific_needs" rows="2" maxlength="280" class="form-control form-control-sm" placeholder="Ex: accessibilité, contrainte alimentaire, besoin médical..."></textarea>
+                                                    </div>
+
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" name="consent_photo" value="1" id="consentPhoto{{ evenement.id }}">
+                                                        <label class="form-check-label" for="consentPhoto{{ evenement.id }}">
+                                                            J'accepte l'utilisation photo/vidéo de l'événement
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="consent_terms" value="1" id="consentTerms{{ evenement.id }}" required>
+                                                        <label class="form-check-label fw-semibold" for="consentTerms{{ evenement.id }}">
+                                                            J'accepte les conditions d'inscription
+                                                        </label>
+                                                    </div>
+                                                </div>
                                                 <button type="submit" class="btn btn-primary px-4">
                                                     <i class="fas fa-check-circle me-1"></i> Confirmer
                                                 </button>
@@ -709,11 +879,22 @@
                 {% endif %}
             </div>
             
-            {% if evenements is defined and evenements|length > 3 %}
-                <div class="text-center mt-5">
-                    <a href="{{ path('evenements_client_events') }}" class="btn btn-outline-primary-custom btn-lg px-5">
-                        Voir tous les événements <i class="fas fa-arrow-right ms-2"></i>
-                    </a>
+            {% if total_pages is defined and total_pages > 1 %}
+                <div class="d-flex justify-content-center mt-5">
+                    <nav aria-label="Pagination des événements">
+                        <ul class="pagination custom-pagination mb-0">
+                            {% for i in 1..total_pages %}
+                                <li class="page-item {{ page|default(1) == i ? 'active' : '' }}">
+                                    <a
+                                        class="page-link"
+                                        href="{{ path('evenements_client_events', {'page': i, 'type': type, 'recherche': recherche, 'tri': tri|default('date_asc'), 'decouverte': decouverte_mode|default('recommandes')}) }}"
+                                    >
+                                        {{ i }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </nav>
                 </div>
             {% endif %}
         </div>
@@ -783,7 +964,7 @@
     </section>
 
     <!-- CTA Section -->
-    <section>
+    {# <section>
         <div class="container">
             <div class="cta-section">
                 <div class="row align-items-center">
@@ -808,7 +989,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> #}
 
     <!-- Footer -->
     {% include 'partials/footer.html.twig' %}
@@ -820,13 +1001,46 @@
     <script>
         // Smooth scroll for anchor links
         document.addEventListener('DOMContentLoaded', function() {
+            const scrollKey = 'sahty_client_events_scroll';
+            const savedScroll = sessionStorage.getItem(scrollKey);
+            if (savedScroll !== null) {
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, parseInt(savedScroll, 10) || 0);
+                    sessionStorage.removeItem(scrollKey);
+                });
+            }
+
+            const preserveScrollLinks = document.querySelectorAll('.filter-section a, .discover-zone a, .custom-pagination a');
+            preserveScrollLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    sessionStorage.setItem(scrollKey, String(window.scrollY));
+                });
+            });
+
+            const searchForm = document.querySelector('.filter-section form[action*="evenements_client_events"]');
+            if (searchForm) {
+                searchForm.addEventListener('submit', () => {
+                    sessionStorage.setItem(scrollKey, String(window.scrollY));
+                });
+            }
+
             const anchors = document.querySelectorAll('a[href*="#"]');
             anchors.forEach(anchor => {
                 anchor.addEventListener('click', function(e) {
                     const href = this.getAttribute('href');
                     if (href === '#' || !href.includes('#')) return;
-                    
-                    const hash = href.split('#')[1];
+
+                    let targetUrl;
+                    try {
+                        targetUrl = new URL(href, window.location.href);
+                    } catch (error) {
+                        return;
+                    }
+                    if (targetUrl.pathname !== window.location.pathname || targetUrl.search !== window.location.search) {
+                        return;
+                    }
+
+                    const hash = targetUrl.hash.replace('#', '');
                     const target = document.getElementById(hash);
                     if (target) {
                         e.preventDefault();
@@ -866,6 +1080,26 @@
                 if (link.href === currentUrl.split('#')[0]) {
                     link.classList.add('active');
                 }
+            });
+
+            const bringGuestToggles = document.querySelectorAll('.js-bring-guests');
+            bringGuestToggles.forEach(toggle => {
+                const wrapper = toggle.closest('form');
+                if (!wrapper) return;
+                const guestCountInput = wrapper.querySelector('.js-guests-count');
+                if (!guestCountInput) return;
+
+                const syncState = () => {
+                    guestCountInput.disabled = !toggle.checked;
+                    if (!toggle.checked) {
+                        guestCountInput.value = '0';
+                    } else if (parseInt(guestCountInput.value || '0', 10) < 1) {
+                        guestCountInput.value = '1';
+                    }
+                };
+
+                toggle.addEventListener('change', syncState);
+                syncState();
             });
         });
     </script>

@@ -469,7 +469,7 @@
                         <i class="fas fa-arrow-left"></i> Retour à la liste
                     </a>
                 {% else %}
-                    <a href="{{ path('evenements_client_events') }}" class="back-btn">
+                    <a href="{{ path('evenements_client_events') }}" class="back-btn" onclick="if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) { event.preventDefault(); window.history.back(); }">
                         <i class="fas fa-arrow-left"></i> Retour aux événements
                     </a>
                 {% endif %}
@@ -830,6 +830,10 @@
                             {% else %}
                                 <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
+                                    <input type="hidden" name="participation_mode" value="{{ evenement.mode|default('presentiel') }}">
+                                    <input type="hidden" name="bring_guests" value="0">
+                                    <input type="hidden" name="guests_count" value="0">
+                                    <input type="hidden" name="consent_terms" value="1">
                                     <button type="submit" class="btn-subscribe">
                                         <i class="fas fa-user-plus me-2"></i>S'inscrire
                                     </button>

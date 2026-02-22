@@ -185,10 +185,7 @@
                             </a>
                             <div class="dropdown-menu m-0">
                                 <a href="{{ path('evenements_client_events') }}" class="dropdown-item {{ app.current_route starts with 'evenements_client' ? 'active' : '' }}">
-                                    <i class="fas fa-calendar-check me-2"></i>Mes Événements
-                                </a>
-                                <a href="{{ path('evenements_client_all_events') }}" class="dropdown-item {{ app.current_route == 'evenements_client_all_events' ? 'active' : '' }}">
-                                    <i class="fas fa-list me-2"></i>Tous les événements
+                                    <i class="fas fa-calendar-check me-2"></i>Les événements
                                 </a>
                                 <a href="{{ path('evenements_client_mes_inscriptions') }}" class="dropdown-item">
                                     <i class="fas fa-ticket-alt me-2"></i>Mes inscriptions

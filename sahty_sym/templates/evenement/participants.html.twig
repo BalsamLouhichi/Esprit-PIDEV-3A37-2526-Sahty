@@ -693,6 +693,7 @@
                                 <th>Email</th>
                                 <th>Rôle</th>
                                 <th>Date d'inscription</th>
+                                <th>Préférences</th>
                                 <th>Statut</th>
                                 <th>Présence</th>
                                 <th>Actions</th>
@@ -701,6 +702,8 @@
                         <tbody id="participantsTable">
                             {% for participant in participants %}
                                 {% set utilisateur = participant.utilisateur %}
+                                {% set prefKey = participant.id ~ '' %}
+                                {% set pref = preferences_by_participant[prefKey] is defined ? preferences_by_participant[prefKey] : {} %}
                                 <tr class="participant-row" 
                                     data-statut="{{ participant.statut }}"
                                     data-present="{{ participant.present ? 'present' : 'absent' }}"
@@ -740,6 +743,18 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ participant.dateInscription|date('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <div class="small">
+                                            <div><strong>Mode:</strong> {{ pref.participation_mode|default('Non renseigné')|replace({'en_ligne':'En ligne','presentiel':'Présentiel','hybride':'Hybride'}) }}</div>
+                                            <div><strong>Accompagnants:</strong> {{ pref.guests_count|default(0) }}</div>
+                                            {% if pref.zone_preference is defined and pref.zone_preference %}
+                                                <div><strong>Zone:</strong> {{ pref.zone_preference|replace({'avant':'Avant','milieu':'Milieu','arriere':'Arrière','proche_sortie':'Proche sortie','accessibilite':'Accessibilité'}) }}</div>
+                                            {% endif %}
+                                            {% if pref.specific_needs is defined and pref.specific_needs %}
+                                                <div class="text-muted">{{ pref.specific_needs }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                     <td>
                                         <span class="status-badge status-{{ participant.statut|replace({'_': ''}) }}">
                                             {% if participant.statut == 'confirme' %}

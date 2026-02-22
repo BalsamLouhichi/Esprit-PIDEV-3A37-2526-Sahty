@@ -15,6 +15,7 @@ use App\Service\EvenementOperationalInsightsService;
 use App\Service\EvenementResourcePlanningService;
 use App\Service\EvenementSeriesInsightsAIService;
 use App\Service\EvenementVenueRecommendationService;
+use App\Service\InscriptionPreferencesStorageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -33,6 +34,7 @@ class EvenementController extends AbstractController
     private EvenementVenueRecommendationService $evenementVenueRecommendationService;
     private EvenementResourcePlanningService $evenementResourcePlanningService;
     private EvenementExperienceDesignService $evenementExperienceDesignService;
+    private InscriptionPreferencesStorageService $inscriptionPreferencesStorageService;
 
     public function __construct(
         EvenementRepository $evenementRepository,
@@ -40,7 +42,8 @@ class EvenementController extends AbstractController
         EvenementSeriesInsightsAIService $evenementSeriesInsightsAIService,
         EvenementVenueRecommendationService $evenementVenueRecommendationService,
         EvenementResourcePlanningService $evenementResourcePlanningService,
-        EvenementExperienceDesignService $evenementExperienceDesignService
+        EvenementExperienceDesignService $evenementExperienceDesignService,
+        InscriptionPreferencesStorageService $inscriptionPreferencesStorageService
     )
     {
         $this->evenementRepository = $evenementRepository;
@@ -49,6 +52,7 @@ class EvenementController extends AbstractController
         $this->evenementVenueRecommendationService = $evenementVenueRecommendationService;
         $this->evenementResourcePlanningService = $evenementResourcePlanningService;
         $this->evenementExperienceDesignService = $evenementExperienceDesignService;
+        $this->inscriptionPreferencesStorageService = $inscriptionPreferencesStorageService;
     }
 
     #[Route('/', name: 'evenement_list', methods: ['GET'])]
@@ -809,12 +813,57 @@ class EvenementController extends AbstractController
             return $this->redirectToRoute($route, ['id' => $evenement->getId()]);
         }
 
+        $requestedMode = trim((string) $request->request->get('participation_mode', ''));
+        $requestedZone = trim((string) $request->request->get('zone_preference', ''));
+        $specificNeeds = trim((string) $request->request->get('specific_needs', ''));
+        $bringGuests = $request->request->getBoolean('bring_guests', false);
+        $guestsCount = max(0, min(3, (int) $request->request->get('guests_count', 0)));
+        $consentPhoto = $request->request->getBoolean('consent_photo', false);
+        $consentTerms = $request->request->getBoolean('consent_terms', false);
+
+        $allowedPresenceModes = ['presentiel', 'en_ligne', 'hybride'];
+        if (!in_array($requestedMode, $allowedPresenceModes, true)) {
+            $requestedMode = (string) ($evenement->getMode() ?: 'presentiel');
+        }
+
+        $eventMode = (string) ($evenement->getMode() ?: 'presentiel');
+        if ($eventMode === 'presentiel' && $requestedMode === 'en_ligne') {
+            $this->addFlash('warning', 'Cet événement est en présentiel. Veuillez sélectionner un mode de présence compatible.');
+            $route = $this->isGranted('ROLE_ADMIN') ? 'evenements_evenement_view' : 'evenements_client_event_view';
+            return $this->redirectToRoute($route, ['id' => $evenement->getId()]);
+        }
+        if ($eventMode === 'en_ligne' && $requestedMode !== 'en_ligne') {
+            $requestedMode = 'en_ligne';
+        }
+
+        if (!$consentTerms) {
+            $this->addFlash('warning', 'Vous devez accepter les conditions d inscription pour confirmer.');
+            $route = $this->isGranted('ROLE_ADMIN') ? 'evenements_evenement_view' : 'evenements_client_event_view';
+            return $this->redirectToRoute($route, ['id' => $evenement->getId()]);
+        }
+
+        $requestedSeats = 1 + ($bringGuests ? $guestsCount : 0);
+        if (!$bringGuests) {
+            $guestsCount = 0;
+        }
+
+        if (strlen($specificNeeds) > 280) {
+            $specificNeeds = substr($specificNeeds, 0, 280);
+        }
+
         // Vérifier les places disponibles
         if ($evenement->getPlacesMax() !== null) {
-            $inscriptionsCount = $em->getRepository(InscriptionEvenement::class)
-                ->count(['evenement' => $evenement]);
-                
-            if ($inscriptionsCount >= $evenement->getPlacesMax()) {
+            $inscriptions = $em->getRepository(InscriptionEvenement::class)
+                ->findBy(['evenement' => $evenement]);
+
+            $occupiedSeats = 0;
+            foreach ($inscriptions as $inscriptionExistante) {
+                $prefs = $this->inscriptionPreferencesStorageService->getForInscription((int) $inscriptionExistante->getId());
+                $extra = max(0, (int) ($prefs['guests_count'] ?? 0));
+                $occupiedSeats += 1 + $extra;
+            }
+
+            if (($occupiedSeats + $requestedSeats) > $evenement->getPlacesMax()) {
                 $this->addFlash('danger', 'Désolé, cet événement est complet.');
                 $route = $this->isGranted('ROLE_ADMIN') ? 'evenements_evenement_view' : 'evenements_client_event_view';
                 return $this->redirectToRoute($route, ['id' => $evenement->getId()]);
@@ -832,6 +881,19 @@ class EvenementController extends AbstractController
 
         $em->persist($inscription);
         $em->flush();
+
+        $this->inscriptionPreferencesStorageService->saveForInscription((int) $inscription->getId(), [
+            'event_id' => (int) $evenement->getId(),
+            'user_id' => method_exists($user, 'getId') ? (int) $user->getId() : null,
+            'participation_mode' => $requestedMode,
+            'bring_guests' => $bringGuests,
+            'guests_count' => $guestsCount,
+            'zone_preference' => $requestedZone !== '' ? $requestedZone : null,
+            'specific_needs' => $specificNeeds !== '' ? $specificNeeds : null,
+            'consent_photo' => $consentPhoto,
+            'consent_terms' => $consentTerms,
+            'created_at' => (new \DateTime())->format(\DateTime::ATOM),
+        ]);
 
         $this->addFlash('success', 'Inscription réussie !');
         $route = $this->isGranted('ROLE_ADMIN') ? 'evenements_evenement_view' : 'evenements_client_event_view';
@@ -851,6 +913,7 @@ class EvenementController extends AbstractController
             ->findOneBy(['evenement' => $evenement, 'utilisateur' => $user]);
 
         if ($inscription) {
+            $this->inscriptionPreferencesStorageService->removeForInscription((int) $inscription->getId());
             $em->remove($inscription);
             $em->flush();
             $this->addFlash('success', 'Vous avez été désinscrit de cet événement.');
@@ -886,6 +949,7 @@ class EvenementController extends AbstractController
         return $this->render('evenement/participants.html.twig', [
             'evenement' => $evenement,
             'participants' => $participants,
+            'preferences_by_participant' => $this->inscriptionPreferencesStorageService->getForEvent((int) $evenement->getId()),
         ]);
     }
 
@@ -928,6 +992,14 @@ class EvenementController extends AbstractController
         $user = $this->getUser();
         $type = $request->query->get('type');
         $recherche = $request->query->get('recherche');
+        $tri = $request->query->get('tri', 'date_asc');
+        $decouverteMode = $request->query->get('decouverte', 'recommandes');
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 9;
+        $decouverteValides = ['recommandes', 'nouveautes', 'proches'];
+        if (!in_array($decouverteMode, $decouverteValides, true)) {
+            $decouverteMode = 'recommandes';
+        }
         
         $evenementsApprouves = [];
         $demandesEnAttente = [];
@@ -967,6 +1039,30 @@ class EvenementController extends AbstractController
             );
         }
 
+        $evenementsApprouves = $this->applyClientDiscoveryMode($evenementsApprouves, $user, $em, $decouverteMode, $tri);
+
+        $userInscriptions = [];
+        if ($user) {
+            $inscriptions = $em->getRepository(InscriptionEvenement::class)->findBy(['utilisateur' => $user]);
+            foreach ($inscriptions as $inscription) {
+                if ($inscription->getEvenement()) {
+                    $userInscriptions[$inscription->getEvenement()->getId()] = true;
+                }
+            }
+        }
+
+        foreach ($evenementsApprouves as $evt) {
+            try {
+                $evt->inscriptionsCount = $em->getRepository(InscriptionEvenement::class)->count(['evenement' => $evt]);
+                $evt->userInscrit = isset($userInscriptions[$evt->getId()]);
+                $evt->editionNumero = $this->extractEditionNumberFromTitle((string) $evt->getTitre());
+            } catch (\Exception $e) {
+                $evt->inscriptionsCount = 0;
+                $evt->userInscrit = false;
+                $evt->editionNumero = null;
+            }
+        }
+
         // Calculate stats
         $now = new \DateTime();
         $stats = [
@@ -975,10 +1071,15 @@ class EvenementController extends AbstractController
             'expertSpeakers' => 25,
             'happyParticipants' => 1200,
         ];
-        
+
+        $totalEvents = count($evenementsApprouves);
+        $totalPages = max(1, (int) ceil($totalEvents / $limit));
+        $offset = ($page - 1) * $limit;
+        $evenementsPagines = array_slice($evenementsApprouves, $offset, $limit);
+
         // Actions logic
         $actions = [];
-        foreach ($evenementsApprouves as $evt) {
+        foreach ($evenementsPagines as $evt) {
             $canInscrire = false;
             if ($user && $user !== $evt->getCreateur()) {
                 $subscribeCheck = $this->canUserSubscribe($user, $evt, $em);
@@ -993,12 +1094,16 @@ class EvenementController extends AbstractController
         }
 
         return $this->render('evenement/client.html.twig', [
-            'evenements' => $evenementsApprouves, // Contains ONLY approved
+            'evenements' => $evenementsPagines, // Contains ONLY approved
             'demandes_en_attente' => $demandesEnAttente, // Contains ONLY pending
             'actions' => $actions,
             'stats' => $stats,
             'type' => $type,
             'recherche' => $recherche,
+            'tri' => $tri,
+            'decouverte_mode' => $decouverteMode,
+            'page' => $page,
+            'total_pages' => $totalPages,
             'has_permission_to_create' => $hasClientRole,
             'user' => $user,
             'show_pending_section' => !empty($demandesEnAttente),
@@ -1603,6 +1708,11 @@ class EvenementController extends AbstractController
     #[Route('/client/tous-les-evenements', name: 'client_all_events', methods: ['GET'])]
     public function clientAllEvents(Request $request, EvenementRepository $evenementRepository, EntityManagerInterface $em): Response
     {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('evenements_evenement_list');
+        }
+        return $this->redirectToRoute('evenements_client_events');
+
         // Vérifier que l'utilisateur a un rôle client valide
         $allowedClientRoles = ['ROLE_MEDECIN', 'ROLE_RESPONSABLE_LABO', 'ROLE_RESPONSABLE_PARA', 'ROLE_PATIENT'];
         $hasClientRole = false;
@@ -1627,8 +1737,21 @@ class EvenementController extends AbstractController
         $user = $this->getUser();
         $type = $request->query->get('type');
         $recherche = $request->query->get('recherche');
+        $tri = $request->query->get('tri', 'date_asc');
+        $decouverteMode = $request->query->get('decouverte', 'recommandes');
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 9;
+        $decouverteValides = ['recommandes', 'nouveautes', 'proches'];
+        if (!in_array($decouverteMode, $decouverteValides, true)) {
+            $decouverteMode = 'recommandes';
+        }
+        $decouverteMode = $request->query->get('decouverte', 'recommandes');
         $page = $request->query->getInt('page', 1);
         $limit = 9; // Nombre d'événements par page
+        $decouverteValides = ['recommandes', 'nouveautes', 'proches'];
+        if (!in_array($decouverteMode, $decouverteValides, true)) {
+            $decouverteMode = 'recommandes';
+        }
         
         // Récupérer TOUS les événements pertinents pour le client
         $evenements = [];
@@ -1686,10 +1809,7 @@ class EvenementController extends AbstractController
             });
         }
         
-        // Trier par date de début
-        usort($evenements, function($a, $b) {
-            return $a->getDateDebut() <=> $b->getDateDebut();
-        });
+        $evenements = $this->applyClientDiscoveryMode($evenements, $user, $em, $decouverteMode, 'date_asc');
         
         // Pagination
         $total = count($evenements);
@@ -1729,10 +1849,12 @@ class EvenementController extends AbstractController
             'stats' => $stats,
             'type' => $type,
             'recherche' => $recherche,
+            'tri' => 'date_asc',
             'page' => $page,
             'totalPages' => $totalPages,
             'total' => $total,
             'has_permission_to_create' => $hasClientRole,
+            'decouverte_mode' => $decouverteMode,
         ]);
     }
 
@@ -1742,6 +1864,11 @@ class EvenementController extends AbstractController
         EvenementRepository $evenementRepository, 
         EntityManagerInterface $em
     ): Response {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('evenements_evenement_list');
+        }
+        return $this->redirectToRoute('evenements_client_events');
+
         // Vérifier que l'utilisateur a un rôle client valide (non admin)
         $allowedClientRoles = ['ROLE_MEDECIN', 'ROLE_RESPONSABLE_LABO', 'ROLE_RESPONSABLE_PARA', 'ROLE_PATIENT'];
         $hasClientRole = false;
@@ -1767,8 +1894,13 @@ class EvenementController extends AbstractController
         $type = $request->query->get('type');
         $recherche = $request->query->get('recherche');
         $tri = $request->query->get('tri', 'date_asc');
+        $decouverteMode = $request->query->get('decouverte', 'recommandes');
         $page = $request->query->getInt('page', 1);
         $limit = 9;
+        $decouverteValides = ['recommandes', 'nouveautes', 'proches'];
+        if (!in_array($decouverteMode, $decouverteValides, true)) {
+            $decouverteMode = 'recommandes';
+        }
         
         // Récupérer tous les événements pertinents pour le client
         $evenements = [];
@@ -1814,32 +1946,17 @@ class EvenementController extends AbstractController
             });
         }
         
-        // Trier les événements
-        usort($evenements, function($a, $b) use ($tri) {
-            switch ($tri) {
-                case 'date_desc':
-                    return $b->getDateDebut() <=> $a->getDateDebut();
-                case 'prix_asc':
-                    $prixA = $a->getTarif() ?? 0;
-                    $prixB = $b->getTarif() ?? 0;
-                    return $prixA <=> $prixB;
-                case 'prix_desc':
-                    $prixA = $a->getTarif() ?? 0;
-                    $prixB = $b->getTarif() ?? 0;
-                    return $prixB <=> $prixA;
-                case 'date_asc':
-                default:
-                    return $a->getDateDebut() <=> $b->getDateDebut();
-            }
-        });
-        
+        $evenements = $this->applyClientDiscoveryMode($evenements, $user, $em, $decouverteMode, $tri);
+
         // Récupérer les inscriptions de l'utilisateur
         $userInscriptions = [];
         if ($user) {
             $inscriptions = $em->getRepository(InscriptionEvenement::class)
                 ->findBy(['utilisateur' => $user]);
             foreach ($inscriptions as $inscription) {
-                $userInscriptions[$inscription->getEvenement()->getId()] = true;
+                if ($inscription->getEvenement()) {
+                    $userInscriptions[$inscription->getEvenement()->getId()] = true;
+                }
             }
         }
         
@@ -1889,7 +2006,149 @@ class EvenementController extends AbstractController
             'totalPages' => $totalPages,
             'total' => $total,
             'has_permission_to_create' => $hasClientRole,
+            'decouverte_mode' => $decouverteMode,
         ]);
+    }
+
+    private function applyClientDiscoveryMode(array $evenements, ?Utilisateur $user, EntityManagerInterface $em, string $decouverteMode, string $tri): array
+    {
+        $inscriptions = [];
+        $typesPreferes = [];
+        $modesPreferes = [];
+
+        if ($user) {
+            $inscriptions = $em->getRepository(InscriptionEvenement::class)->findBy(['utilisateur' => $user]);
+            foreach ($inscriptions as $inscription) {
+                $evtInscrit = $inscription->getEvenement();
+                if (!$evtInscrit) {
+                    continue;
+                }
+
+                $typeEvt = strtolower((string) $evtInscrit->getType());
+                $modeEvt = strtolower((string) $evtInscrit->getMode());
+                if ($typeEvt !== '') {
+                    $typesPreferes[$typeEvt] = ($typesPreferes[$typeEvt] ?? 0) + 1;
+                }
+                if ($modeEvt !== '') {
+                    $modesPreferes[$modeEvt] = ($modesPreferes[$modeEvt] ?? 0) + 1;
+                }
+            }
+        }
+
+        foreach ($evenements as $evt) {
+            $evt->relevanceScore = $this->calculateClientEventScore($evt, $typesPreferes, $modesPreferes);
+            $evt->hasConflict = false;
+            $evt->conflictMessage = null;
+
+            $conflictMessage = $this->buildClientConflictMessage($evt, $inscriptions);
+            if ($conflictMessage !== null) {
+                $evt->hasConflict = true;
+                $evt->conflictMessage = $conflictMessage;
+                $evt->relevanceScore = max(0, (int) $evt->relevanceScore - 18);
+            }
+        }
+
+        usort($evenements, function($a, $b) use ($decouverteMode, $tri, $user) {
+            if ($decouverteMode === 'nouveautes') {
+                $aDate = $a->getCreeLe() ?: $a->getDateDebut();
+                $bDate = $b->getCreeLe() ?: $b->getDateDebut();
+                return $bDate <=> $aDate;
+            }
+
+            if ($decouverteMode === 'proches') {
+                $aScore = (int) ($a->relevanceScore ?? 0);
+                $bScore = (int) ($b->relevanceScore ?? 0);
+                if ($aScore !== $bScore) {
+                    return $bScore <=> $aScore;
+                }
+                return $a->getDateDebut() <=> $b->getDateDebut();
+            }
+
+            if ($decouverteMode === 'recommandes' && $user) {
+                $aScore = (int) ($a->relevanceScore ?? 0);
+                $bScore = (int) ($b->relevanceScore ?? 0);
+                if ($aScore !== $bScore) {
+                    return $bScore <=> $aScore;
+                }
+            }
+
+            switch ($tri) {
+                case 'date_desc':
+                    return $b->getDateDebut() <=> $a->getDateDebut();
+                case 'prix_asc':
+                    return ($a->getTarif() ?? 0) <=> ($b->getTarif() ?? 0);
+                case 'prix_desc':
+                    return ($b->getTarif() ?? 0) <=> ($a->getTarif() ?? 0);
+                case 'date_asc':
+                default:
+                    return $a->getDateDebut() <=> $b->getDateDebut();
+            }
+        });
+
+        return $evenements;
+    }
+
+    private function calculateClientEventScore(Evenement $evt, array $typesPreferes, array $modesPreferes): int
+    {
+        $score = 0;
+        $typeEvt = strtolower((string) $evt->getType());
+        $modeEvt = strtolower((string) $evt->getMode());
+
+        if (isset($typesPreferes[$typeEvt])) {
+            $score += 30 + (5 * $typesPreferes[$typeEvt]);
+        }
+        if (isset($modesPreferes[$modeEvt])) {
+            $score += 20 + (4 * $modesPreferes[$modeEvt]);
+        }
+        if (($evt->getTarif() ?? 0) == 0) {
+            $score += 6;
+        }
+
+        if ($evt->getDateDebut() instanceof \DateTimeInterface) {
+            $now = new \DateTime();
+            if ($evt->getDateDebut() > $now) {
+                $daysToStart = $now->diff($evt->getDateDebut())->days;
+                if ($daysToStart <= 14) {
+                    $score += 8;
+                }
+            }
+        }
+
+        return min(99, max(0, $score));
+    }
+
+    private function buildClientConflictMessage(Evenement $evt, array $inscriptions): ?string
+    {
+        if (
+            !($evt->getDateDebut() instanceof \DateTimeInterface) ||
+            !($evt->getDateFin() instanceof \DateTimeInterface)
+        ) {
+            return null;
+        }
+
+        foreach ($inscriptions as $inscription) {
+            $evtInscrit = $inscription->getEvenement();
+            if (
+                !$evtInscrit ||
+                $evtInscrit->getId() === $evt->getId() ||
+                !($evtInscrit->getDateDebut() instanceof \DateTimeInterface) ||
+                !($evtInscrit->getDateFin() instanceof \DateTimeInterface)
+            ) {
+                continue;
+            }
+
+            $overlap = $evt->getDateDebut() < $evtInscrit->getDateFin() && $evtInscrit->getDateDebut() < $evt->getDateFin();
+            if ($overlap) {
+                return sprintf(
+                    'Conflit avec "%s" (%s - %s).',
+                    (string) $evtInscrit->getTitre(),
+                    $evtInscrit->getDateDebut()->format('d/m H:i'),
+                    $evtInscrit->getDateFin()->format('H:i')
+                );
+            }
+        }
+
+        return null;
     }
 
     private function buildSeriesCandidateChoices(?int $excludeEventId = null): array

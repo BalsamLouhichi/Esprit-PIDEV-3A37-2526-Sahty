@@ -550,6 +550,80 @@
             color: #1e40af;
         }
 
+        .discover-section {
+            margin: 0 2rem 2rem;
+            padding: 1rem;
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .discover-label {
+            font-weight: 700;
+            color: var(--gray-700);
+            margin-right: 0.5rem;
+        }
+
+        .discover-chip {
+            text-decoration: none;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+            background: white;
+            border-radius: 999px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .discover-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .discover-chip.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.25);
+        }
+
+        .relevance-badge {
+            margin-top: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: #ecfdf3;
+            border: 1px solid #b7f0d2;
+            color: #047857;
+        }
+
+        .conflict-alert {
+            margin-top: 0.9rem;
+            border-radius: 12px;
+            padding: 0.7rem 0.85rem;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            color: #9a3412;
+            font-size: 0.82rem;
+            line-height: 1.35;
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
         @media (max-width: 768px) {
             .page-wrapper {
                 padding: 1rem;
@@ -660,6 +734,7 @@
                 <!-- Filters -->
                 <div class="filter-section">
                     <form method="get" action="{{ path('evenements_client_all_evenements') }}">
+                        <input type="hidden" name="decouverte" value="{{ decouverte_mode|default('recommandes') }}">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="filter-label">
@@ -700,6 +775,28 @@
                             </div>
                         </div>
                     </form>
+                </div>
+
+                <div class="discover-section">
+                    <span class="discover-label"><i class="fas fa-compass me-1"></i>Mode découverte</span>
+                    <a
+                        class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'recommandes' ? 'active' : '' }}"
+                        href="{{ path('evenements_client_all_evenements', {'decouverte': 'recommandes', 'type': type, 'recherche': recherche, 'tri': tri}) }}"
+                    >
+                        <i class="fas fa-star"></i> Recommandés pour moi
+                    </a>
+                    <a
+                        class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'nouveautes' ? 'active' : '' }}"
+                        href="{{ path('evenements_client_all_evenements', {'decouverte': 'nouveautes', 'type': type, 'recherche': recherche, 'tri': tri}) }}"
+                    >
+                        <i class="fas fa-bolt"></i> Nouveautés
+                    </a>
+                    <a
+                        class="discover-chip {{ (decouverte_mode|default('recommandes')) == 'proches' ? 'active' : '' }}"
+                        href="{{ path('evenements_client_all_evenements', {'decouverte': 'proches', 'type': type, 'recherche': recherche, 'tri': tri}) }}"
+                    >
+                        <i class="fas fa-link"></i> Proches de mes inscriptions
+                    </a>
                 </div>
 
                 <!-- Events Grid -->
@@ -766,6 +863,20 @@
                                                 <i class="fas fa-gift me-2"></i>Gratuit
                                             {% endif %}
                                         </div>
+
+                                        {% if evenement.relevanceScore is defined and evenement.relevanceScore > 0 %}
+                                            <span class="relevance-badge">
+                                                <i class="fas fa-magic"></i>
+                                                Match {{ evenement.relevanceScore }}%
+                                            </span>
+                                        {% endif %}
+
+                                        {% if evenement.hasConflict is defined and evenement.hasConflict and evenement.conflictMessage is defined and evenement.conflictMessage %}
+                                            <div class="conflict-alert">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>{{ evenement.conflictMessage }}</span>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                     
                                     <!-- Event Footer -->
@@ -779,7 +890,7 @@
                                                 <i class="fas fa-check-circle"></i> Déjà inscrit
                                             </span>
                                         {% elseif evenement.statut == 'planifie' or evenement.statut == 'approuve' %}
-                                            {% if evenement.createur and evenement.createur.id == app.user.id %}
+                                            {% if app.user and evenement.createur and evenement.createur.id == app.user.id %}
                                                 <span class="btn-event btn-disabled">
                                                     <i class="fas fa-star"></i> Mon événement
                                                 </span>
@@ -812,7 +923,7 @@
                                 <ul class="pagination">
                                     {% for i in 1..totalPages %}
                                         <li class="page-item {{ page == i ? 'active' : '' }}">
-                                            <a class="page-link" href="{{ path('evenements_client_all_evenements', {'page': i, 'type': type, 'recherche': recherche, 'tri': tri}) }}">
+                                            <a class="page-link" href="{{ path('evenements_client_all_evenements', {'page': i, 'type': type, 'recherche': recherche, 'tri': tri, 'decouverte': decouverte_mode|default('recommandes')}) }}">
                                                 {{ i }}
                                             </a>
                                         </li>
