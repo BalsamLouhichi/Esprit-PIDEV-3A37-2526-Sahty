@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Fiche médicale #{{ record.id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #1e293b;
+            background: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 30px;
+        }
+
+        /* En-tête moderne */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #f0f4f8;
+        }
+        
+        .hospital-brand h1 {
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+        
+        .hospital-brand .subtitle {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+        
+        .document-meta {
+            text-align: right;
+        }
+        
+        .document-id {
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .document-date {
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        /* Titres de section modernes */
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title .title-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .section-title h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Grille moderne */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        
+        .info-card:hover {
+            border-color: #94a3b8;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        
+        .info-card .label {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+        
+        .info-card .value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        .info-card .value small {
+            font-size: 12px;
+            font-weight: 400;
+            color: #64748b;
+            margin-left: 4px;
+        }
+
+        /* Badges modernes */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        
+        .badge-primary { background: #e0f2fe; color: #0369a1; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef9c3; color: #854d0e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-secondary { background: #f1f5f9; color: #475569; }
+
+        /* Conteneurs de contenu */
+        .content-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            min-height: 60px;
+            line-height: 1.7;
+        }
+
+        /* Tableaux modernes */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f8fafc;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .info-table tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .info-table tr:last-child {
+            border-bottom: none;
+        }
+        
+        .info-table th {
+            width: 200px;
+            padding: 14px 18px;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .info-table td {
+            padding: 14px 18px;
+            color: #334155;
+        }
+
+        /* Pied de page */
+        .footer {
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .footer p {
+            color: #64748b;
+            font-size: 11px;
+            margin: 4px 0;
+        }
+        
+        .footer .confidential {
+            color: #991b1b;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Icônes en dur (Font Awesome fallback) */
+        .icon { font-family: 'Segoe UI', 'Arial', sans-serif; }
+        
+        /* Responsive */
+        @media print {
+            body {
+                padding: 20px;
+            }
+            
+            .info-card:hover {
+                border-color: #e2e8f0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête moderne -->
+    <div class="header">
+        <div class="hospital-brand">
+            <h1>SAHTY</h1>
+            <div class="subtitle">Système de Gestion Hospitalière</div>
+        </div>
+        <div class="document-meta">
+            <span class="document-id">
+                <span class="icon">📋</span> FICHE #{{ record.id }}
+            </span>
+            <div class="document-date">
+                Générée le {{ "now"|date("d/m/Y à H:i") }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations patient -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">👤</span></div>
+            <h2>Informations patient</h2>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Nom complet</div>
+                <div class="value">{{ record.patient.prenom }} {{ record.patient.nom }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Email</div>
+                <div class="value">{{ record.patient.email }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Téléphone</div>
+                <div class="value">{{ record.patient.telephone|default('Non renseigné') }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Date de naissance</div>
+                <div class="value">{{ record.patient.dateNaissance|date('d/m/Y')|default('Non renseignée') }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Groupe sanguin</div>
+                <div class="value">{{ record.patient.groupeSanguin|default('Non renseigné') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mesures et IMC -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">📏</span></div>
+            <h2>Mesures et IMC</h2>
+        </div>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Taille</div>
+                <div class="value">{{ record.taille ? record.taille ~ ' cm' : 'N/A' }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Poids</div>
+                <div class="value">{{ record.poids ? record.poids ~ ' kg' : 'N/A' }}</div>
+            </div>
+            <div class="info-card">
+                <div class="label">IMC</div>
+                <div class="value">
+                    {% if record.imc %}
+                        {{ record.imc|number_format(1) }}
+                        <small>kg/m²</small>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="label">Catégorie IMC</div>
+                <div class="value">
+                    {% if record.categorieImc %}
+                        <span class="badge 
+                            {% if record.categorieImc == 'Maigreur' %}badge-warning
+                            {% elseif record.categorieImc == 'Normal' %}badge-success
+                            {% elseif record.categorieImc == 'Surpoids' %}badge-info
+                            {% elseif record.categorieImc == 'Obésité' %}badge-danger
+                            {% else %}badge-secondary{% endif %}">
+                            {{ record.categorieImc }}
+                        </span>
+                    {% else %}
+                        <span class="badge badge-secondary">Non défini</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Antécédents médicaux -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">📋</span></div>
+            <h2>Antécédents médicaux</h2>
+        </div>
+        <div class="content-container">
+            {{ record.antecedents|default('Aucun antécédent renseigné')|nl2br }}
+        </div>
+    </div>
+
+    <!-- Allergies -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">⚠️</span></div>
+            <h2>Allergies</h2>
+        </div>
+        <div class="content-container">
+            {{ record.allergies|default('Aucune allergie renseignée')|nl2br }}
+        </div>
+    </div>
+
+    <!-- Traitement en cours -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">💊</span></div>
+            <h2>Traitement en cours</h2>
+        </div>
+        <div class="content-container">
+            {{ record.traitementEnCours|default('Aucun traitement renseigné')|nl2br }}
+        </div>
+    </div>
+
+    <!-- Consultation -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">🩺</span></div>
+            <h2>Consultation</h2>
+        </div>
+        <table class="info-table">
+            <tr>
+                <th>Diagnostic</th>
+                <td>{{ record.diagnostic|default('Non renseigné')|nl2br }}</td>
+            </tr>
+            <tr>
+                <th>Traitement prescrit</th>
+                <td>{{ record.traitementPrescrit|default('Aucun traitement prescrit')|nl2br }}</td>
+            </tr>
+            <tr>
+                <th>Observations</th>
+                <td>{{ record.observations|default('Aucune observation')|nl2br }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Informations complémentaires -->
+    <div class="section">
+        <div class="section-title">
+            <div class="title-icon"><span class="icon">ℹ️</span></div>
+            <h2>Informations complémentaires</h2>
+        </div>
+        <table class="info-table">
+            <tr>
+                <th>Date de création</th>
+                <td>{{ record.creeLe|date('d/m/Y H:i') }}</td>
+            </tr>
+            <tr>
+                <th>Statut</th>
+                <td>
+                    <span class="badge {{ record.statut == 'Actif' ? 'badge-success' : 'badge-danger' }}">
+                        {{ record.statut }}
+                    </span>
+                </td>
+            </tr>
+            {% if record.rendezVous %}
+            <tr>
+                <th>Rendez-vous associé</th>
+                <td>
+                    <strong>{{ record.rendezVous.dateRdv|date('d/m/Y') }} à {{ record.rendezVous.heureRdv|date('H:i') }}</strong><br>
+                    <span style="color: #475569;">Dr. {{ record.rendezVous.medecin.prenom }} {{ record.rendezVous.medecin.nom }}</span><br>
+                    <span class="badge 
+                        {% if record.rendezVous.statut == 'Confirmé' %}badge-success
+                        {% elseif record.rendezVous.statut == 'En attente' %}badge-warning
+                        {% elseif record.rendezVous.statut == 'Annulé' %}badge-danger
+                        {% elseif record.rendezVous.statut == 'Terminé' %}badge-info
+                        {% else %}badge-secondary{% endif %}">
+                        {{ record.rendezVous.statut }}
+                    </span>
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <p>SAHTY Healthcare Management System</p>
+        <p class="confidential">⚡ DOCUMENT CONFIDENTIEL ⚡</p>
+        <p>Ne doit être partagé qu'avec le personnel médical autorisé</p>
+    </div>
+</body>
+</html>

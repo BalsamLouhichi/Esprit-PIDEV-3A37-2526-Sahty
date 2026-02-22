@@ -1,0 +1,2575 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MEDINOVA - Fiches Médicales{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============ PALETTE DE COULEURS MÉDICALE PROFESSIONNELLE ============ */
+        :root {
+            /* Couleurs principales inspirées de l'image */
+            --mughal-green: #304D30;
+            --prussian-blue: #163A5F;
+            --teal-blue: #1D5D9B;
+            --pastel-blue: #75C2F6;
+            --light-silver: #F4F6FF;
+            
+            /* Palette étendue */
+            --primary: #1D5D9B;
+            --primary-light: #E8F4F8;
+            --primary-dark: #163A5F;
+            
+            --secondary: #304D30;
+            --secondary-light: #4A7C59;
+            --secondary-dark: #1E3A1E;
+            
+            --accent: #75C2F6;
+            --accent-light: #B4E4FF;
+            
+            --light: #F4F6FF;
+            --light-alt: #E8EAF6;
+            
+            --dark: #1A2332;
+            --dark-light: #2C3E50;
+            
+            /* Couleurs de statut */
+            --success: #4A7C59;
+            --success-light: #D4E9DA;
+            --danger: #C1666B;
+            --danger-light: #F8E8E9;
+            --warning: #D4A574;
+            --warning-light: #F9F0E7;
+            --info: #75C2F6;
+            --info-light: #E8F4F8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, var(--light-alt) 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Geometric Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(29, 93, 155, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(48, 77, 48, 0.08) 0%, transparent 40%),
+                linear-gradient(135deg, transparent 0%, rgba(117, 194, 246, 0.05) 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+            animation: backgroundPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, rgba(29, 93, 155, 0.2), transparent),
+                radial-gradient(2px 2px at 60% 70%, rgba(48, 77, 48, 0.2), transparent),
+                radial-gradient(1px 1px at 50% 50%, rgba(117, 194, 246, 0.15), transparent);
+            background-size: 200px 200px, 300px 300px, 150px 150px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            animation: particlesFloat 40s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes particlesFloat {
+            to {
+                background-position: 200px 200px, 240px 260px, 330px 470px;
+            }
+        }
+
+        .medical-form-section {
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ============ HEADER SECTION ============ */
+        .page-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 30px;
+            padding: 50px 40px;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 8px 32px rgba(29, 93, 155, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(29, 93, 155, 0.08) 0%, transparent 70%);
+            animation: headerGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10%, 10%) scale(1.1); }
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -1px;
+        }
+
+        .page-header h1 i {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 15px;
+            filter: drop-shadow(0 0 20px rgba(29, 93, 155, 0.3));
+        }
+
+        .page-header p {
+            color: var(--dark-light);
+            font-size: 1.2rem;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ ALERT MESSAGES ============ */
+        .alert {
+            padding: 20px 28px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-weight: 600;
+            box-shadow: 
+                0 10px 35px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            animation: alertSlide 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border-left: 5px solid;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        @keyframes alertSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%);
+            color: var(--secondary-dark);
+            border-left-color: var(--success);
+        }
+
+        .alert-danger, .alert-error {
+            background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
+            color: #8B2E2E;
+            border-left-color: var(--danger);
+        }
+
+        .alert-info, .alert-warning {
+            background: linear-gradient(135deg, var(--info-light) 0%, #B3E5FC 100%);
+            color: var(--primary-dark);
+            border-left-color: var(--info);
+        }
+
+        .alert i {
+            font-size: 1.6rem;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
+        }
+
+        /* ============ ACTION BAR ============ */
+        .action-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 28px 35px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 15px 45px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* ============ BUTTONS ============ */
+        .btn {
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn i {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover i {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 
+                0 10px 30px rgba(29, 93, 155, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 15px 40px rgba(29, 93, 155, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+            box-shadow: 
+                0 10px 30px rgba(193, 102, 107, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 15px 40px rgba(193, 102, 107, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-lg {
+            padding: 18px 45px;
+            font-size: 1.1rem;
+            border-radius: 18px;
+        }
+
+        /* ============ ICON BUTTONS ============ */
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            text-decoration: none;
+        }
+
+        .btn-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+
+        .btn-icon:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .btn-icon i {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon:hover i {
+            transform: scale(1.15) rotate(8deg);
+        }
+
+        .btn-icon-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.35);
+        }
+
+        .btn-icon-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(193, 102, 107, 0.35);
+        }
+
+        .btn-icon-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(48, 77, 48, 0.35);
+        }
+
+        .btn-icon-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(74, 124, 89, 0.35);
+        }
+
+        .btn-icon-lg {
+            width: 58px;
+            height: 58px;
+            font-size: 1.4rem;
+        }
+
+        /* Tooltip */
+        .btn-icon[data-tooltip] {
+            position: relative;
+        }
+
+        .btn-icon[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+        }
+
+        .btn-icon[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 4px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(26, 35, 50, 0.95);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 1000;
+        }
+
+        .btn-icon[data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .btn-icon[data-tooltip]:hover::before {
+            opacity: 1;
+        }
+
+        .btn-icon-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ============ SEARCH CONTAINER - CORRIGÉ ============ */
+        .search-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        /* Input group avec bouton AVANT */
+        .input-group {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.12);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+        }
+
+        .input-group:focus-within {
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.25);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .input-group .btn-icon {
+            border-radius: 0 !important;
+            margin: 0;
+            flex-shrink: 0;
+            box-shadow: none;
+            width: 56px;
+            height: 56px;
+            border-right: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .input-group .btn-icon:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 16px 22px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            font-weight: 500;
+            background: transparent;
+            min-width: 0;
+        }
+
+        .input-group input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* ============ AJAX SEARCH RESULTS DROPDOWN ============ */
+        .search-results-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 15px 50px rgba(29, 93, 155, 0.25);
+            max-height: 450px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+        }
+
+        .search-results-dropdown.active {
+            display: block;
+            animation: searchDropdownAppear 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        @keyframes searchDropdownAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .search-result-item {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--light-alt);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: linear-gradient(90deg, rgba(117, 194, 246, 0.15) 0%, transparent 100%);
+            padding-left: 28px;
+        }
+
+        .search-result-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(29, 93, 155, 0.3);
+        }
+
+        .search-result-content {
+            flex: 1;
+        }
+
+        .search-result-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .search-result-meta {
+            font-size: 0.85rem;
+            color: var(--dark-light);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-result-badge {
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .search-result-badge.status-actif {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .search-result-badge.status-inactif {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .search-result-badge.status-modifié,
+        .search-result-badge.status-modifie {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .search-no-results {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--dark-light);
+        }
+
+        .search-no-results i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .search-no-results p {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .search-loading {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .search-loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .search-loading p {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar pour les résultats */
+        .search-results-dropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+        }
+
+        .search-results-dropdown::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+        }
+
+        /* ============ STATS GRID ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 35px 30px;
+            text-align: center;
+            box-shadow: 
+                0 15px 45px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(117, 194, 246, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 25px 60px rgba(29, 93, 155, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .stat-card:hover::after {
+            opacity: 0.5;
+        }
+
+        .stat-card h3 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card p {
+            color: var(--dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ FICHES GRID ============ */
+        .fiches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+        }
+
+        .fiche-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 
+                0 15px 50px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .fiche-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .fiche-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(117, 194, 246, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .fiche-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 
+                0 25px 70px rgba(29, 93, 155, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .fiche-card:hover::after {
+            opacity: 0.6;
+        }
+
+        .fiche-status {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+            z-index: 2;
+        }
+
+        .status-actif {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .status-inactif {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .status-modifié, .status-modifie {
+            background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
+            color: var(--dark);
+        }
+
+        .fiche-card h5 {
+            color: var(--dark);
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .fiche-card h5 i {
+            color: var(--primary);
+            font-size: 1.6rem;
+            filter: drop-shadow(0 2px 5px rgba(29, 93, 155, 0.3));
+        }
+
+        .fiche-details {
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .fiche-details .detail-item {
+            padding: 14px 0;
+            border-bottom: 2px solid var(--light-alt);
+            transition: all 0.3s ease;
+        }
+
+        .fiche-details .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .fiche-details .detail-item:hover {
+            padding-left: 10px;
+            background: linear-gradient(90deg, rgba(117, 194, 246, 0.1) 0%, transparent 100%);
+            border-radius: 8px;
+        }
+
+        .fiche-details strong {
+            color: var(--primary-dark);
+            font-weight: 700;
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fiche-details p {
+            color: var(--dark);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ INFO BADGE ============ */
+        .info-badge {
+            background: linear-gradient(135deg, var(--light) 0%, rgba(117, 194, 246, 0.15) 100%);
+            border: 2px solid var(--primary);
+            padding: 18px 22px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 
+                0 8px 25px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .info-badge:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.18);
+        }
+
+        .info-badge i {
+            font-size: 1.8rem;
+            color: var(--primary);
+            filter: drop-shadow(0 2px 5px rgba(29, 93, 155, 0.3));
+        }
+
+        .info-badge strong {
+            color: var(--dark);
+            font-weight: 800;
+        }
+
+        /* ============ IMC INDICATOR ============ */
+        .imc-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 8px;
+        }
+
+        .imc-normal {
+            background: linear-gradient(135deg, var(--success) 0%, var(--secondary-light) 100%);
+            color: white;
+        }
+
+        .imc-surpoids {
+            background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
+            color: var(--dark);
+        }
+
+        .imc-obésité, .imc-obesite {
+            background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+            color: white;
+        }
+
+        .imc-maigreur {
+            background: linear-gradient(135deg, var(--info) 0%, var(--accent) 100%);
+            color: white;
+        }
+
+        /* ============ EMPTY STATE ============ */
+        .empty-state {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 100px 50px;
+            text-align: center;
+            box-shadow: 
+                0 25px 70px rgba(29, 93, 155, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+        }
+
+        .empty-state-icon {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 35px;
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.2) 0%, var(--light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--primary);
+            box-shadow: 
+                0 15px 40px rgba(29, 93, 155, 0.2),
+                inset 0 -5px 15px rgba(29, 93, 155, 0.1);
+            animation: emptyIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes emptyIconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .empty-state h3 {
+            color: var(--dark);
+            font-size: 2rem;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .empty-state p {
+            color: var(--dark-light);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        /* ============ MODAL STYLES ============ */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 35, 50, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+            animation: modalFadeIn 0.4s ease;
+        }
+
+        .modal::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(117, 194, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(48, 77, 48, 0.15) 0%, transparent 50%);
+            animation: modalBackgroundPulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes modalBackgroundPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes modalFadeIn {
+            from { 
+                opacity: 0;
+                backdrop-filter: blur(0px);
+            }
+            to { 
+                opacity: 1;
+                backdrop-filter: blur(20px) saturate(180%);
+            }
+        }
+
+        .modal-dialog {
+            max-width: 1300px;
+            width: 100%;
+            margin: 40px auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 30px;
+            box-shadow: 
+                0 30px 90px rgba(29, 93, 155, 0.4),
+                0 0 0 1px rgba(117, 194, 246, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+            animation: modalSlideUp 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            position: relative;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(117, 194, 246, 0.2), transparent);
+            animation: modalShine 3s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes modalShine {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 35px 45px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 
+                0 8px 30px rgba(29, 93, 155, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(117, 194, 246, 0.2) 0%, transparent 70%);
+            animation: headerModalGlow 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes headerModalGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(5%, 5%) scale(1.1); }
+        }
+
+        .modal-header h5 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-header h5 i {
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .btn-close-white {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            text-decoration: none;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-close-white::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: white;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
+        }
+
+        .btn-close-white:hover {
+            background: white;
+            color: var(--primary);
+            transform: rotate(90deg) scale(1.15);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+            border-color: white;
+        }
+
+        .btn-close-white:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .modal-body {
+            max-height: calc(100vh - 320px);
+            overflow-y: auto;
+            padding: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+            border: 2px solid var(--light);
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+        }
+
+        .form-split-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .patient-section {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
+            padding: 45px;
+            border-right: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(117, 194, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .patient-section .section-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 28px;
+            border-radius: 20px;
+            margin-bottom: 35px;
+            text-align: center;
+            box-shadow: 
+                0 12px 35px rgba(29, 93, 155, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-section .section-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: sectionHeaderGlow 5s ease-in-out infinite;
+        }
+
+        @keyframes sectionHeaderGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10%, 10%); }
+        }
+
+        .patient-section .section-header i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+            position: relative;
+            z-index: 1;
+        }
+
+        .patient-section .section-header h3 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .patient-section .section-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .medecin-section {
+            background: linear-gradient(135deg, rgba(48, 77, 48, 0.08) 0%, #F0F8F0 100%);
+            padding: 45px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .medecin-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(48, 77, 48, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .medecin-section .section-header {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+            color: white;
+            padding: 28px;
+            border-radius: 20px;
+            margin-bottom: 35px;
+            text-align: center;
+            box-shadow: 
+                0 12px 35px rgba(48, 77, 48, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .medecin-section .section-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: sectionHeaderGlow 5s ease-in-out infinite;
+        }
+
+        .medecin-section .section-header i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+            position: relative;
+            z-index: 1;
+        }
+
+        .medecin-section .section-header h3 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .medecin-section .section-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .form-label i {
+            margin-right: 10px;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
+        }
+
+        .patient-section .form-label i {
+            color: var(--primary);
+        }
+
+        .medecin-section .form-label i {
+            color: var(--secondary);
+        }
+
+        .form-control,
+        .form-select {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            border-radius: 14px;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            font-family: inherit;
+            background: white;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.05),
+                0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .patient-section .form-control:focus,
+        .patient-section .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 4px rgba(29, 93, 155, 0.15),
+                0 4px 20px rgba(29, 93, 155, 0.2),
+                inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .medecin-section .form-control:focus,
+        .medecin-section .form-select:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 
+                0 0 0 4px rgba(48, 77, 48, 0.15),
+                0 4px 20px rgba(48, 77, 48, 0.2),
+                inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        textarea.form-control {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            background: linear-gradient(135deg, var(--light) 0%, rgba(117, 194, 246, 0.15) 100%);
+            padding: 35px 45px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            border-top: 3px solid var(--primary);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 -5px 20px rgba(29, 93, 155, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .modal-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 0%, rgba(117, 194, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .form-control[readonly]:not(.form-control:focus),
+        .form-select[disabled] {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            cursor: not-allowed;
+            opacity: 0.75;
+            border-color: #d0d0d0;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-control[readonly]:not(.form-control:focus)::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .medecin-section .form-control:not([readonly]):focus,
+        .medecin-section .form-select:not([disabled]):focus {
+            border-color: var(--success) !important;
+            box-shadow: 
+                0 0 0 4px rgba(74, 124, 89, 0.15),
+                0 4px 20px rgba(74, 124, 89, 0.2),
+                inset 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .modal .info-badge {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.15) 0%, rgba(117, 194, 246, 0.05) 100%);
+            border: 2px solid var(--primary);
+            padding: 18px 22px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 
+                0 8px 25px rgba(29, 93, 155, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal .info-badge:hover {
+            transform: scale(1.02);
+            box-shadow: 
+                0 12px 35px rgba(29, 93, 155, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .form-split-container {
+                grid-template-columns: 1fr;
+            }
+
+            .patient-section {
+                border-right: none;
+                border-bottom: 4px solid var(--primary);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .fiches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-container {
+                flex-direction: column;
+                max-width: 100%;
+            }
+
+            .search-box {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 0.9rem;
+            }
+
+            .btn-icon-group {
+                justify-content: center;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+            border: 2px solid var(--light);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+        }
+
+        /* Animation shake */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="medical-form-section">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-file-medical-alt"></i> Fiches Médicales</h1>
+            <p>Gestion complète et intelligente des dossiers médicaux</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        {% for message in app.flashes('info') %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        {% for message in app.flashes('warning') %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        <!-- Action Bar avec recherche AJAX -->
+        <div class="action-bar">
+            <div class="action-buttons">
+                {% if isPatient %}
+                    <a href="{{ path('app_fiche_medicale_index', {'new': true}) }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Nouvelle Fiche</span>
+                    </a>
+                {% endif %}
+                
+                <a href="{{ path('app_fiche_medicale_export_all_pdf') }}" class="btn btn-export" target="_blank">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Exporter Tout PDF</span>
+                </a>
+            </div>
+            
+            <!-- RECHERCHE AJAX CORRIGÉE -->
+            <div class="search-container">
+                <div class="search-box">
+                    <div class="input-group">
+                        <button type="button" class="btn-icon btn-icon-primary" id="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <input type="text" 
+                               id="ajax-search-input" 
+                               class="form-control" 
+                               placeholder="Rechercher par patient, diagnostic, ID..."
+                               autocomplete="off">
+                    </div>
+                    
+                    <!-- Dropdown des résultats -->
+                    <div id="search-results" class="search-results-dropdown"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ fiches|length }}</h3>
+                <p>Total Fiches</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ fiches|filter(f => f.statut == 'actif')|length }}</h3>
+                <p>Actives</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ fiches|filter(f => f.statut == 'modifié')|length }}</h3>
+                <p>Modifiées</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ fiches|filter(f => f.imc is not null)|length }}</h3>
+                <p>Avec IMC</p>
+            </div>
+        </div>
+
+        <!-- Fiches Grid -->
+        {% if fiches is not empty %}
+            <div class="fiches-grid">
+                {% for fiche in fiches %}
+                    <div class="fiche-card">
+                        <span class="fiche-status status-{{ fiche.statut|lower|replace({' ': '-', 'é': 'e'}) }}">
+                            {{ fiche.statut|default('Non défini') }}
+                        </span>
+                        
+                        <h5>
+                            <i class="fas fa-file-medical"></i>
+                            Fiche #{{ fiche.id }}
+                        </h5>
+                        
+                        {% if fiche.patient %}
+                            <div class="info-badge">
+                                <i class="fas fa-user"></i>
+                                <div>
+                                    <strong>Patient:</strong>
+                                    {% if fiche.patient.nom is defined and fiche.patient.prenom is defined %}
+                                        {{ fiche.patient.nom }} {{ fiche.patient.prenom }}
+                                    {% else %}
+                                        Patient #{{ fiche.patient.id }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="fiche-details">
+                            {% if fiche.taille and fiche.poids %}
+                                <div class="detail-item">
+                                    <strong>📏 Mesures Physiques</strong>
+                                    <p>{{ fiche.taille }} m / {{ fiche.poids }} kg</p>
+                                    {% if fiche.imc %}
+                                        <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
+                                            IMC: {{ fiche.imc|number_format(2) }} - {{ fiche.categorieImc }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="detail-item">
+                                <strong>📅 Créée le</strong>
+                                <p>{{ fiche.creeLe|date('d/m/Y à H:i') }}</p>
+                            </div>
+                            
+                            {% if fiche.modifieLe %}
+                                <div class="detail-item">
+                                    <strong>🔄 Modifiée le</strong>
+                                    <p>{{ fiche.modifieLe|date('d/m/Y à H:i') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <div class="btn-icon-group">
+                                <a href="{{ path('app_fiche_medicale_index', {'view': fiche.id}) }}" 
+                                   class="btn-icon btn-icon-primary" 
+                                   data-tooltip="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                <a href="{{ path('app_fiche_medicale_export_pdf', {'id': fiche.id}) }}" 
+                                   class="btn-icon btn-icon-danger btn-icon-pdf" 
+                                   target="_blank"
+                                   data-tooltip="Télécharger PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                                
+                                <a href="{{ path('app_fiche_medicale_index', {'edit': fiche.id}) }}" 
+                                   class="btn-icon btn-icon-success" 
+                                   data-tooltip="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                {% if isPatient %}
+                                    <form action="{{ path('app_fiche_medicale_index') }}" method="post" style="display: inline;" 
+                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette fiche ?');">
+                                        <input type="hidden" name="delete_id" value="{{ fiche.id }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ fiche.id) }}">
+                                        <button type="submit" 
+                                                class="btn-icon btn-icon-secondary" 
+                                                data-tooltip="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-file-medical-alt"></i>
+                </div>
+                <h3>Aucune fiche médicale</h3>
+                <p>Commencez par créer votre première fiche médicale</p>
+                {% if isPatient %}
+                    <a href="{{ path('app_fiche_medicale_index', {'new': true}) }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Créer ma première fiche</span>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# MODAL FOR CREATE/EDIT #}
+{% if mode == 'new' or mode == 'edit' %}
+<div class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>
+                    <i class="fas fa-{{ mode == 'new' ? 'plus' : 'edit' }}"></i>
+                    {{ mode == 'new' ? 'Nouvelle Fiche Médicale' : 'Modifier Fiche #' ~ fiche.id }}
+                </h5>
+                <a href="{{ path('app_fiche_medicale_index') }}" class="btn-close-white">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+            
+            <div class="modal-body">
+                {{ form_start(form) }}
+                
+                <div class="form-split-container">
+                    <!-- LEFT SIDE: PATIENT SECTION -->
+                    <div class="patient-section">
+                        <div class="section-header">
+                            <i class="fas fa-user"></i>
+                            <h3>Partie Patient</h3>
+                            <p>Informations à remplir par le patient</p>
+                        </div>
+
+                        {% if fiche.patient %}
+                            <div class="info-badge">
+                                <i class="fas fa-user-circle"></i>
+                                <div>
+                                    <strong>Patient:</strong>
+                                    {% if fiche.patient.nom is defined and fiche.patient.prenom is defined %}
+                                        {{ fiche.patient.nom }} {{ fiche.patient.prenom }}
+                                    {% else %}
+                                        Patient #{{ fiche.patient.id }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            {{ form_label(form.antecedents, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.antecedents, {
+                                'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Décrivez vos antécédents médicaux...'}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.allergies, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.allergies, {
+                                'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Listez vos allergies...'}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.taille, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.taille, {
+                                'attr': {'class': 'form-control', 'placeholder': 'Ex: 1.75', 'step': '0.01'}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.poids, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.poids, {
+                                'attr': {'class': 'form-control', 'placeholder': 'Ex: 70'}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.traitement_en_cours, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.traitement_en_cours, {
+                                'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Traitements actuels...'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <!-- RIGHT SIDE: MÉDECIN SECTION -->
+                    <div class="medecin-section">
+                        <div class="section-header">
+                            <i class="fas fa-user-md"></i>
+                            <h3>Partie Médecin</h3>
+                            <p>Réservé au médecin traitant</p>
+                        </div>
+
+                        {% if not is_granted('ROLE_MEDECIN') %}
+                            <div class="info-badge" style="background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%); border-color: var(--danger);">
+                                <i class="fas fa-lock" style="color: var(--danger);"></i>
+                                <div>
+                                    <strong style="color: var(--danger);">🔒 Section réservée aux médecins</strong>
+                                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: var(--dark-light);">
+                                        Seuls les médecins peuvent modifier ces champs
+                                    </p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="info-badge" style="background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%); border-color: var(--success);">
+                                <i class="fas fa-user-md" style="color: var(--success);"></i>
+                                <div>
+                                    <strong style="color: var(--success);">✅ Accès médecin autorisé</strong>
+                                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: var(--dark-light);">
+                                        Vous pouvez modifier tous les champs
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            {{ form_label(form.diagnostic, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.diagnostic, {
+                                'attr': {'class': 'form-control', 'rows': 4}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.traitement_prescrit, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.traitement_prescrit, {
+                                'attr': {'class': 'form-control', 'rows': 4}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.observations, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.observations, {
+                                'attr': {'class': 'form-control', 'rows': 5}
+                            }) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.statut, null, {
+                                'label_attr': {'class': 'form-label'}
+                            }) }}
+                            {{ form_widget(form.statut, {
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i>
+                        <span>{{ mode == 'new' ? 'Créer' : 'Mettre à jour' }}</span>
+                    </button>
+                    <a href="{{ path('app_fiche_medicale_index') }}" 
+                       class="btn-icon btn-icon-lg btn-icon-secondary" 
+                       data-tooltip="Annuler">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# VIEW MODAL #}
+{% if mode == 'view' and fiche %}
+<div class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>
+                    <i class="fas fa-file-medical"></i>
+                    Fiche Médicale #{{ fiche.id }}
+                </h5>
+                <a href="{{ path('app_fiche_medicale_index') }}" class="btn-close-white">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-split-container">
+                    <div class="patient-section">
+                        <div class="section-header">
+                            <i class="fas fa-user"></i>
+                            <h3>Informations Patient</h3>
+                        </div>
+
+                        {% if fiche.patient %}
+                            <div class="detail-item">
+                                <strong>👤 Patient</strong>
+                                <p>
+                                    {% if fiche.patient.nom is defined and fiche.patient.prenom is defined %}
+                                        {{ fiche.patient.nom }} {{ fiche.patient.prenom }}
+                                    {% else %}
+                                        Patient #{{ fiche.patient.id }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.antecedents %}
+                            <div class="detail-item">
+                                <strong>📋 Antécédents</strong>
+                                <p>{{ fiche.antecedents|nl2br }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.allergies %}
+                            <div class="detail-item">
+                                <strong>⚠️ Allergies</strong>
+                                <p>{{ fiche.allergies|nl2br }}</p>
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.taille and fiche.poids %}
+                            <div class="detail-item">
+                                <strong>📏 Mesures</strong>
+                                <p>Taille: {{ fiche.taille }} m | Poids: {{ fiche.poids }} kg</p>
+                                {% if fiche.imc %}
+                                    <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
+                                        IMC: {{ fiche.imc|number_format(2) }} - {{ fiche.categorieImc }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.traitementEnCours %}
+                            <div class="detail-item">
+                                <strong>💊 Traitements en cours</strong>
+                                <p>{{ fiche.traitementEnCours|nl2br }}</p>
+                            </div>
+                        {% endif %}
+
+                        <div class="detail-item">
+                            <strong>📅 Date de création</strong>
+                            <p>{{ fiche.creeLe|date('d/m/Y à H:i') }}</p>
+                        </div>
+
+                        {% if fiche.modifieLe %}
+                            <div class="detail-item">
+                                <strong>🔄 Dernière modification</strong>
+                                <p>{{ fiche.modifieLe|date('d/m/Y à H:i') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="medecin-section">
+                        <div class="section-header">
+                            <i class="fas fa-user-md"></i>
+                            <h3>Diagnostic Médical</h3>
+                        </div>
+
+                        <div class="detail-item">
+                            <strong>📊 Statut</strong>
+                            <p>
+                                <span class="status-{{ fiche.statut|lower|replace({' ': '-', 'é': 'e'}) }} fiche-status" style="position: static;">
+                                    {{ fiche.statut|default('Non défini') }}
+                                </span>
+                            </p>
+                        </div>
+
+                        {% if fiche.diagnostic %}
+                            <div class="detail-item">
+                                <strong>🩺 Diagnostic</strong>
+                                <p>{{ fiche.diagnostic|nl2br }}</p>
+                            </div>
+                        {% else %}
+                            <div class="detail-item">
+                                <strong>🩺 Diagnostic</strong>
+                                <p style="color: #999; font-style: italic;">Aucun diagnostic renseigné</p>
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.traitementPrescrit %}
+                            <div class="detail-item">
+                                <strong>💉 Traitement Prescrit</strong>
+                                <p>{{ fiche.traitementPrescrit|nl2br }}</p>
+                            </div>
+                        {% else %}
+                            <div class="detail-item">
+                                <strong>💉 Traitement Prescrit</strong>
+                                <p style="color: #999; font-style: italic;">Aucun traitement prescrit</p>
+                            </div>
+                        {% endif %}
+
+                        {% if fiche.observations %}
+                            <div class="detail-item">
+                                <strong>📝 Observations</strong>
+                                <p>{{ fiche.observations|nl2br }}</p>
+                            </div>
+                        {% else %}
+                            <div class="detail-item">
+                                <strong>📝 Observations</strong>
+                                <p style="color: #999; font-style: italic;">Aucune observation</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <a href="{{ path('app_fiche_medicale_export_pdf', {'id': fiche.id}) }}" 
+                   class="btn-icon btn-icon-lg btn-icon-danger btn-icon-pdf"
+                   target="_blank"
+                   data-tooltip="Télécharger PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </a>
+                
+                <a href="{{ path('app_fiche_medicale_index', {'edit': fiche.id}) }}" 
+                   class="btn-icon btn-icon-lg btn-icon-success" 
+                   data-tooltip="Modifier">
+                    <i class="fas fa-edit"></i>
+                </a>
+                
+                <a href="{{ path('app_fiche_medicale_index') }}" 
+                   class="btn-icon btn-icon-lg btn-icon-secondary" 
+                   data-tooltip="Fermer">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-dismiss alerts avec animation
+        document.querySelectorAll('.alert').forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(100%) scale(0.8)';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
+
+        // Calcul automatique de l'IMC avec animation
+        const tailleInput = document.getElementById('fiche_medicale_taille');
+        const poidsInput = document.getElementById('fiche_medicale_poids');
+        
+        if (tailleInput && poidsInput) {
+            function calculerIMC() {
+                const taille = parseFloat(tailleInput.value);
+                const poids = parseFloat(poidsInput.value);
+                
+                if (taille > 0 && poids > 0) {
+                    const imc = poids / (taille * taille);
+                    
+                    let imcDisplay = document.getElementById('imc-calcul');
+                    if (!imcDisplay) {
+                        imcDisplay = document.createElement('div');
+                        imcDisplay.id = 'imc-calcul';
+                        imcDisplay.className = 'info-badge';
+                        imcDisplay.style.marginTop = '15px';
+                        imcDisplay.style.animation = 'alertSlide 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                        poidsInput.parentNode.appendChild(imcDisplay);
+                    }
+                    
+                    let categorie = '';
+                    let classe = '';
+                    
+                    if (imc < 18.5) {
+                        categorie = 'Maigreur';
+                        classe = 'imc-maigreur';
+                    } else if (imc < 25) {
+                        categorie = 'Normal';
+                        classe = 'imc-normal';
+                    } else if (imc < 30) {
+                        categorie = 'Surpoids';
+                        classe = 'imc-surpoids';
+                    } else {
+                        categorie = 'Obésité';
+                        classe = 'imc-obesite';
+                    }
+                    
+                    imcDisplay.innerHTML = `
+                        <i class="fas fa-calculator"></i>
+                        <div>
+                            <strong>IMC calculé:</strong>
+                            <span class="imc-indicator ${classe}">${imc.toFixed(2)} - ${categorie}</span>
+                        </div>
+                    `;
+                }
+            }
+            
+            tailleInput.addEventListener('input', calculerIMC);
+            poidsInput.addEventListener('input', calculerIMC);
+            calculerIMC();
+        }
+
+        // ============ AJAX SEARCH FUNCTIONALITY - CORRIGÉ ============
+        (function() {
+            const searchInput = document.getElementById('ajax-search-input');
+            const searchResults = document.getElementById('search-results');
+            const searchBtn = document.getElementById('search-btn');
+            let searchTimeout = null;
+
+            console.log('🔍 Initialisation de la recherche AJAX...');
+            console.log('Input:', searchInput);
+            console.log('Results container:', searchResults);
+            console.log('Button:', searchBtn);
+
+            if (!searchInput || !searchResults) {
+                console.error('❌ Éléments de recherche non trouvés!');
+                return;
+            }
+
+            // Fonction de recherche AJAX
+            function performSearch(query) {
+                console.log('🔎 Recherche pour:', query);
+
+                if (query.length < 2) {
+                    searchResults.classList.remove('active');
+                    searchResults.innerHTML = '';
+                    return;
+                }
+
+                // Afficher le loader
+                searchResults.innerHTML = `
+                    <div class="search-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Recherche en cours...</p>
+                    </div>
+                `;
+                searchResults.classList.add('active');
+
+                // Effectuer la requête AJAX
+                fetch(`{{ path('app_fiche_medicale_search_ajax') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        console.log('✅ Réponse reçue:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('📊 Données reçues:', data);
+                        displayResults(data);
+                    })
+                    .catch(error => {
+                        console.error('❌ Erreur de recherche:', error);
+                        searchResults.innerHTML = `
+                            <div class="search-no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Erreur lors de la recherche</p>
+                                <small style="color: #999; margin-top: 5px; display: block;">${error.message}</small>
+                            </div>
+                        `;
+                    });
+            }
+
+            // Fonction d'affichage des résultats
+            function displayResults(results) {
+                if (results.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="search-no-results">
+                            <i class="fas fa-search"></i>
+                            <p>Aucun résultat trouvé</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                results.forEach(fiche => {
+                    const statusClass = fiche.statut ? fiche.statut.toLowerCase().replace(/[éè]/g, 'e').replace(' ', '-') : 'non-defini';
+                    const imcBadge = fiche.imc ? `
+                        <span class="search-result-badge" style="background: var(--info-light); color: var(--info);">
+                            IMC: ${fiche.imc}
+                        </span>
+                    ` : '';
+
+                    const diagnosticPreview = fiche.diagnostic ? `
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 4px; font-style: italic;">
+                            ${fiche.diagnostic}
+                        </div>
+                    ` : '';
+
+                    html += `
+                        <div class="search-result-item" data-fiche-id="${fiche.id}">
+                            <div class="search-result-icon">
+                                <i class="fas fa-file-medical"></i>
+                            </div>
+                            <div class="search-result-content">
+                                <div class="search-result-title">
+                                    Fiche #${fiche.id} - ${fiche.patient}
+                                </div>
+                                <div class="search-result-meta">
+                                    <span class="search-result-badge status-${statusClass}">
+                                        ${fiche.statut || 'Non défini'}
+                                    </span>
+                                    ${imcBadge}
+                                    <span><i class="fas fa-calendar"></i> ${fiche.creeLe}</span>
+                                </div>
+                                ${diagnosticPreview}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                searchResults.innerHTML = html;
+
+                // Ajouter les événements de clic
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const ficheId = this.dataset.ficheId;
+                        console.log('📋 Redirection vers fiche:', ficheId);
+                        window.location.href = `{{ path('app_fiche_medicale_index') }}?view=${ficheId}`;
+                    });
+                });
+
+                console.log('✅ Affichage de', results.length, 'résultats');
+            }
+
+            // Événement de saisie avec debounce
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            });
+
+            // Bouton de recherche
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    const query = searchInput.value.trim();
+                    console.log('🔘 Clic sur bouton recherche:', query);
+                    if (query.length >= 2) {
+                        performSearch(query);
+                    } else {
+                        searchInput.focus();
+                        searchInput.classList.add('shake');
+                        setTimeout(() => searchInput.classList.remove('shake'), 500);
+                    }
+                });
+            }
+
+            // Fermer les résultats en cliquant ailleurs
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && 
+                    !searchResults.contains(e.target) && 
+                    !searchBtn.contains(e.target)) {
+                    searchResults.classList.remove('active');
+                }
+            });
+
+            // Rouvrir les résultats au focus
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2 && searchResults.innerHTML) {
+                    searchResults.classList.add('active');
+                }
+            });
+
+            // Navigation au clavier (Enter)
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const firstResult = document.querySelector('.search-result-item');
+                    if (firstResult) {
+                        firstResult.click();
+                    } else {
+                        performSearch(this.value.trim());
+                    }
+                }
+
+                // Fermer avec Escape
+                if (e.key === 'Escape') {
+                    searchResults.classList.remove('active');
+                    this.blur();
+                }
+            });
+
+            console.log('✅ Recherche AJAX complètement initialisée');
+        })();
+
+        // Animation des boutons icônes au chargement
+        document.querySelectorAll('.btn-icon').forEach((btn, index) => {
+            btn.style.animationDelay = `${index * 0.1}s`;
+        });
+
+        // Fermer le modal en cliquant en dehors
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    window.location.href = "{{ path('app_fiche_medicale_index') }}";
+                }
+            });
+        });
+
+        // Animation au scroll pour les cartes
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fiche-card, .stat-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+
+        // Confirmation stylée pour la suppression
+        document.querySelectorAll('form[onsubmit*="confirm"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const confirmDelete = confirm('⚠️ ATTENTION!\n\nÊtes-vous absolument sûr de vouloir supprimer cette fiche médicale?\n\nCette action est irréversible!');
+                
+                if (confirmDelete) {
+                    this.submit();
+                }
+            });
+        });
+
+        // Animation de chargement pour les boutons PDF
+        document.querySelectorAll('.btn-icon-pdf').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const icon = this.querySelector('i');
+                icon.classList.remove('fa-file-pdf');
+                icon.classList.add('fa-spinner', 'fa-spin');
+                
+                setTimeout(() => {
+                    icon.classList.remove('fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-file-pdf');
+                }, 2000);
+            });
+        });
+
+        // Compteur animé pour les statistiques
+        function animateCounter(element) {
+            const target = parseInt(element.textContent);
+            const duration = 1000;
+            const increment = target / (duration / 16);
+            let current = 0;
+
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    element.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    element.textContent = target;
+                }
+            };
+
+            updateCounter();
+        }
+
+        // Animer les compteurs au chargement
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target.querySelector('h3');
+                    animateCounter(counter);
+                    statObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stat-card').forEach(card => {
+            statObserver.observe(card);
+        });
+
+        console.log('🏥 MEDINOVA - Interface médicale professionnelle chargée!');
+        console.log('🎨 Palette de couleurs: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
+        console.log('✨ Design moderne avec bouton de recherche AVANT l\'input');
+        console.log('🔍 Recherche AJAX fonctionnelle avec bouton cliquable');
+        console.log('🎭 Modaux harmonisés avec le thème principal');
+    </script>
+{% endblock %}

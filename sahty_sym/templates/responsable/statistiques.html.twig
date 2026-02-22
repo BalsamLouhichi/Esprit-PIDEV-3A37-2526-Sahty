@@ -1,0 +1,359 @@
+{# templates/backoffice/responsable/statistiques.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques - {{ parapharmacie.nom }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: linear-gradient(135deg, #0dcaf0 0%, #0a9ec7 100%);
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-brand a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .sidebar-menu a i {
+            width: 25px;
+            margin-right: 10px;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        /* Messages flash */
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #ecf0f1;
+            font-weight: 600;
+            color: #2c3e50;
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        /* Table */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            border-bottom: none;
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: #343a40;
+            font-weight: 600;
+        }
+
+        .page-header p {
+            color: #6c757d;
+        }
+
+        /* Chart containers */
+        canvas {
+            max-height: 300px;
+            width: 100% !important;
+        }
+        
+        #statsMensuelles {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <a href="{{ path('app_responsable_dashboard') }}">
+                <i class="fas fa-clinic-medical me-2"></i>sahty - {{ parapharmacie.nom }}
+            </a>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ path('app_responsable_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_produits') }}">
+                    <i class="fas fa-boxes"></i>Produits
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_commandes') }}">
+                    <i class="fas fa-shopping-cart"></i>Commandes
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_statistiques') }}">
+                    <i class="fas fa-chart-line"></i>Statistiques
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_parametres') }}">
+                    <i class="fas fa-cog"></i>Paramètres
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_home') }}" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>Voir le site
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Messages flash -->
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <!-- Contenu principal -->
+        <div class="container-fluid py-4">
+            <div class="page-header">
+                <h1><i class="fas fa-chart-line me-2"></i>Statistiques</h1>
+                <p class="text-muted">{{ parapharmacie.nom }}</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Répartition des commandes par statut</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if statsStatuts is defined and statsStatuts|length > 0 %}
+                                <canvas id="statsStatuts" style="max-height: 300px;"></canvas>
+                            {% else %}
+                                <p class="text-muted text-center py-4">Aucune donnée disponible</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Top 10 des produits les plus vendus</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Produit</th>
+                                            <th>Quantité vendue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in topProduits %}
+                                        <tr>
+                                            <td>{{ item.nom }}</td>
+                                            <td><strong>{{ item.total_vendu|default(0) }}</strong></td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="2" class="text-center">Aucune vente</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Évolution mensuelle</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if statsMensuelles is defined and statsMensuelles|length > 0 %}
+                                <canvas id="statsMensuelles" style="max-height: 400px;"></canvas>
+                            {% else %}
+                                <p class="text-muted text-center py-4">Aucune donnée disponible</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if statsStatuts is defined and statsStatuts|length > 0 or statsMensuelles is defined and statsMensuelles|length > 0 %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if statsStatuts is defined and statsStatuts|length > 0 %}
+        // Graphique des statuts
+        const ctxStatuts = document.getElementById('statsStatuts').getContext('2d');
+        const statuts = {{ statsStatuts|json_encode|raw }};
+        
+        new Chart(ctxStatuts, {
+            type: 'pie',
+            data: {
+                labels: statuts.map(s => s.statut ? s.statut.replace('_', ' ') : 'Inconnu'),
+                datasets: [{
+                    data: statuts.map(s => s.nb_commandes),
+                    backgroundColor: [
+                        '#ffc107', '#0dcaf0', '#0d6efd', '#6c757d', '#198754', '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        {% if statsMensuelles is defined and statsMensuelles|length > 0 %}
+        // Graphique des stats mensuelles
+        const ctxMensuelles = document.getElementById('statsMensuelles').getContext('2d');
+        const mensuelles = {{ statsMensuelles|json_encode|raw }};
+        
+        new Chart(ctxMensuelles, {
+            type: 'line',
+            data: {
+                labels: mensuelles.map(m => m.mois + '/' + m.annee),
+                datasets: [{
+                    label: 'Chiffre d\'affaires (€)',
+                    data: mensuelles.map(m => parseFloat(m.chiffre_affaires) || 0),
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+    </script>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

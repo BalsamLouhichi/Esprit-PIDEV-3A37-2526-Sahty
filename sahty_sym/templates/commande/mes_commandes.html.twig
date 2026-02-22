@@ -1,0 +1,499 @@
+{# templates/commande/mes_commandes.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes commandes{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary: #0dcaf0;
+            --primary-light: #e8f7ff;
+            --primary-dark: #0bb6d9;
+            --secondary: #6c757d;
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --border-radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        
+     
+        
+        .nav-item.nav-link {
+            font-weight: 600;
+            color: var(--dark) !important;
+            transition: var(--transition);
+            padding: 0.5rem 1.25rem !important;
+            border-radius: 25px;
+        }
+        
+        
+        
+        .container.py-5 {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: calc(100vh - 550px);
+            border-radius: 0;
+            padding-top: 3rem !important;
+        }
+        
+       
+        
+        /* Carte de commande améliorée */
+        .commande-card {
+            background: white;
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .commande-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+        
+        .commande-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .commande-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .commande-number::before {
+            content: '#';
+            color: var(--primary);
+            font-weight: 800;
+        }
+        
+        .commande-date {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .commande-body {
+            padding: 1.5rem;
+        }
+        
+        .produit-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .produit-icon {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .produit-details h6 {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .pharmacie-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .pharmacie-info i {
+            color: var(--primary);
+        }
+        
+        /* Statut amélioré */
+        .statut-container {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .statut-badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .statut-en_attente { background: #fff3cd; color: #856404; }
+        .statut-confirmee { background: #d1ecf1; color: #0c5460; }
+        .statut-prete { background: #d4edda; color: #155724; }
+        .statut-livree { background: #d1e7dd; color: #0f5132; }
+        .statut-annulee { background: #f8d7da; color: #721c24; }
+        
+        /* Actions améliorées */
+        .commande-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-action {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-view {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-view:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-cancel {
+            background: #fff5f5;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+        }
+        
+        .btn-cancel:hover {
+            background: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* Section prix améliorée */
+        .price-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .price-label {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .price-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--success);
+        }
+        
+        /* Section email améliorée */
+        .email-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border-top: 4px solid var(--primary);
+        }
+        
+        .email-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .email-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+        
+        .email-info h5 {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        /* État vide amélioré */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(13, 202, 240, 0.1) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            color: var(--primary);
+            font-size: 3rem;
+        }
+        
+        .empty-state h3 {
+            color: var(--dark);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state p {
+            color: var(--secondary);
+            max-width: 400px;
+            margin: 0 auto 2rem;
+            font-size: 1.1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header {
+                text-align: center;
+                padding: 2rem 1rem;
+            }
+            
+            .commande-card {
+                margin-bottom: 1rem;
+            }
+            
+            .commande-actions {
+                flex-direction: column;
+            }
+            
+            .btn-action {
+                width: 100%;
+            }
+            
+            .navbar-nav {
+                background: white;
+                padding: 1rem;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow);
+            }
+        }
+        .btn-outline-cyan {
+    color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+.btn-outline-cyan:hover {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .commande-card {
+            animation: fadeIn 0.5s ease;
+            animation-fill-mode: both;
+        }
+        
+        .commande-card:nth-child(1) { animation-delay: 0.1s; }
+        .commande-card:nth-child(2) { animation-delay: 0.2s; }
+        .commande-card:nth-child(3) { animation-delay: 0.3s; }
+        .commande-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-list-check me-2"></i>
+            Mes commandes
+        </h1>
+      <a href="{{ path('app_parapharmacie_produits') }}" class="btn btn-outline-cyan">
+    <i class="bi bi-cart-plus me-2"></i>Nouvelle commande
+</a>
+    </div>
+    
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle fs-4 me-3"></i>
+            <div>
+                <strong>Email :</strong> {{ email }}
+               
+            </div>
+        </div>
+    </div>
+    
+    {% if commandes|length > 0 %}
+        <div class="mb-3">
+            <span class="badge bg-primary">{{ commandes|length }} commande(s)</span>
+        </div>
+        
+        {% for commande in commandes %}
+            <div class="card mb-4 commande-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="me-3">
+                                    <div class="bg-light rounded p-2">
+                                        <i class="bi bi-receipt text-primary" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="card-title mb-1">
+                                        Commande #{{ commande.numero }}
+                                    </h5>
+                                    <p class="text-muted mb-2">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ commande.dateCreation|date('d/m/Y H:i') }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Produit :</strong> {{ commande.produit.nom }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Parapharmacie :</strong> {{ commande.parapharmacie.nom }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Total :</strong> 
+                                        <span class="text-success fw-bold">
+                                            {{ commande.prixTotal|number_format(2, ',', ' ') }} €
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column h-100">
+                                <div class="mb-3">
+                                    <span class="badge bg-{{ commande.statutCouleur }} statut-badge">
+                                        {{ commande.statutLibelle }}
+                                    </span>
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ path('app_commander_confirmation', {'id': commande.id}) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye me-1"></i>Voir
+                                        </a>
+                                        {% if commande.statut == 'en_attente' %}
+                                            <form method="post" action="{{ path('app_commande_annuler', {'id': commande.id}) }}" 
+                                                  style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette commande ?')">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('annuler-commande') }}">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-x-circle me-1"></i>Annuler
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="alert alert-light mt-4">
+            <h5 class="alert-heading">
+                <i class="bi bi-question-circle me-2"></i>Besoin d'aide ?
+            </h5>
+            <p class="mb-0">
+                Pour toute question concernant vos commandes, contactez directement la parapharmacie concernée.
+            </p>
+        </div>
+        
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="text-muted">Aucune commande trouvée</h3>
+            <p class="text-muted mb-4">
+                Aucune commande n'a été trouvée pour l'email : <strong>{{ email }}</strong>
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ path('app_mes_commandes') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-search me-2"></i>Changer d'email
+                </a>
+                <a href="{{ path('app_parapharmacie_list') }}" class="btn btn-primary">
+                    <i class="bi bi-cart-plus me-2"></i>Faire une commande
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

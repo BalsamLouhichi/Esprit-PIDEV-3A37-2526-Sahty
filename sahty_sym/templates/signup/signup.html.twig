@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>MEDINOVA - Inscription</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .role-card { cursor:pointer; border:2px solid #dee2e6; transition:0.3s; margin-bottom:15px; }
+        .role-card.active { border-color:#0d6efd; background:#f0f8ff; }
+        .role-specific { display:none; margin-top:20px; padding:15px; border:1px solid #dee2e6; border-radius:5px; background:#f8f9fa; }
+        .form-section { margin-bottom: 30px; }
+        .required-field::after { content: " *"; color: #dc3545; }
+    </style>
+</head>
+ {% include 'partials/navbar.html.twig' %}
+<body>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="text-center mb-4">Créer un compte Medinova</h2>
+
+            {# Affichage des messages flash #}
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+
+                {# Sélection du rôle avec cards #}
+                <div class="form-section">
+                    <h4 class="mb-3">Sélectionnez votre rôle <span class="text-danger">*</span></h4>
+                    <div class="row g-3 mt-3">
+                        {% for role, info in {
+                            'patient': {'icon':'fas fa-user-injured','label':'Patient','desc':'Prenez rendez-vous, consultez vos résultats et gérez votre santé'},
+                            'medecin': {'icon':'fas fa-user-md','label':'Médecin','desc':'Gérez vos patients, prescriptions et consultations'},
+                            'responsable_labo': {'icon':'fas fa-flask','label':'Responsable Laboratoire','desc':'Gérez les analyses et résultats de laboratoire'},
+                            'responsable_para': {'icon':'fas fa-stethoscope','label':'Responsable Parapharmacie','desc':'Gérez les services paramédicaux et soins'}
+                        } %}
+                        <div class="col-md-6">
+                            <div class="role-card text-center p-4 rounded" data-role="{{ role }}">
+                                <div class="role-icon text-primary"><i class="{{ info.icon }} fa-2x"></i></div>
+                                <h5>{{ info.label }}</h5>
+                                <p class="text-muted small">{{ info.desc }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        {{ form_label(form.role) }}
+                        {{ form_widget(form.role, {'attr': {'class': 'form-control'}}) }}
+                        <div class="text-danger">{{ form_errors(form.role) }}</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                {# Infos générales #}
+                <div class="form-section">
+                    <h4 class="mb-3">Informations générales</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form_label(form.nom, null, {'label_attr': {'class': 'required-field'}}) }}
+                            {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.nom) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.prenom, null, {'label_attr': {'class': 'required-field'}}) }}
+                            {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.prenom) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.email, null, {'label_attr': {'class': 'required-field'}}) }}
+                            {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.email) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.telephone) }}
+                            {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.telephone) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.ville) }}
+                            {{ form_widget(form.ville, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.ville) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.dateNaissance) }}
+                            {{ form_widget(form.dateNaissance, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.dateNaissance) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Sexe</label>
+                            <select class="form-control" name="sexe">
+                                <option value="">Sélectionnez...</option>
+                                <option value="M">Masculin</option>
+                                <option value="F">Féminin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.password, null, {'label_attr': {'class': 'required-field'}}) }}
+                            {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.password) }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="required-field">Confirmer le mot de passe</label>
+                            <input type="password" class="form-control" name="confirm_password" required minlength="6">
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_label(form.photoProfil) }}
+                            {{ form_widget(form.photoProfil, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.photoProfil) }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Infos spécifiques selon rôle #}
+                <div id="patient-info" class="role-specific">
+                    <h5 class="mb-3">Informations Patient</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Groupe sanguin</label>
+                            <select class="form-control" name="groupe_sanguin">
+                                <option value="">Sélectionnez...</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Contact urgence</label>
+                            <input type="tel" class="form-control" name="contact_urgence">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="medecin-info" class="role-specific">
+                    <h5 class="mb-3">Informations Médecin</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label>Spécialité</label><input type="text" class="form-control" name="specialite"></div>
+                        <div class="col-md-6"><label>Années expérience</label><input type="number" class="form-control" name="annee_experience" min="0"></div>
+                        <div class="col-md-6"><label>Grade</label><input type="text" class="form-control" name="grade"></div>
+                        <div class="col-md-6"><label>Adresse cabinet</label><input type="text" class="form-control" name="adresse_cabinet"></div>
+                        <div class="col-md-6"><label>Téléphone cabinet</label><input type="tel" class="form-control" name="telephone_cabinet"></div>
+                        <div class="col-md-6"><label>Nom établissement</label><input type="text" class="form-control" name="nom_etablissement"></div>
+                        <div class="col-md-6"><label>Numéro urgence</label><input type="tel" class="form-control" name="numero_urgence"></div>
+                        <div class="col-md-6"><label>Document PDF</label><input type="file" class="form-control" name="document_pdf" accept=".pdf"></div>
+                        <div class="col-12"><label>Disponibilités</label><textarea class="form-control" name="disponibilite" rows="3"></textarea></div>
+                    </div>
+                </div>
+
+                <div id="responsable_labo-info" class="role-specific">
+                    <h5 class="mb-3">Informations Responsable Laboratoire</h5>
+                    <div class="col-md-6"><label>ID Laboratoire</label><input type="number" class="form-control" name="laboratoire_id" min="1"></div>
+                </div>
+
+                <div id="responsable_para-info" class="role-specific">
+                    <h5 class="mb-3">Informations Responsable Parapharmacie</h5>
+                    <div class="col-md-6"><label>ID Parapharmacie</label><input type="number" class="form-control" name="parapharmacie_id" min="1"></div>
+                </div>
+
+                <div class="form-section text-center">
+                    <button type="submit" class="btn btn-success btn-lg px-5">Créer mon compte</button>
+                    <p class="mt-3">
+                        Déjà un compte ? <a href="{{ path('app_login') }}">Connectez-vous ici</a>
+                    </p>
+                </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+
+<script>
+    const roleCards = document.querySelectorAll('.role-card');
+    const roleSections = document.querySelectorAll('.role-specific');
+    const roleSelect = document.querySelector('select[name="{{ form.role.vars.full_name }}"]');
+
+    roleCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Retirer la classe active de toutes les cartes
+            roleCards.forEach(c => c.classList.remove('active'));
+            // Ajouter la classe active à la carte cliquée
+            this.classList.add('active');
+
+            // Récupérer le rôle
+            const role = this.dataset.role;
+            // Mettre à jour le select
+            roleSelect.value = role;
+
+            // Cacher toutes les sections spécifiques
+            roleSections.forEach(sec => sec.style.display = 'none');
+            
+            // Afficher la section correspondante
+            const section = document.getElementById(role + '-info');
+            if(section) {
+                section.style.display = 'block';
+            }
+        });
+    });
+
+    // Synchroniser le select avec les cartes
+    roleSelect.addEventListener('change', function() {
+        const role = this.value;
+        roleCards.forEach(card => {
+            card.classList.remove('active');
+            if (card.dataset.role === role) {
+                card.classList.add('active');
+            }
+        });
+        
+        roleSections.forEach(sec => sec.style.display = 'none');
+        const section = document.getElementById(role + '-info');
+        if(section) {
+            section.style.display = 'block';
+        }
+    });
+
+    // Validation de la confirmation du mot de passe
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.querySelector('input[name="{{ form.password.vars.full_name }}"]').value;
+        const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+        
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('Les mots de passe ne correspondent pas !');
+            return false;
+        }
+
+        // Validation du rôle sélectionné
+        if (!roleSelect.value) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un rôle !');
+            return false;
+        }
+    });
+</script>
+
+<script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

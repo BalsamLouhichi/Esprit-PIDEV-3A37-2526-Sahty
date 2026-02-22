@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon laboratoire{% endblock %}
+
+{% block stylesheets %}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="mb-4">
+        <h1 class="h3">Modifier mon laboratoire</h1>
+        {% if laboratoire %}
+            <p class="text-muted mb-0">{{ laboratoire.nom }} - {{ laboratoire.ville }}</p>
+        {% endif %}
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('warning') %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{{ path('app_demande_analyse_index') }}" class="btn btn-secondary">Retour</a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

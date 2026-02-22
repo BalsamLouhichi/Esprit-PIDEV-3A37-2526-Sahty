@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Événements - Sahty</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #e2eafe;
+            --primary-dark: #3451b5;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+        }
+
+        .page-wrapper {
+            min-height: calc(100vh - 76px);
+            background: linear-gradient(135deg, #f1f5f9 0%, #eef2f6 100%);
+            padding: 2rem 0;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 2rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .page-title {
+            color: var(--gray-900);
+            font-weight: 700;
+            font-size: 2rem;
+            letter-spacing: -0.02em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title i {
+            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 16px rgba(67, 97, 238, 0.25);
+        }
+
+        .page-subtitle {
+            color: var(--gray-500);
+            margin: 0.5rem 0 0 4.5rem;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-light);
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, #e2eafe 0%, #c7d7fe 100%);
+            color: var(--primary);
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: var(--warning);
+        }
+
+        .stat-icon.info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: var(--info);
+        }
+
+        .stat-content h4 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1.2;
+        }
+
+        .stat-content p {
+            margin: 0.25rem 0 0 0;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .filter-section {
+            padding: 1.5rem 2rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .filter-label i {
+            color: var(--primary);
+            margin-right: 0.5rem;
+            width: 16px;
+        }
+
+        .form-select, .form-control {
+            border-radius: 14px;
+            border: 1.5px solid var(--gray-200);
+            padding: 0.625rem 1rem;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            background-color: white;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+            outline: none;
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: white;
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-reset {
+            background: white;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--gray-700);
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-reset:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+
+        .table-container {
+            padding: 2rem;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.5rem;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1.25rem 1.5rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.9375rem;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .event-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .event-description {
+            color: var(--gray-500);
+            font-size: 0.8125rem;
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge {
+            padding: 0.4rem 0.875rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            letter-spacing: 0.01em;
+        }
+
+        .badge i {
+            font-size: 0.6875rem;
+        }
+
+        .badge-type {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .badge-group {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            margin: 0.125rem;
+            font-size: 0.6875rem;
+            padding: 0.25rem 0.625rem;
+        }
+
+        .progress {
+            height: 6px;
+            border-radius: 10px;
+            background: var(--gray-200);
+            min-width: 80px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--success) 0%, #34d399 100%);
+            border-radius: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-view {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-view:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-edit {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-inscribe {
+            background: #dcfce7;
+            color: #059669;
+        }
+
+        .btn-inscribe:hover {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray-300);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h4 {
+            color: var(--gray-700);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: 2rem;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 0.875rem 2rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+            color: white;
+        }
+
+        .active-filter {
+            background: var(--primary-light);
+            border-radius: 30px;
+            padding: 0.25rem 1rem;
+            color: var(--primary-dark);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .page-wrapper {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                margin: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+            
+            .table-container {
+                padding: 1rem;
+            }
+            
+            .table thead th {
+                padding: 1rem;
+            }
+            
+            .table tbody td {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'partials/header.html.twig' %}
+
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="content-card">
+                <div class="page-header">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h1 class="page-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Gestion des Événements
+                            </h1>
+                            <p class="page-subtitle">
+                                Gérez vos webinaires, ateliers et conférences médicales
+                            </p>
+                        </div>
+                        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                            <a href="{{ path('evenements_evenement_add') }}" class="btn btn-filter w-auto">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Nouvel Événement
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if stats %}
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ stats.evenementsAVenir }}</h4>
+                            <p>À venir</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ stats.totalParticipants }}</h4>
+                            <p>Participants</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ stats.tauxRemplissageMoyen }}%</h4>
+                            <p>Taux remplissage</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ stats.revenusGeneres }} TND</h4>
+                            <p>Revenus générés</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="filter-section">
+                    <form method="get" action="{{ path('evenements_evenement_list') }}" id="filterForm">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="filter-label">
+                                    <i class="fas fa-filter"></i>
+                                    Type d'événement
+                                </label>
+                                <select name="type" class="form-select" onchange="this.form.submit()">
+                                    <option value="">Tous les types</option>
+                                    <option value="webinaire" {{ app.request.get('type') == 'webinaire' ? 'selected' : '' }}>
+                                        <i class="fas fa-video me-1"></i> Webinaire
+                                    </option>
+                                    <option value="atelier" {{ app.request.get('type') == 'atelier' ? 'selected' : '' }}>
+                                        <i class="fas fa-users me-1"></i> Atelier
+                                    </option>
+                                    <option value="depistage" {{ app.request.get('type') == 'depistage' ? 'selected' : '' }}>
+                                        <i class="fas fa-stethoscope me-1"></i> Dépistage
+                                    </option>
+                                    <option value="conference" {{ app.request.get('type') == 'conference' ? 'selected' : '' }}>
+                                        <i class="fas fa-microphone me-1"></i> Conférence
+                                    </option>
+                                    <option value="groupe_parole" {{ app.request.get('type') == 'groupe_parole' ? 'selected' : '' }}>
+                                        <i class="fas fa-comments me-1"></i> Groupe de parole
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="filter-label">
+                                    <i class="fas fa-search"></i>
+                                    Recherche
+                                </label>
+                                <div class="input-group">
+                                    <input type="text"
+                                           name="recherche"
+                                           value="{{ app.request.get('recherche') }}"
+                                           class="form-control"
+                                           placeholder="Rechercher par titre...">
+                                    <button class="btn btn-filter" type="submit" style="width: auto; padding: 0.625rem 1.5rem;">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="filter-label">
+                                    <i class="fas fa-sort"></i>
+                                    Trier par
+                                </label>
+                                <select name="tri" class="form-select">
+                                    <option value="dateDebut" {{ tri == 'dateDebut' ? 'selected' : '' }}>Date début</option>
+                                    <option value="dateFin" {{ tri == 'dateFin' ? 'selected' : '' }}>Date fin</option>
+                                    <option value="titre" {{ tri == 'titre' ? 'selected' : '' }}>Titre</option>
+                                </select>
+                                <input type="hidden" name="ordre" value="{{ ordre }}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="filter-label">
+                                    <i class="fas fa-sliders-h"></i>
+                                    Actions
+                                </label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-filter">
+                                        <i class="fas fa-check me-2"></i>
+                                        Appliquer
+                                    </button>
+                                    <a href="{{ path('evenements_evenement_list') }}" class="btn btn-reset">
+                                        <i class="fas fa-times me-2"></i>
+                                        Réinitialiser
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active filters display -->
+                        <div class="mt-3 d-flex gap-2 align-items-center">
+                            {% if app.request.get('type') or app.request.get('recherche') %}
+                                <span class="active-filter">
+                                    <i class="fas fa-filter me-1"></i>
+                                    Filtres actifs:
+                                </span>
+                                {% if app.request.get('type') %}
+                                    <span class="badge badge-group">
+                                        Type: {{ app.request.get('type')|replace({'_': ' '})|title }}
+                                        <a href="?{% for key, value in app.request.query.all %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-1 text-danger">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </span>
+                                {% endif %}
+                                {% if app.request.get('recherche') %}
+                                    <span class="badge badge-group">
+                                        Recherche: "{{ app.request.get('recherche') }}"
+                                        <a href="?{% for key, value in app.request.query.all %}{% if key != 'recherche' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" class="ms-1 text-danger">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Événement</th>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Groupes Cibles</th>
+                                    <th>Places</th>
+                                    <th>Statut</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set user = app.user %}
+                                {% set is_admin = is_granted('ROLE_ADMIN') %}
+
+                                {% for evenement in evenements %}
+                                    <tr>
+                                        <td>
+                                            <div class="event-title">{{ evenement.titre }}</div>
+                                            <div class="event-description">{{ evenement.description|slice(0, 60) }}{% if evenement.description|length > 60 %}...{% endif %}</div>
+                                        </td>
+                                        
+                                        <td>
+                                            <div class="fw-medium">{{ evenement.dateDebut|date('d/m/Y') }}</div>
+                                            <small class="text-muted">{{ evenement.dateDebut|date('H:i') }}</small>
+                                        </td>
+                                        
+                                        <td>
+                                            <span class="badge badge-type">
+                                                <i class="fas fa-{{ 
+                                                    evenement.type == 'webinaire' ? 'video' : 
+                                                    (evenement.type == 'atelier' ? 'users' : 
+                                                    (evenement.type == 'depistage' ? 'stethoscope' : 
+                                                    (evenement.type == 'conference' ? 'microphone' : 'comments'))) 
+                                                }} me-1"></i>
+                                                {{ evenement.type|replace({'_': ' '})|title }}
+                                            </span>
+                                        </td>
+                                        
+                                        <td>
+                                            {% if evenement.groupeCibles|length > 0 %}
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    {% for groupe in evenement.groupeCibles|slice(0, 2) %}
+                                                        <span class="badge badge-group">
+                                                            <i class="fas fa-users me-1"></i>
+                                                            {{ groupe.nom }}
+                                                        </span>
+                                                    {% endfor %}
+                                                    {% if evenement.groupeCibles|length > 2 %}
+                                                        <span class="badge badge-group">+{{ evenement.groupeCibles|length - 2 }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small">—</span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <td>
+                                            {% if evenement.placesMax %}
+                                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                                    <div class="progress flex-grow-1">
+                                                        {% set taux = (evenement.inscriptions|length / evenement.placesMax * 100)|round %}
+                                                        <div class="progress-bar" style="width: {{ taux }}%"></div>
+                                                    </div>
+                                                    <small class="text-muted">{{ evenement.inscriptions|length }}/{{ evenement.placesMax }}</small>
+                                                </div>
+                                            {% else %}
+                                                <span class="badge badge-group">Illimité</span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <td>
+                                            {% if evenement.statut == 'en_attente_approbation' %}
+                                                <span class="badge" style="background: #fef3c7; color: #92400e;">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    En attente
+                                                </span>
+                                            {% elseif evenement.statut == 'planifie' %}
+                                                <span class="badge" style="background: #dcfce7; color: #065f46;">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    Planifié
+                                                </span>
+                                            {% elseif evenement.statut == 'termine' %}
+                                                <span class="badge" style="background: #f3f4f6; color: #4b5563;">
+                                                    <i class="fas fa-flag-checkered me-1"></i>
+                                                    Terminé
+                                                </span>
+                                            {% else %}
+                                                <span class="badge" style="background: #e2eafe; color: #3451b5;">
+                                                    {{ evenement.statut|replace({'_': ' '})|title }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        
+                                        <td>
+                                            {% set perms = actions[evenement.id] ?? {'can_edit': false, 'can_delete': false, 'can_inscribe': false} %}
+                                            <div class="action-buttons">
+                                                <a href="{{ path('evenements_evenement_view', {id: evenement.id}) }}" 
+                                                   class="btn-icon btn-view"
+                                                   title="Voir détails">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                
+                                                {% if perms.can_edit %}
+                                                    <a href="{{ path('evenements_evenement_update', {id: evenement.id}) }}" 
+                                                       class="btn-icon btn-edit"
+                                                       title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                {% if perms.can_inscribe %}
+                                                    <a href="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" 
+                                                       class="btn-icon btn-inscribe"
+                                                       title="S'inscrire">
+                                                        <i class="fas fa-user-plus"></i>
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                {% if perms.can_delete %}
+                                                    <a href="#" 
+                                                       class="btn-icon btn-delete"
+                                                       title="Supprimer"
+                                                       onclick="event.preventDefault(); if(confirm('Voulez-vous vraiment supprimer cet événement ?')) { document.getElementById('delete-form-{{ evenement.id }}').submit(); }">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                    
+                                                    <form id="delete-form-{{ evenement.id }}" 
+                                                          action="{{ path('evenements_evenement_delete', {'id': evenement.id}) }}" 
+                                                          method="post" 
+                                                          style="display: none;">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ evenement.id) }}">
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="empty-state">
+                                                <i class="fas fa-calendar-times"></i>
+                                                <h4>Aucun événement trouvé</h4>
+                                                <p>Commencez par créer votre premier événement</p>
+                                                <a href="{{ path('evenements_evenement_add') }}" class="btn-create">
+                                                    <i class="fas fa-plus-circle"></i>
+                                                    Créer un événement
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'partials/footer.html.twig' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sorting functionality
+            const sortSelect = document.querySelector('select[name="tri"]');
+            const ordreInput = document.querySelector('input[name="ordre"]');
+            
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    const currentTri = '{{ tri }}';
+                    const newTri = this.value;
+                    
+                    if (currentTri === newTri) {
+                        ordreInput.value = ordreInput.value === 'ASC' ? 'DESC' : 'ASC';
+                    } else {
+                        ordreInput.value = 'ASC';
+                    }
+                    document.getElementById('filterForm').submit();
+                });
+            }
+
+            // Auto-submit for type filter
+            const typeSelect = document.querySelector('select[name="type"]');
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function() {
+                    document.getElementById('filterForm').submit();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

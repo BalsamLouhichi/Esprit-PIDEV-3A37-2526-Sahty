@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ laboratoire ? 'Modifier' : 'Nouveau' }} laboratoire - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ laboratoire ? 'Modifier' : 'Nouveau' }} laboratoire</h4>
+                <a href="{{ path('admin_laboratoires') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="_token" value="{{ csrf_token('laboratoire_form') }}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nom" class="form-label">Nom du laboratoire *</label>
+                                <input type="text" class="form-control" id="nom" name="nom" 
+                                       value="{{ laboratoire ? laboratoire.nom : '' }}" required>
+                                <div class="invalid-feedback">Le nom est obligatoire</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="ville" class="form-label">Ville *</label>
+                                <input type="text" class="form-control" id="ville" name="ville" 
+                                       value="{{ laboratoire ? laboratoire.ville : '' }}" required>
+                                <div class="invalid-feedback">La ville est obligatoire</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="adresse" class="form-label">Adresse *</label>
+                                <input type="text" class="form-control" id="adresse" name="adresse" 
+                                       value="{{ laboratoire ? laboratoire.adresse : '' }}" required>
+                                <div class="invalid-feedback">L'adresse est obligatoire</div>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="latitude" class="form-label">Latitude</label>
+                                <input type="number" step="any" class="form-control" id="latitude" name="latitude" 
+                                       value="{{ laboratoire ? laboratoire.latitude : '' }}">
+                                <small class="text-muted">Optionnel</small>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="longitude" class="form-label">Longitude</label>
+                                <input type="number" step="any" class="form-control" id="longitude" name="longitude" 
+                                       value="{{ laboratoire ? laboratoire.longitude : '' }}">
+                                <small class="text-muted">Optionnel</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="telephone" class="form-label">Téléphone *</label>
+                                <input type="tel" class="form-control" id="telephone" name="telephone" 
+                                       value="{{ laboratoire ? laboratoire.telephone : '' }}" required>
+                                <div class="invalid-feedback">Le téléphone est obligatoire</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ laboratoire ? laboratoire.email : '' }}">
+                                <small class="text-muted">Optionnel</small>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="numeroAgrement" class="form-label">Numéro d'agrément</label>
+                                <input type="text" class="form-control" id="numeroAgrement" name="numeroAgrement" 
+                                       value="{{ laboratoire ? laboratoire.numeroAgrement : '' }}">
+                                <small class="text-muted">Optionnel</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ laboratoire ? laboratoire.description : '' }}</textarea>
+                            <small class="text-muted">Optionnel</small>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="disponible" name="disponible" 
+                                   {% if not laboratoire or laboratoire.disponible %}checked{% endif %}>
+                            <label class="form-check-label" for="disponible">Laboratoire disponible</label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ path('admin_laboratoires') }}" class="btn btn-secondary me-md-2">
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {{ laboratoire ? 'Mettre à jour' : 'Créer' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,948 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MEDINOVA - Fiche Médicale{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============ PALETTE MEDINOVA ============ */
+        :root {
+            --mughal-green: #304D30;
+            --prussian-blue: #163A5F;
+            --teal-blue: #1D5D9B;
+            --pastel-blue: #75C2F6;
+            --light-silver: #F4F6FF;
+            
+            --primary: #1D5D9B;
+            --primary-light: #E8F4F8;
+            --primary-dark: #163A5F;
+            
+            --secondary: #304D30;
+            --secondary-light: #4A7C59;
+            --secondary-dark: #1E3A1E;
+            
+            --accent: #75C2F6;
+            --accent-light: #B4E4FF;
+            
+            --light: #F4F6FF;
+            --light-alt: #E8EAF6;
+            
+            --dark: #1A2332;
+            --dark-light: #2C3E50;
+            
+            --success: #4A7C59;
+            --success-light: #D4E9DA;
+            --danger: #C1666B;
+            --danger-light: #F8E8E9;
+            --warning: #D4A574;
+            --warning-light: #F9F0E7;
+            --info: #75C2F6;
+            --info-light: #E8F4F8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, var(--light-alt) 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(29, 93, 155, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(48, 77, 48, 0.08) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+            animation: backgroundPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, rgba(29, 93, 155, 0.2), transparent),
+                radial-gradient(2px 2px at 60% 70%, rgba(48, 77, 48, 0.2), transparent);
+            background-size: 200px 200px, 300px 300px;
+            background-position: 0 0, 40px 60px;
+            animation: particlesFloat 40s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes particlesFloat {
+            to {
+                background-position: 200px 200px, 240px 260px;
+            }
+        }
+
+        .fiche-section {
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ============ HEADER ============ */
+        .page-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 8px 32px rgba(29, 93, 155, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            animation: fadeInDown 0.6s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h1 i {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(29, 93, 155, 0.3));
+        }
+
+        .header-title p {
+            color: var(--dark-light);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .btn-back {
+            padding: 14px 28px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        .btn-back:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.4);
+        }
+
+        /* ============ ALERTS ============ */
+        .alert {
+            padding: 20px 28px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-weight: 600;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+            animation: alertSlide 0.5s ease;
+            border-left: 5px solid;
+        }
+
+        @keyframes alertSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
+            color: #8B2E2E;
+            border-left-color: var(--danger);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%);
+            color: var(--secondary-dark);
+            border-left-color: var(--success);
+        }
+
+        .alert i {
+            font-size: 1.6rem;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ============ PATIENT INFO BANNER ============ */
+        .patient-banner {
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.15) 0%, var(--light) 100%);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 35px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            box-shadow: 0 15px 45px rgba(29, 93, 155, 0.12);
+            animation: slideInUp 0.6s ease 0.2s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .patient-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 10px 30px rgba(48, 77, 48, 0.3);
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .patient-details {
+            flex: 1;
+        }
+
+        .patient-details h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .patient-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark-light);
+            font-weight: 600;
+        }
+
+        .meta-item i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* ============ FORM CONTAINER ============ */
+        .form-container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 
+                0 15px 50px rgba(29, 93, 155, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+            animation: slideInUp 0.6s ease 0.4s both;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .form-inner {
+            padding: 50px;
+        }
+
+        .section-block {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--light-alt);
+        }
+
+        .section-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.15) 0%, var(--light) 100%);
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.12);
+        }
+
+        .section-title-wrap h2 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .section-title-wrap p {
+            font-size: 0.95rem;
+            color: var(--dark-light);
+            font-weight: 500;
+        }
+
+        /* ============ FORM FIELDS ============ */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-field label {
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-field label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .required-indicator {
+            color: var(--danger);
+            font-weight: 900;
+            margin-left: 4px;
+        }
+
+        .form-control {
+            padding: 18px 22px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            border-radius: 16px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 4px rgba(29, 93, 155, 0.15),
+                inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.6;
+        }
+
+        .form-control:read-only {
+            background: var(--light);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* ============ ERROR MESSAGES ============ */
+        .form-control.is-invalid {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 4px var(--danger-light);
+        }
+
+        .form-control.is-invalid:focus {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 4px var(--danger-light);
+        }
+
+        .invalid-feedback {
+            color: var(--danger);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: errorShake 0.5s ease;
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .invalid-feedback::before {
+            content: '⚠️';
+            font-size: 1.1rem;
+        }
+
+        .field-hint {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: red;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(117, 194, 246, 0.08) 0%, var(--light) 100%);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            font-weight: 500;
+        }
+
+        .field-hint::before {
+            content: '💡';
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* ============ MEDICAL SECTION HIGHLIGHT ============ */
+        .medical-section {
+            background: linear-gradient(135deg, rgba(74, 124, 89, 0.08) 0%, var(--light) 100%);
+            border: 2px solid rgba(74, 124, 89, 0.3);
+            padding: 35px;
+            border-radius: 20px;
+            margin-top: 30px;
+        }
+
+        .medical-section .section-header {
+            border-bottom-color: rgba(74, 124, 89, 0.2);
+        }
+
+        .medical-section .section-icon {
+            background: linear-gradient(135deg, rgba(74, 124, 89, 0.15) 0%, var(--success-light) 100%);
+            border-color: rgba(74, 124, 89, 0.3);
+            color: var(--success);
+        }
+
+        /* ============ BUTTONS ============ */
+        .form-footer {
+            display: flex;
+            gap: 20px;
+            margin-top: 50px;
+            padding-top: 40px;
+            border-top: 3px solid var(--light-alt);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px 40px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn i {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover i {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 
+                0 10px 30px rgba(29, 93, 155, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 15px 40px rgba(29, 93, 155, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--light-alt);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .form-inner {
+                padding: 35px 25px;
+            }
+
+            .patient-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .patient-meta-grid {
+                justify-items: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .fiche-section {
+                padding: 20px 10px;
+            }
+
+            .page-header {
+                padding: 25px;
+            }
+
+            .header-title h1 {
+                font-size: 2rem;
+            }
+
+            .form-footer {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+            border: 2px solid var(--light);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="fiche-section">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1><i class="fas fa-file-medical"></i> Fiche Médicale</h1>
+                    <p>{{ isNew ? 'Créer' : 'Modifier' }} la fiche médicale du patient</p>
+                </div>
+                <a href="{{ path('app_medecin_rdv_liste') }}" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
+        <!-- Form Errors -->
+        {% if not form.vars.valid %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>⚠️ Erreurs de validation</strong>
+                    <p>Veuillez corriger les erreurs ci-dessous avant de soumettre le formulaire.</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Patient Banner -->
+        <div class="patient-banner">
+            <div class="patient-avatar-large">
+                {{ rdv.patient.prenom|slice(0, 1) }}{{ rdv.patient.nom|slice(0, 1) }}
+            </div>
+            <div class="patient-details">
+                <h2>{{ rdv.patient.nom }} {{ rdv.patient.prenom }}</h2>
+                <div class="patient-meta-grid">
+                    <div class="meta-item">
+                        <i class="fas fa-envelope"></i>
+                        {{ rdv.patient.email }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-phone"></i>
+                        {{ rdv.patient.telephone|default('Non renseigné') }}
+                    </div>
+                    {% if rdv.patient.dateNaissance %}
+                        <div class="meta-item">
+                            <i class="fas fa-birthday-cake"></i>
+                            {{ rdv.patient.dateNaissance|date('d/m/Y') }}
+                            {% if rdv.patient.age %}
+                                ({{ rdv.patient.age }} ans)
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        RDV: {{ rdv.dateRdv|date('d/m/Y') }} à {{ rdv.heureRdv|date('H:i') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <div class="form-inner">
+                {{ form_start(form) }}
+
+                <!-- Section Patient (Médecin peut tout modifier) -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <div class="section-icon">👤</div>
+                        <div class="section-title-wrap">
+                            <h2>Informations Patient</h2>
+                            <p>Données médicales du patient (modifiables)</p>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.antecedents) }}
+                            {{ form_widget(form.antecedents, {
+                                attr: {
+                                    class: form.antecedents.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.antecedents) }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.allergies) }}
+                            {{ form_widget(form.allergies, {
+                                attr: {
+                                    class: form.allergies.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.allergies) }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.taille) }}
+                            {{ form_widget(form.taille, {
+                                attr: {
+                                    class: form.taille.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.taille) }}
+                            <div class="field-hint">Taille entre 0.50m et 2.50m</div>
+                        </div>
+
+                        <div class="form-field">
+                            {{ form_label(form.poids) }}
+                            {{ form_widget(form.poids, {
+                                attr: {
+                                    class: form.poids.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.poids) }}
+                            <div class="field-hint">Poids entre 1kg et 300kg</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.traitement_en_cours) }}
+                            {{ form_widget(form.traitement_en_cours, {
+                                attr: {
+                                    class: form.traitement_en_cours.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.traitement_en_cours) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Médecin (Editable) -->
+                <div class="medical-section">
+                    <div class="section-header">
+                        <div class="section-icon">🩺</div>
+                        <div class="section-title-wrap">
+                            <h2>Diagnostic et Traitement</h2>
+                            <p>Section médicale professionnelle</p>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <div style="display: flex; align-items: center;">
+                                {{ form_label(form.diagnostic) }}
+                                <span class="required-indicator">*</span>
+                            </div>
+                            {{ form_widget(form.diagnostic, {
+                                attr: {
+                                    class: form.diagnostic.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control',
+                                    placeholder: 'Saisissez votre diagnostic médical...'
+                                }
+                            }) }}
+                            {{ form_errors(form.diagnostic) }}
+                            <div class="field-hint">Diagnostic obligatoire (minimum 10 caractères)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.traitement_prescrit) }}
+                            {{ form_widget(form.traitement_prescrit, {
+                                attr: {
+                                    class: form.traitement_prescrit.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control',
+                                    placeholder: 'Médicaments, posologie, durée...'
+                                }
+                            }) }}
+                            {{ form_errors(form.traitement_prescrit) }}
+                            <div class="field-hint">Détaillez le traitement prescrit avec posologie et durée</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            {{ form_label(form.observations) }}
+                            {{ form_widget(form.observations, {
+                                attr: {
+                                    class: form.observations.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control',
+                                    placeholder: 'Notes complémentaires, recommandations...'
+                                }
+                            }) }}
+                            {{ form_errors(form.observations) }}
+                            <div class="field-hint">Ajoutez vos observations et recommandations pour le suivi</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <div style="display: flex; align-items: center;">
+                                {{ form_label(form.statut) }}
+                                <span class="required-indicator">*</span>
+                            </div>
+                            {{ form_widget(form.statut, {
+                                attr: {
+                                    class: form.statut.vars.errors|length > 0 ? 'form-control is-invalid' : 'form-control'
+                                }
+                            }) }}
+                            {{ form_errors(form.statut) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="form-footer">
+                    <a href="{{ path('app_medecin_rdv_liste') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> <span>Annuler</span>
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <span>{{ isNew ? 'Créer la fiche' : 'Enregistrer les modifications' }}</span>
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    document.querySelectorAll('.alert').forEach(alert => {
+        setTimeout(() => {
+            alert.style.transition = 'all 0.5s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateX(100%)';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+
+    // Scroll to first error field
+    const firstError = document.querySelector('.is-invalid');
+    if (firstError) {
+        setTimeout(() => {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstError.focus();
+        }, 300);
+    }
+
+    // Character counter for textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        const maxLength = textarea.getAttribute('maxlength');
+        if (maxLength) {
+            const counter = document.createElement('div');
+            counter.style.cssText = 'text-align: right; font-size: 0.85rem; color: var(--dark-light); margin-top: 5px;';
+            textarea.parentElement.appendChild(counter);
+            
+            const updateCounter = () => {
+                const remaining = maxLength - textarea.value.length;
+                counter.textContent = `${textarea.value.length} / ${maxLength} caractères`;
+                counter.style.color = remaining < 100 ? 'var(--danger)' : 'var(--dark-light)';
+            };
+            
+            textarea.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+    });
+
+    console.log('🏥 MEDINOVA - Fiche médicale médecin chargée avec succès!');
+</script>
+{% endblock %}

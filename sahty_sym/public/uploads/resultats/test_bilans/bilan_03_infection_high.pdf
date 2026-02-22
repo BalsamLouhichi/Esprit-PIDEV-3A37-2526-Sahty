@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 574 >>
+stream
+BT
+/F1 12 Tf
+72 800 Td (Bilan de test 03 - Syndrome infectieux marque \(HIGH\)) Tj
+0 0 Td
+72 782 Td (Type: NFS + Inflammation) Tj
+0 0 Td
+72 764 Td (GB 18.9 G/L \(4-10\)) Tj
+0 0 Td
+72 746 Td (PNN 15.2 G/L \(1.5-7.5\)) Tj
+0 0 Td
+72 728 Td (CRP 186 mg/L \(<5\)) Tj
+0 0 Td
+72 710 Td (Procalcitonine 4.8 ng/mL \(<0.5\)) Tj
+0 0 Td
+72 692 Td (Hb 12.8 g/dL \(12-16\)) Tj
+0 0 Td
+72 674 Td (Plaquettes 380 G/L \(150-400\)) Tj
+0 0 Td
+72 656 Td (Conclusion: forte suspicion d'infection bacterienne aigue.) Tj
+0 0 Td
+72 638 Td (Donnees synthetiques pour test IA uniquement.) Tj
+0 0 Td
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+936
+%%EOF

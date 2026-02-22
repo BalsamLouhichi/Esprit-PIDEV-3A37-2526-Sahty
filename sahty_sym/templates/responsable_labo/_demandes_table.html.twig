@@ -1,0 +1,26 @@
+{% if demandes is empty %}
+    <tr>
+        <td colspan="8" class="text-center text-muted">Aucune demande pour le moment.</td>
+    </tr>
+{% else %}
+    {% for demande in demandes %}
+        <tr>
+            <td>{{ demande.id }}</td>
+            <td>{{ demande.patient ? demande.patient.nomComplet : '-' }}</td>
+            <td>{{ demande.medecin ? demande.medecin.nomComplet : '-' }}</td>
+            <td>{{ demande.typeBilan }}</td>
+            <td>{{ demande.resultatPdf ? 'Envoye' : 'En attente' }}</td>
+            <td>{{ demande.dateDemande ? demande.dateDemande|date('d/m/Y H:i') : '-' }}</td>
+            <td>
+                {% if demande.resultatPdf %}
+                    <a href="{{ asset(demande.resultatPdf) }}" target="_blank">Voir PDF</a>
+                {% else %}
+                    <span class="text-muted">Non disponible</span>
+                {% endif %}
+            </td>
+            <td>
+                <a class="btn btn-sm btn-primary" href="{{ path('app_responsable_labo_demande_edit', {id: demande.id}) }}">Modifier</a>
+            </td>
+        </tr>
+    {% endfor %}
+{% endif %}

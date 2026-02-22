@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Sahty</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-dark: #1d4ed8;
+            --secondary: #475569;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --info: #3b82f6;
+            --info-light: #dbeafe;
+            --purple: #8b5cf6;
+            --purple-light: #ede9fe;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --light: #f8fafc;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            
+            --border-radius-sm: 0.375rem;
+            --border-radius-md: 0.5rem;
+            --border-radius-lg: 0.75rem;
+            --border-radius-xl: 1rem;
+            
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-700);
+            line-height: 1.5;
+            font-weight: 400;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header avec style page-title-box */
+        .page-title-box {
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title-box h4 {
+            color: var(--gray-900);
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        .page-title-box p {
+            color: var(--gray-500);
+            margin: 0.5rem 0 0 0;
+        }
+
+        /* Cartes de statistiques */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -12px;
+            margin-left: -12px;
+        }
+
+        .col-xl-3, .col-md-6, .col-xl-4, .col-xl-8, .col-xl-6 {
+            padding-right: 12px;
+            padding-left: 12px;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card.bg-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important; }
+        .card.bg-info { background: linear-gradient(135deg, var(--info), #2563eb) !important; }
+        .card.bg-success { background: linear-gradient(135deg, var(--success), #059669) !important; }
+        .card.bg-warning { background: linear-gradient(135deg, var(--warning), #d97706) !important; }
+        .card.bg-danger { background: linear-gradient(135deg, var(--danger), #b91c1c) !important; }
+        .card.bg-purple { background: linear-gradient(135deg, var(--purple), #6d28d9) !important; }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .text-white-50 {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .card .d-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card h6 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .card h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .card h2 small {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .card i {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+
+        /* Cartes standards pour les graphiques */
+        .card:not([class*="bg-"]) .card-header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 1.5rem;
+        }
+
+        .card:not([class*="bg-"]) .card-header h5 {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card:not([class*="bg-"]) .card-header h5 i {
+            color: var(--success);
+        }
+
+        .card:not([class*="bg-"]) .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Badges */
+        .badge {
+            font-weight: 500;
+            padding: 0.35rem 0.65rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+        }
+
+        .badge.bg-warning { background-color: var(--warning-light) !important; color: var(--warning); }
+        .badge.bg-primary { background-color: var(--info-light) !important; color: var(--info); }
+        .badge.bg-success { background-color: var(--success-light) !important; color: var(--success); }
+        .badge.bg-danger { background-color: var(--danger-light) !important; color: var(--danger); }
+        .badge.bg-info { background-color: #e0f2fe !important; color: #0369a1; }
+        .badge.bg-purple { background-color: var(--purple-light) !important; color: var(--purple); }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 1rem 0.75rem;
+            color: var(--gray-500);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .table tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Boutons */
+        .btn {
+            font-weight: 500;
+            border-radius: var(--border-radius-md);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border: 1px solid transparent;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-outline-success {
+            border: 1px solid var(--success);
+            color: var(--success);
+            background: transparent;
+        }
+
+        .btn-outline-success:hover {
+            background: var(--success);
+            color: white;
+        }
+
+        /* Marges et espacements */
+        .mb-0 { margin-bottom: 0; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mt-4 { margin-top: 1.5rem; }
+        .me-1 { margin-right: 0.25rem; }
+        .me-2 { margin-right: 0.5rem; }
+        .ms-1 { margin-left: 0.25rem; }
+        .ms-2 { margin-left: 0.5rem; }
+        .p-0 { padding: 0; }
+        .p-2 { padding: 0.5rem; }
+        .p-3 { padding: 1rem; }
+        .py-3 { padding-top: 1rem; padding-bottom: 1rem; }
+        .py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+        /* Textes */
+        .text-center { text-align: center; }
+        .text-end { text-align: right; }
+        .text-start { text-align: left; }
+        .small { font-size: 0.875rem; }
+        .fw-medium { font-weight: 500; }
+        .fw-semibold { font-weight: 600; }
+        .fw-bold { font-weight: 700; }
+        .text-muted { color: var(--gray-500); }
+        .text-success { color: var(--success); }
+        .text-info { color: var(--info); }
+        .text-warning { color: var(--warning); }
+        .text-danger { color: var(--danger); }
+
+        /* Status badges pour événements */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-planned { background: var(--info-light); color: var(--info); }
+        .status-pending { background: var(--warning-light); color: var(--warning); }
+        .status-completed { background: var(--success-light); color: var(--success); }
+        .status-cancelled { background: var(--danger-light); color: var(--danger); }
+
+        /* Quick Stats pour les petites cartes */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .quick-stat-item {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+            text-decoration: none;
+            color: var(--gray-700);
+            display: block;
+        }
+
+        .quick-stat-item:hover {
+            border-color: var(--success);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quick-stat-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--success);
+        }
+
+        .quick-stat-item h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .quick-stat-item small {
+            color: var(--gray-500);
+            font-size: 0.75rem;
+        }
+
+        /* Progress bars */
+        .progress {
+            height: 0.5rem;
+            background: var(--gray-100);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 1rem;
+        }
+
+        .progress-bar.bg-success { background: var(--success); }
+        .progress-bar.bg-info { background: var(--info); }
+        .progress-bar.bg-warning { background: var(--warning); }
+
+        /* Avatars */
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .bg-success-light {
+            background-color: var(--success-light);
+        }
+
+        /* Stat icon pour petites cartes */
+        .stat-icon-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .stat-card {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .stat-card:nth-child(5) { animation-delay: 0.5s; }
+        .stat-card:nth-child(6) { animation-delay: 0.6s; }
+        .stat-card:nth-child(7) { animation-delay: 0.7s; }
+        .stat-card:nth-child(8) { animation-delay: 0.8s; }
+
+        /* Border top cards */
+        .border-top-success { border-top: 4px solid var(--success) !important; }
+        .border-top-info { border-top: 4px solid var(--info) !important; }
+        .border-top-warning { border-top: 4px solid var(--warning) !important; }
+        .border-top-danger { border-top: 4px solid var(--danger) !important; }
+
+        /* Chart containers */
+        canvas {
+            max-height: 250px;
+            width: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header avec le style page-title-box -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-0">Tableau de bord</h4>
+                        <p class="text-muted mt-1">Aperçu général de votre plateforme d'événements</p>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary me-2">{{ "now"|date("d/m/Y") }}</span>
+                        <span class="badge bg-success">{{ "now"|date("H:i") }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREMIÈRE LIGNE : Cartes principales -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">Événements totaux</h6>
+                                <h2 class="mb-0">{{ totalEvenements }}</h2>
+                            </div>
+                            <i class="fas fa-calendar fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-info text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">À venir</h6>
+                                <h2 class="mb-0">{{ evenementsAVenir }}</h2>
+                            </div>
+                            <i class="fas fa-clock fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">Inscriptions</h6>
+                                <h2 class="mb-0">{{ totalInscriptions }}</h2>
+                            </div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">Nouveaux (7j)</h6>
+                                <h2 class="mb-0">{{ evenementsSemaine }}</h2>
+                            </div>
+                            <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEUXIÈME LIGNE : Cartes supplémentaires -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-danger text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">Demandes en attente</h6>
+                                <h2 class="mb-0">{{ demandesEnAttente|default(0) }}</h2>
+                            </div>
+                            <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-purple text-white mb-4 stat-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50 mb-1">Groupes cibles</h6>
+                                <h2 class="mb-0">{{ totalGroupesCibles|default(0) }}</h2>
+                            </div>
+                            <i class="fas fa-users-cog fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card border-top-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-1">Taux de remplissage</h6>
+                                <h3 class="mb-0">{{ tauxRemplissageMoyen|default(0) }}%</h3>
+                            </div>
+                            <div class="stat-icon-sm" style="background: var(--success-light); color: var(--success);">
+                                <i class="fas fa-percent"></i>
+                            </div>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-success" style="width: {{ tauxRemplissageMoyen|default(0) }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card border-top-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-1">Participants</h6>
+                                <h3 class="mb-0">{{ totalInscriptions }}</h3>
+                            </div>
+                            <div class="stat-icon-sm" style="background: var(--info-light); color: var(--info);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                        <p class="small text-muted mt-2 mb-0">
+                            <i class="fas fa-arrow-up text-success me-1"></i>+12% vs mois dernier
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TROISIÈME LIGNE : Graphiques et statistiques détaillées -->
+        <div class="row mb-4">
+            <div class="col-xl-8">
+                <div class="card stat-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line text-success"></i>
+                            Évolution des créations d'événements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="evolutionChart" style="height: 250px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4">
+                <div class="card stat-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie text-success"></i>
+                            Répartition par statut
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statutChart" style="height: 200px;"></canvas>
+                        <div class="mt-3">
+                            {% for statut in evenementsParStatut %}
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>
+                                    <span class="badge 
+                                        {% if statut.statut == 'planifie' %}bg-primary
+                                        {% elseif statut.statut == 'en_attente_approbation' %}bg-warning
+                                        {% elseif statut.statut == 'termine' %}bg-success
+                                        {% elseif statut.statut == 'annule' %}bg-danger
+                                        {% else %}bg-secondary{% endif %} me-1" style="width: 10px; height: 10px; padding: 0;">&nbsp;</span>
+                                    {{ statut.statut|replace({'_': ' '})|title }}
+                                </span>
+                                <span class="fw-semibold">{{ statut.count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUATRIÈME LIGNE : Événements récents et À venir -->
+        <div class="row mb-4">
+            <div class="col-xl-6">
+                <div class="card stat-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history text-success"></i>
+                            Événements récents
+                        </h5>
+                        <a href="{{ path('evenements_evenement_list') }}" class="btn btn-sm btn-outline-success">Voir tout</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <tbody>
+                                    {% if evenementsRecents|length > 0 %}
+                                        {% for evenement in evenementsRecents|slice(0, 5) %}
+                                        <tr>
+                                            <td class="align-middle">
+                                                <div class="fw-medium">{{ evenement.titre }}</div>
+                                                <div class="small text-muted">
+                                                    <i class="far fa-calendar-alt me-1"></i>{{ evenement.dateDebut|date('d/m/Y') }}
+                                                    <i class="far fa-clock ms-2 me-1"></i>{{ evenement.dateDebut|date('H:i') }}
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge 
+                                                    {% if evenement.statut == 'planifie' %}bg-primary
+                                                    {% elseif evenement.statut == 'en_attente_approbation' %}bg-warning
+                                                    {% elseif evenement.statut == 'termine' %}bg-success
+                                                    {% elseif evenement.statut == 'annule' %}bg-danger
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ evenement.statut|replace({'_': ' '})|title }}
+                                                </span>
+                                            </td>
+                                            <td class="align-middle text-end">
+                                                <span class="small text-muted">
+                                                    <i class="fas fa-users me-1"></i>{{ evenement.inscriptions|length }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-4">
+                                                <i class="fas fa-calendar-times fa-2x mb-2 text-muted"></i>
+                                                <p class="mb-0">Aucun événement récent</p>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-6">
+                <div class="card stat-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-day text-success"></i>
+                            Événements à venir
+                        </h5>
+                        <a href="{{ path('evenements_evenement_calendar') }}" class="btn btn-sm btn-outline-success">Calendrier</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <tbody>
+                                    {% if evenementsProchains|length > 0 %}
+                                        {% for evenement in evenementsProchains|slice(0, 5) %}
+                                        <tr>
+                                            <td class="align-middle">
+                                                <div class="fw-medium">{{ evenement.titre|slice(0, 30) }}{% if evenement.titre|length > 30 %}...{% endif %}</div>
+                                                <div class="small text-muted">
+                                                    <i class="far fa-calendar-alt me-1"></i>{{ evenement.dateDebut|date('d/m') }}
+                                                    <i class="far fa-clock ms-2 me-1"></i>{{ evenement.dateDebut|date('H:i') }}
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-info">
+                                                    {{ evenement.inscriptions|length }}/{{ evenement.placesMax|default('∞') }}
+                                                </span>
+                                            </td>
+                                            <td class="align-middle text-end">
+                                                {% if evenement.tarif %}
+                                                    <span class="fw-semibold text-success">{{ evenement.tarif }} {{ evenement.devise }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Gratuit</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-4">
+                                                <i class="fas fa-calendar-check fa-2x mb-2 text-muted"></i>
+                                                <p class="mb-0">Aucun événement à venir</p>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CINQUIÈME LIGNE : Top événements, Top utilisateurs et Types -->
+        <div class="row">
+            <div class="col-xl-4">
+                <div class="card stat-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-trophy text-success"></i>
+                            Top 5 événements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if topEvenements|length > 0 %}
+                            {% for event in topEvenements %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-sm me-2 bg-success-light text-success">
+                                    {{ loop.index }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium">{{ event.titre|slice(0, 25) }}{% if event.titre|length > 25 %}...{% endif %}</div>
+                                    <small class="text-muted">{{ event.inscriptions }} inscriptions</small>
+                                </div>
+                                <span class="badge bg-success">{{ event.inscriptions }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-trophy fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">Aucune donnée disponible</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4">
+                <div class="card stat-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users text-success"></i>
+                            Top participants
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if topUtilisateurs|length > 0 %}
+                            {% for user in topUtilisateurs %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-sm me-2">
+                                    {{ user.prenom[:1] }}{{ user.nom[:1] }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium">{{ user.prenom }} {{ user.nom }}</div>
+                                    <small class="text-muted">{{ user.inscriptions }} inscriptions</small>
+                                </div>
+                                <span class="badge bg-success">{{ user.inscriptions }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">Aucune donnée disponible</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-4">
+                <div class="card stat-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie text-success"></i>
+                            Types d'événements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if evenementsParType|length > 0 %}
+                            {% for type in evenementsParType %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>
+                                    <i class="fas fa-circle me-2" style="color: 
+                                        {% if type.type == 'conference' %}#3b82f6
+                                        {% elseif type.type == 'atelier' %}#f59e0b
+                                        {% elseif type.type == 'formation' %}#10b981
+                                        {% elseif type.type == 'webinaire' %}#8b5cf6
+                                        {% elseif type.type == 'depistage' %}#ef4444
+                                        {% elseif type.type == 'groupe_parole' %}#6b7280
+                                        {% else %}#10b981{% endif %};
+                                        font-size: 0.5rem;"></i>
+                                    {{ type.type|title }}
+                                </span>
+                                <span class="fw-semibold">{{ type.count }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-chart-pie fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">Aucune donnée disponible</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-3 pt-2 border-top">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Gratuits</span>
+                                <span class="fw-semibold">{{ evenementsGratuits|default(0) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Payants</span>
+                                <span class="fw-semibold">{{ evenementsPayants|default(0) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                                <span class="text-muted">Revenus estimés</span>
+                                <span class="fw-semibold text-success">{{ revenusTotaux|default(0) }} DT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIXIÈME LIGNE : Actions rapides -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt text-success"></i>
+                            Actions rapides
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-stats">
+                            <a href="{{ path('evenements_evenement_add') }}" class="quick-stat-item">
+                                <i class="fas fa-plus-circle" style="color: var(--primary);"></i>
+                                <h4>Nouvel</h4>
+                                <small>Événement</small>
+                            </a>
+                            <a href="{{ path('evenements_evenement_calendar') }}" class="quick-stat-item">
+                                <i class="fas fa-calendar-alt" style="color: var(--success);"></i>
+                                <h4>Calendrier</h4>
+                                <small>Vue mensuelle</small>
+                            </a>
+                            <a href="{{ path('evenements_admin_demandes_evenements') }}" class="quick-stat-item">
+                                <i class="fas fa-clock" style="color: var(--warning);"></i>
+                                <h4>Demandes</h4>
+                                <small>En attente</small>
+                            </a>
+                            <a href="{{ path('groupe_cible_index') }}" class="quick-stat-item">
+                                <i class="fas fa-users-cog" style="color: var(--info);"></i>
+                                <h4>Groupes</h4>
+                                <small>Cibles</small>
+                            </a>
+                            <a href="#" class="quick-stat-item">
+                                <i class="fas fa-file-export" style="color: var(--gray-500);"></i>
+                                <h4>Exporter</h4>
+                                <small>Rapports</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <footer class="border-top pt-3 text-center text-muted">
+                    <small>
+                        <i class="fas fa-heartbeat me-1" style="color: var(--success);"></i>
+                        Sahty Dashboard • {{ "now"|date("d/m/Y H:i") }}
+                    </small>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation supplémentaire pour les cartes
+            const cards = document.querySelectorAll('.card:not([class*="bg-"])');
+            cards.forEach((card, index) => {
+                if (!card.classList.contains('bg-primary') && !card.classList.contains('bg-info') && 
+                    !card.classList.contains('bg-success') && !card.classList.contains('bg-warning') &&
+                    !card.classList.contains('bg-danger') && !card.classList.contains('bg-purple')) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.4s ease';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 500 + (index * 100));
+                }
+            });
+
+            // Graphique d'évolution
+            const evolutionCtx = document.getElementById('evolutionChart')?.getContext('2d');
+            if (evolutionCtx) {
+                const evolutionData = {{ evolutionMensuelle|json_encode|raw }};
+                const labels = evolutionData.map(item => item.mois);
+                const counts = evolutionData.map(item => item.count);
+                
+                new Chart(evolutionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Événements créés',
+                            data: counts,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#10b981',
+                            pointHoverBackgroundColor: '#059669',
+                            pointHoverBorderColor: '#059669'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#1f2937',
+                                titleColor: '#f9fafb',
+                                bodyColor: '#d1d5db',
+                                borderColor: '#374151',
+                                borderWidth: 1
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    color: '#6b7280'
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#6b7280'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Graphique des statuts
+            const statutCtx = document.getElementById('statutChart')?.getContext('2d');
+            if (statutCtx) {
+                const statutData = {{ evenementsParStatut|json_encode|raw }};
+                const labels = statutData.map(item => {
+                    return item.statut.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                });
+                const counts = statutData.map(item => item.count);
+                const colors = statutData.map(item => {
+                    if (item.statut.includes('planifie')) return '#3b82f6';
+                    if (item.statut.includes('attente')) return '#f59e0b';
+                    if (item.statut.includes('termine')) return '#10b981';
+                    if (item.statut.includes('annule')) return '#ef4444';
+                    return '#6b7280';
+                });
+
+                new Chart(statutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: colors,
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#1f2937',
+                                titleColor: '#f9fafb',
+                                bodyColor: '#d1d5db'
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

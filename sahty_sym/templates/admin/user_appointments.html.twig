@@ -1,0 +1,130 @@
+{% extends 'admin/index.html.twig' %}
+
+{% block title %}Rendez-vous de {{ user.prenom }} {{ user.nom }} - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-check mr-2"></i>
+                        Rendez-vous de {{ user.prenom }} {{ user.nom }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{{ path('admin_users') }}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info">
+                                    <i class="fas fa-calendar-check"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total rendez-vous</span>
+                                    <span class="info-box-number">{{ appointments|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Confirmés</span>
+                                    <span class="info-box-number">
+                                        {{ appointments|filter(a => a.statut == 'Confirmé')|length }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">En attente</span>
+                                    <span class="info-box-number">
+                                        {{ appointments|filter(a => a.statut == 'En attente')|length }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Heure</th>
+                                    <th>Médecin/Patient</th>
+                                    <th>Statut</th>
+                                    <th>Motif</th>
+                                    <th>Fiche médicale</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td>{{ appointment.id }}</td>
+                                    <td>{{ appointment.dateRdv|date('d/m/Y') }}</td>
+                                    <td>{{ appointment.heureRdv|date('H:i') }}</td>
+                                    <td>
+                                        {% if user.role == 'patient' %}
+                                            Dr. {{ appointment.medecin.prenom }} {{ appointment.medecin.nom }}
+                                        {% else %}
+                                            {{ appointment.patient.prenom }} {{ appointment.patient.nom }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if appointment.statut == 'Confirmé' %}bg-success
+                                            {% elseif appointment.statut == 'En attente' %}bg-warning
+                                            {% elseif appointment.statut == 'Annulé' %}bg-danger
+                                            {% else %}bg-info{% endif %}">
+                                            {{ appointment.statut }}
+                                        </span>
+                                    </td>
+                                    <td>{{ appointment.raison|slice(0, 50) ~ '...' }}</td>
+                                    <td>
+                                        {% if appointment.ficheMedicale %}
+                                            <span class="badge bg-success">Créée</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Non créée</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ path('admin_view_appointment', {id: appointment.id}) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                                        <p class="mb-0">Aucun rendez-vous trouvé</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

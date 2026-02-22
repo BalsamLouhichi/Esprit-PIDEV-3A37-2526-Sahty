@@ -1,0 +1,347 @@
+{# templates/backoffice/responsable/dashboard.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - {{ parapharmacie.nom }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: linear-gradient(135deg, #0dcaf0 0%, #0a9ec7 100%);
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-brand a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .sidebar-menu a i {
+            width: 25px;
+            margin-right: 10px;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        /* Messages flash */
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card.bg-primary, .card.bg-success, .card.bg-info, .card.bg-warning {
+            color: white;
+        }
+
+        /* Table */
+        .table {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            border-bottom: none;
+            background-color: #f8f9fa;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary {
+            border-radius: 8px;
+            padding: 5px 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Header dans main content */
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: #343a40;
+            font-weight: 600;
+        }
+
+        .page-header p {
+            color: #6c757d;
+        }
+
+        /* Opacity pour les icônes */
+        .opacity-50 {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <a href="{{ path('app_responsable_dashboard') }}">
+                <i class="fas fa-clinic-medical me-2"></i>sahty - {{ parapharmacie.nom }}
+            </a>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ path('app_responsable_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_produits') }}">
+                    <i class="fas fa-boxes"></i>Produits
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_commandes') }}">
+                    <i class="fas fa-shopping-cart"></i>Commandes
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_statistiques') }}">
+                    <i class="fas fa-chart-line"></i>Statistiques
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_responsable_parametres') }}">
+                    <i class="fas fa-cog"></i>Paramètres
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('home') }}" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>Voir le site
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Messages flash -->
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <!-- Contenu principal -->
+        <div class="container-fluid py-4">
+            <div class="page-header">
+                <h1><i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h1>
+                <p class="text-muted">Bienvenue dans l'espace de gestion de {{ parapharmacie.nom }}</p>
+            </div>
+
+            <!-- Cartes de statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Commandes en attente</h6>
+                                    <h2 class="mb-0">{{ commandesEnAttente }}</h2>
+                                </div>
+                                <i class="fas fa-clock fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Chiffre d'affaires</h6>
+                                    <h2 class="mb-0">{{ statsVentes.total_chiffre_affaires|default(0) }} €</h2>
+                                </div>
+                                <i class="fas fa-euro-sign fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Total produits</h6>
+                                    <h2 class="mb-0">{{ totalProduits }}</h2>
+                                </div>
+                                <i class="fas fa-boxes fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Commandes totales</h6>
+                                    <h2 class="mb-0">{{ statsVentes.total_commandes|default(0) }}</h2>
+                                </div>
+                                <i class="fas fa-shopping-cart fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commandes récentes -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Commandes récentes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if commandesRecent|length > 0 %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>N° Commande</th>
+                                                <th>Client</th>
+                                                <th>Produit</th>
+                                                <th>Quantité</th>
+                                                <th>Total</th>
+                                                <th>Statut</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for commande in commandesRecent %}
+                                                <tr>
+                                                    <td><strong>#{{ commande.numero }}</strong></td>
+                                                    <td>{{ commande.nomClient }}</td>
+                                                    <td>{{ commande.produit.nom }}</td>
+                                                    <td>{{ commande.quantite }}</td>
+                                                    <td>{{ commande.prixTotal }} €</td>
+                                                    <td>
+                                                        {% set badge_color = {
+                                                            'en_attente': 'warning',
+                                                            'confirmee': 'info',
+                                                            'preparation': 'primary',
+                                                            'expediee': 'secondary',
+                                                            'livree': 'success',
+                                                            'annulee': 'danger'
+                                                        } %}
+                                                        <span class="badge bg-{{ badge_color[commande.statut]|default('secondary') }}">
+                                                            {{ commande.statut|replace({'_': ' '})|capitalize }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ commande.dateCreation|date('d/m/Y H:i') }}</td>
+                                                    <td>
+                                                        <a href="{{ path('app_responsable_commande_details', {'id': commande.id}) }}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center py-4">Aucune commande récente</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

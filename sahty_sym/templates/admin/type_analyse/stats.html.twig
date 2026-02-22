@@ -1,0 +1,442 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des types d'analyse - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Statistiques des types d'analyse</h4>
+                <a href="{{ path('admin_type_analyse_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques globales -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Total types</h6>
+                            <h2 class="mb-0">{{ stats.total }}</h2>
+                        </div>
+                        <i class="fas fa-flask fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Types actifs</h6>
+                            <h2 class="mb-0">{{ stats.actifs }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span>
+                        {% if stats.total > 0 %}
+                            {{ ((stats.actifs / stats.total) * 100)|round }}% du total
+                        {% else %}
+                            0% du total
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Laboratoires</h6>
+                            <h2 class="mb-0">{{ stats.total_laboratoires }}</h2>
+                        </div>
+                        <i class="fas fa-flask fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Total associations</h6>
+                            <h2 class="mb-0">{{ stats.total_associations|default(0) }}</h2>
+                        </div>
+                        <i class="fas fa-link fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <span>Moy. {{ stats.moyenne_par_type|round(1) }} par type</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deuxième ligne de cartes -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Nombre de catégories</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.nb_categories }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tags fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avec laboratoires</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.avec_laboratoire }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Sans laboratoire</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.sans_laboratoire }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Max associations</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.max_associations }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top types d'analyse les plus utilisés -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top 5 des types d'analyse les plus utilisés</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type d'analyse</th>
+                                    <th>Catégorie</th>
+                                    <th>Statut</th>
+                                    <th>Nombre de laboratoires</th>
+                                    <th>Popularité</th>
+                                    <th>Contribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type in stats.top_types %}
+                                    <tr>
+                                        <td class="fw-bold">{{ type.nom }}</td>
+                                        <td>
+                                            {% if type.categorie %}
+                                                <span class="badge bg-info">{{ type.categorie }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if type.actif %}
+                                                <span class="badge bg-success">Actif</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactif</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ type.count }}</span>
+                                        </td>
+                                        <td style="min-width: 200px;">
+                                            <div class="progress" style="height: 10px;">
+                                                {% set pourcent = stats.total_laboratoires > 0 ? ((type.count / stats.total_laboratoires) * 100)|round : 0 %}
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ pourcent }}%"></div>
+                                            </div>
+                                            <small class="text-muted">{{ pourcent }}% des laboratoires</small>
+                                        </td>
+                                        <td>
+                                            {% if stats.total_associations|default(0) > 0 %}
+                                                {% set contribution = ((type.count / stats.total_associations) * 100)|round %}
+                                                <span class="badge bg-secondary">{{ contribution }}%</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Résumé des catégories</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-check-circle text-success me-2"></i>Types actifs</span>
+                            <span class="badge bg-success rounded-pill">{{ stats.actifs }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-times-circle text-danger me-2"></i>Types inactifs</span>
+                            <span class="badge bg-danger rounded-pill">{{ stats.inactifs }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-tags text-info me-2"></i>Nombre de catégories</span>
+                            <span class="badge bg-info rounded-pill">{{ stats.nb_categories }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-flask text-primary me-2"></i>Total laboratoires</span>
+                            <span class="badge bg-primary rounded-pill">{{ stats.total_laboratoires }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Détails des associations</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-link text-primary me-2"></i>Types avec laboratoires</span>
+                            <span class="badge bg-primary rounded-pill">{{ stats.avec_laboratoire }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-unlink text-warning me-2"></i>Types sans laboratoire</span>
+                            <span class="badge bg-warning rounded-pill">{{ stats.sans_laboratoire }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calculator text-info me-2"></i>Moyenne par type</span>
+                            <span class="badge bg-info rounded-pill">{{ stats.moyenne_par_type|round(1) }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-star text-success me-2"></i>Maximum associations</span>
+                            <span class="badge bg-success rounded-pill">{{ stats.max_associations }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistiques avancées</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-percent text-primary me-2"></i>Taux d'activité</span>
+                            <span class="badge bg-primary rounded-pill">
+                                {% if stats.total > 0 %}
+                                    {{ ((stats.actifs / stats.total) * 100)|round }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-chart-line text-success me-2"></i>Taux d'association</span>
+                            <span class="badge bg-success rounded-pill">
+                                {% if stats.total > 0 %}
+                                    {{ ((stats.avec_laboratoire / stats.total) * 100)|round }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-layer-group text-info me-2"></i>Catégorie principale</span>
+                            <span class="badge bg-info rounded-pill">
+                                {% if stats.par_categorie|length > 0 %}
+                                    {% set maxCategorie = stats.par_categorie|reduce((max, item) => item.count > max.count ? item : max, {'count': 0}) %}
+                                    {{ maxCategorie.categorie|default('Sans catégorie')|slice(0, 15) ~ (maxCategorie.categorie|length > 15 ? '...' : '') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-arrow-up text-warning me-2"></i>Type le plus associé</span>
+                            <span class="badge bg-warning rounded-pill">
+                                {% if stats.top_types|length > 0 %}
+                                    {{ stats.top_types[0].nom|slice(0, 15) ~ (stats.top_types[0].nom|length > 15 ? '...' : '') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicateurs de performance -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Indicateurs de performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="display-4 text-primary">{{ stats.total }}</div>
+                            <p class="text-muted">Types d'analyse</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="display-4 text-success">{{ stats.actifs }}</div>
+                            <p class="text-muted">Types actifs</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="display-4 text-info">{{ stats.total_laboratoires }}</div>
+                            <p class="text-muted">Laboratoires</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="display-4 text-warning">{{ stats.total_associations|default(0) }}</div>
+                            <p class="text-muted">Associations totales</p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Ratio type/laboratoire</span>
+                                <span class="fw-bold">
+                                    {% if stats.total_laboratoires > 0 %}
+                                        {{ (stats.total / stats.total_laboratoires)|round(2) }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                {% set ratio = stats.total_laboratoires > 0 ? min(100, (stats.total / stats.total_laboratoires * 10)) : 0 %}
+                                <div class="progress-bar bg-info" style="width: {{ ratio }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Couverture laboratoires</span>
+                                <span class="fw-bold">
+                                    {% if stats.total > 0 %}
+                                        {{ ((stats.avec_laboratoire / stats.total) * 100)|round }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                {% set couverture = stats.total > 0 ? ((stats.avec_laboratoire / stats.total) * 100) : 0 %}
+                                <div class="progress-bar bg-success" style="width: {{ couverture }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Les graphiques ont été supprimés
+});
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+.border-left-success {
+    border-left: 4px solid #28a745 !important;
+}
+.border-left-info {
+    border-left: 4px solid #17a2b8 !important;
+}
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+.shadow {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.display-4 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    line-height: 1.2;
+}
+</style>
+{% endblock %}

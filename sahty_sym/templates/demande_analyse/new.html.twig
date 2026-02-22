@@ -1,0 +1,580 @@
+{# templates/demande_analyse/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle demande d'analyse{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    
+    {# Google Web Fonts #}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    {# Icons #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    {# Bootstrap + Template CSS #}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+
+    {# Custom CSS #}
+    <style>
+        :root {
+            --primary: #13C5DD;
+            --secondary: #354F8E;
+            --light: #f8f9fa;
+            --dark: #1D2A4D;
+        }
+        
+        .demande-form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(19, 197, 221, 0.1);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .form-control-lg {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control-lg:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(19, 197, 221, 0.25);
+        }
+        
+        .form-select-lg {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .btn-lg {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0fa9c0;
+            border-color: #0fa9c0;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .bg-primary {
+            background-color: var(--primary) !important;
+        }
+        
+        .text-primary {
+            color: var(--primary) !important;
+        }
+        
+        .header-bg {
+            background: linear-gradient(rgba(29, 42, 77, 0.9), rgba(29, 42, 77, 0.9)), 
+                        url('{{ asset("img/lab-banner.jpg") }}');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .demande-form-card {
+                padding: 25px !important;
+            }
+            
+            .btn-lg {
+                padding: 0.6rem 1.5rem;
+            }
+        }
+        
+        /* Style pour les champs required */
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        /* Animation pour les messages flash */
+        .alert {
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Style pour les groupes de formulaire */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Style pour le footer de formulaire */
+        .form-footer {
+            border-top: 1px solid #dee2e6;
+            padding-top: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include 'partials/header.html.twig' %}
+
+    <!-- Header Start -->
+    <div class="container-fluid header-bg py-5 mb-5">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h1 class="display-4 text-white mb-3">Nouvelle demande d'analyse</h1>
+                    <p class="text-white-50 mb-0">
+                        {% if laboratoire is defined and laboratoire %}
+                            Créez une demande d'analyse pour le laboratoire <strong>{{ laboratoire.nom }}</strong>
+                        {% else %}
+                            Créez une nouvelle demande d'analyse
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Header End -->
+
+    <!-- Form Section Start -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="demande-form-card">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                            <div>
+                                <h3 class="mb-1 text-primary">Informations de la demande</h3>
+                                <div class="text-muted">Les champs marqués * sont obligatoires</div>
+                            </div>
+
+                            <a href="{{ 
+                                laboratoire is defined and laboratoire 
+                                ? path('app_labo_show', {'id': laboratoire.id}) 
+                                : path('app_demande_analyse_index')
+                            }}" class="btn btn-outline-primary">
+                                <i class="fa fa-arrow-left me-2"></i>
+                                {% if laboratoire is defined and laboratoire %}
+                                    Retour au laboratoire
+                                {% else %}
+                                    Retour à la liste
+                                {% endif %}
+                            </a>
+                        </div>
+
+                        {# Flash messages #}
+                        {% for label, messages in app.flashes %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ label }} alert-dismissible fade show mb-4" role="alert">
+                                    <i class="fa fa-{{ 
+                                        label == 'success' ? 'check-circle' : 
+                                        label == 'error' ? 'exclamation-circle' : 
+                                        label == 'warning' ? 'exclamation-triangle' : 'info-circle' 
+                                    }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {{ form_start(form, { attr: { class: 'row g-4', id: 'demande-form' } }) }}
+
+                            {# Type de bilan #}
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form_label(form.type_bilan, 'Type de bilan', { label_attr: { class: 'required-field' } }) }}
+                                    {{ form_widget(form.type_bilan, {
+                                        attr: { 
+                                            class: 'form-control form-control-lg',
+                                            placeholder: 'Ex: Bilan sanguin complet, Test COVID-19, etc.'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.type_bilan) }}
+                                    {{ form_errors(form.type_bilan) }}
+                                </div>
+                            </div>
+
+                            {# Patient - seulement si l'utilisateur n'est pas un patient #}
+                            {% if form.patient is defined %}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.patient, 'Patient', { label_attr: { class: 'required-field' } }) }}
+                                        {{ form_widget(form.patient, {
+                                            attr: { 
+                                                class: 'form-select form-control-lg',
+                                                'data-live-search': 'true'
+                                            }
+                                        }) }}
+                                        {{ form_help(form.patient) }}
+                                        {{ form_errors(form.patient) }}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Médecin - seulement si l'utilisateur n'est pas un médecin #}
+                            {% if form.medecin is defined %}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.medecin, 'Médecin prescripteur') }}
+                                        {{ form_widget(form.medecin, {
+                                            attr: { 
+                                                class: 'form-select form-control-lg',
+                                                'data-live-search': 'true'
+                                            }
+                                        }) }}
+                                        {{ form_help(form.medecin) }}
+                                        {{ form_errors(form.medecin) }}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Laboratoire #}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.laboratoire, 'Laboratoire', { label_attr: { class: 'required-field' } }) }}
+                                    {{ form_widget(form.laboratoire, {
+                                        attr: { 
+                                            class: 'form-select form-control-lg',
+                                            'data-live-search': 'true'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.laboratoire) }}
+                                    {{ form_errors(form.laboratoire) }}
+                                </div>
+                            </div>
+
+                            {# Priorité #}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.priorite, 'Priorité', { label_attr: { class: 'required-field' } }) }}
+                                    {{ form_widget(form.priorite, {
+                                        attr: { 
+                                            class: 'form-select form-control-lg'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.priorite) }}
+                                    {{ form_errors(form.priorite) }}
+                                </div>
+                            </div>
+
+                            {# Analyses #}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.analyses, 'Analyses demandées') }}
+                                    {{ form_widget(form.analyses, {
+                                        attr: { 
+                                            class: 'form-control form-control-lg',
+                                            rows: 3,
+                                            placeholder: 'Entrez une analyse par ligne'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.analyses) }}
+                                    {{ form_errors(form.analyses) }}
+                                </div>
+                            </div>
+
+                            {# Statut - seulement pour les médecins et admins #}
+                            {% if form.statut is defined %}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.statut, 'Statut') }}
+                                        {{ form_widget(form.statut, {
+                                            attr: { 
+                                                class: 'form-select form-control-lg'
+                                            }
+                                        }) }}
+                                        {{ form_help(form.statut) }}
+                                        {{ form_errors(form.statut) }}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Date programmée #}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form_label(form.programme_le, 'Date programmée') }}
+                                    {{ form_widget(form.programme_le, {
+                                        attr: { 
+                                            class: 'form-control form-control-lg datepicker'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.programme_le) }}
+                                    {{ form_errors(form.programme_le) }}
+                                </div>
+                            </div>
+
+                            {# Notes #}
+                            <div class="col-12">
+                                <div class="form-group">
+                                    {{ form_label(form.notes, 'Notes additionnelles') }}
+                                    {{ form_widget(form.notes, {
+                                        attr: { 
+                                            class: 'form-control form-control-lg',
+                                            rows: 4,
+                                            placeholder: 'Informations complémentaires, instructions spéciales...'
+                                        }
+                                    }) }}
+                                    {{ form_help(form.notes) }}
+                                    {{ form_errors(form.notes) }}
+                                </div>
+                            </div>
+
+                            {# Boutons d'action #}
+                            <div class="col-12 d-flex justify-content-between form-footer">
+                                <a href="{{ 
+                                    laboratoire is defined and laboratoire 
+                                    ? path('app_labo_show', {'id': laboratoire.id}) 
+                                    : path('app_demande_analyse_index')
+                                }}" class="btn btn-lg btn-outline-secondary px-5">
+                                    <i class="fa fa-times me-2"></i>Annuler
+                                </a>
+                                <button class="btn btn-lg btn-primary px-5" type="submit">
+                                    <i class="fa fa-save me-2"></i>Créer la demande
+                                </button>
+                            </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                    
+                    {# Information additionnelle #}
+                    <div class="alert alert-info mt-4">
+                        <div class="d-flex">
+                            <i class="fa fa-lightbulb text-primary fs-4 me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">Conseils pour remplir le formulaire</h6>
+                                <p class="mb-0">
+                                    • Soyez précis dans le type de bilan demandé<br>
+                                    • Vérifiez la disponibilité du laboratoire sélectionné<br>
+                                    • Précisez toute information médicale importante dans les notes<br>
+                                    • Les demandes urgentes peuvent nécessiter un appel téléphonique
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Form Section End -->
+
+    {% include 'partials/footer.html.twig' %}
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top">
+        <i class="bi bi-arrow-up"></i>
+    </a>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    
+    {# JavaScript Libraries #}
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+    <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+    
+    {# Select2 pour les selects améliorés #}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <script src="{{ asset('js/main.js') }}"></script>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisation du datepicker
+            const dateInputs = document.querySelectorAll('.datepicker');
+            dateInputs.forEach(input => {
+                if (input.type === 'datetime-local') {
+                    if (!input.value) {
+                        // Définir la date minimale à aujourd'hui
+                        const now = new Date();
+                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                        input.min = now.toISOString().slice(0, 16);
+                        
+                        // Définir une valeur par défaut (demain à 9h)
+                        const tomorrow = new Date(now);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        tomorrow.setHours(9, 0, 0, 0);
+                        input.value = tomorrow.toISOString().slice(0, 16);
+                    }
+                } else if (input.type === 'date') {
+                    if (!input.value) {
+                        const today = new Date().toISOString().split('T')[0];
+                        input.min = today;
+                    }
+                }
+            });
+
+            // Initialisation de Select2 pour les selects améliorés
+            if ($ && $.fn.select2) {
+                $('.form-select[data-live-search="true"]').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Sélectionnez une option',
+                    allowClear: true,
+                    language: {
+                        noResults: function() {
+                            return "Aucun résultat trouvé";
+                        },
+                        searching: function() {
+                            return "Recherche en cours...";
+                        }
+                    }
+                });
+            }
+
+            // NE PAS ajouter de traitement spécial pour le champ analyses
+            // Le DataTransformer dans le formulaire s'en occupe déjà
+
+            // Validation du formulaire
+            const form = document.getElementById('demande-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const requiredFields = form.querySelectorAll('[required]');
+                    let isValid = true;
+                    
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.classList.add('is-invalid');
+                            isValid = false;
+                            
+                            // Scroll vers le premier champ invalide
+                            if (!isValid) {
+                                field.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                            }
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        
+                        // Afficher un message d'erreur
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                        alertDiv.innerHTML = `
+                            <i class="fa fa-exclamation-circle me-2"></i>
+                            Veuillez remplir tous les champs obligatoires (*).
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        
+                        const firstInvalid = form.querySelector('.is-invalid');
+                        if (firstInvalid) {
+                            firstInvalid.parentNode.insertBefore(alertDiv, firstInvalid.nextSibling);
+                        }
+                    }
+                });
+                
+                // Validation en temps réel
+                form.querySelectorAll('[required]').forEach(field => {
+                    field.addEventListener('blur', function() {
+                        if (!this.value.trim()) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        }
+                    });
+                    
+                    field.addEventListener('input', function() {
+                        if (this.value.trim()) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        }
+                    });
+                });
+            }
+            
+            // Back to Top button
+            const backToTopButton = document.querySelector('.back-to-top');
+            if (backToTopButton) {
+                window.addEventListener('scroll', function() {
+                    if (window.pageYOffset > 300) {
+                        backToTopButton.style.display = 'block';
+                    } else {
+                        backToTopButton.style.display = 'none';
+                    }
+                });
+                
+                backToTopButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+            
+            // Afficher/masquer les champs en fonction du type d'utilisateur
+            const prioriteField = document.querySelector('#{{ form.priorite.vars.id }}');
+            if (prioriteField) {
+                prioriteField.addEventListener('change', function() {
+                    if (this.value === 'Urgent') {
+                        // Afficher un avertissement pour les urgences
+                        const warningDiv = document.createElement('div');
+                        warningDiv.className = 'alert alert-warning mt-2';
+                        warningDiv.innerHTML = `
+                            <i class="fa fa-exclamation-triangle me-2"></i>
+                            <strong>Attention:</strong> Pour les demandes urgentes, il est recommandé de contacter 
+                            directement le laboratoire par téléphone.
+                        `;
+                        
+                        // Ne pas ajouter plusieurs fois le message
+                        if (!this.parentNode.querySelector('.alert-warning')) {
+                            this.parentNode.appendChild(warningDiv);
+                        }
+                    } else {
+                        // Supprimer l'avertissement
+                        const existingWarning = this.parentNode.querySelector('.alert-warning');
+                        if (existingWarning) {
+                            existingWarning.remove();
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

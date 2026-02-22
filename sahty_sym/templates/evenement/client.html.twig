@@ -1,0 +1,869 @@
+{# templates/evenement/client.html.twig #}
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahty - Événements & Santé Mentale</title>
+    <meta name="description" content="Sahty : votre plateforme complète pour la santé mentale, les événements médicaux, et le bien-être professionnel. Tests, webinaires, et ressources santé.">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3a56d8;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #475569;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(74, 108, 247, 0.95) 0%, rgba(58, 86, 216, 0.95) 100%), 
+                        url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(0,0,0,0.05);
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 32px;
+        }
+
+        /* Event Cards */
+        .event-card {
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .event-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-webinaire { background: #3b82f6; color: white; }
+        .badge-atelier { background: #10b981; color: white; }
+        .badge-conference { background: #8b5cf6; color: white; }
+        .badge-seminaire { background: #f59e0b; color: white; }
+        .badge-formation { background: #ef4444; color: white; }
+
+        /* Stats Counter */
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        /* Testimonial */
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 30px;
+            padding: 60px;
+            margin: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 60px 0;
+            }
+            
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            
+            .cta-section {
+                padding: 40px 20px;
+                border-radius: 20px;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Custom Button */
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-primary-custom {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 28px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary-custom:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+            margin-bottom: 40px;
+        }
+
+        .filter-badge {
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-badge:hover, .filter-badge.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        /* Price Badge */
+        .price-badge {
+            background: #fee2e2;
+            color: #ef4444;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .price-free {
+            background: #dcfce7;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    {% include 'partials/header.html.twig' %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Votre santé mentale, <span class="text-warning">notre priorité</span>
+                    </h1>
+                    
+                    <p class="lead mb-5 opacity-90">
+                        Sahty est la plateforme complète qui accompagne les professionnels de santé 
+                        et les patients dans leur parcours de bien-être mental. Événements médicaux, 
+                        ressources éducatives, et outils de suivi personnalisés.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#evenements" class="btn btn-light btn-lg px-4 py-3 fw-bold">
+                            <i class="fas fa-calendar-alt me-2"></i> Découvrir les événements
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="fas fa-info-circle me-2"></i> En savoir plus
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 text-center d-none d-lg-block">
+                    <div class="floating">
+                        <img src="{{ asset('img/about.jpg') }}" 
+                             class="img-fluid rounded-4 shadow-lg" 
+                             alt="Santé mentale et bien-être" style="max-height: 450px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.totalEvents|default(0) }}+</div>
+                        <p class="text-muted mb-0">Événements organisés</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.happyParticipants|default(0) }}+</div>
+                        <p class="text-muted mb-0">Participants</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.expertSpeakers|default(0) }}+</div>
+                        <p class="text-muted mb-0">Experts partenaires</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-number">95%</div>
+                        <p class="text-muted mb-0">Satisfaction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Pourquoi choisir Sahty ?</h2>
+                <p class="lead text-muted">Une plateforme complète pour la santé mentale et le développement professionnel</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Événements Médicaux</h4>
+                        <p class="text-muted">
+                            Webinaires, ateliers et conférences animés par des experts reconnus. 
+                            Formations continues pour les professionnels de santé.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Ressources Santé Mentale</h4>
+                        <p class="text-muted">
+                            Articles scientifiques, outils d'auto-évaluation et guides pratiques 
+                            pour mieux comprendre et gérer la santé mentale.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Communauté Professionnelle</h4>
+                        <p class="text-muted">
+                            Échangez avec d'autres professionnels, partagez vos expériences 
+                            et développez votre réseau dans un environnement sécurisé.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upcoming Events Section -->
+    <section id="evenements" class="py-5 bg-light">
+        <div class="container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="display-6 fw-bold mb-2">Événements à venir</h2>
+                    <p class="text-muted">Découvrez nos prochains webinaires, ateliers et conférences</p>
+                </div>
+                <div class="mt-3 mt-md-0">
+                    {% if has_permission_to_create|default(false) %}
+                        <a href="{{ path('evenements_client_demande_evenement') }}" class="btn btn-primary-custom me-2">
+                            <i class="fas fa-plus-circle me-2"></i> Proposer un événement
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('evenements_client_events') }}" class="btn btn-outline-primary-custom">
+                        Voir tout <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtres rapides -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="d-flex flex-wrap gap-2 mb-3 mb-lg-0">
+                            <span class="fw-semibold me-2">Filtres :</span>
+                            <a href="{{ path('evenements_client_events') }}" class="filter-badge {% if not type %}active{% endif %}">
+                                <i class="fas fa-calendar me-1"></i> Tous
+                            </a>
+                            <a href="{{ path('evenements_client_events', {type: 'webinaire'}) }}" class="filter-badge {% if type == 'webinaire' %}active{% endif %}">
+                                <i class="fas fa-video me-1"></i> Webinaires
+                            </a>
+                            <a href="{{ path('evenements_client_events', {type: 'atelier'}) }}" class="filter-badge {% if type == 'atelier' %}active{% endif %}">
+                                <i class="fas fa-tools me-1"></i> Ateliers
+                            </a>
+                            <a href="{{ path('evenements_client_events', {type: 'conference'}) }}" class="filter-badge {% if type == 'conference' %}active{% endif %}">
+                                <i class="fas fa-microphone me-1"></i> Conférences
+                            </a>
+                            <a href="{{ path('evenements_client_events', {type: 'formation'}) }}" class="filter-badge {% if type == 'formation' %}active{% endif %}">
+                                <i class="fas fa-graduation-cap me-1"></i> Formations
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <form method="get" action="{{ path('evenements_client_events') }}" class="d-flex">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" name="recherche" class="form-control border-start-0 ps-0" 
+                                       placeholder="Rechercher un événement..." value="{{ recherche|default('') }}">
+                                <button type="submit" class="btn btn-primary">Chercher</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section des demandes en attente (visible uniquement pour l'utilisateur connecté) -->
+            {% if show_pending_section is defined and show_pending_section and demandes_en_attente is defined and demandes_en_attente|length > 0 %}
+                <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                    <i class="fas fa-clock me-3 fa-2x"></i>
+                    <div>
+                        <h5 class="alert-heading fw-bold mb-1">Vous avez {{ demandes_en_attente|length }} demande(s) en attente</h5>
+                        <p class="mb-0">Vos demandes de création d'événements sont en cours de validation par nos administrateurs.</p>
+                    </div>
+                </div>
+                
+                <div class="row g-4 mb-5">
+                    <div class="col-12">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-hourglass-half text-warning me-2"></i>
+                            Mes demandes en attente
+                        </h5>
+                    </div>
+                    {% for demande in demandes_en_attente %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="event-card bg-white border-warning" style="border-left: 4px solid #f59e0b;">
+                                <div class="position-relative">
+                                    <img src="{{ demande.imageUrl|default('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') }}" 
+                                         class="img-fluid w-100" style="height: 180px; object-fit: cover;" 
+                                         alt="{{ demande.titre }}">
+                                    <span class="event-badge badge-{{ demande.type|lower|replace({'é':'e', 'è':'e'}) }}">
+                                        {{ demande.type|default('Webinaire')|capitalize }}
+                                    </span>
+                                    <span class="event-badge bg-warning text-dark" style="left: auto; right: 15px; background-color: #f59e0b !important; color: #000 !important;">
+                                        <i class="fas fa-clock me-1"></i> En attente
+                                    </span>
+                                </div>
+                                <div class="p-4">
+                                    <h5 class="fw-bold mb-2">{{ demande.titre }}</h5>
+                                    <div class="text-muted small mb-3">
+                                        <div><i class="fas fa-calendar-alt me-2"></i> {{ demande.dateDebut|date('d/m/Y H:i') }}</div>
+                                    </div>
+                                    <p class="small text-muted mb-3">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Soumis le {{ demande.creeLe|date('d/m/Y') }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-light text-dark">En attente de validation</span>
+                                        <a href="{{ path('evenements_evenement_update', {'id': demande.id}) }}" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit me-1"></i> Modifier
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <hr class="my-5">
+                
+                <h5 class="fw-bold mb-4">
+                    <i class="fas fa-calendar-check text-primary me-2"></i>
+                    Événements à venir
+                </h5>
+            {% endif %}
+
+            <!-- Liste des événements approuvés -->
+            <div class="row g-4">
+                {% if evenements is defined and evenements|length > 0 %}
+                    {% for evenement in evenements %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="event-card bg-white">
+                                <div class="position-relative">
+                                    <img src="{{ evenement.imageUrl|default('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') }}" 
+                                         class="img-fluid w-100" style="height: 200px; object-fit: cover;" 
+                                         alt="{{ evenement.titre }}">
+                                    <span class="event-badge badge-{{ evenement.type|lower|replace({'é':'e', 'è':'e'}) }}">
+                                        {{ evenement.type|default('Webinaire')|capitalize }}
+                                    </span>
+                                </div>
+                                <div class="p-4 d-flex flex-column flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="fw-bold mb-0">{{ evenement.titre }}</h5>
+                                    </div>
+                                    <div class="text-muted small mb-3">
+                                        <div class="mb-1">
+                                            <i class="fas fa-calendar-alt me-2"></i> 
+                                            {{ evenement.dateDebut|date('d/m/Y') }} • {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-map-marker-alt me-2"></i> 
+                                            {{ evenement.lieu|default('En ligne') }}
+                                        </div>
+                                    </div>
+                                    <p class="mb-3 text-truncate" style="max-width: 100%;">
+                                        {{ evenement.description|slice(0, 100) }}{% if evenement.description|length > 100 %}...{% endif %}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <div>
+                                            {% if evenement.tarif > 0 %}
+                                                <span class="price-badge">
+                                                    <i class="fas fa-tag me-1"></i> {{ evenement.tarif }} TND
+                                                </span>
+                                            {% else %}
+                                                <span class="price-badge price-free">
+                                                    <i class="fas fa-gift me-1"></i> Gratuit
+                                                </span>
+                                            {% endif %}
+                                            {% if evenement.placesMax is defined and evenement.placesMax > 0 %}
+                                                <span class="badge bg-light text-dark ms-2">
+                                                    <i class="fas fa-users me-1"></i> 
+                                                    {% set placesDispo = evenement.placesMax - evenement.inscriptionsCount|default(0) %}
+                                                    {{ placesDispo }} places
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            {% if app.user %}
+                                                {% if actions[evenement.id] is defined and actions[evenement.id].can_inscribe %}
+                                                    <button type="button" class="btn btn-sm btn-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#inscriptionModal{{ evenement.id }}">
+                                                        <i class="fas fa-check-circle me-1"></i> S'inscrire
+                                                    </button>
+                                                {% elseif evenement.createur == app.user %}
+                                                    <span class="btn btn-sm btn-outline-secondary" disabled>
+                                                        <i class="fas fa-user-cog me-1"></i> Votre événement
+                                                    </span>
+                                                {% else %}
+                                                    <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                        Détails
+                                                    </a>
+                                                {% endif %}
+                                            {% else %}
+                                                <a href="{{ path('app_login') }}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-sign-in-alt me-1"></i> Se connecter
+                                                </a>
+                                                <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                    Détails
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal d'inscription -->
+                        {% if app.user and actions[evenement.id] is defined and actions[evenement.id].can_inscribe %}
+                            <div class="modal fade" id="inscriptionModal{{ evenement.id }}" tabindex="-1" aria-labelledby="inscriptionModalLabel{{ evenement.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0">
+                                        <div class="modal-header bg-light border-0">
+                                            <h5 class="modal-title fw-bold" id="inscriptionModalLabel{{ evenement.id }}">
+                                                <i class="fas fa-calendar-check text-primary me-2"></i>
+                                                Confirmer l'inscription
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="text-center mb-4">
+                                                <div class="feature-icon mx-auto" style="width: 70px; height: 70px; background: linear-gradient(135deg, #4a6cf7, #3a56d8);">
+                                                    <i class="fas fa-question-circle" style="font-size: 30px;"></i>
+                                                </div>
+                                            </div>
+                                            
+                                            <h5 class="text-center fw-bold mb-3">{{ evenement.titre }}</h5>
+                                            
+                                            <div class="bg-light p-3 rounded-3 mb-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                                    <span>{{ evenement.dateDebut|date('d/m/Y') }} • {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}</span>
+                                                </div>
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                                    <span>{{ evenement.lieu|default('En ligne') }}</span>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-tag text-primary me-2"></i>
+                                                    {% if evenement.tarif > 0 %}
+                                                        <span>{{ evenement.tarif }} TND</span>
+                                                    {% else %}
+                                                        <span class="text-success">Gratuit</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <p class="text-center text-muted mb-0">
+                                                Êtes-vous sûr de vouloir vous inscrire à cet événement ?
+                                            </p>
+                                            <p class="text-center small text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Vous recevrez un email de confirmation et pourrez gérer votre inscription depuis votre espace personnel.
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer bg-light border-0">
+                                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                                                <i class="fas fa-times me-1"></i> Annuler
+                                            </button>
+                                            <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
+                                                <button type="submit" class="btn btn-primary px-4">
+                                                    <i class="fas fa-check-circle me-1"></i> Confirmer
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <h4 class="fw-bold mb-2">Aucun événement trouvé</h4>
+                            <p class="text-muted mb-4">
+                                {% if recherche %}
+                                    Aucun événement ne correspond à votre recherche "{{ recherche }}".
+                                {% else %}
+                                    Aucun événement disponible pour le moment.
+                                {% endif %}
+                            </p>
+                            {% if has_permission_to_create|default(false) %}
+                                <a href="{{ path('evenements_client_demande_evenement') }}" class="btn btn-primary-custom">
+                                    <i class="fas fa-plus-circle me-2"></i> Proposer un événement
+                                </a>
+                            {% else %}
+                                <a href="{{ path('evenements_client_events') }}" class="btn btn-outline-primary-custom">
+                                    <i class="fas fa-sync-alt me-2"></i> Réinitialiser les filtres
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if evenements is defined and evenements|length > 3 %}
+                <div class="text-center mt-5">
+                    <a href="{{ path('evenements_client_events') }}" class="btn btn-outline-primary-custom btn-lg px-5">
+                        Voir tous les événements <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Ce qu'ils disent de Sahty</h2>
+                <p class="lead text-muted">Témoignages de nos participants et partenaires</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/32.jpg" 
+                                 class="rounded-circle me-3" width="50" height="50" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Dr. Sarah Chen</h6>
+                                <small class="text-muted">Pédopsychiatre</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "Les webinaires Sahty m'ont permis de rester à jour sur les dernières recherches 
+                            en santé mentale infantile. Une plateforme indispensable."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/men/54.jpg" 
+                                 class="rounded-circle me-3" width="50" height="50" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Pierre Martin</h6>
+                                <small class="text-muted">Infirmier en psychiatrie</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "La qualité des intervenants est exceptionnelle. J'ai particulièrement apprécié 
+                            l'atelier sur les techniques de communication thérapeutique."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/67.jpg" 
+                                 class="rounded-circle me-3" width="50" height="50" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Marie Dubois</h6>
+                                <small class="text-muted">Psychologue clinicienne</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "En tant que jeune professionnelle, Sahty m'a offert des opportunités de networking 
+                            précieuses et des formations continues de grande qualité."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section>
+        <div class="container">
+            <div class="cta-section">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h2 class="display-5 fw-bold mb-3">Prêt à rejoindre notre communauté ?</h2>
+                        <p class="lead opacity-90 mb-4">
+                            Inscrivez-vous gratuitement et accédez à tous nos événements, 
+                            ressources et outils pour votre développement professionnel.
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        {% if app.user %}
+                            <a href="{{ path('evenements_client_events') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                                <i class="fas fa-rocket me-2"></i> Explorer les événements
+                            </a>
+                        {% else %}
+                            <a href="{{ path('app_register') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                                <i class="fas fa-user-plus me-2"></i> Créer un compte
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    {% include 'partials/footer.html.twig' %}
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <script>
+        // Smooth scroll for anchor links
+        document.addEventListener('DOMContentLoaded', function() {
+            const anchors = document.querySelectorAll('a[href*="#"]');
+            anchors.forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href === '#' || !href.includes('#')) return;
+                    
+                    const hash = href.split('#')[1];
+                    const target = document.getElementById(hash);
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Simple counter animation for stats
+            const counters = document.querySelectorAll('.stat-number');
+            counters.forEach(counter => {
+                const text = counter.textContent;
+                const target = parseInt(text);
+                if (!isNaN(target)) {
+                    let current = 0;
+                    const increment = target / 50;
+                    
+                    const updateCounter = () => {
+                        if (current < target) {
+                            current += increment;
+                            counter.textContent = Math.ceil(current) + '+';
+                            setTimeout(updateCounter, 30);
+                        }
+                    };
+                    
+                    updateCounter();
+                }
+            });
+            
+            // Active filter highlight
+            const currentUrl = window.location.href;
+            const filterLinks = document.querySelectorAll('.filter-badge');
+            filterLinks.forEach(link => {
+                if (link.href === currentUrl.split('#')[0]) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,870 @@
+{# templates/responsable_laboratoire/demandes.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des demandes d'analyse - MEDINOVA{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Google Fonts #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #e2eafe;
+            --primary-dark: #3451b5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #eef2f6 100%);
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            padding: 2rem 0;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 2.5rem 2rem;
+            color: white;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        .user-profile {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1rem 1.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .btn-hero {
+            background: white;
+            color: var(--primary);
+            border: none;
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            color: var(--primary-dark);
+        }
+
+        .btn-hero-outline {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-hero-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            padding: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            color: white;
+            height: 100%;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.3;
+            position: absolute;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--gray-50);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 0 2rem 2rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .filter-label i {
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+
+        .form-select, .form-control {
+            border-radius: 14px;
+            border: 1.5px solid var(--gray-200);
+            padding: 0.75rem 1rem;
+            font-size: 0.9375rem;
+            background-color: white;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+            outline: none;
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 0.75rem;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        /* Table */
+        .table-wrapper {
+            padding: 0 2rem 2rem;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .demande-row {
+            transition: background-color 0.2s;
+        }
+
+        .demande-row:hover {
+            background-color: var(--gray-50);
+        }
+
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .patient-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #c7d7fe 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Badges */
+        .badge-priority {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 30px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .priority-high {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .priority-normal {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .priority-low {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 30px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .status-pending {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: 1px solid var(--gray-300);
+        }
+
+        .status-sent {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(67, 97, 238, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Action Buttons */
+        .action-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-view {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .btn-view:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-upload {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-upload:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .btn-edit:hover {
+            background: var(--warning);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-accept {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .btn-accept:hover {
+            background: var(--success);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-refuse {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .btn-refuse:hover {
+            background: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Pagination */
+        .card-footer {
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+        }
+
+        .pagination {
+            margin-bottom: 0;
+            gap: 0.25rem;
+        }
+
+        .page-link {
+            border: none;
+            border-radius: 8px;
+            color: var(--gray-600);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .page-item.active .page-link {
+            background: var(--primary);
+            color: white;
+        }
+
+        .page-item.disabled .page-link {
+            color: var(--gray-400);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray-300);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h4 {
+            color: var(--gray-700);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+            
+            .user-profile {
+                margin-top: 1rem;
+                width: 100%;
+            }
+            
+            .filter-section {
+                margin: 0 1rem 1rem;
+                padding: 1rem;
+            }
+            
+            .table-wrapper {
+                padding: 0 1rem 1rem;
+            }
+            
+            .action-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+{% set demandes = demandes|default(demande_analyses|default([])) %}
+{% set stats = stats|default({
+    'total': demandes|length,
+    'en_attente': demandes|filter(d => d.resultatPdf is null)|length,
+    'envoye': demandes|filter(d => d.resultatPdf is not null)|length
+}) %}
+{% set statut_filter = statut_filter|default('') %}
+{% set type_bilan_filter = type_bilan_filter|default('') %}
+{% set priorite_filter = priorite_filter|default('') %}
+{% set date_filter = date_filter|default('') %}
+{% set sort = sort|default('date') %}
+{% set dir = dir|default('desc') %}
+{% set pagination = pagination|default({
+    'page': 1,
+    'per_page': 6,
+    'total': stats.total ?? demandes|length,
+    'total_pages': 1
+}) %}
+
+<div class="page-wrapper">
+    <div class="container-fluid px-4">
+        <div class="content-card">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <h1 class="hero-title">
+                            <i class="fas fa-flask me-3"></i>Demandes d'analyse
+                        </h1>
+                        <p class="hero-subtitle">
+                            Gérez efficacement les demandes d'analyse de votre laboratoire
+                        </p>
+                    </div>
+                    <div class="col-md-5 text-md-end">
+                        <div class="user-profile">
+                            <div class="user-avatar">
+                                {% if app.user and app.user.prenom and app.user.nom %}
+                                    {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
+                                {% else %}
+                                    <i class="fas fa-user"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">
+                                    {% if app.user %}
+                                        {{ app.user.prenom|default('') }} {{ app.user.nom|default('') }}
+                                    {% else %}
+                                        Responsable Laboratoire
+                                    {% endif %}
+                                </div>
+                                <small style="opacity: 0.8;">Connecté</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{{ path('app_responsable_labo_edit') }}" class="btn-hero">
+                                <i class="fas fa-flask me-2"></i>Modifier laboratoire
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            {% set total_count = stats.total ?? demandes|length %}
+            {% set pending_count = stats.en_attente ?? (demandes|filter(d => d.resultatPdf is null)|length) %}
+            {% set sent_count = stats.envoye ?? (demandes|filter(d => d.resultatPdf is not null)|length) %}
+
+            <div class="stats-grid">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="stat-card position-relative">
+                            <div class="stat-number">{{ total_count }}</div>
+                            <div class="stat-label">Total Demandes</div>
+                            <i class="fas fa-vial stat-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card info position-relative">
+                            <div class="stat-number">{{ pending_count }}</div>
+                            <div class="stat-label">En attente</div>
+                            <i class="fas fa-clock stat-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card success position-relative">
+                            <div class="stat-number">{{ sent_count }}</div>
+                            <div class="stat-label">Envoyées</div>
+                            <i class="fas fa-paper-plane stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form method="get" action="{{ path('app_responsable_labo_demandes') }}" class="row g-3">
+                    <input type="hidden" name="sort" value="{{ sort|default('date') }}">
+                    <input type="hidden" name="dir" value="{{ dir|default('desc') }}">
+                    <input type="hidden" name="page" value="1">
+                    
+                    <div class="col-md-3">
+                        <label class="filter-label" for="statut">
+                            <i class="fas fa-tag"></i>Statut
+                        </label>
+                        <select class="form-select" id="statut" name="statut">
+                            <option value="">Tous les statuts</option>
+                            <option value="en_attente" {{ statut_filter == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                            <option value="envoye" {{ statut_filter == 'envoye' ? 'selected' : '' }}>Envoyé</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="filter-label" for="priorite">
+                            <i class="fas fa-flag"></i>Priorité
+                        </label>
+                        <select class="form-select" id="priorite" name="priorite">
+                            <option value="">Toutes les priorités</option>
+                            <option value="Haute" {{ priorite_filter == 'Haute' ? 'selected' : '' }}>Haute</option>
+                            <option value="Normale" {{ priorite_filter == 'Normale' ? 'selected' : '' }}>Normale</option>
+                            <option value="Basse" {{ priorite_filter == 'Basse' ? 'selected' : '' }}>Basse</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="filter-label" for="date_demande">
+                            <i class="fas fa-calendar"></i>Date
+                        </label>
+                        <input type="date" class="form-control" id="date_demande" name="date" value="{{ date_filter|default('') }}">
+                    </div>
+                    
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn-filter" type="submit">
+                            <i class="fas fa-search me-2"></i>Filtrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-wrapper">
+                {% if demandes is empty %}
+                    <div class="empty-state">
+                        <i class="fas fa-vial"></i>
+                        <h4>Aucune demande d'analyse</h4>
+                        <p class="text-muted">Aucune demande n'a été trouvée pour votre laboratoire.</p>
+                    </div>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Médecin Prescripteur</th>
+                                    <th>Date Programmée</th>
+                                    <th>Priorité</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in demandes %}
+                                    <tr class="demande-row">
+                                        <td>
+                                            <span class="fw-bold">#{{ demande.id|slice(0, 8) }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="patient-info">
+                                                <div class="patient-avatar">
+                                                    {% if demande.patient %}
+                                                        {{ demande.patient.prenom|first|upper }}{{ demande.patient.nom|first|upper }}
+                                                    {% else %}
+                                                        ?
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">
+                                                        {% if demande.patient %}
+                                                            {{ demande.patient.nom }} {{ demande.patient.prenom }}
+                                                        {% else %}
+                                                            <span class="text-muted">Non renseigné</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if demande.patient and demande.patient.dateNaissance %}
+                                                        <small class="text-muted">
+                                                            {{ demande.patient.dateNaissance|date('d/m/Y') }}
+                                                        </small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if demande.medecin %}
+                                                <div class="fw-bold">Dr. {{ demande.medecin.nom }}</div>
+                                                <small class="text-muted">{{ demande.medecin.specialite ?? 'Généraliste' }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Non assigné</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ demande.programmeLe ? demande.programmeLe|date('d/m/Y') : '-' }}</div>
+                                            <small class="text-muted">{{ demande.programmeLe ? demande.programmeLe|date('H:i') : '' }}</small>
+                                        </td>
+                                        <td>
+                                            {% set priority_class = {
+                                                'Haute': 'priority-high',
+                                                'Normale': 'priority-normal',
+                                                'Basse': 'priority-low'
+                                            } %}
+                                            <span class="badge-priority {{ priority_class[demande.priorite] ?? 'priority-normal' }}">
+                                                <i class="fas fa-flag"></i>
+                                                {{ demande.priorite }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% set effective_status = demande.resultatPdf ? 'envoye' : 'en_attente' %}
+                                            {% set status_class = {
+                                                'en_attente': 'status-pending',
+                                                'envoye': 'status-sent'
+                                            } %}
+                                            {% set status_label = {
+                                                'en_attente': 'En attente',
+                                                'envoye': 'Envoyé'
+                                            } %}
+                                            <span class="badge-status {{ status_class[effective_status] ?? 'status-pending' }}">
+                                                <i class="fas fa-{% if effective_status == 'envoye' %}check-circle{% else %}clock{% endif %}"></i>
+                                                {{ status_label[effective_status] ?? effective_status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-group">
+                                                {% if demande.resultatPdf %}
+                                                    <a href="{{ asset(demande.resultatPdf) }}"
+                                                       class="btn-action btn-view"
+                                                       title="Voir PDF"
+                                                       target="_blank"
+                                                       rel="noopener">
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <button type="button" class="btn-action btn-view" title="Aucun PDF" disabled>
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </button>
+                                                {% endif %}
+
+                                                <a href="{{ path('app_responsable_labo_demande_edit', {'id': demande.id}) }}"
+                                                   class="btn-action btn-upload"
+                                                   title="Uploader résultat PDF">
+                                                    <i class="fas fa-upload"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if demandes|length > 0 %}
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="text-muted small">
+                                    {% set start_index = ((pagination.page - 1) * pagination.per_page) + 1 %}
+                                    {% set end_index = pagination.page * pagination.per_page %}
+                                    {% if end_index > pagination.total %}{% set end_index = pagination.total %}{% endif %}
+                                    Affichage de {{ start_index }} à {{ end_index }} sur {{ pagination.total }} demande(s)
+                                </div>
+                                
+                                {% if pagination.total_pages > 1 %}
+                                    <nav>
+                                        <ul class="pagination">
+                                            {% set prev_page = pagination.page - 1 %}
+                                            <li class="page-item {{ pagination.page <= 1 ? 'disabled' : '' }}">
+                                                <a class="page-link" href="{{ path('app_responsable_labo_demandes', {
+                                                    page: prev_page < 1 ? 1 : prev_page,
+                                                    statut: statut_filter,
+                                                    type_bilan: type_bilan_filter,
+                                                    priorite: priorite_filter,
+                                                    date: date_filter,
+                                                    sort: sort,
+                                                    dir: dir
+                                                }) }}">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            </li>
+
+                                            {% for p in 1..pagination.total_pages %}
+                                                <li class="page-item {{ p == pagination.page ? 'active' : '' }}">
+                                                    <a class="page-link" href="{{ path('app_responsable_labo_demandes', {
+                                                        page: p,
+                                                        statut: statut_filter,
+                                                        type_bilan: type_bilan_filter,
+                                                        priorite: priorite_filter,
+                                                        date: date_filter,
+                                                        sort: sort,
+                                                        dir: dir
+                                                    }) }}">{{ p }}</a>
+                                                </li>
+                                            {% endfor %}
+
+                                            {% set next_page = pagination.page + 1 %}
+                                            <li class="page-item {{ pagination.page >= pagination.total_pages ? 'disabled' : '' }}">
+                                                <a class="page-link" href="{{ path('app_responsable_labo_demandes', {
+                                                    page: next_page > pagination.total_pages ? pagination.total_pages : next_page,
+                                                    statut: statut_filter,
+                                                    type_bilan: type_bilan_filter,
+                                                    priorite: priorite_filter,
+                                                    date: date_filter,
+                                                    sort: sort,
+                                                    dir: dir
+                                                }) }}">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.filter-section form');
+        if (!form) return;
+
+        const inputs = form.querySelectorAll('select, input[type="date"]');
+        let debounceTimer;
+
+        const submitForm = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => form.submit(), 250);
+        };
+
+        inputs.forEach((input) => {
+            if (input.type === 'date') {
+                input.addEventListener('change', submitForm);
+            } else {
+                input.addEventListener('change', submitForm);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahty - Confirmation d'inscription</title>
+    <meta name="description" content="Confirmation de votre inscription à l'événement">
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3a56d8;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #475569;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e6ecf7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Confirmation Card */
+        .confirmation-card {
+            background: white;
+            border-radius: 30px;
+            padding: 50px 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .confirmation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        .confirmation-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(74, 108, 247, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success Icon */
+        .success-icon-wrapper {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 30px;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .success-icon i {
+            font-size: 3.5rem;
+            color: white;
+        }
+
+        /* Reference Badge */
+        .reference-badge {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .reference-badge i {
+            margin-right: 10px;
+            opacity: 0.9;
+        }
+
+        /* Details Card */
+        .details-card {
+            background: var(--light);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.5);
+            padding-left: 10px;
+            border-radius: 10px;
+        }
+
+        .detail-icon {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-label {
+            flex: 1;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .status-paye, .status-confirme {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-en_attente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-annule {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Info Alert */
+        .info-alert {
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            border: none;
+            border-radius: 15px;
+            padding: 20px 25px;
+            color: #1e40af;
+            margin: 30px 0;
+            position: relative;
+            z-index: 1;
+            border-left: 5px solid var(--primary);
+        }
+
+        .info-alert i {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3);
+            color: white;
+        }
+
+        .btn-outline-primary-custom {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .btn-outline-primary-custom:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2);
+        }
+
+        /* Decorative Elements */
+        .confetti {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 30px;
+            background: var(--primary);
+            opacity: 0.1;
+            transform: rotate(45deg);
+        }
+
+        .confetti-piece:nth-child(1) {
+            top: 20px;
+            left: 10%;
+            background: var(--primary);
+        }
+
+        .confetti-piece:nth-child(2) {
+            bottom: 20px;
+            right: 15%;
+            background: var(--success);
+            width: 15px;
+            height: 40px;
+        }
+
+        .confetti-piece:nth-child(3) {
+            top: 40%;
+            right: 5%;
+            background: var(--accent);
+            width: 8px;
+            height: 25px;
+        }
+
+        .confetti-piece:nth-child(4) {
+            bottom: 30%;
+            left: 5%;
+            background: var(--secondary);
+            width: 12px;
+            height: 35px;
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .confirmation-card {
+                padding: 30px 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .detail-icon {
+                margin-bottom: 5px;
+            }
+
+            .detail-value {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-card">
+        <!-- Confetti Decorations -->
+        <div class="confetti">
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+            <div class="confetti-piece"></div>
+        </div>
+
+        <!-- Success Icon -->
+        <div class="success-icon-wrapper">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <h1 class="display-5 fw-bold mb-2 text-dark">Inscription confirmée !</h1>
+            <p class="text-muted">Votre inscription a été enregistrée avec succès</p>
+        </div>
+
+        <!-- Reference Badge -->
+        <div class="text-center">
+            <div class="reference-badge">
+                <i class="fas fa-hashtag"></i>
+                {{ inscription.reference is defined and inscription.reference ? inscription.reference : 'REF-' ~ inscription.id ~ '-' ~ inscription.dateInscription|date('Ymd') }}
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="details-card">
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <span class="detail-label">Événement</span>
+                <span class="detail-value">{{ inscription.evenement.titre }}</span>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <span class="detail-label">Date & Heure</span>
+                <span class="detail-value">{{ inscription.evenement.dateDebut|date('d/m/Y H:i') }}</span>
+            </div>
+
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="detail-label">Participant</span>
+                <span class="detail-value">{{ inscription.utilisateur.prenom }} {{ inscription.utilisateur.nom }}</span>
+            </div>
+
+            {% if inscription.evenement.lieu is defined and inscription.evenement.lieu %}
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <span class="detail-label">Lieu</span>
+                <span class="detail-value">{{ inscription.evenement.lieu }}</span>
+            </div>
+            {% endif %}
+
+            {% if inscription.evenement.tarif is defined and inscription.evenement.tarif %}
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-tag"></i>
+                </div>
+                <span class="detail-label">Montant</span>
+                <span class="detail-value text-success fw-bold">{{ inscription.evenement.tarif }} €</span>
+            </div>
+            {% endif %}
+
+            <div class="detail-item">
+                <div class="detail-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <span class="detail-label">Statut</span>
+                <span class="status-badge status-{{ inscription.statut }}">
+                    <i class="fas fa-{% if inscription.statut == 'paye' %}check-circle{% elseif inscription.statut == 'en_attente' %}clock{% else %}info-circle{% endif %} me-1"></i>
+                    {{ inscription.statut|replace({'_': ' '})|title }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Info Alert -->
+        <div class="info-alert d-flex align-items-center">
+            <i class="fas fa-envelope-open-text"></i>
+            <div>
+                <strong>Email de confirmation envoyé</strong><br>
+                <small>Un email récapitulatif a été envoyé à {{ inscription.utilisateur.email }}</small>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ path('evenements_evenement_view', {'id': inscription.evenement.id}) }}" 
+               class="btn-outline-primary-custom">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Voir l'événement
+            </a>
+            <a href="{{ path('app_home') }}" class="btn-primary-custom">
+                <i class="fas fa-home me-2"></i>
+                Accueil
+            </a>
+        </div>
+
+        <!-- Additional Info -->
+        <p class="text-center text-muted small mt-4 mb-0">
+            <i class="fas fa-print me-1"></i>
+            <a href="javascript:window.print()" class="text-decoration-none">Imprimer cette confirmation</a>
+        </p>
+    </div>
+</body>
+</html>

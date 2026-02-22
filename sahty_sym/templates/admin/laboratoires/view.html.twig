@@ -1,0 +1,273 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ laboratoire.nom }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ laboratoire.nom }}</h4>
+                <div>
+                    <a href="{{ path('admin_laboratoire_edit', {'id': laboratoire.id}) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <a href="{{ path('admin_laboratoires') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations générales -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Informations générales
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>Nom :</th>
+                            <td>{{ laboratoire.nom }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ville :</th>
+                            <td>{{ laboratoire.ville }}</td>
+                        </tr>
+                        <tr>
+                            <th>Adresse :</th>
+                            <td>{{ laboratoire.adresse }}</td>
+                        </tr>
+                        <tr>
+                            <th>Téléphone :</th>
+                            <td>{{ laboratoire.telephone }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email :</th>
+                            <td>{{ laboratoire.email ?: 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <th>N° Agrément :</th>
+                            <td>{{ laboratoire.numeroAgrement ?: 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Disponibilité :</th>
+                            <td>
+                                {% if laboratoire.disponible %}
+                                    <span class="badge bg-success">Disponible</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Indisponible</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Date création :</th>
+                            <td>{{ laboratoire.creeLe|date('d/m/Y') }}</td>
+                        </tr>
+                    </table>
+
+                    {% if laboratoire.description %}
+                        <div class="mt-3">
+                            <h6>Description :</h6>
+                            <p class="text-muted">{{ laboratoire.description }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="col-md-8 mb-4">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Total demandes</h6>
+                            <h2 class="mb-0">{{ stats.total_demandes }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">En attente</h6>
+                            <h2 class="mb-0">{{ stats.en_attente }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">En cours</h6>
+                            <h2 class="mb-0">{{ stats.en_cours }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Terminées</h6>
+                            <h2 class="mb-0">{{ stats.terminees }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Types d'analyses -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-flask"></i> Types d'analyses proposés
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if laboratoire.laboratoireTypeAnalyses|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type d'analyse</th>
+                                        <th>Catégorie</th>
+                                        <th>Prix</th>
+                                        <th>Délai</th>
+                                        <th>Disponible</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lta in laboratoire.laboratoireTypeAnalyses %}
+                                        <tr>
+                                            <td>{{ lta.typeAnalyse.nom }}</td>
+                                            <td>{{ lta.typeAnalyse.categorie ?: '-' }}</td>
+                                            <td>{{ lta.prix ? lta.prix|number_format(0, ',', ' ') ~ ' TND' : '-' }}</td>
+                                            <td>{{ lta.delaiResultatHeures ? lta.delaiResultatHeures ~ 'h' : '-' }}</td>
+                                            <td>
+                                                {% if lta.disponible %}
+                                                    <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Aucun type d'analyse associé à ce laboratoire</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Répartition par priorité -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i> Répartition par priorité
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-danger text-white rounded">
+                                <h6>Haute</h6>
+                                <h3>{{ priorites.Haute }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-warning text-white rounded">
+                                <h6>Normale</h6>
+                                <h3>{{ priorites.Normale }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3 bg-success text-white rounded">
+                                <h6>Basse</h6>
+                                <h3>{{ priorites.Basse }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dernières demandes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock"></i> Dernières demandes d'analyse
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Type bilan</th>
+                                    <th>Priorité</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for demande in demandes %}
+                                    <tr>
+                                        <td>{{ demande.dateDemande|date('d/m/Y H:i') }}</td>
+                                        <td>
+                                            {% if demande.patient %}
+                                                {{ demande.patient.prenom }} {{ demande.patient.nom }}
+                                            {% else %}
+                                                <span class="text-muted">Non assigné</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ demande.typeBilan }}</td>
+                                        <td>
+                                            {% if demande.priorite == 'Haute' %}
+                                                <span class="badge bg-danger">Haute</span>
+                                            {% elseif demande.priorite == 'Normale' %}
+                                                <span class="badge bg-warning">Normale</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Basse</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if demande.statut == 'en_attente' %}
+                                                <span class="badge bg-warning">En attente</span>
+                                            {% elseif demande.statut == 'en_cours' %}
+                                                <span class="badge bg-info">En cours</span>
+                                            {% elseif demande.statut == 'terminee' %}
+                                                <span class="badge bg-success">Terminée</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ path('admin_demande_analyse_view', {'id': demande.id}) }}" 
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <p class="mb-0 text-muted">Aucune demande d'analyse</p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
