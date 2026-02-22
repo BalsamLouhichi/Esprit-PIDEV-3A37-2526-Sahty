@@ -116,6 +116,7 @@ class SignupController extends AbstractController
                  ->setNom($form->get('nom')->getData())
                  ->setEmail($form->get('email')->getData())
                  ->setTelephone($form->get('telephone')->getData())
+                 ->setVille($form->get('ville')->getData())
                  ->setRole($roleSelected);
 
             if ($form->get('dateNaissance')->getData()) {

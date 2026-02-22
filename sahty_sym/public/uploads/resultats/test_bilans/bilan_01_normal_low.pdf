@@ -1,0 +1,58 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 626 >>
+stream
+BT
+/F1 12 Tf
+72 800 Td (Bilan de test 01 - Profil normal \(LOW\)) Tj
+0 0 Td
+72 782 Td (Type: NFS + Biochimie) Tj
+0 0 Td
+72 764 Td (Hb 14.2 g/dL \(12-16\)) Tj
+0 0 Td
+72 746 Td (GB 6.1 G/L \(4-10\)) Tj
+0 0 Td
+72 728 Td (Plaquettes 250 G/L \(150-400\)) Tj
+0 0 Td
+72 710 Td (Glycemie a jeun 0.92 g/L \(0.70-1.10\)) Tj
+0 0 Td
+72 692 Td (Creatinine 9 mg/L \(6-12\)) Tj
+0 0 Td
+72 674 Td (ASAT 24 U/L \(<35\)) Tj
+0 0 Td
+72 656 Td (ALAT 28 U/L \(<45\)) Tj
+0 0 Td
+72 638 Td (CRP 3 mg/L \(<5\)) Tj
+0 0 Td
+72 620 Td (Conclusion: parametres dans les normes.) Tj
+0 0 Td
+72 602 Td (Donnees synthetiques pour test IA uniquement.) Tj
+0 0 Td
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+988
+%%EOF

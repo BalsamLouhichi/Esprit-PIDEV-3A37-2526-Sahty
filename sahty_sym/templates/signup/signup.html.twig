@@ -85,6 +85,11 @@
                             <div class="text-danger">{{ form_errors(form.telephone) }}</div>
                         </div>
                         <div class="col-md-6">
+                            {{ form_label(form.ville) }}
+                            {{ form_widget(form.ville, {'attr': {'class': 'form-control'}}) }}
+                            <div class="text-danger">{{ form_errors(form.ville) }}</div>
+                        </div>
+                        <div class="col-md-6">
                             {{ form_label(form.dateNaissance) }}
                             {{ form_widget(form.dateNaissance, {'attr': {'class': 'form-control'}}) }}
                             <div class="text-danger">{{ form_errors(form.dateNaissance) }}</div>

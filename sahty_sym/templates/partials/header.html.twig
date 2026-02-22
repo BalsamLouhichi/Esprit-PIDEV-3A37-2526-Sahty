@@ -1,7 +1,11 @@
 <!-- templates/partials/header.html.twig -->
+<div class="sahty-header">
+{% set compact = header_compact|default(false) %}
 
 <!-- Topbar Start - Version Premium avec design amélioré -->
-<div class="container-fluid py-2 border-bottom d-none d-lg-block" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+{% set show_topbar = false %}
+{% if show_topbar %}
+<div class="container-fluid py-1 border-bottom d-none d-lg-block" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6 text-center text-lg-start mb-2 mb-lg-0">
@@ -38,17 +42,18 @@
     </div>
 </div>
 <!-- Topbar End -->
+{% endif %}
 
 <!-- Navbar Start - Design Premium Amélioré -->
 <div class="container-fluid sticky-top bg-white shadow-sm" style="border-bottom: 3px solid transparent; border-image: linear-gradient(90deg, var(--primary), var(--accent)); border-image-slice: 1;">
     <div class="container">
-        <nav class="navbar navbar-expand-lg bg-white navbar-light py-2 py-lg-0">
+        <nav class="navbar navbar-expand-lg bg-white navbar-light py-1 py-lg-0">
             <a href="{{ path('app_home') }}" class="navbar-brand">
                 <div class="d-flex align-items-center">
-                    <div class="me-2" style="width: 45px; height: 45px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <div class="me-2" style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                         <i class="fa fa-heartbeat text-white" style="font-size: 1.5rem;"></i>
                     </div>
-                    <h1 class="m-0" style="font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    <h1 class="m-0" style="font-size: 1.55rem; font-weight: 700; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                         Sahty
                     </h1>
                 </div>
@@ -97,7 +102,7 @@
                     {% endif %}
                     
                     <!-- MENU RENDEZ-VOUS - POUR MÉDECINS ET PATIENTS UNIQUEMENT -->
-                    {% if is_granted('ROLE_MEDECIN') or is_granted('ROLE_PATIENT') %}
+                    {% if (is_granted('ROLE_MEDECIN') or is_granted('ROLE_PATIENT')) and not compact %}
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fa fa-calendar-check me-1"></i>Rendez-vous
@@ -145,7 +150,7 @@
                     {% endif %}
                     
                     <!-- MENU PARAPHARMACIE - POUR RESPONSABLE PARA ET PATIENTS -->
-                    {% if is_granted('ROLE_RESPONSABLE_PARA') or is_granted('ROLE_PATIENT') %}
+                    {% if (is_granted('ROLE_RESPONSABLE_PARA') or is_granted('ROLE_PATIENT')) and not compact %}
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fa fa-pills me-1"></i>Parapharmacie
@@ -178,7 +183,7 @@
                     {% endif %}
                     
                     <!-- MENU ÉVÉNEMENTS - POUR TOUS LES UTILISATEURS CONNECTÉS SAUF ADMIN -->
-                    {% if app.user and not is_granted('ROLE_ADMIN') %}
+                    {% if app.user and not is_granted('ROLE_ADMIN') and not compact %}
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fas fa-calendar-alt me-1"></i>Événements
@@ -246,9 +251,9 @@
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle d-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="dropdown" style="border-radius: 50px; background: rgba(29, 93, 155, 0.05); border: 1px solid rgba(29, 93, 155, 0.1);">
                                 {% if app.user.photoProfil %}
-                                    <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+                                    <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
                                 {% else %}
-                                    <span class="d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border: 2px solid white; box-shadow: 0 2px 10px rgba(29,93,155,0.2);">
+                                    <span class="d-inline-flex align-items-center justify-content-center" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border: 2px solid white; box-shadow: 0 2px 10px rgba(29,93,155,0.2);">
                                         <i class="fa fa-user" style="font-size: 1rem;"></i>
                                     </span>
                                 {% endif %}
@@ -299,7 +304,7 @@
 
 <style>
 /* Styles améliorés pour le header */
-:root {
+.sahty-header {
     --primary: #1D5D9B;
     --primary-dark: #163A5F;
     --accent: #75C2F6;
@@ -317,11 +322,11 @@
 
 .navbar-nav .nav-link {
     font-weight: 600;
-    padding: 0.7rem 1.2rem !important;
+    padding: 0.52rem 0.95rem !important;
     color: #2c3e50;
     transition: all 0.3s ease;
     border-radius: 50px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .navbar-nav .nav-link:hover {
@@ -488,3 +493,5 @@ window.addEventListener('scroll', function() {
     }
 });
 </script>
+
+</div>

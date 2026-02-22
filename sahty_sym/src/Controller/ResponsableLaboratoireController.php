@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\DemandeAnalyse;
+use App\Entity\ResultatAnalyse;
 use App\Entity\ResponsableLaboratoire;
 use App\Form\LaboratoireType;
+use App\Integration\FastApiLabAiClient;
 use App\Repository\DemandeAnalyseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,6 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -120,7 +123,8 @@ class ResponsableLaboratoireController extends AbstractController
         DemandeAnalyse $demandeAnalyse,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger,
-        MailerInterface $mailer
+        MailerInterface $mailer,
+        FastApiLabAiClient $fastApiLabAiClient
     ): Response {
         $responsable = $this->getUser();
         if (!$responsable instanceof ResponsableLaboratoire) {
@@ -147,6 +151,7 @@ class ResponsableLaboratoireController extends AbstractController
 
             $resultatFile = $request->files->get('resultat_pdf');
             $shouldSendEmail = false;
+
             if ($resultatFile instanceof UploadedFile) {
                 $mimeType = $resultatFile->getMimeType();
                 $extension = strtolower((string) $resultatFile->guessExtension());
@@ -168,6 +173,14 @@ class ResponsableLaboratoireController extends AbstractController
                 $demandeAnalyse->setResultatPdf('uploads/resultats/' . $newFilename);
                 $shouldSendEmail = true;
 
+                $fullFilePath = $uploadDir . '/' . $newFilename;
+                $this->analyzeAndAttachResultat(
+                    $demandeAnalyse,
+                    $fullFilePath,
+                    $newFilename,
+                    $fastApiLabAiClient
+                );
+
                 if ($demandeAnalyse->getStatut() !== 'envoye') {
                     $demandeAnalyse->setStatut('envoye');
                 }
@@ -182,6 +195,7 @@ class ResponsableLaboratoireController extends AbstractController
 
             if ($shouldSendEmail) {
                 $this->sendResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
+                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
             }
 
             $this->addFlash('success', 'Demande mise a jour avec succes.');
@@ -194,71 +208,61 @@ class ResponsableLaboratoireController extends AbstractController
         ]);
     }
 
-    private function sendResultEmail(DemandeAnalyse $demandeAnalyse, MailerInterface $mailer, ?string $fromEmail): void
+    private function sendResultEmail(
+        DemandeAnalyse $demandeAnalyse,
+        MailerInterface $mailer,
+        ?string $fromEmail
+    ): void
     {
-        $recipients = [];
         $patientEmail = $demandeAnalyse->getPatient()?->getEmail();
-        $medecinEmail = $demandeAnalyse->getMedecin()?->getEmail();
-
-        if ($patientEmail) {
-            $recipients[] = $patientEmail;
-        }
-        if ($medecinEmail) {
-            $recipients[] = $medecinEmail;
-        }
-        $recipients = array_values(array_unique($recipients));
-
-        if (!$recipients || !$demandeAnalyse->getResultatPdf()) {
+        if (!$patientEmail || !$demandeAnalyse->getResultatPdf()) {
             return;
         }
 
-        $filePath = $this->getParameter('kernel.project_dir') . '/public/' . $demandeAnalyse->getResultatPdf();
-        if (!is_file($filePath)) {
-            return;
-        }
+        $patientName = $demandeAnalyse->getPatient()?->getNomComplet() ?: 'Patient';
+        $laboratoireName = $demandeAnalyse->getLaboratoire()?->getNom() ?: 'Laboratoire';
+        $typeBilan = $demandeAnalyse->getTypeBilan() ?: 'Non precise';
+        $dateDemande = $demandeAnalyse->getDateDemande()?->format('d/m/Y H:i') ?: '-';
+        $mesDemandesUrl = $this->generateUrl('app_demande_analyse_mes_demandes', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
-                $patientName = $demandeAnalyse->getPatient()?->getNomComplet() ?: 'Patient';
-                $medecinName = $demandeAnalyse->getMedecin()?->getNomComplet() ?: 'Medecin';
-                $laboratoireName = $demandeAnalyse->getLaboratoire()?->getNom() ?: 'Laboratoire';
-                $typeBilan = $demandeAnalyse->getTypeBilan() ?: 'Non precise';
-                $dateDemande = $demandeAnalyse->getDateDemande()?->format('d/m/Y H:i') ?: '-';
+        $safePatientName = htmlspecialchars($patientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeLaboratoireName = htmlspecialchars($laboratoireName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeTypeBilan = htmlspecialchars($typeBilan, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeDateDemande = htmlspecialchars($dateDemande, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeMesDemandesUrl = htmlspecialchars($mesDemandesUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-                $safePatientName = htmlspecialchars($patientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $safeMedecinName = htmlspecialchars($medecinName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $safeLaboratoireName = htmlspecialchars($laboratoireName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $safeTypeBilan = htmlspecialchars($typeBilan, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $safeDateDemande = htmlspecialchars($dateDemande, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $textBody = "Bonjour " . $patientName . ",\n\n"
+            . "Votre resultat d'analyse est disponible pour la demande #" . $demandeAnalyse->getId() . ".\n\n"
+            . "Laboratoire : " . $laboratoireName . "\n"
+            . "Type de bilan : " . $typeBilan . "\n"
+            . "Date de la demande : " . $dateDemande . "\n\n"
+            . "Consultez votre espace patient (Mes demandes):\n"
+            . $mesDemandesUrl . "\n\n"
+            . "Cordialement,\n"
+            . $laboratoireName;
 
-                $textBody = "Bonjour,\n\n"
-                        . "Le resultat d'analyse pour la demande #" . $demandeAnalyse->getId() . " est disponible.\n\n"
-                        . "Patient : " . $patientName . "\n"
-                        . "Medecin : " . $medecinName . "\n"
-                        . "Laboratoire : " . $laboratoireName . "\n"
-                        . "Type de bilan : " . $typeBilan . "\n"
-                        . "Date de la demande : " . $dateDemande . "\n\n"
-                        . "Veuillez trouver le PDF en piece jointe.\n\n"
-                        . "Cordialement,\n"
-                        . $laboratoireName;
-
-                $htmlBody = <<<HTML
+        $htmlBody = <<<HTML
 <div style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;">
     <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
         <div style="background:#2563eb;color:#ffffff;padding:16px 24px;font-size:18px;font-weight:700;">
-            Resultat d'analyse disponible
+            Notification resultat disponible
         </div>
         <div style="padding:24px;line-height:1.55;">
-            <p style="margin:0 0 12px 0;">Bonjour,</p>
-            <p style="margin:0 0 16px 0;">Le resultat d'analyse pour la demande <strong>#{$demandeAnalyse->getId()}</strong> est disponible.</p>
+            <p style="margin:0 0 12px 0;">Bonjour {$safePatientName},</p>
+            <p style="margin:0 0 16px 0;">Votre resultat d'analyse est disponible pour la demande <strong>#{$demandeAnalyse->getId()}</strong>.</p>
 
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 16px 0;">
-                <p style="margin:0 0 6px 0;"><strong>Patient :</strong> {$safePatientName}</p>
-                <p style="margin:0 0 6px 0;"><strong>Medecin :</strong> {$safeMedecinName}</p>
                 <p style="margin:0 0 6px 0;"><strong>Laboratoire :</strong> {$safeLaboratoireName}</p>
                 <p style="margin:0 0 6px 0;"><strong>Type de bilan :</strong> {$safeTypeBilan}</p>
                 <p style="margin:0;"><strong>Date de la demande :</strong> {$safeDateDemande}</p>
             </div>
 
-            <p style="margin:0 0 16px 0;">Le document PDF est joint a ce message.</p>
+            <p style="margin:0 0 12px 0;">Pour consulter votre resultat, allez dans votre espace patient.</p>
+            <p style="margin:0 0 20px 0;">
+                <a href="{$safeMesDemandesUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">
+                    Ouvrir Mes Demandes
+                </a>
+            </p>
             <p style="margin:0;">Cordialement,<br><strong>{$safeLaboratoireName}</strong></p>
         </div>
     </div>
@@ -268,13 +272,422 @@ HTML;
         $from = $fromEmail ?: 'no-reply@sahty.local';
         $email = (new Email())
             ->from($from)
-            ->to(...$recipients)
-            ->subject('Resultat d\'analyse - Demande #' . $demandeAnalyse->getId())
-                        ->text($textBody)
-                        ->html($htmlBody)
-            ->attachFromPath($filePath, 'resultat-analyse.pdf', 'application/pdf');
+            ->to($patientEmail)
+            ->subject('Resultat disponible - Demande #' . $demandeAnalyse->getId())
+            ->text($textBody)
+            ->html($htmlBody);
 
         $mailer->send($email);
+    }
+
+    private function sendDoctorResultEmail(
+        DemandeAnalyse $demandeAnalyse,
+        MailerInterface $mailer,
+        ?string $fromEmail
+    ): void {
+        $doctorEmail = $demandeAnalyse->getMedecin()?->getEmail();
+        if (!$doctorEmail || !$demandeAnalyse->getResultatPdf()) {
+            return;
+        }
+
+        $pdfPublicPath = (string) $demandeAnalyse->getResultatPdf();
+        $pdfAbsolutePath = $this->getParameter('kernel.project_dir') . '/public/' . $pdfPublicPath;
+        $hasPdfAttachment = is_file($pdfAbsolutePath);
+        $pdfAttachmentName = basename($pdfPublicPath) ?: 'resultat-analyse.pdf';
+
+        $doctorName = $demandeAnalyse->getMedecin()?->getNomComplet() ?: 'Docteur';
+        $patientName = $demandeAnalyse->getPatient()?->getNomComplet() ?: 'Patient';
+        $laboratoireName = $demandeAnalyse->getLaboratoire()?->getNom() ?: 'Laboratoire';
+        $typeBilan = $demandeAnalyse->getTypeBilan() ?: 'Non precise';
+        $dateDemande = $demandeAnalyse->getDateDemande()?->format('d/m/Y H:i') ?: '-';
+        $resultatUrl = $this->generateUrl('app_demande_analyse_mes_demandes', [], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $safeDoctorName = htmlspecialchars($doctorName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safePatientName = htmlspecialchars($patientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeLaboratoireName = htmlspecialchars($laboratoireName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeTypeBilan = htmlspecialchars($typeBilan, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeDateDemande = htmlspecialchars($dateDemande, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeResultatUrl = htmlspecialchars($resultatUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        $raw = is_array($resultatAnalyse?->getAiRawResponse()) ? $resultatAnalyse->getAiRawResponse() : [];
+        $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
+        $anomalies = $resultatAnalyse?->getAnomalies();
+        if (!is_array($anomalies)) {
+            $anomalies = [];
+        }
+
+        $dangerLevel = $resultatAnalyse?->getDangerLevel() ?: '-';
+        $dangerScore = $resultatAnalyse?->getDangerScore();
+        $dangerText = $dangerScore !== null ? sprintf('%s (%d/100)', $dangerLevel, $dangerScore) : $dangerLevel;
+        $aiStatus = $resultatAnalyse?->getAiStatus() ?? ResultatAnalyse::AI_STATUS_PENDING;
+        $model = $resultatAnalyse?->getModeleVersion() ?: '-';
+        $resume = trim((string) ($llmInterpretation['clinician_summary'] ?? $resultatAnalyse?->getResumeBilan() ?? ''));
+        if ($resume === '') {
+            $resume = 'Resume IA non disponible.';
+        }
+        $urgency = trim((string) ($llmInterpretation['urgency'] ?? ''));
+        $urgencyReason = trim((string) ($llmInterpretation['urgency_reason'] ?? ''));
+        $actions = $this->normalizeAiList($llmInterpretation['suggested_actions'] ?? null);
+
+        $textBody = "Bonjour Dr. " . $doctorName . ",\n\n"
+            . "Un nouveau resultat de bilan est disponible.\n\n"
+            . "Demande : #" . $demandeAnalyse->getId() . "\n"
+            . "Patient : " . $patientName . "\n"
+            . "Laboratoire : " . $laboratoireName . "\n"
+            . "Type de bilan : " . $typeBilan . "\n"
+            . "Date de la demande : " . $dateDemande . "\n\n"
+            . "--- Synthese IA ---\n"
+            . "Statut IA : " . $aiStatus . "\n"
+            . "Niveau danger : " . $dangerText . "\n"
+            . "Modele : " . $model . "\n"
+            . "Resume clinicien : " . $resume . "\n";
+
+        if ($urgency !== '') {
+            $textBody .= "Urgence : " . $urgency . ($urgencyReason !== '' ? ' - ' . $urgencyReason : '') . "\n";
+        }
+        if ($actions) {
+            $textBody .= "Actions suggerees:\n";
+            foreach ($actions as $action) {
+                $textBody .= "- " . $action . "\n";
+            }
+        }
+
+        $textBody .= "\n--- Anomalies ---\n" . $this->formatAnomaliesText($anomalies) . "\n\n"
+            . ($hasPdfAttachment ? "Le PDF resultat est joint a ce message.\n" : "PDF resultat introuvable en piece jointe.\n")
+            . "Lien plateforme patient : " . $resultatUrl . "\n\n"
+            . "Cordialement,\n"
+            . $laboratoireName;
+
+        $safeAiStatus = htmlspecialchars($aiStatus, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeDangerText = htmlspecialchars($dangerText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeModel = htmlspecialchars($model, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeResume = nl2br(htmlspecialchars($resume, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $safeUrgency = htmlspecialchars($urgency, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeUrgencyReason = htmlspecialchars($urgencyReason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $actionsHtml = '';
+        if ($actions) {
+            $items = array_map(
+                static fn (string $a): string => '<li>' . htmlspecialchars($a, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</li>',
+                $actions
+            );
+            $actionsHtml = '<p style="margin:0 0 8px 0;"><strong>Actions suggerees :</strong></p><ul style="margin:0 0 10px 18px;padding:0;">' . implode('', $items) . '</ul>';
+        }
+
+        $urgencyHtml = '';
+        if ($urgency !== '') {
+            $urgencyHtml = '<p style="margin:0 0 6px 0;"><strong>Urgence :</strong> ' . $safeUrgency
+                . ($urgencyReason !== '' ? ' - ' . $safeUrgencyReason : '') . '</p>';
+        }
+
+        $anomalyTableRows = $this->buildAnomalyTableRowsHtml($anomalies);
+        $pdfAttachmentHintHtml = htmlspecialchars(
+            $this->buildDoctorPdfAttachmentHintHtml($hasPdfAttachment),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $htmlBody = <<<HTML
+<div style="margin:0;padding:24px;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;">
+    <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <div style="background:#1d4ed8;color:#ffffff;padding:16px 24px;font-size:18px;font-weight:700;">
+            Resultat de bilan disponible - Synthese medecin
+        </div>
+        <div style="padding:24px;line-height:1.55;">
+            <p style="margin:0 0 12px 0;">Bonjour Dr. {$safeDoctorName},</p>
+            <p style="margin:0 0 14px 0;">Le resultat de la demande <strong>#{$demandeAnalyse->getId()}</strong> est maintenant disponible.</p>
+
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:0 0 14px 0;">
+                <p style="margin:0 0 6px 0;"><strong>Patient :</strong> {$safePatientName}</p>
+                <p style="margin:0 0 6px 0;"><strong>Laboratoire :</strong> {$safeLaboratoireName}</p>
+                <p style="margin:0 0 6px 0;"><strong>Type de bilan :</strong> {$safeTypeBilan}</p>
+                <p style="margin:0;"><strong>Date de la demande :</strong> {$safeDateDemande}</p>
+            </div>
+
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 14px 0;">
+                <p style="margin:0 0 6px 0;"><strong>Statut IA :</strong> {$safeAiStatus}</p>
+                <p style="margin:0 0 6px 0;"><strong>Niveau danger :</strong> {$safeDangerText}</p>
+                <p style="margin:0 0 6px 0;"><strong>Modele :</strong> {$safeModel}</p>
+                {$urgencyHtml}
+                <p style="margin:0 0 8px 0;"><strong>Resume clinicien :</strong></p>
+                <p style="margin:0 0 10px 0;">{$safeResume}</p>
+                {$actionsHtml}
+            </div>
+
+            <h3 style="margin:0 0 10px 0;color:#0f172a;font-size:18px;">Anomalies</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #d1d5db;margin-bottom:14px;">
+                <thead>
+                    <tr style="background:#e5edf7;">
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Name</th>
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Value</th>
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Reference</th>
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Status</th>
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Severity</th>
+                        <th style="border:1px solid #d1d5db;padding:8px;text-align:left;">Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$anomalyTableRows}
+                </tbody>
+            </table>
+
+            <p style="margin:0 0 10px 0;">
+                <a href="{$safeResultatUrl}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;">
+                    Ouvrir la plateforme
+                </a>
+            </p>
+            <p style="margin:0 0 10px 0;color:#334155;">{$pdfAttachmentHintHtml}</p>
+            <p style="margin:0;">Cordialement,<br><strong>{$safeLaboratoireName}</strong></p>
+        </div>
+    </div>
+</div>
+HTML;
+
+        $from = $fromEmail ?: 'no-reply@sahty.local';
+        $email = (new Email())
+            ->from($from)
+            ->to($doctorEmail)
+            ->subject('Synthese IA bilan patient - Demande #' . $demandeAnalyse->getId())
+            ->text($textBody)
+            ->html($htmlBody);
+
+        if ($hasPdfAttachment) {
+            $email->attachFromPath($pdfAbsolutePath, $pdfAttachmentName, 'application/pdf');
+        }
+
+        $mailer->send($email);
+    }
+
+    private function analyzeAndAttachResultat(
+        DemandeAnalyse $demandeAnalyse,
+        string $fullPdfPath,
+        string $filename,
+        FastApiLabAiClient $fastApiLabAiClient
+    ): void {
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse() ?? new ResultatAnalyse();
+        $resultatAnalyse->setDemandeAnalyse($demandeAnalyse);
+        $resultatAnalyse->setSourcePdf($demandeAnalyse->getResultatPdf());
+        $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_PENDING);
+        $resultatAnalyse->touch();
+
+        try {
+            $payload = $fastApiLabAiClient->analyzePdf($fullPdfPath, $filename);
+
+            $analysis = is_array($payload['analysis'] ?? null) ? $payload['analysis'] : [];
+            $llmInterpretation = is_array($payload['llm_interpretation'] ?? null) ? $payload['llm_interpretation'] : [];
+
+            $dangerScore = isset($analysis['danger_score']) ? (int) $analysis['danger_score'] : null;
+            $dangerLevel = isset($analysis['danger_level']) ? (string) $analysis['danger_level'] : null;
+            $summary = isset($analysis['summary']) ? (string) $analysis['summary'] : '';
+            $clinicianSummary = isset($llmInterpretation['clinician_summary']) ? (string) $llmInterpretation['clinician_summary'] : '';
+            $urgency = isset($llmInterpretation['urgency']) ? (string) $llmInterpretation['urgency'] : '';
+            $urgencyReason = isset($llmInterpretation['urgency_reason']) ? (string) $llmInterpretation['urgency_reason'] : '';
+            $model = isset($analysis['model']) ? (string) $analysis['model'] : null;
+            $llmModel = isset($llmInterpretation['model']) ? (string) $llmInterpretation['model'] : null;
+
+            $resumeParts = [];
+            if ($summary !== '') {
+                $resumeParts[] = 'Analyse: ' . $summary;
+            }
+            if ($clinicianSummary !== '') {
+                $resumeParts[] = 'Interpretation clinicien: ' . $clinicianSummary;
+            }
+            if ($urgency !== '') {
+                $resumeParts[] = 'Urgence: ' . $urgency . ($urgencyReason !== '' ? ' - ' . $urgencyReason : '');
+            }
+
+            $modelVersion = trim(implode(' | ', array_filter([$model, $llmModel], static fn ($v) => $v !== null && $v !== '')));
+            $anomalies = is_array($analysis['anomalies'] ?? null) ? $analysis['anomalies'] : null;
+
+            $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_DONE);
+            $resultatAnalyse->setDangerScore($dangerScore);
+            $resultatAnalyse->setDangerLevel($dangerLevel);
+            $resultatAnalyse->setResumeBilan($resumeParts ? implode("\n\n", $resumeParts) : null);
+            $resultatAnalyse->setModeleVersion($modelVersion !== '' ? $modelVersion : null);
+            $resultatAnalyse->setAnomalies($anomalies);
+            $resultatAnalyse->setAiRawResponse($payload);
+            $resultatAnalyse->setAnalyseLe(new \DateTime());
+            $resultatAnalyse->touch();
+        } catch (\Throwable $e) {
+            $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_FAILED);
+            $resultatAnalyse->setResumeBilan('Analyse IA indisponible: ' . $e->getMessage());
+            $resultatAnalyse->setAiRawResponse([
+                'error' => $e->getMessage(),
+            ]);
+            $resultatAnalyse->setAnalyseLe(new \DateTime());
+            $resultatAnalyse->touch();
+
+            $this->addFlash('warning', 'Le resultat PDF est enregistre, mais l\'analyse IA distante a echoue.');
+        }
+
+        $demandeAnalyse->setResultatAnalyse($resultatAnalyse);
+    }
+
+    /**
+     * @param array<int,mixed>|null $anomalies
+     */
+    private function formatTopAnomalies(?array $anomalies): string
+    {
+        if (!$anomalies) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ($anomalies as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $name = isset($item['name']) ? (string) $item['name'] : '';
+            if ($name === '') {
+                continue;
+            }
+            $value = isset($item['value']) ? (string) $item['value'] : '';
+            $status = isset($item['status']) ? (string) $item['status'] : '';
+            $ref = isset($item['reference']) ? (string) $item['reference'] : '';
+
+            $line = '- ' . $name;
+            if ($value !== '') {
+                $line .= ' = ' . $value;
+            }
+            if ($status !== '') {
+                $line .= ' (' . $status . ')';
+            }
+            if ($ref !== '') {
+                $line .= ' [ref: ' . $ref . ']';
+            }
+            $lines[] = $line;
+            if (count($lines) >= 5) {
+                break;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param mixed $source
+     * @return array<int,string>
+     */
+    private function normalizeAiList(mixed $source): array
+    {
+        if (is_array($source)) {
+            $lines = [];
+            foreach ($source as $item) {
+                if (is_scalar($item)) {
+                    $value = trim((string) $item);
+                    if ($value !== '') {
+                        $lines[] = $value;
+                    }
+                }
+            }
+            return array_values(array_unique($lines));
+        }
+
+        if (!is_string($source)) {
+            return [];
+        }
+
+        $parts = preg_split('/[\r\n;]+/', $source) ?: [];
+        $lines = [];
+        foreach ($parts as $part) {
+            $value = trim((string) $part);
+            $value = ltrim($value, "-* \t");
+            if ($value !== '') {
+                $lines[] = $value;
+            }
+        }
+
+        return array_values(array_unique($lines));
+    }
+
+    /**
+     * @param array<int,mixed> $anomalies
+     */
+    private function buildAnomalyTableRowsHtml(array $anomalies): string
+    {
+        if (!$anomalies) {
+            return '<tr><td colspan="6" style="border:1px solid #d1d5db;padding:8px;color:#6b7280;">Aucune anomalie structuree disponible.</td></tr>';
+        }
+
+        $rows = [];
+        foreach ($anomalies as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $name = htmlspecialchars((string) ($item['name'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $value = htmlspecialchars((string) ($item['value'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $reference = htmlspecialchars((string) ($item['reference'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $status = htmlspecialchars((string) ($item['status'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $severity = htmlspecialchars((string) ($item['severity'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $note = htmlspecialchars((string) ($item['note'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+            $rows[] = '<tr>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $name . '</td>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $value . '</td>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $reference . '</td>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $status . '</td>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $severity . '</td>'
+                . '<td style="border:1px solid #d1d5db;padding:8px;">' . $note . '</td>'
+                . '</tr>';
+        }
+
+        if (!$rows) {
+            return '<tr><td colspan="6" style="border:1px solid #d1d5db;padding:8px;color:#6b7280;">Aucune anomalie structuree disponible.</td></tr>';
+        }
+
+        return implode('', $rows);
+    }
+
+    /**
+     * @param array<int,mixed> $anomalies
+     */
+    private function formatAnomaliesText(array $anomalies): string
+    {
+        if (!$anomalies) {
+            return 'Aucune anomalie structuree disponible.';
+        }
+
+        $lines = [];
+        foreach ($anomalies as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $name = trim((string) ($item['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $value = trim((string) ($item['value'] ?? '-'));
+            $reference = trim((string) ($item['reference'] ?? '-'));
+            $status = trim((string) ($item['status'] ?? '-'));
+            $severity = trim((string) ($item['severity'] ?? '-'));
+            $note = trim((string) ($item['note'] ?? '-'));
+
+            $lines[] = sprintf(
+                '- %s | value: %s | ref: %s | status: %s | severity: %s | note: %s',
+                $name,
+                $value !== '' ? $value : '-',
+                $reference !== '' ? $reference : '-',
+                $status !== '' ? $status : '-',
+                $severity !== '' ? $severity : '-',
+                $note !== '' ? $note : '-'
+            );
+        }
+
+        return $lines ? implode("\n", $lines) : 'Aucune anomalie structuree disponible.';
+    }
+
+    private function buildDoctorPdfAttachmentHintHtml(bool $hasPdfAttachment): string
+    {
+        if ($hasPdfAttachment) {
+            return 'Le PDF resultat est joint a ce message.';
+        }
+
+        return 'Le PDF resultat n\'a pas pu etre joint automatiquement.';
     }
 
     private function buildDemandesViewData(
