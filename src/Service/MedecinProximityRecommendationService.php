@@ -32,6 +32,7 @@ class MedecinProximityRecommendationService
         // Evite des requetes geocoding trop longues quand la base contient beaucoup de medecins.
         $medecins = array_slice($medecins, 0, 15);
         $results = [];
+        $candidates = [];
 
         foreach ($medecins as $medecin) {
             if (!$medecin instanceof Medecin || !$medecin->isEstActif()) {
@@ -39,11 +40,39 @@ class MedecinProximityRecommendationService
             }
 
             $adresseCabinet = trim((string) $medecin->getAdresseCabinet());
-            if ($adresseCabinet === '') {
+            $ville = trim((string) $medecin->getVille());
+            if ($adresseCabinet === '' && $ville === '') {
                 continue;
             }
 
-            $coords = $this->geocodeAddress($this->buildTunisiaAddressQuery($medecin));
+            $queries = $this->buildAddressQueries($medecin);
+            $candidates[] = [
+                'medecin' => $medecin,
+                'queries' => $queries,
+            ];
+        }
+
+        $addressQueries = [];
+        foreach ($candidates as $item) {
+            foreach (($item['queries'] ?? []) as $query) {
+                if (is_string($query) && $query !== '') {
+                    $addressQueries[] = $query;
+                }
+            }
+        }
+        $addressQueries = array_values(array_unique(array_filter($addressQueries)));
+        $coordsByAddress = $this->geocodeAddresses($addressQueries);
+
+        foreach ($candidates as $item) {
+            /** @var Medecin $medecin */
+            $medecin = $item['medecin'];
+            $coords = null;
+            foreach (($item['queries'] ?? []) as $query) {
+                $coords = $coordsByAddress[$query] ?? null;
+                if ($coords !== null) {
+                    break;
+                }
+            }
             if ($coords === null) {
                 continue;
             }
@@ -81,73 +110,112 @@ class MedecinProximityRecommendationService
     }
 
     /**
-     * @return array{lat: float, lng: float}|null
+     * @param array<int, string> $addresses
+     * @return array<string, array{lat: float, lng: float}|null>
      */
-    private function geocodeAddress(string $address): ?array
+    private function geocodeAddresses(array $addresses): array
     {
-        if (array_key_exists($address, $this->geocodeCache)) {
-            return $this->geocodeCache[$address];
-        }
+        $results = [];
+        $responses = [];
+        $responseAddressMap = [];
 
-        try {
+        foreach ($addresses as $address) {
+            if (array_key_exists($address, $this->geocodeCache)) {
+                $results[$address] = $this->geocodeCache[$address];
+                continue;
+            }
+
             $response = $this->httpClient->request('GET', self::GEOCODER_ENDPOINT, [
                 'query' => [
                     'q' => $address,
                     'format' => 'jsonv2',
                     'limit' => 1,
                     'countrycodes' => 'tn',
-                    'addressdetails' => 1,
                 ],
                 'headers' => [
                     'User-Agent' => 'SahtySym/1.0 (doctor-proximity-recommendation)',
                 ],
-                'timeout' => 2.5,
+                'timeout' => 2.0,
             ]);
 
-            $payload = $response->toArray(false);
-            if (!is_array($payload) || empty($payload[0])) {
-                $this->geocodeCache[$address] = null;
-                return null;
-            }
-
-            $first = $payload[0];
-            $countryCode = mb_strtolower((string) ($first['address']['country_code'] ?? $first['country_code'] ?? ''));
-            if ($countryCode !== '' && $countryCode !== 'tn') {
-                $this->geocodeCache[$address] = null;
-                return null;
-            }
-
-            $lat = isset($first['lat']) ? (float) $first['lat'] : null;
-            $lng = isset($first['lon']) ? (float) $first['lon'] : null;
-
-            if ($lat === null || $lng === null) {
-                $this->geocodeCache[$address] = null;
-                return null;
-            }
-
-            $this->geocodeCache[$address] = ['lat' => $lat, 'lng' => $lng];
-            return $this->geocodeCache[$address];
-        } catch (\Throwable) {
-            $this->geocodeCache[$address] = null;
-            return null;
+            $responses[] = $response;
+            $responseAddressMap[spl_object_id($response)] = $address;
         }
+
+        if ($responses !== []) {
+            foreach ($this->httpClient->stream($responses, 3.0) as $response => $chunk) {
+                if (!$chunk->isLast()) {
+                    continue;
+                }
+
+                $address = $responseAddressMap[spl_object_id($response)] ?? null;
+                if ($address === null) {
+                    continue;
+                }
+
+                try {
+                    $payload = $response->toArray(false);
+                    $results[$address] = $this->extractCoordinatesFromPayload($payload);
+                } catch (\Throwable) {
+                    $results[$address] = null;
+                }
+
+                $this->geocodeCache[$address] = $results[$address];
+            }
+        }
+
+        foreach ($addresses as $address) {
+            if (!array_key_exists($address, $results)) {
+                $this->geocodeCache[$address] = null;
+                $results[$address] = null;
+            }
+        }
+
+        return $results;
     }
 
-    private function buildTunisiaAddressQuery(Medecin $medecin): string
+    /**
+     * @param mixed $payload
+     * @return array{lat: float, lng: float}|null
+     */
+    private function extractCoordinatesFromPayload(mixed $payload): ?array
     {
-        $parts = [];
+        if (!is_array($payload) || empty($payload[0]) || !is_array($payload[0])) {
+            return null;
+        }
+
+        $first = $payload[0];
+
+        if (!isset($first['lat'], $first['lon'])) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $first['lat'],
+            'lng' => (float) $first['lon'],
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function buildAddressQueries(Medecin $medecin): array
+    {
         $cabinet = trim((string) $medecin->getAdresseCabinet());
         $ville = trim((string) $medecin->getVille());
+        $queries = [];
 
         if ($cabinet !== '') {
-            $parts[] = $cabinet;
+            if ($ville !== '') {
+                $queries[] = sprintf('%s, %s, Tunisia', $cabinet, $ville);
+            }
+            $queries[] = sprintf('%s, Tunisia', $cabinet);
         }
         if ($ville !== '') {
-            $parts[] = $ville;
+            $queries[] = sprintf('%s, Tunisia', $ville);
         }
-        $parts[] = 'Tunisia';
 
-        return implode(', ', $parts);
+        return array_values(array_unique(array_filter($queries)));
     }
 
     private function haversineDistanceKm(

@@ -1287,6 +1287,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function appendRecommendationDebug(message) {
+        setRecommendationStatus(message);
+    }
+
     /* === Fonction pour afficher la liste déroulante === */
     function renderDropdown(filteredMedecins) {
         dropdownList.innerHTML = '';
@@ -1448,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             recommendationStatus.textContent = 'Recherche des médecins proches...';
             const controller = new AbortController();
-            timer = setTimeout(() => controller.abort(), 8000);
+            timer = setTimeout(() => controller.abort(), 12000);
             const response = await fetch(`${ENDPOINT_RECOMMENDATION}?limit=3&max_km=25`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
@@ -1469,6 +1473,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             renderRecommendations(data.recommendations || []);
+            if (data.used_distance_fallback) {
+                const fallbackKm = Number(data.fallback_max_km || 60);
+                recommendationStatus.textContent = `Top ${(data.recommendations || []).length} médecin(s) proches (rayon étendu à ${fallbackKm} km)`;
+            }
         } catch (error) {
             recommendationStatus.textContent = (error && error.name === 'AbortError')
                 ? 'Recommandation trop lente (timeout). Vérifiez les adresses cabinet.'
@@ -1584,17 +1592,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    if (refreshRecommendationsBtn) {
-        refreshRecommendationsBtn.addEventListener('click', loadNearbyRecommendations);
-    }
-    if (askGeoBtn) {
-        askGeoBtn.addEventListener('click', async function() {
-            const ok = await requestAndSavePatientLocation();
-            if (ok) {
-                await loadNearbyRecommendations();
-            }
-        });
-    }
 
     /* === Date ≥ aujourd'hui et week-end bloqués === */
     const today = new Date();

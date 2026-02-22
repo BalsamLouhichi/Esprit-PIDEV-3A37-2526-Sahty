@@ -80,6 +80,18 @@ class MedecinRecommendationApiController extends AbstractController
             $limit,
             $maxDistanceKm
         );
+        $usedDistanceFallback = false;
+        $fallbackMaxDistanceKm = 60.0;
+        if ($recommendations === []) {
+            $recommendations = $recommendationService->recommendNearest(
+                $medecins,
+                $patientLat,
+                $patientLng,
+                $limit,
+                $fallbackMaxDistanceKm
+            );
+            $usedDistanceFallback = ($recommendations !== []);
+        }
 
         return new JsonResponse([
             'success' => true,
@@ -89,6 +101,8 @@ class MedecinRecommendationApiController extends AbstractController
                 'captured_at' => (string) ($location['captured_at'] ?? ''),
             ],
             'count' => count($recommendations),
+            'used_distance_fallback' => $usedDistanceFallback,
+            'fallback_max_km' => $usedDistanceFallback ? $fallbackMaxDistanceKm : null,
             'recommendations' => $recommendations,
         ]);
     }
