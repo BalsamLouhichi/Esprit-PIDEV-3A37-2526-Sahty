@@ -1,7 +1,0 @@
-{
-  "controllers": {
-    "hello": {
-      "enabled": true
-    }
-  }
-}

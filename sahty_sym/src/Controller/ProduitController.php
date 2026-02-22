@@ -6,6 +6,7 @@ use App\Entity\Commande;
 use App\Entity\Parapharmacie;
 use App\Entity\Produit;
 use App\Form\CommandeType;
+use App\Payment\BtcPayPaymentService;
 use App\Repository\CommandeRepository;
 use App\Repository\ParapharmacieRepository;
 use App\Repository\ProduitRepository;

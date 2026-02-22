@@ -593,6 +593,16 @@
                                             </div>
                                         </div>
                                         
+                                        <div class="info-item">
+                                            <div class="info-item-icon">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </div>
+                                            <div class="info-item-content">
+                                                <div class="info-item-label">Ville</div>
+                                                <div class="info-item-value">{{ user.ville ?: 'Non renseignée' }}</div>
+                                            </div>
+                                        </div>
+
                                         {% if user.dateNaissance %}
                                         <div class="info-item">
                                             <div class="info-item-icon">

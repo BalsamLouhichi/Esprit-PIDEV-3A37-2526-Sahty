@@ -7,6 +7,7 @@ use App\Entity\DemandeAnalyse;
 use App\Entity\Patient;
 use App\Entity\Laboratoire;
 use App\Entity\Medecin;
+use App\Entity\ResultatAnalyse;
 use App\Entity\ResponsableLaboratoire;
 use App\Form\DemandeAnalyseType;
 use App\Repository\DemandeAnalyseRepository;
@@ -95,16 +96,9 @@ class DemandeAnalyseController extends AbstractController
 
         // Pour les responsables de laboratoire, voir seulement les demandes du labo
         if ($user instanceof ResponsableLaboratoire) {
-            $laboratoire = $user->getLaboratoire();
-            $demandes = $laboratoire
-                ? $demandeAnalyseRepository->findBy(['laboratoire' => $laboratoire])
-                : [];
-
-            return $this->render('responsable_laboratoire/demandes.html.twig', [
-                'demande_analyses' => $demandes,
-                'controller_name' => 'DemandeAnalyseController',
-                'test_mode' => $this->isTestMode(),
-            ]);
+            // Utiliser la route dediee du responsable labo qui applique
+            // la pagination serveur, filtres et tri.
+            return $this->redirectToRoute('app_responsable_labo_demandes');
         }
 
         // Pour les médecins, voir seulement leurs propres demandes
@@ -153,6 +147,159 @@ class DemandeAnalyseController extends AbstractController
             'html' => $html,
             'count_text' => $countText,
         ]);
+    }
+
+    #[Route('/{id}/ia-interpretation', name: 'app_demande_analyse_ia_interpretation', methods: ['GET'])]
+    public function iaInterpretation(DemandeAnalyse $demandeAnalyse): JsonResponse
+    {
+        if (!$this->isTestMode()) {
+            $this->checkAccess($demandeAnalyse);
+        }
+
+        if (!$demandeAnalyse->getResultatPdf()) {
+            return $this->json([
+                'ok' => false,
+                'available' => false,
+                'message' => 'Le resultat PDF n\'est pas encore disponible.',
+            ], 404);
+        }
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        if (!$resultatAnalyse) {
+            return $this->json([
+                'ok' => false,
+                'available' => false,
+                'message' => 'Aucune interpretation IA n\'est disponible pour cette demande.',
+            ], 404);
+        }
+
+        if ($resultatAnalyse->getAiStatus() !== ResultatAnalyse::AI_STATUS_DONE) {
+            $status = $resultatAnalyse->getAiStatus();
+            $message = 'Analyse IA en attente.';
+            if ($status === ResultatAnalyse::AI_STATUS_FAILED) {
+                $message = 'Analyse IA indisponible pour ce document.';
+            }
+
+            return $this->json([
+                'ok' => false,
+                'available' => false,
+                'ai_status' => $status,
+                'message' => $message,
+            ]);
+        }
+
+        $raw = $resultatAnalyse->getAiRawResponse();
+        if (!is_array($raw)) {
+            $raw = [];
+        }
+        $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
+        $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
+
+        $summary = $this->resolveAiSummary(
+            $llmInterpretation,
+            $analysis,
+            (string) $resultatAnalyse->getResumeBilan()
+        );
+
+        return $this->json([
+            'ok' => true,
+            'available' => true,
+            'ai_status' => $resultatAnalyse->getAiStatus(),
+            'danger_level' => $resultatAnalyse->getDangerLevel(),
+            'danger_score' => $resultatAnalyse->getDangerScore(),
+            'summary' => $summary,
+            'recommendations' => $this->resolveAiRecommendations($analysis, $llmInterpretation, $raw),
+            'model' => $resultatAnalyse->getModeleVersion(),
+            'updated_at' => $resultatAnalyse->getUpdatedAt()?->format('d/m/Y H:i'),
+        ]);
+    }
+
+    /**
+     * @param array<string,mixed> $llmInterpretation
+     * @param array<string,mixed> $analysis
+     */
+    private function resolveAiSummary(array $llmInterpretation, array $analysis, string $fallback): string
+    {
+        $candidateFields = [
+            $llmInterpretation['patient_summary'] ?? null,
+            $llmInterpretation['clinician_summary'] ?? null,
+            $analysis['summary'] ?? null,
+            $fallback !== '' ? $fallback : null,
+        ];
+
+        foreach ($candidateFields as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        return 'Aucun resume IA disponible.';
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     * @param array<string,mixed> $llmInterpretation
+     * @param array<string,mixed> $raw
+     * @return array<int,string>
+     */
+    private function resolveAiRecommendations(array $analysis, array $llmInterpretation, array $raw): array
+    {
+        $recommendations = [];
+        $sources = [
+            $analysis['recommendations'] ?? null,
+            $llmInterpretation['suggested_actions'] ?? null,
+            $llmInterpretation['recommendations'] ?? null,
+            $raw['recommendations'] ?? null,
+        ];
+
+        foreach ($sources as $source) {
+            foreach ($this->normalizeRecommendationSource($source) as $item) {
+                $recommendations[] = $item;
+            }
+        }
+
+        $recommendations = array_values(array_unique(array_filter($recommendations, static fn ($line) => trim($line) !== '')));
+
+        if (!$recommendations) {
+            $recommendations = [
+                'Consultez votre medecin pour valider l\'interpretation de ce bilan.',
+            ];
+        }
+
+        return array_slice($recommendations, 0, 8);
+    }
+
+    /**
+     * @param mixed $source
+     * @return array<int,string>
+     */
+    private function normalizeRecommendationSource(mixed $source): array
+    {
+        if (is_array($source)) {
+            $lines = [];
+            foreach ($source as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $lines[] = trim($item);
+                }
+            }
+            return $lines;
+        }
+
+        if (!is_string($source) || trim($source) === '') {
+            return [];
+        }
+
+        $parts = preg_split('/[\r\n;]+/', $source) ?: [];
+        $lines = [];
+        foreach ($parts as $part) {
+            $line = trim((string) $part);
+            $line = ltrim($line, "-* \t");
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
     }
 
     private function buildMesDemandesData(Request $request, DemandeAnalyseRepository $demandeAnalyseRepository): array

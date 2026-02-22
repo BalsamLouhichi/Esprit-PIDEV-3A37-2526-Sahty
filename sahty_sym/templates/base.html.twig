@@ -22,7 +22,11 @@
 
     {# Header / Navbar #}
     {% block header %}
-        {% include 'partials/navbar.html.twig' %}
+        {% if app.user and is_granted('ROLE_PATIENT') %}
+            {% include 'partials/header.html.twig' %}
+        {% else %}
+            {% include 'partials/navbar.html.twig' %}
+        {% endif %}
     {% endblock %}
 
     <main class="container mt-4">

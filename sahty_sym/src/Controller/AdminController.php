@@ -263,7 +263,7 @@ class AdminController extends AbstractController
         ]);
     }
     
-    #[Route('/laboratoire/new', name: 'laboratoire_new')]
+    #[Route('/laboratoires/new', name: 'laboratoire_new')]
     public function laboratoireNew(Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -314,7 +314,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/laboratoire/{id}', name: 'laboratoire_view', requirements: ['id' => '\d+'])]
+    #[Route('/laboratoires/{id}', name: 'laboratoire_view', requirements: ['id' => '\d+'])]
     public function laboratoireView(int $id, LaboratoireRepository $laboratoireRepo, DemandeAnalyseRepository $demandeRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -333,7 +333,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/laboratoire/{id}/edit', name: 'laboratoire_edit', requirements: ['id' => '\d+'])]
+    #[Route('/laboratoires/{id}/edit', name: 'laboratoire_edit', requirements: ['id' => '\d+'])]
     public function laboratoireEdit(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -389,7 +389,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/laboratoire/{id}/delete', name: 'laboratoire_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/laboratoires/{id}/delete', name: 'laboratoire_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function laboratoireDelete(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -419,7 +419,7 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('admin_laboratoires');
     }
 
-    #[Route('/laboratoire/{id}/toggle-disponibilite', name: 'laboratoire_toggle_disponibilite', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/laboratoires/{id}/toggle-disponibilite', name: 'laboratoire_toggle_disponibilite', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function laboratoireToggleDisponibilite(Request $request, int $id, LaboratoireRepository $laboratoireRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');

@@ -26,6 +26,11 @@ class ProfileType extends AbstractType
                 'label' => 'Prénom',
                 'attr' => ['class' => 'form-control']
             ])
+            ->add('ville', TextType::class, [
+                'label' => 'Ville',
+                'required' => false,
+                'attr' => ['class' => 'form-control']
+            ])
             ->add('telephone', TextType::class, [
                 'label' => 'Téléphone',
                 'required' => false,
