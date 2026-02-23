@@ -189,7 +189,6 @@ class ResponsableLaboratoireController extends AbstractController
 
             if ($shouldSendEmail) {
                 $this->sendResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
-                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
             }
 
             $this->addFlash('success', 'Demande mise a jour avec succes.');
@@ -237,7 +236,8 @@ class ResponsableLaboratoireController extends AbstractController
         Request $request,
         DemandeAnalyse $demandeAnalyse,
         EntityManagerInterface $entityManager,
-        FastApiLabAiClient $fastApiLabAiClient
+        FastApiLabAiClient $fastApiLabAiClient,
+        MailerInterface $mailer
     ): JsonResponse {
         $responsable = $this->getUser();
         if (!$responsable instanceof ResponsableLaboratoire) {
@@ -270,6 +270,8 @@ class ResponsableLaboratoireController extends AbstractController
         @set_time_limit(0);
 
         $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        $alreadyDoneBeforeRun = $resultatAnalyse
+            && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_DONE;
         if (
             $resultatAnalyse
             && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_DONE
@@ -306,6 +308,9 @@ class ResponsableLaboratoireController extends AbstractController
         $message = 'Analyse IA indisponible pour ce document.';
         if ($status === ResultatAnalyse::AI_STATUS_DONE) {
             $message = 'Analyse IA terminee.';
+            if (!$alreadyDoneBeforeRun) {
+                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
+            }
         } elseif ($status === ResultatAnalyse::AI_STATUS_PENDING) {
             $message = 'Analyse IA en attente (service IA temporairement indisponible, reessayez dans quelques instants).';
         }
