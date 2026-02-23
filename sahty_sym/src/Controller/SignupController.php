@@ -40,13 +40,10 @@ class SignupController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Récupération du rôle choisi
             $roleSelected = $form->get('role')->getData();
-
-            // Validation de la confirmation du mot de passe
             $confirmPassword = $request->request->get('confirm_password');
             $password = $form->get('password')->getData();
-            
+
             if ($password !== $confirmPassword) {
                 $this->addFlash('error', 'Les mots de passe ne correspondent pas.');
                 return $this->render('signup/signup.html.twig', [
@@ -76,11 +73,8 @@ class SignupController extends AbstractController
                 case 'admin':
                     $user = new Administrateur();
                     break;
-                    
                 case 'medecin':
                     $user = new Medecin();
-                    
-                    // Champs spécifiques au médecin
                     $user->setSpecialite($request->request->get('specialite', ''));
                     $user->setAnneeExperience((int)$request->request->get('annee_experience', 0));
                     $user->setGrade($request->request->get('grade', ''));
@@ -89,8 +83,8 @@ class SignupController extends AbstractController
                     $user->setNomEtablissement($request->request->get('nom_etablissement', ''));
                     $user->setNumeroUrgence($request->request->get('numero_urgence', ''));
                     $user->setDisponibilite($request->request->get('disponibilite', ''));
-                    
-                    // Gestion du document PDF
+
+                    // Gestion document PDF
                     $documentPdfFile = $request->files->get('document_pdf');
                     if ($documentPdfFile) {
                         $originalFilename = pathinfo($documentPdfFile->getClientOriginalName(), PATHINFO_FILENAME);
@@ -106,7 +100,7 @@ class SignupController extends AbstractController
                         $user->setDocumentPdf('uploads/documents/' . $newFilename);
                     }
                     break;
-                    
+
                 case 'responsable_labo':
                     $user = new ResponsableLaboratoire();
                     
@@ -128,17 +122,15 @@ class SignupController extends AbstractController
                         }
                     }
                     break;
-                    
+
                 case 'responsable_para':
                     $user = new ResponsableParapharmacie();
                     $user->setParapharmacieId((int)$request->request->get('parapharmacie_id', 0));
                     break;
-                    
+
                 case 'patient':
                 default:
                     $user = new Patient();
-                    
-                    // Champs spécifiques au patient
                     $user->setSexe($request->request->get('sexe', ''));
                     $user->setGroupeSanguin($request->request->get('groupe_sanguin', ''));
                     $user->setContactUrgence($request->request->get('contact_urgence', ''));
@@ -151,9 +143,9 @@ class SignupController extends AbstractController
                  ->setEmail($form->get('email')->getData())
                  ->setTelephone($form->get('telephone')->getData())
                  ->setRole($roleSelected)
-                 ->setEstActif(true);
+                 ->setEstActif(true)
+                 ->setVille($form->get('ville')->getData());
 
-            // Date de naissance
             if ($form->get('dateNaissance')->getData()) {
                 $user->setDateNaissance($form->get('dateNaissance')->getData());
             }
@@ -167,15 +159,13 @@ class SignupController extends AbstractController
             if ($photoProfilFile) {
                 $originalFilename = pathinfo($photoProfilFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoProfilFile->guessExtension();
-                
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/photos';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-                
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$photoProfilFile->guessExtension();
+
+                $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/photos';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
                 $photoProfilFile->move($uploadDir, $newFilename);
-                $user->setPhotoProfil('uploads/photos/' . $newFilename);
+                $user->setPhotoProfil('uploads/photos/'.$newFilename);
             }
 
             try {
@@ -184,16 +174,14 @@ class SignupController extends AbstractController
 
                 $this->addFlash('success', 'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.');
                 return $this->redirectToRoute('app_login');
-                
+
             } catch (\Exception $e) {
-                // Gestion des erreurs (email déjà existant, etc.)
-                if (strpos($e->getMessage(), 'UNIQ') !== false || 
-                    strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                    $this->addFlash('error', 'Cet email est déjà utilisé. Veuillez en choisir un autre.');
+                if (strpos($e->getMessage(), 'UNIQ') !== false || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                    $this->addFlash('error', 'Cet email est déjà utilisé.');
                 } else {
-                    $this->addFlash('error', 'Une erreur est survenue lors de la création du compte : ' . $e->getMessage());
+                    $this->addFlash('error', 'Erreur: '.$e->getMessage());
                 }
-                
+
                 return $this->render('signup/signup.html.twig', [
                     'form' => $form->createView(),
                 ]);

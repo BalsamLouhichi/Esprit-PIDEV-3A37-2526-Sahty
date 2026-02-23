@@ -72,8 +72,8 @@
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* ============ NAVBAR PREMIUM (Balsam) ============ */
-    .sahty-navbar {
+    /* ============ NAVBAR ============ */
+    .medinova-navbar {
         background: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(20px) saturate(180%);
         box-shadow: 0 8px 32px rgba(29, 93, 155, 0.12);
@@ -122,7 +122,7 @@
         50% { transform: translateY(-5px); }
     }
 
-    /* Nav Links - Design Premium */
+    /* Nav Links */
     .navbar-nav .nav-link {
         color: var(--dark);
         font-weight: 600;
@@ -211,7 +211,7 @@
         color: white;
     }
 
-    /* Dropdown Menu - Design Premium */
+    /* Dropdown Menu */
     .navbar-nav .dropdown-menu {
         min-width: 280px;
         border: none;
@@ -299,8 +299,8 @@
 
     /* User Avatar */
     .user-avatar {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid var(--primary);
@@ -308,15 +308,15 @@
     }
 
     .user-avatar-icon {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white;
+        background: var(--light);
+        color: var(--primary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: 2px solid white;
+        border: 2px solid var(--primary);
     }
 
     .nav-link.dropdown-toggle:hover .user-avatar {
@@ -324,7 +324,7 @@
         border-color: var(--accent);
     }
 
-    /* Boutons d'authentification */
+    /* Bouton Inscription */
     .btn-inscription {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white !important;
@@ -343,6 +343,11 @@
         color: white !important;
     }
 
+    .btn-inscription i {
+        margin-right: 8px;
+    }
+
+    /* Bouton Connexion */
     .btn-connexion {
         background: transparent;
         color: var(--primary) !important;
@@ -360,9 +365,30 @@
         box-shadow: 0 8px 20px rgba(29, 93, 155, 0.2);
     }
 
+    /* Navbar Toggler */
+    .navbar-toggler {
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 8px 12px;
+        transition: all 0.3s ease;
+    }
+
+    .navbar-toggler:hover {
+        background: var(--primary-light);
+        transform: scale(1.05);
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 4px rgba(29, 93, 155, 0.2);
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231D5D9B' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
     /* Responsive */
     @media (max-width: 991px) {
-        .sahty-topbar {
+        .medinova-topbar {
             display: none;
         }
 
@@ -380,7 +406,7 @@
         }
 
         .btn-inscription, .btn-connexion {
-            margin: 10px 0 !important;
+            margin: 10px 0 0 0 !important;
             display: block;
             text-align: center;
             width: 100%;
@@ -389,40 +415,70 @@
         .dropdown-menu::before {
             display: none;
         }
+
+        .d-flex.align-items-center.ms-3 {
+            margin-left: 0 !important;
+            flex-direction: column;
+            width: 100%;
+        }
     }
 
-    /* Navbar Toggler */
-    .navbar-toggler {
-        border: 2px solid var(--primary);
-        border-radius: 12px;
-        padding: 8px 12px;
+    /* Sticky Navbar Effect */
+    .sticky-top {
         transition: all 0.3s ease;
     }
 
-    .navbar-toggler:hover {
-        background: var(--primary-light);
-        transform: scale(1.05);
+    /* Nav Link Dropdown Toggle */
+    .nav-link.dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231D5D9B' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    .nav-link.dropdown-toggle::after {
+        margin-left: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .dropdown.show .nav-link.dropdown-toggle::after {
+        transform: rotate(180deg);
+    }
+
+    /* Scrollbar pour dropdown */
+    .dropdown-menu {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-track {
+        background: var(--light);
+        border-radius: 10px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 10px;
     }
 </style>
 
-<!-- Topbar Premium - VOS COORDONNÉES + DESIGN BALSAM -->
-<div class="sahty-topbar d-none d-lg-block">
+<!-- Topbar MEDINOVA Premium avec ├®l├®ments SAHTY ajout├®s -->
+<div class="medinova-topbar d-none d-lg-block">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6 text-center text-lg-start">
                 <div class="d-inline-flex align-items-center">
-                    <a class="topbar-link" href="tel:+21670000000">
+                    <a class="topbar-link" href="tel:+0123456789">
                         <i class="bi bi-telephone-fill"></i>
-                        <span>+216 70 000 000</span>
+                        <span>+012 345 6789</span>
                     </a>
                     <span class="topbar-divider">|</span>
-                    <a class="topbar-link" href="mailto:contact@sahty.tn">
+                    <a class="topbar-link" href="mailto:info@sahty.com">
                         <i class="bi bi-envelope-fill"></i>
-                        <span>contact@sahty.tn</span>
+                        <span>info@sahty.com</span>
                     </a>
                 </div>
             </div>
@@ -439,13 +495,13 @@
     </div>
 </div>
 
-<!-- Navbar Premium avec TOUS VOS LIENS -->
-<nav class="navbar navbar-expand-lg sahty-navbar sticky-top">
+<!-- Navbar MEDINOVA Premium avec tous les ├®l├®ments SAHTY int├®gr├®s -->
+<nav class="navbar navbar-expand-lg medinova-navbar sticky-top">
     <div class="container">
         <a href="{{ path('app_home') }}" class="navbar-brand">
             <h1>
                 <i class="fas fa-heartbeat"></i>
-                SAHTY
+                Sahty
             </h1>
         </a>
         
@@ -454,132 +510,67 @@
         </button>
         
         <div class="collapse navbar-collapse" id="navbarCollapse">
-            {# === MAIN NAVIGATION - POUR TOUS === #}
-            <div class="navbar-nav mx-auto py-0">
-                <a href="{{ path('app_home') }}" class="nav-link {{ app.current_route == 'app_home' ? 'active' : '' }}">
+            <div class="navbar-nav ms-auto">
+                {# === NAVIGATION PRINCIPALE SAHTY === #}
+                <a href="{{ path('app_home') }}" 
+                   class="nav-link {% if app.request.get('_route') == 'app_home' %}active{% endif %}">
                     <i class="fas fa-home"></i>Accueil
                 </a>
-            </div>
 
-            {# === MENUS SPÉCIFIQUES PAR RÔLE === #}
-            <div class="navbar-nav ms-auto py-0">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-info-circle"></i>About
+                </a>
+
+                <a href="#" class="nav-link">
+                    <i class="fas fa-stethoscope"></i>Service
+                </a>
+
+                {# Menu Laboratoire (SAHTY) #}
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown">
+                        <i class="fas fa-flask"></i>Laboratoire
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{{ app_url|default('#') }}/laboratoire/" class="dropdown-item">
+                            <i class="fas fa-list"></i>Liste des laboratoires
+                        </a>
+                        {% if app.user and is_granted('ROLE_PATIENT') %}
+                            <a href="{{ app_url|default('#') }}/demande-analyse/mes-demandes" class="dropdown-item">
+                                <i class="fas fa-file-prescription"></i>Mes demandes
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# === NAVIGATION M├ëDICALE MEDINOVA === #}
+                {# Rendez-vous selon le r├┤le #}
                 {% if app.user %}
-                    {# === MENU LABORATOIRE COMPLET === #}
-                    {% if is_granted('ROLE_RESPONSABLE_LABO') or is_granted('ROLE_PATIENT') %}
-                        <div class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-flask"></i>Laboratoire
-                            </a>
-                            <div class="dropdown-menu">
-                                <h6 class="dropdown-header">Gestion des laboratoires</h6>
-                                
-                                {% if is_granted('ROLE_RESPONSABLE_LABO') %}
-                                    <a href="{{ path('app_labo_new') }}" class="dropdown-item">
-                                        <i class="fas fa-plus-circle me-2" style="color: var(--success);"></i>Nouveau laboratoire
-                                    </a>
-                                {% endif %}
-                                
-                                {% if is_granted('ROLE_PATIENT') %}
-                                    <a href="{{ path('app_labo_index') }}" class="dropdown-item">
-                                        <i class="fas fa-list me-2" style="color: var(--primary);"></i>Liste des laboratoires
-                                    </a>
-                                {% endif %}
-                                
-                                <div class="dropdown-divider"></div>
-                                <h6 class="dropdown-header">Demandes d'analyses</h6>
-                                
-                                {% if is_granted('ROLE_RESPONSABLE_LABO') %}
-                                    <a href="{{ path('app_demande_analyse_index') }}" class="dropdown-item">
-                                        <i class="fas fa-inbox me-2" style="color: var(--warning);"></i>Toutes les demandes
-                                    </a>
-                                {% endif %}
-                                
-                                {% if is_granted('ROLE_PATIENT') %}
-                                    <a href="{{ path('app_demande_analyse_mes_demandes') }}" class="dropdown-item">
-                                        <i class="fas fa-file-prescription me-2" style="color: var(--primary);"></i>Mes demandes
-                                    </a>
-                                    <a href="{{ path('app_demande_analyse_new') }}" class="dropdown-item">
-                                        <i class="fas fa-plus-circle me-2" style="color: var(--success);"></i>Nouvelle demande
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    {# === MENU CLIENT (Médecin, Labo, Para, Patient) - VOS LIENS === #}
-                    {% if is_granted('ROLE_MEDECIN') 
-                       or is_granted('ROLE_RESPONSABLE_LABO') 
-                       or is_granted('ROLE_RESPONSABLE_PARA') 
-                       or is_granted('ROLE_PATIENT') %}
-                        
-                        <div class="nav-item dropdown">
-                            <a href="{{ path('evenements_client_events') }}" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-calendar-alt"></i>Événements
-                            </a>
-                            <div class="dropdown-menu">
-                                <a href="{{ path('evenements_client_all_events') }}" class="dropdown-item">
-                                    <i class="fas fa-calendar-check me-2"></i>Mes Événements
-                                </a>
-                                <a href="{{ path('evenements_client_all_events') }}" class="dropdown-item">
-                                    <i class="fas fa-list me-2"></i>Tous les événements
-                                </a>
-                                <a href="{{ path('evenements_client_mes_inscriptions') }}" class="dropdown-item">
-                                    <i class="fas fa-ticket-alt me-2"></i>Mes inscriptions
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a href="" class="dropdown-item">
-                                    <i class="fa fa-paper-plane me-2"></i>Demander un événement
-                                </a>
-                            </div>
-                        </div>
-                        
-                        {# Menu Rendez-vous pour patients #}
-                        {% if is_granted('ROLE_PATIENT') %}
-                            <a href="{{ path('app_rdv_mes_rdv') }}" class="nav-link {{ app.current_route starts with 'app_rdv' ? 'active' : '' }}">
-                                <i class="fas fa-calendar-check"></i>Mes Rendez-vous
-                            </a>
-                        {% endif %}
-                        
-                        {# Menu Consultations pour médecins #}
-                        {% if is_granted('ROLE_MEDECIN') %}
-                            <a href="{{ path('app_medecin_rdv_liste') }}" class="nav-link {{ app.current_route starts with 'app_medecin_rdv' ? 'active' : '' }}">
-                                <i class="fas fa-stethoscope"></i>Mes Consultations
-                            </a>
-                        {% endif %}
-                        
-                        {# Fiches médicales #}
-                        {% if is_granted('ROLE_PATIENT') or is_granted('ROLE_MEDECIN') %}
-                            <a href="{{ path('app_fiche_medicale_index') }}" class="nav-link {{ app.current_route starts with 'app_fiche_medicale' ? 'active' : '' }}">
-                                <i class="fas fa-file-medical"></i>
-                                {% if is_granted('ROLE_PATIENT') %}Mes Fiches{% else %}Fiches Patients{% endif %}
-                            </a>
-                        {% endif %}
-                    {% endif %}
-                    
-                    {# === MENU ADMIN - VOS LIENS === #}
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <div class="nav-item dropdown">
-                            <a href="{{ path('evenements_evenement_list') }}" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fa fa-calendar-check"></i>Gestion Événements
-                            </a>
-                            <div class="dropdown-menu">
-                                <a href="{{ path('evenements_evenement_list') }}" class="dropdown-item">
-                                    <i class="fa fa-list me-2"></i>Tous les événements
-                                </a>
-                                <a href="{{ path('evenements_admin_demandes_evenements') }}" class="dropdown-item">
-                                    <i class="fa fa-inbox me-2"></i>Demandes
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <a href="{{ path('admin_index') }}" class="nav-link {{ app.current_route starts with 'dashboard' ? 'active' : '' }}">
-                            <i class="fa fa-tachometer-alt"></i>Dashboard
+                    {% if is_granted('ROLE_PATIENT') %}
+                        <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" 
+                           class="nav-link {% if app.request.get('_route') starts with 'app_rdv' %}active{% endif %}">
+                            <i class="fas fa-calendar-check"></i>Mes Rendez-vous
+                        </a>
+                    {% elseif is_granted('ROLE_MEDECIN') %}
+                        <a href="{{ path('app_medecin_rdv_liste')|default('#') }}" 
+                           class="nav-link {% if app.request.get('_route') starts with 'app_medecin_rdv' %}active{% endif %}">
+                            <i class="fas fa-stethoscope"></i>Mes Consultations
                         </a>
                     {% endif %}
-                    
-                    {# === MENU UTILISATEUR PREMIUM === #}
+                {% endif %}
+
+                {# Fiches M├®dicales #}
+                {% if app.user and (is_granted('ROLE_PATIENT') or is_granted('ROLE_MEDECIN')) %}
+                    <a href="{{ path('app_fiche_medicale_index')|default('#') }}" 
+                       class="nav-link {% if app.request.get('_route') starts with 'app_fiche_medicale' %}active{% endif %}">
+                        <i class="fas fa-file-medical"></i>
+                        {% if is_granted('ROLE_PATIENT') %}Mes Fiches{% else %}Fiches Patients{% endif %}
+                    </a>
+                {% endif %}
+
+                {# === ESPACE UTILISATEUR FUSIONN├ë === #}
+                {% if app.user %}
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                             {% if app.user.photoProfil %}
                                 <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" class="user-avatar">
                             {% else %}
@@ -589,55 +580,70 @@
                             {% endif %}
                             
                             {% if is_granted('ROLE_MEDECIN') %}
-                                <span class="user-badge badge-success">Dr</span>
-                            {% elseif is_granted('ROLE_ADMIN') %}
-                                <span class="user-badge badge-danger">Admin</span>
+                                <span class="user-badge badge-success">Dr.</span>
                             {% elseif is_granted('ROLE_PATIENT') %}
                                 <span class="user-badge badge-primary">Patient</span>
-                            {% elseif is_granted('ROLE_RESPONSABLE_LABO') %}
-                                <span class="user-badge badge-primary">Labo</span>
-                            {% elseif is_granted('ROLE_RESPONSABLE_PARA') %}
-                                <span class="user-badge badge-primary">Para</span>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <span class="user-badge badge-danger">Admin</span>
                             {% endif %}
                             
-                            <span class="fw-semibold">{{ app.user.prenom }} {{ app.user.nom }}</span>
+                            <span class="fw-semibold">{{ app.user.nomComplet|default(app.user.prenom|default(app.user.email|split('@')[0])) }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end">
-                            <a href="{{ path('app_profile') }}" class="dropdown-item">
-                                <i class="fa fa-id-card me-2"></i>Mon Profil
+                            {# Profil #}
+                            <a href="{{ path('app_profile')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-user"></i>Mon Profil
                             </a>
                             
-                            {% if is_granted('ROLE_MEDECIN')
-                               or is_granted('ROLE_RESPONSABLE_LABO')
-                               or is_granted('ROLE_RESPONSABLE_PARA')
-                               or is_granted('ROLE_PATIENT') %}
-                                <a href="{{ path('evenements_client_demande_evenement') }}" class="dropdown-item">
-                                    <i class="fa fa-paper-plane me-2"></i>Demander un événement
+                            {# Liens sp├®cifiques selon r├┤le #}
+                            {% if is_granted('ROLE_PATIENT') %}
+                                <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-calendar-alt"></i>Mes Rendez-vous
+                                </a>
+                                <a href="{{ path('app_fiche_medicale_index')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-file-medical"></i>Mes Fiches
+                                </a>
+                                <a href="{{ app_url|default('#') }}/demande-analyse/mes-demandes" class="dropdown-item">
+                                    <i class="fas fa-flask"></i>Mes demandes labo
+                                </a>
+                            {% elseif is_granted('ROLE_MEDECIN') %}
+                                <a href="{{ path('app_medecin_rdv_liste')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-stethoscope"></i>Mes Consultations
+                                </a>
+                                <a href="{{ path('app_fiche_medicale_index')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-folder-open"></i>Fiches Patients
+                                </a>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <a href="{{ path('admin_index') }}" class="dropdown-item">
+                                    <i class="fas fa-tachometer-alt"></i>Dashboard Admin
                                 </a>
                             {% endif %}
                             
                             <div class="dropdown-divider"></div>
-                            <a href="{{ path('app_profile_edit') }}" class="dropdown-item">
-                                <i class="fas fa-edit me-2"></i>Modifier mon profil
+                            
+                            {# Param├¿tres du compte #}
+                            <a href="{{ path('app_profile_edit')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-edit"></i>Modifier mon profil
                             </a>
-                            <a href="{{ path('app_profile_change_password') }}" class="dropdown-item">
-                                <i class="fas fa-key me-2"></i>Changer mot de passe
+                            <a href="{{ path('app_profile_change_password')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-key"></i>Changer mot de passe
                             </a>
                             
                             <div class="dropdown-divider"></div>
-                            <a href="{{ path('app_logout') }}" class="dropdown-item text-danger">
-                                <i class="fa fa-sign-out-alt me-2"></i>Déconnexion
+                            
+                            {# D├®connexion #}
+                            <a href="{{ path('app_logout')|default('#') }}" class="dropdown-item text-danger">
+                                <i class="fas fa-sign-out-alt"></i>D├®connexion
                             </a>
                         </div>
                     </div>
-                    
                 {% else %}
-                    {# === UTILISATEUR NON CONNECTÉ - VOS LIENS AVEC DESIGN PREMIUM === #}
+                    {# Utilisateur non connect├® - Boutons SAHTY style MEDINOVA #}
                     <div class="d-flex align-items-center ms-3">
-                        <a href="{{ path('app_sign') }}" class="nav-link btn-inscription {{ app.current_route == 'app_register' ? 'active' : '' }}">
+                        <a href="{{ path('app_sign')|default('#') }}" class="nav-link btn-inscription">
                             <i class="fas fa-user-plus"></i>S'inscrire
                         </a>
-                        <a href="{{ path('app_login') }}" class="nav-link btn-connexion ms-2 {{ app.current_route == 'app_login' ? 'active' : '' }}">
+                        <a href="{{ path('app_login')|default('#') }}" class="nav-link btn-connexion ms-2">
                             <i class="fas fa-sign-in-alt"></i>Se connecter
                         </a>
                     </div>
@@ -650,7 +656,7 @@
 <script>
 // Effet scroll sur la navbar
 window.addEventListener('scroll', function() {
-    const navbar = document.querySelector('.sahty-navbar');
+    const navbar = document.querySelector('.medinova-navbar');
     if (window.scrollY > 50) {
         navbar.classList.add('scrolled');
     } else {
@@ -668,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
             link.style.transition = 'all 0.5s ease';
             link.style.opacity = '1';
             link.style.transform = 'translateY(0)';
-        }, 50 * index);
+        }, 100 * index);
     });
 });
 

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Parapharmacies et Produits{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Parapharmacies et leurs Produits</h1>
+
+    {% for para in parapharmacies %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                {{ para.nom }} - {{ para.adresse }}
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Téléphone :</strong> {{ para.telephone }} |
+                    <strong>Email :</strong> {{ para.email ?? '—' }}
+                </p>
+
+                {% if para.getProduits()|length > 0 %}
+                    <table class="table table-bordered table-striped table-hover mt-3">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th>Prix</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for prod in para.getProduits() %}
+                            <tr>
+                                <td>{{ prod.id }}</td>
+                                <td>{{ prod.nom }}</td>
+                                <td>{{ prod.description ?? '—' }}</td>
+                                <td>{{ prod.prix }} €</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-center mt-3">Aucun produit pour cette parapharmacie.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p class="text-center">Aucune parapharmacie trouvée.</p>
+    {% endfor %}
+</div>
+{% endblock %}

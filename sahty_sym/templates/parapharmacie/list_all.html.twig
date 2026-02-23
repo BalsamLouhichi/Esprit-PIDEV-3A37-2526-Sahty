@@ -1,0 +1,974 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Toutes les parapharmacies et tous les produits{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Couleurs principales - Cyan #0dcaf0 */
+        :root {
+            --primary-color: #0dcaf0; /* Cyan au lieu du bleu Bootstrap */
+            --primary-hover: #0ba8cc;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+        }
+        
+        /* Supprimer l'espace entre navbar et section */
+        body {
+            padding-top: 0;
+        }
+        
+        /* Supprimer le margin-bottom du navbar */
+        .container-fluid.sticky-top.bg-white.shadow-sm {
+            margin-bottom: 0 !important;
+        }
+        
+        /* Modifier la section pour qu'elle touche le navbar */
+        .container-fluid.py-5.bg-light {
+            padding-top: 0.5rem !important;
+            padding-bottom: 3rem !important;
+        }
+        
+        /* Styles pour la barre de recherche */
+        .search-section {
+            background: white;
+            padding: 2rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            padding-right: 60px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+        }
+        
+        .search-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .search-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .search-results-info {
+            text-align: center;
+            margin-top: 1rem;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+        
+        /* Styles pour les produits améliorés */
+        .products-container {
+            margin-top: 3rem;
+        }
+        
+        .products-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .product-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+            height: 100%;
+            position: relative;
+            margin-bottom: 2rem;
+            opacity: 1;
+            transform: scale(1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .product-card.hidden {
+            display: none;
+        }
+        
+        .product-card.highlight {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 25px rgba(13, 202, 240, 0.25);
+            animation: highlightPulse 1s ease-in-out;
+        }
+        
+        @keyframes highlightPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+            border-color: var(--primary-color);
+        }
+        
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
+        }
+        
+        .product-price {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .product-image {
+            height: 200px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .product-image img {
+            max-height: 160px;
+            max-width: 100%;
+            transition: transform 0.5s ease;
+            object-fit: contain;
+        }
+        
+        .product-card:hover .product-image img {
+            transform: scale(1.08);
+        }
+        
+        .product-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        
+        .product-brand {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .product-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            height: 44px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.3;
+        }
+        
+        .product-short-description {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            height: 40px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.4;
+            transition: all 0.3s;
+        }
+        
+        .product-full-description {
+            font-size: 13px;
+            color: #555;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .product-full-description.show {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .product-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-description {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            flex: 1;
+        }
+        
+        .btn-description:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+        }
+        
+        .btn-add-to-cart {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            flex: 1;
+        }
+        
+        .btn-add-to-cart:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .product-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .product-tag {
+            background: rgba(13, 202, 240, 0.1);
+            color: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid rgba(13, 202, 240, 0.2);
+        }
+        
+        /* Styles carrousel pharmacies amélioré */
+        .pharmacies-section {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .pharmacies-scroll-container {
+            position: relative;
+            padding: 20px 50px; /* Augmenté pour laisser de la place aux flèches */
+        }
+        
+        .pharmacies-scroll-wrapper {
+            display: flex;
+            gap: 20px;
+            padding: 20px 0;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) #f1f1f1;
+            padding-bottom: 10px;
+        }
+        
+        .pharmacies-scroll-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .pharmacies-scroll-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .pharmacies-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        .pharmacy-item {
+            flex: 0 0 auto;
+            width: 280px;
+            padding: 25px;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pharmacy-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), #0ba8cc);
+        }
+        
+        .pharmacy-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(13, 202, 240, 0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .pharmacy-item h5 {
+            margin: 0 0 12px 0;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .pharmacy-item .specialite {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            min-height: 20px;
+        }
+        
+        .pharmacy-item .location {
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            width: 100%;
+        }
+        
+        .pharmacy-item .location i {
+            margin-right: 8px;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+        
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        
+        .scroll-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .scroll-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(-50%) scale(1);
+        }
+        
+        .scroll-btn-left {
+            left: 5px;
+        }
+        
+        .scroll-btn-right {
+            right: 5px;
+        }
+        
+        .scroll-btn i {
+            font-size: 20px;
+        }
+        
+        /* Style pour le titre de section */
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .border-bottom.border-5 {
+            border-color: var(--primary-color) !important;
+        }
+        
+        /* Mettre à jour la couleur du navbar pour qu'il utilise aussi le cyan */
+        .navbar-brand .text-primary,
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-color) !important;
+        }
+        
+        /* Section produits */
+        .products-section {
+            background: white;
+            padding-top: 2rem;
+            padding-bottom: 4rem;
+        }
+        
+        /* Animation pour les cartes */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .product-item {
+            animation: slideIn 0.5s ease forwards;
+            animation-delay: calc(var(--item-index) * 0.1s);
+            opacity: 0;
+        }
+        
+        .scroll-indicator {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+        }
+        
+        .scroll-indicator .badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .pharmacy-item {
+                width: 250px;
+                padding: 20px;
+            }
+            
+            .pharmacies-scroll-container {
+                padding: 20px 40px;
+            }
+            
+            .scroll-btn {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .scroll-btn i {
+                font-size: 16px;
+            }
+            
+            .product-card {
+                margin-bottom: 1.5rem;
+            }
+            
+            .container-fluid.py-5.bg-light {
+                padding-bottom: 2rem !important;
+            }
+            
+            .products-section {
+                padding-top: 1rem;
+                padding-bottom: 2rem;
+            }
+            
+            .search-input {
+                padding: 12px 20px;
+                padding-right: 50px;
+                font-size: 14px;
+            }
+            
+            .search-button {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .product-actions {
+                flex-direction: column;
+            }
+            
+            .btn-description,
+            .btn-add-to-cart {
+                width: 100%;
+            }
+            
+            .pharmacies-scroll-wrapper {
+                gap: 15px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .scroll-btn-left {
+                left: 2px;
+            }
+            
+            .scroll-btn-right {
+                right: 2px;
+            }
+        }
+        
+        /* Responsive pour les petits écrans */
+        @media (max-width: 576px) {
+            .pharmacy-item {
+                width: 220px;
+            }
+            
+            .product-image {
+                height: 180px;
+            }
+            
+            .product-content {
+                padding: 15px;
+            }
+            
+            .pharmacies-scroll-container {
+                padding: 20px 30px;
+            }
+            
+            .scroll-btn {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .scroll-btn-left {
+                left: 0px;
+            }
+            
+            .scroll-btn-right {
+                right: 0px;
+            }
+        }
+
+        /* Styles pour les flèches - Toujours visibles */
+        .scroll-btn {
+            display: flex !important; /* Force l'affichage des flèches */
+        }
+        
+        /* Amélioration du conteneur pour que les flèches ne soient pas coupées */
+        .pharmacies-scroll-container {
+            padding: 20px 60px; /* Plus d'espace pour les flèches */
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+
+<!-- Famous Pharmacies Start -->
+<div class="container-fluid py-5 bg-light" style="padding-top: 0.5rem !important;">
+    <div class="container">
+        <div class="text-center mx-auto mb-5" style="max-width: 600px;">
+            <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">Parapharmacies</h5>
+            <h1 class="display-6 mt-3">Les Parapharmacies les Plus Célèbres</h1>
+            <p class="mb-4 fs-5">Découvrez les parapharmacies les plus réputées et appréciées par nos patients.</p>
+        </div>
+        
+        <div class="pharmacies-scroll-container">
+            <button class="scroll-btn scroll-btn-left" id="scrollLeft" style="display: flex !important;">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="pharmacies-scroll-wrapper" id="pharmaciesScroll">
+                {% for para in parapharmacies %}
+                <div class="pharmacy-item">
+                    <h5>{{ para.nom }}</h5>
+                    <p class="specialite">
+                        {% if para.specialite is defined and para.specialite %}
+                            {{ para.specialite }}
+                        {% else %}
+                            Parapharmacie générale
+                        {% endif %}
+                    </p>
+                    <div class="location">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ para.adresse|length > 30 ? para.adresse|slice(0, 30) ~ '...' : para.adresse }}</span>
+                    </div>
+                    {% if para.telephone %}
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-phone me-1"></i>{{ para.telephone }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <button class="scroll-btn scroll-btn-right" id="scrollRight" style="display: flex !important;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="scroll-indicator">
+            <span class="badge" id="pharmacyCount">{{ parapharmacies|length }} parapharmacies disponibles</span>
+           
+        </div>
+    </div>
+</div>
+<!-- Famous Pharmacies End -->
+
+<!-- Search Section Start -->
+<div class="container-fluid search-section">
+    <div class="container">
+        <div class="search-container">
+            <h3 class="text-center mb-4">Rechercher un Produit</h3>
+            <div class="search-box">
+                <input type="text" 
+                       class="search-input" 
+                       id="productSearch" 
+                       placeholder="Rechercher par nom, marque ou catégorie... (ex: valériane, sommeil, hydratation)">
+                <button class="search-button" id="searchButton">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="search-results-info" id="searchResultsInfo">
+                <span id="resultsCount">{{ produits|length }} produits trouvés</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Search Section End -->
+
+<!-- Products Section Start -->
+<div class="container-fluid products-section">
+    <div class="container">
+        <div class="products-header">
+            <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">Nouveautés</h5>
+            <h1 class="display-6 mt-3">Produits Recommandés</h1>
+            <p class="mb-0 fs-5">Découvrez nos meilleures offres et produits populaires</p>
+        </div>
+        
+        <div class="row" id="productsContainer">
+            {% for prod in produits %}
+            <div class="col-lg-3 col-md-6 product-item" 
+                 data-name="{{ prod.nom|lower }}" 
+                 data-brand="{{ prod.marque|default('')|lower }}" 
+                 data-tags="{{ prod.categorie|default('')|lower }} {{ prod.type|default('')|lower }}"
+                 data-description="{{ prod.description|default('')|lower }}"
+                 style="--item-index: {{ loop.index0 % 8 }};">
+                <div class="product-card">
+                    {% if prod.estNouveau is defined and prod.estNouveau %}
+                    <div class="product-badge">NOUVEAU</div>
+                    {% elseif prod.estPopulaire is defined and prod.estPopulaire %}
+                    <div class="product-badge">POPULAIRE</div>
+                    {% endif %}
+                    
+                    <div class="product-price">{{ prod.prix }} €</div>
+                    
+                    <div class="product-image">
+                        {% if prod.image is defined and prod.image %}
+                        <img src="{{ asset('uploads/images/produits/' ~ prod.image) }}" alt="{{ prod.nom }}">
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="{{ prod.nom }}">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-content">
+                        {% if prod.marque is defined and prod.marque %}
+                        <div class="product-brand">{{ prod.marque }}</div>
+                        {% endif %}
+                        
+                        <div class="product-title">{{ prod.nom }}</div>
+                        
+                        {% if prod.categorie is defined and prod.categorie %}
+                        <div class="product-tags">
+                            <span class="product-tag">{{ prod.categorie|upper }}</span>
+                            {% if prod.type is defined and prod.type %}
+                            <span class="product-tag">{{ prod.type|upper }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="product-short-description">
+                            {{ prod.description|slice(0, 80) ~ (prod.description|length > 80 ? '...' : '') }}
+                        </div>
+                        
+                        <div class="product-full-description" id="description-{{ prod.id }}">
+                            {{ prod.description }}
+                        </div>
+                        
+                        <div class="product-actions">
+                            <a href="{{ path('app_produit_details', {'id': prod.id}) }}" class="btn-description">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Description</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="no-results">
+                    <i class="fas fa-box-open fa-3x mb-3" style="color: #ccc;"></i>
+                    <h4>Aucun produit disponible</h4>
+                    <p>Les produits seront bientôt ajoutés</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Message aucun résultat -->
+        <div class="no-results" id="noResultsMessage" style="display: none;">
+            <i class="fas fa-search fa-3x mb-3" style="color: #ccc;"></i>
+            <h4>Aucun produit trouvé</h4>
+            <p>Essayez avec d'autres termes de recherche comme "sommeil", "vitamines" ou "soin"</p>
+        </div>
+    </div>
+</div>
+<!-- Products Section End -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            // Initialiser le compteur de produits
+            const totalProducts = {{ produits|length }};
+            $('#resultsCount').text(`${totalProducts} produit${totalProducts !== 1 ? 's' : ''} trouvé${totalProducts !== 1 ? 's' : ''}`);
+            
+            // Animation des produits
+            $('.product-item').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+            
+            // Fonction de recherche
+            function searchProducts() {
+                const searchTerm = $('#productSearch').val().toLowerCase().trim();
+                let visibleCount = 0;
+                
+                $('.product-item').each(function() {
+                    const productName = $(this).data('name').toLowerCase();
+                    const productBrand = $(this).data('brand').toLowerCase();
+                    const productTags = $(this).data('tags').toLowerCase();
+                    const productDescription = $(this).data('description').toLowerCase();
+                    
+                    if (searchTerm === '' || 
+                        productName.includes(searchTerm) || 
+                        productBrand.includes(searchTerm) || 
+                        productTags.includes(searchTerm) || 
+                        productDescription.includes(searchTerm)) {
+                        $(this).removeClass('hidden').show();
+                        visibleCount++;
+                        $(this).find('.product-card').removeClass('highlight');
+                        if (searchTerm !== '') {
+                            $(this).find('.product-card').addClass('highlight');
+                        }
+                    } else {
+                        $(this).addClass('hidden').hide();
+                    }
+                });
+                
+                // Mettre à jour le compteur de résultats
+                $('#resultsCount').text(`${visibleCount} produit${visibleCount !== 1 ? 's' : ''} trouvé${visibleCount !== 1 ? 's' : ''}`);
+                
+                // Afficher/masquer le message "aucun résultat"
+                if (visibleCount === 0 && searchTerm !== '') {
+                    $('#noResultsMessage').show();
+                } else {
+                    $('#noResultsMessage').hide();
+                }
+            }
+            
+            // Recherche en temps réel
+            $('#productSearch').on('input', function() {
+                searchProducts();
+            });
+            
+            // Recherche au clic sur le bouton
+            $('#searchButton').click(function() {
+                searchProducts();
+            });
+            
+            // Recherche avec la touche Entrée
+            $('#productSearch').keypress(function(e) {
+                if (e.which === 13) {
+                    searchProducts();
+                }
+            });
+            
+            // Effacer la recherche au double-clic
+            $('#productSearch').on('dblclick', function() {
+                $(this).val('');
+                searchProducts();
+            });
+            
+            // Scroll horizontal des parapharmacies
+            const scrollWrapper = document.getElementById('pharmaciesScroll');
+            const scrollLeftBtn = document.getElementById('scrollLeft');
+            const scrollRightBtn = document.getElementById('scrollRight');
+            const scrollAmount = 300;
+            
+            // Vérifier si les éléments existent
+            if (scrollWrapper && scrollLeftBtn && scrollRightBtn) {
+                
+                // Fonction pour vérifier et mettre à jour l'état des boutons
+                function updateScrollButtons() {
+                    const maxScrollLeft = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
+                    
+                    // Bouton gauche - désactivé si au début
+                    if (scrollWrapper.scrollLeft <= 5) {
+                        scrollLeftBtn.disabled = true;
+                        scrollLeftBtn.style.opacity = '0.5';
+                    } else {
+                        scrollLeftBtn.disabled = false;
+                        scrollLeftBtn.style.opacity = '1';
+                    }
+                    
+                    // Bouton droit - désactivé si à la fin
+                    if (scrollWrapper.scrollLeft >= maxScrollLeft - 5) {
+                        scrollRightBtn.disabled = true;
+                        scrollRightBtn.style.opacity = '0.5';
+                    } else {
+                        scrollRightBtn.disabled = false;
+                        scrollRightBtn.style.opacity = '1';
+                    }
+                    
+                    // Cacher complètement les boutons si pas assez d'éléments
+                    if (scrollWrapper.scrollWidth <= scrollWrapper.clientWidth) {
+                        scrollLeftBtn.style.display = 'none';
+                        scrollRightBtn.style.display = 'none';
+                    } else {
+                        scrollLeftBtn.style.display = 'flex';
+                        scrollRightBtn.style.display = 'flex';
+                    }
+                }
+                
+                // Scroll vers la gauche
+                scrollLeftBtn.addEventListener('click', () => {
+                    scrollWrapper.scrollBy({
+                        left: -scrollAmount,
+                        behavior: 'smooth'
+                    });
+                    setTimeout(updateScrollButtons, 300);
+                });
+                
+                // Scroll vers la droite
+                scrollRightBtn.addEventListener('click', () => {
+                    scrollWrapper.scrollBy({
+                        left: scrollAmount,
+                        behavior: 'smooth'
+                    });
+                    setTimeout(updateScrollButtons, 300);
+                });
+                
+                // Mettre à jour les boutons lors du scroll
+                scrollWrapper.addEventListener('scroll', updateScrollButtons);
+                
+                // Mettre à jour les boutons au redimensionnement de la fenêtre
+                window.addEventListener('resize', updateScrollButtons);
+                
+                // Initialiser l'état des boutons
+                setTimeout(updateScrollButtons, 100);
+                
+                // Navigation au clavier
+                document.addEventListener('keydown', (e) => {
+                    // Vérifier que l'utilisateur n'est pas en train de taper dans un champ de recherche
+                    if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                        if (e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            scrollWrapper.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                        } else if (e.key === 'ArrowRight') {
+                            e.preventDefault();
+                            scrollWrapper.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                        }
+                    }
+                });
+            } else {
+                console.log('Éléments de scroll non trouvés');
+            }
+        });
+    </script>
+{% endblock %}

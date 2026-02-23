@@ -1,0 +1,562 @@
+{# templates/commande/formulaire.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Commander {{ produit.nom }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .commande-container {
+            max-width: 1300px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .produit-resume {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #0dcaf0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .produit-resume h4 {
+            color: #0dcaf0;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .prix-total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #198754;
+            text-align: right;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #0dcaf0;
+            box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+        }
+        
+        .alert-info {
+            background: #e8f7ff;
+            border-color: #b6ecf7;
+            color: #055160;
+            border-radius: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0dcaf0 0%, #0bb6d9 100%);
+            border: none;
+            padding: 15px 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(13, 202, 240, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .section-title {
+            color: #0dcaf0;
+            border-bottom: 2px solid #0dcaf0;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+        
+        .form-help-text {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .pharmacie-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid #0dcaf0;
+        }
+        
+        .quantite-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .quantite-input {
+            width: 100px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .commande-container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+            
+            .produit-resume {
+                padding: 20px;
+            }
+            
+            .prix-total {
+                text-align: left;
+                margin-top: 15px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+<div class="container">
+    <div class="commande-container">
+        <!-- Titre de la page -->
+        <div class="text-center mb-5">
+          <h1 class="mb-3" style="color: #0dcaf0;">
+    <i class="bi bi-cart-check me-2"></i>Commander {{ produit.nom }}
+</h1>
+            <p class="text-muted">
+                Remplissez le formulaire ci-dessous pour passer votre commande
+            </p>
+        </div>
+        
+        <!-- Résumé du produit -->
+        <div class="produit-resume">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4>{{ produit.nom }}</h4>
+                    {% if produit.description %}
+                        <p class="text-muted mb-2">{{ produit.description|slice(0, 150) }}...</p>
+                    {% endif %}
+                    <div class="mt-3">
+                        <span class="badge bg-primary me-2">
+                            <i class="bi bi-tag me-1"></i>Produit
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-upc-scan me-1"></i>Réf: PROD{{ "%04d"|format(produit.id) }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="prix-info text-md-end">
+                        <div class="prix-unit mb-2">
+                            <small class="text-muted">Prix unitaire :</small>
+                            <div class="h4 text-primary">{{ produit.prix|number_format(2, ',', ' ') }} €</div>
+                        </div>
+                        <div id="prix-total" class="prix-total">
+                            <small class="text-muted">Total :</small>
+                            <div class="h4 text-success">
+                                <span id="prix-total-value">{{ produit.prix|number_format(2, ',', ' ') }}</span> €
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="alert alert-info mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-info-circle fs-4 me-3"></i>
+                <div>
+                    <strong>Informations importantes :</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Les champs marqués d'un * sont obligatoires</li>
+                        <li>Vous serez contacté par la parapharmacie pour finaliser votre commande</li>
+                        <li>Le retrait se fait en pharmacie</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulaire de commande -->
+        {{ form_start(form, {'attr': {'id': 'form-commande', 'class': 'mt-4'}}) }}
+        
+        <!-- Section : Détails de la commande -->
+        <div class="mb-5">
+            <h3 class="section-title">
+                <i class="bi bi-cart me-2"></i>Détails de la commande
+            </h3>
+            
+            <div class="row">
+                <!-- Quantité -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.quantite, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                        <div class="quantite-control">
+                            {{ form_widget(form.quantite, {'attr': {
+                                'class': 'form-control quantite-input',
+                                'id': 'quantite-input',
+                                'min': '1',
+                                'max': '99'
+                            }}) }}
+                            <span class="text-muted">unité(s)</span>
+                        </div>
+                        {{ form_errors(form.quantite) }}
+                        <div class="form-help-text">
+                            Sélectionnez la quantité souhaitée (max: 99)
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Parapharmacie -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.parapharmacie, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                        {{ form_widget(form.parapharmacie, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.parapharmacie) }}
+                        
+                        <!-- Informations de la parapharmacie sélectionnée -->
+                        <div id="pharmacie-details" class="pharmacie-info mt-3 d-none">
+                            <div id="pharmacie-nom" class="fw-bold"></div>
+                            <div id="pharmacie-adresse" class="small text-muted mt-1"></div>
+                            <div id="pharmacie-telephone" class="small text-muted"></div>
+                        </div>
+                        
+                        <div class="form-help-text">
+                            Choisissez la parapharmacie où vous souhaitez récupérer votre commande
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section : Informations personnelles -->
+        <div class="mb-5">
+            <h3 class="section-title">
+                <i class="bi bi-person me-2"></i>Informations personnelles
+            </h3>
+            
+            <div class="row">
+                <!-- Nom complet -->
+                <div class="col-md-12">
+                    <div class="form-group">
+                        {{ form_label(form.nomClient, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                        {{ form_widget(form.nomClient, {'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Votre nom et prénom'
+                        }}) }}
+                        {{ form_errors(form.nomClient) }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Email -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.email, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                        {{ form_widget(form.email, {'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'exemple@email.com'
+                        }}) }}
+                        {{ form_errors(form.email) }}
+                        <div class="form-help-text">
+                            Vous recevrez la confirmation de commande à cette adresse
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Téléphone -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.telephone, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                        {{ form_widget(form.telephone, {'attr': {
+                            'class': 'form-control',
+                            'placeholder': '06 12 34 56 78'
+                        }}) }}
+                        {{ form_errors(form.telephone) }}
+                        <div class="form-help-text">
+                            La parapharmacie vous contactera sur ce numéro
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section : Livraison -->
+        <div class="mb-5">
+            <h3 class="section-title">
+                <i class="bi bi-truck me-2"></i>Adresse de livraison
+            </h3>
+            
+            <div class="form-group">
+                {{ form_label(form.adresseLivraison, null, {'label_attr': {'class': 'form-label required-field'}}) }}
+                {{ form_widget(form.adresseLivraison, {'attr': {
+                    'class': 'form-control',
+                    'rows': '4',
+                    'placeholder': 'Numéro, rue, code postal, ville...'
+                }}) }}
+                {{ form_errors(form.adresseLivraison) }}
+                <div class="form-help-text">
+                    Indiquez l'adresse complète pour la livraison
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section : Notes supplémentaires -->
+        <div class="mb-5">
+            <h3 class="section-title">
+                <i class="bi bi-chat-text me-2"></i>Notes supplémentaires
+            </h3>
+            
+            <div class="form-group">
+                {{ form_label(form.notes, null, {'label_attr': {'class': 'form-label'}}) }}
+                {{ form_widget(form.notes, {'attr': {
+                    'class': 'form-control',
+                    'rows': '3',
+                    'placeholder': 'Instructions spéciales, allergies, préférences, heures de livraison préférées...'
+                }}) }}
+                {{ form_errors(form.notes) }}
+                <div class="form-help-text">
+                    Ces informations aideront la parapharmacie à mieux préparer votre commande
+                </div>
+            </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+            <a href="{{ path('app_produit_details', {'id': produit.id}) }}" 
+               class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Retour au produit
+            </a>
+            
+            {{ form_widget(form.submit, {'attr': {'class': 'btn-primary btn-lg'}}) }}
+        </div>
+        
+        {{ form_end(form) }}
+        
+        <!-- Confidentialité -->
+        <div class="mt-5 pt-4 border-top">
+            <div class="alert alert-light">
+                <h6 class="mb-2">
+                    <i class="bi bi-shield-check me-2"></i>Protection de vos données
+                </h6>
+                <p class="small mb-0">
+                    Vos informations personnelles sont collectées uniquement pour le traitement de votre commande. 
+                    Elles ne seront pas partagées avec des tiers sans votre consentement. 
+                    <a href="#" class="text-decoration-none">Politique de confidentialité</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Éléments du DOM
+            const quantiteInput = document.getElementById('quantite-input');
+            const prixUnitaire = {{ produit.prix }};
+            const prixTotalSpan = document.getElementById('prix-total-value');
+            const parapharmacieSelect = document.querySelector('[name="commande[parapharmacie]"]');
+            const pharmacieDetails = document.getElementById('pharmacie-details');
+            
+            // Données des parapharmacies (injectées depuis Twig)
+            const parapharmaciesData = {
+                {% for pharmacie in parapharmacies %}
+                    {{ pharmacie.id }}: {
+                        nom: "{{ pharmacie.nom|escape('js') }}",
+                        adresse: "{{ pharmacie.adresse|escape('js') }}",
+                        telephone: "{{ pharmacie.telephone|escape('js') }}",
+                        email: "{{ pharmacie.email|escape('js')|default('') }}"
+                    },
+                {% endfor %}
+            };
+            
+            // Mettre à jour le prix total
+            function updatePrixTotal() {
+                const quantite = parseInt(quantiteInput.value) || 1;
+                const total = (prixUnitaire * quantite).toFixed(2);
+                prixTotalSpan.textContent = total.replace('.', ',');
+            }
+            
+            // Afficher les détails de la parapharmacie sélectionnée
+            function updatePharmacieDetails() {
+                const selectedId = parapharmacieSelect.value;
+                
+                if (selectedId && parapharmaciesData[selectedId]) {
+                    const pharmacie = parapharmaciesData[selectedId];
+                    
+                    document.getElementById('pharmacie-nom').textContent = pharmacie.nom;
+                    document.getElementById('pharmacie-adresse').textContent = pharmacie.adresse;
+                    document.getElementById('pharmacie-telephone').textContent = `📞 ${pharmacie.telephone}`;
+                    
+                    pharmacieDetails.classList.remove('d-none');
+                } else {
+                    pharmacieDetails.classList.add('d-none');
+                }
+            }
+            
+            // Événements
+            quantiteInput.addEventListener('change', updatePrixTotal);
+            quantiteInput.addEventListener('input', updatePrixTotal);
+            
+            parapharmacieSelect.addEventListener('change', updatePharmacieDetails);
+            
+            // Initialisation
+            updatePrixTotal();
+            updatePharmacieDetails();
+            
+            // Validation du formulaire
+            const form = document.getElementById('form-commande');
+            form.addEventListener('submit', function(e) {
+                // Validation de la quantité
+                const quantite = parseInt(quantiteInput.value);
+                if (quantite < 1 || quantite > 99) {
+                    alert('La quantité doit être comprise entre 1 et 99.');
+                    quantiteInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Validation de la parapharmacie
+                if (!parapharmacieSelect.value) {
+                    alert('Veuillez sélectionner une parapharmacie.');
+                    parapharmacieSelect.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Validation de l'email
+                const emailInput = document.querySelector('[name="commande[email]"]');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailInput.value)) {
+                    alert('Veuillez entrer une adresse email valide.');
+                    emailInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Validation du téléphone
+                const telInput = document.querySelector('[name="commande[telephone]"]');
+                const telRegex = /^[0-9\s\+\-\(\)]{10,20}$/;
+                if (!telRegex.test(telInput.value.replace(/\s/g, ''))) {
+                    alert('Veuillez entrer un numéro de téléphone valide.');
+                    telInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Confirmation finale
+                if (!confirm('Confirmez-vous cette commande ?')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Afficher un indicateur de chargement
+                const submitBtn = document.querySelector('[type="submit"]');
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Traitement en cours...';
+                submitBtn.disabled = true;
+                
+                return true;
+            });
+            
+            // Auto-format du téléphone
+            const telInput = document.querySelector('[name="commande[telephone]"]');
+            telInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                
+                if (value.length > 2) {
+                    value = value.match(/.{1,2}/g).join(' ');
+                }
+                
+                e.target.value = value;
+            });
+            
+            // Sauvegarder les données en cas de rechargement de page
+            window.addEventListener('beforeunload', function(e) {
+                // Sauvegarder les données du formulaire dans localStorage
+                const formData = {
+                    quantite: quantiteInput.value,
+                    parapharmacie: parapharmacieSelect.value,
+                    nomClient: document.querySelector('[name="commande[nomClient]"]').value,
+                    email: document.querySelector('[name="commande[email]"]').value,
+                    telephone: document.querySelector('[name="commande[telephone]"]').value,
+                    adresseLivraison: document.querySelector('[name="commande[adresseLivraison]"]').value,
+                    notes: document.querySelector('[name="commande[notes]"]').value
+                };
+                
+                localStorage.setItem('commandeDraft', JSON.stringify(formData));
+            });
+            
+            // Restaurer les données sauvegardées
+            const savedData = localStorage.getItem('commandeDraft');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    
+                    if (data.quantite) quantiteInput.value = data.quantite;
+                    if (data.parapharmacie) parapharmacieSelect.value = data.parapharmacie;
+                    if (data.nomClient) document.querySelector('[name="commande[nomClient]"]').value = data.nomClient;
+                    if (data.email) document.querySelector('[name="commande[email]"]').value = data.email;
+                    if (data.telephone) document.querySelector('[name="commande[telephone]"]').value = data.telephone;
+                    if (data.adresseLivraison) document.querySelector('[name="commande[adresseLivraison]"]').value = data.adresseLivraison;
+                    if (data.notes) document.querySelector('[name="commande[notes]"]').value = data.notes;
+                    
+                    updatePrixTotal();
+                    updatePharmacieDetails();
+                    
+                    // Nettoyer après restauration
+                    localStorage.removeItem('commandeDraft');
+                } catch (e) {
+                    console.error('Erreur lors de la restauration des données:', e);
+                }
+            }
+        });
+        
+        // Fonction utilitaire pour formater les nombres
+        function formatNumber(number, decimals = 2) {
+            return number.toFixed(decimals).replace('.', ',');
+        }
+    </script>
+{% endblock %}

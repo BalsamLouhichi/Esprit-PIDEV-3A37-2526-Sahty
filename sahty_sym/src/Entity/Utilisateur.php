@@ -58,6 +58,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, nullable: true)]
     protected ?string $telephone = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    protected ?string $ville = null;
+
     #[ORM\Column(type: 'date', nullable: true)]
     protected ?\DateTimeInterface $dateNaissance = null;
 
@@ -214,6 +217,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     { 
         $this->telephone = $telephone; 
         return $this; 
+    }
+
+    public function getVille(): ?string
+    {
+        return $this->ville;
+    }
+
+    public function setVille(?string $ville): self
+    {
+        $this->ville = $ville;
+        return $this;
     }
 
     public function getDateNaissance(): ?\DateTimeInterface 

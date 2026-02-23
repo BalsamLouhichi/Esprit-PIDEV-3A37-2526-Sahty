@@ -1,0 +1,63 @@
+{# templates/commande/email_form.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Suivre mes commandes{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-search-heart text-primary" style="font-size: 4rem;"></i>
+                        <h1 class="h2 mb-3 mt-3">Suivre mes commandes</h1>
+                        <p class="text-muted">
+                            Entrez l'adresse email que vous avez utilisée pour vos commandes.
+                        </p>
+                    </div>
+                    
+                    <form method="get" action="{{ path('app_mes_commandes') }}" class="mt-4">
+                        <div class="form-group mb-4">
+                            <label for="email" class="form-label fw-bold">
+                                <i class="bi bi-envelope me-2"></i>Adresse email
+                            </label>
+                            <input type="email" 
+                                   class="form-control form-control-lg" 
+                                   id="email" 
+                                   name="email" 
+                                   required
+                                   placeholder="votre.nom@email.com">
+                            <div class="form-text mt-2">
+                                Nous vous enverrons un récapitulatif de vos commandes à cette adresse.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-search me-2"></i>Voir mes commandes
+                            </button>
+                            <a href="{{ path('app_parapharmacie_list') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Retour à l'accueil
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-5 pt-4 border-top">
+                        <div class="alert alert-light">
+                            <h6 class="mb-2">
+                                <i class="bi bi-question-circle me-2"></i>Vous n'avez pas encore commandé ?
+                            </h6>
+                            <p class="mb-0 small">
+                                <a href="{{ path('app_parapharmacie_list') }}" class="text-decoration-none">
+                                    Parcourir nos produits disponibles
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

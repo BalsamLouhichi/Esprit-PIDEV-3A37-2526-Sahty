@@ -1,36 +1,28 @@
 {# templates/home/index.html.twig #}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sahty - Votre santé mentale au quotidien</title>
+    <title>Sahty - Plateforme de Santé et Services Médicaux</title>
+    <meta name="description" content="Sahty connecte les points de votre santé. Quiz intelligents, consultations sur mesure, analyses labo, parapharmacie et événements experts — tout ce dont vous avez besoin pour une santé proactive, dans une seule plateforme épurée..">
 
-    <!-- CSS -->
-    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
-
-    <!-- Libs CSS -->
-    <link href="{{ asset('lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css') }}" rel="stylesheet">
-
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Font Awesome 6 (for MEDINOVA icons) -->
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Google Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Libs & Plugins -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- Animate.css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ============ PALETTE DE COULEURS ============ */
+        /* ============ PALETTE DE COULEURS FUSIONNÉE ============ */
         :root {
             --primary: #1D5D9B;
             --primary-light: #E8F4F8;
@@ -43,21 +35,25 @@
             --success: #4A7C59;
             --danger: #C1666B;
             --warning: #D4A574;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --text: #475569;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
             background: var(--light);
             overflow-x: hidden;
         }
 
-        /* Hero Section - Fusion des deux styles */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* ============ NAVBAR (gérée par partial) ============ */
+
+        /* ============ HERO SECTION FUSIONNÉE ============ */
         .hero-section {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--secondary) 100%);
             color: white;
@@ -66,7 +62,7 @@
             align-items: center;
             position: relative;
             overflow: hidden;
-            padding: 80px 0;
+            padding: 100px 0;
         }
 
         .hero-section::before {
@@ -82,6 +78,18 @@
             animation: heroGlow 8s ease-in-out infinite;
         }
 
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23F4F6FF' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+            z-index: 1;
+        }
+
         @keyframes heroGlow {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -89,7 +97,7 @@
 
         .hero-content {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             animation: fadeInUp 1s ease;
         }
 
@@ -165,6 +173,7 @@
             max-width: 600px;
             filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.3));
             animation: floatImage 6s ease-in-out infinite;
+            border-radius: 30px;
         }
 
         @keyframes floatImage {
@@ -172,9 +181,47 @@
             50% { transform: translateY(-20px); }
         }
 
-        /* Features Cards - Fusion */
-        .features-section {
+        /* ============ STATS CARDS (Maram) ============ */
+        .stats-section-sahty {
+            padding: 80px 0;
+            background: linear-gradient(135deg, var(--light) 0%, white 100%);
+        }
+
+        .stat-card-sahty {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 45px rgba(29, 93, 155, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(117, 194, 246, 0.1);
+        }
+
+        .stat-card-sahty:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(29, 93, 155, 0.15);
+        }
+
+        .stat-number-sahty {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        /* ============ FEATURES SECTIONS ============ */
+        .features-section-sahty, .features-section-medinova {
             padding: 100px 0;
+        }
+
+        .features-section-sahty {
+            background: white;
+        }
+
+        .features-section-medinova {
             background: linear-gradient(135deg, var(--light) 0%, white 100%);
         }
 
@@ -201,27 +248,63 @@
             margin-bottom: 20px;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
+        .section-description {
+            font-size: 1.2rem;
+            color: var(--text);
+            max-width: 700px;
+            margin: 0 auto;
         }
 
-        .feature-card {
+        /* Feature Cards (Sahty) */
+        .feature-card-sahty {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(0,0,0,0.05);
+            height: 100%;
+            box-shadow: 0 15px 45px rgba(29, 93, 155, 0.1);
+        }
+
+        .feature-card-sahty:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .feature-icon-sahty {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(29, 93, 155, 0.3);
+        }
+
+        /* Feature Cards (Medinova) */
+        .feature-card-medinova {
             background: white;
             border-radius: 25px;
             padding: 45px 35px;
             box-shadow: 0 15px 45px rgba(29, 93, 155, 0.1);
             transition: all 0.4s ease;
             border: 2px solid rgba(117, 194, 246, 0.1);
+            height: 100%;
         }
 
-        .feature-card:hover {
+        .feature-card-medinova:hover {
             transform: translateY(-10px);
             box-shadow: 0 25px 60px rgba(29, 93, 155, 0.15);
+            border-color: var(--accent);
         }
 
-        .feature-icon {
+        .feature-icon-medinova {
             width: 80px;
             height: 80px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
@@ -229,14 +312,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: white;
             margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(29, 93, 155, 0.3);
-        }
-
-        .feature-card:hover .feature-icon {
-            transform: scale(1.1) rotate(5deg);
         }
 
         .feature-title {
@@ -247,20 +326,43 @@
         }
 
         .feature-description {
-            color: var(--dark);
+            color: var(--text);
             line-height: 1.8;
-            opacity: 0.8;
         }
 
-        /* Stats Section */
-        .stats-section {
+        /* ============ POURQUOI SAHTY SECTION ============ */
+        .why-sahty-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--light) 0%, white 100%);
+        }
+
+        .why-sahty-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .why-sahty-list li {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .why-sahty-list i {
+            font-size: 2rem;
+            color: var(--success);
+        }
+
+        /* ============ STATS SECTION (Medinova) ============ */
+        .stats-section-medinova {
             padding: 80px 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             position: relative;
             overflow: hidden;
         }
 
-        .stats-grid {
+        .stats-grid-medinova {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 40px;
@@ -268,12 +370,12 @@
             z-index: 1;
         }
 
-        .stat-card {
+        .stat-card-medinova {
             text-align: center;
             padding: 30px;
         }
 
-        .stat-number {
+        .stat-number-medinova {
             font-size: 4rem;
             font-weight: 900;
             color: white;
@@ -281,14 +383,37 @@
             text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .stat-label {
+        .stat-label-medinova {
             font-size: 1.2rem;
             color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
             text-transform: uppercase;
         }
 
-        /* CTA Section */
+        /* ============ TESTIMONIALS (Maram) ============ */
+        .testimonials-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--light) 0%, white 100%);
+        }
+
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            height: 100%;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+
+        /* ============ CTA SECTION FUSIONNÉE ============ */
         .cta-section {
             padding: 100px 0;
             background: linear-gradient(135deg, var(--light) 0%, white 100%);
@@ -302,6 +427,23 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(29, 93, 155, 0.2);
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.1;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
         }
 
         .cta-title {
@@ -320,26 +462,16 @@
             margin-right: auto;
         }
 
-        /* Card hover effect from Sahty */
-        .card-hover {
-            transition: all 0.35s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
+        /* ============ UTILS ============ */
+        .floating {
+            animation: float 3s ease-in-out infinite;
         }
 
-        .icon-circle {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        /* Animations */
         .fade-in {
             opacity: 0;
             transform: translateY(30px);
@@ -362,18 +494,7 @@
             }
         }
 
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Responsive */
+        /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
             .hero-title {
                 font-size: 2.5rem;
@@ -391,7 +512,7 @@
             .section-title {
                 font-size: 2rem;
             }
-            .stats-grid {
+            .stats-grid-medinova {
                 grid-template-columns: repeat(2, 1fr);
             }
             .cta-card {
@@ -400,26 +521,29 @@
             .cta-title {
                 font-size: 2rem;
             }
+            .stat-number-sahty {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
 <body>
 
-    {% include 'partials/navbar.html.twig' %}
+    <!-- Navigation -->
+    {% include 'partials/header.html.twig' %}
 
-    <!-- Hero Section (MEDINOVA style) -->
+    <!-- HERO SECTION FUSIONNÉE (Medinova style + Sahty content) -->
     <section class="hero-section">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
                     <div class="hero-content">
                         <h1 class="hero-title">
-                            Votre <span class="highlight">Santé</span>,<br>
-                            Notre <span class="highlight">Priorité</span>
+                            Votre <span class="highlight">santé</span>,<br>
+                            <span class="highlight">notre priorité</span>
                         </h1>
                         <p class="hero-subtitle">
-                            Prenez soin de votre santé mentale avec des tests rapides, 
-                            des résultats clairs et des conseils personnalisés.
+                            Sahty connecte les points de votre santé. Quiz intelligents, consultations sur mesure, analyses labo, parapharmacie et événements experts — tout ce dont vous avez besoin pour une santé proactive, dans une seule plateforme épurée.
                         </p>
                         <div class="hero-buttons">
                             {% if app.user %}
@@ -428,144 +552,182 @@
                                         <span>Prendre Rendez-vous</span>
                                         <i class="fas fa-calendar-plus"></i>
                                     </a>
-                                    <a href="{{ path('app_rdv_mes_rdv') }}" class="hero-btn btn-secondary-hero">
-                                        <span>Mes Rendez-vous</span>
-                                        <i class="fas fa-arrow-right"></i>
+                                    <a href="{{ path('evenements_client_events') }}" class="hero-btn btn-secondary-hero">
+                                        <span>Voir les événements</span>
+                                        <i class="fas fa-calendar-alt"></i>
                                     </a>
                                 {% elseif is_granted('ROLE_MEDECIN') %}
                                     <a href="{{ path('app_medecin_rdv_liste') }}" class="hero-btn btn-primary-hero">
                                         <span>Mes Consultations</span>
                                         <i class="fas fa-stethoscope"></i>
                                     </a>
-                                    <a href="{{ path('app_fiche_medicale_index') }}" class="hero-btn btn-secondary-hero">
-                                        <span>Fiches Patients</span>
-                                        <i class="fas fa-folder-open"></i>
+                                    <a href="{{ path('evenements_client_events') }}" class="hero-btn btn-secondary-hero">
+                                        <span>Événements</span>
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </a>
+                                {% elseif is_granted('ROLE_RESPONSABLE_LABO') or is_granted('ROLE_RESPONSABLE_PARA') %}
+                                    <a href="{{ path('evenements_client_events') }}" class="hero-btn btn-primary-hero">
+                                        <span>Voir les événements</span>
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('evenements_client_events') }}" class="hero-btn btn-primary-hero">
+                                        <span>Voir les événements</span>
+                                        <i class="fas fa-calendar-alt"></i>
                                     </a>
                                 {% endif %}
                             {% else %}
-                                <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
-                                    <span>Commencer un quiz</span>
+                                <a href="{{ path('app_signup') }}" class="hero-btn btn-primary-hero">
+                                    <span>Commencer un test</span>
                                     <i class="fas fa-arrow-right"></i>
                                 </a>
-                                <a href="{{ path('app_login') }}" class="hero-btn btn-secondary-hero">
-                                    <span>Se Connecter</span>
-                                    <i class="fas fa-sign-in-alt"></i>
+                                <a href="{{ path('evenements_client_events') }}" class="hero-btn btn-secondary-hero">
+                                    <span>Explorer les événements</span>
+                                    <i class="fas fa-calendar-alt"></i>
                                 </a>
                             {% endif %}
                         </div>
-                        <small class="d-block mt-4 opacity-75">
-                            Déjà +1 200 personnes ont commencé leur parcours bien-être avec Sahty
+                        <small class="d-block mt-4 opacity-75 text-white">
+                            <i class="fas fa-check-circle me-2"></i>Déjà +1 200 personnes ont commencé leur parcours bien-être avec Sahty
                         </small>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="hero-image">
-                        <img src="https://cdni.iconscout.com/illustration/premium/thumb/doctor-consultation-illustration-download-in-svg-png-gif-file-formats--medical-checkup-health-care-pack-professionals-illustrations-4632862.png" 
-                             alt="Sahty Healthcare">
+                <div class="col-lg-6 text-center">
+                    <div class="hero-image floating">
+                        <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                             class="img-fluid rounded-4 shadow-lg" 
+                             alt="Santé et bien-être">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section (3 cards - Sahty style) -->
-    <section class="py-5 bg-light">
+    <!-- STATS SECTION (Maram) -->
+    <section class="stats-section-sahty">
         <div class="container">
-            <div class="text-center mb-5">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card-sahty">
+                        <div class="stat-number-sahty">150+</div>
+                        <p class="text-muted mb-0 fw-bold">Événements organisés</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card-sahty">
+                        <div class="stat-number-sahty">2.5k+</div>
+                        <p class="text-muted mb-0 fw-bold">Participants</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card-sahty">
+                        <div class="stat-number-sahty">50+</div>
+                        <p class="text-muted mb-0 fw-bold">Experts partenaires</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stat-card-sahty">
+                        <div class="stat-number-sahty">95%</div>
+                        <p class="text-muted mb-0 fw-bold">Satisfaction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION 1 - Pourquoi Sahty (Maram - 3 cards) -->
+    <section class="features-section-sahty">
+        <div class="container">
+            <div class="section-header">
                 <p class="section-subtitle">Comment ça marche</p>
                 <h2 class="section-title">Trois étapes simples</h2>
             </div>
-            <div class="row g-4 text-center">
+
+            <div class="row g-4">
                 <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow-lg card-hover">
-                        <div class="card-body p-5">
-                            <div class="icon-circle bg-primary text-white">
-                                <i class="bi bi-journal-text display-4"></i>
-                            </div>
-                            <h4 class="fw-bold mb-3">Évaluation rapide</h4>
-                            <p class="text-muted">
-                                Répondez en 5 à 10 minutes à des questions simples et valides scientifiquement.
-                            </p>
+                    <div class="feature-card-sahty">
+                        <div class="feature-icon-sahty">
+                            <i class="bi bi-journal-text"></i>
                         </div>
+                        <h4 class="fw-bold mb-3">Évaluation rapide</h4>
+                        <p class="text-muted">
+                            Répondez en 5 à 10 minutes à des questions simples et valides scientifiquement.
+                        </p>
                     </div>
                 </div>
 
                 <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow-lg card-hover">
-                        <div class="card-body p-5">
-                            <div class="icon-circle bg-warning text-dark">
-                                <i class="bi bi-lightbulb display-4"></i>
-                            </div>
-                            <h4 class="fw-bold mb-3">Conseils adaptés</h4>
-                            <p class="text-muted">
-                                Recevez des recommandations personnalisées selon vos réponses.
-                            </p>
+                    <div class="feature-card-sahty">
+                        <div class="feature-icon-sahty">
+                            <i class="bi bi-lightbulb"></i>
                         </div>
+                        <h4 class="fw-bold mb-3">Conseils adaptés</h4>
+                        <p class="text-muted">
+                            Recevez des recommandations personnalisées selon vos réponses.
+                        </p>
                     </div>
                 </div>
 
                 <div class="col-lg-4 col-md-6">
-                    <div class="card h-100 border-0 shadow-lg card-hover">
-                        <div class="card-body p-5">
-                            <div class="icon-circle bg-success text-white">
-                                <i class="bi bi-chat-dots display-4"></i>
-                            </div>
-                            <h4 class="fw-bold mb-3">Suivi discret</h4>
-                            <p class="text-muted">
-                                Historique privé, progression visible, rappels bienveillants.
-                            </p>
+                    <div class="feature-card-sahty">
+                        <div class="feature-icon-sahty">
+                            <i class="bi bi-chat-dots"></i>
                         </div>
+                        <h4 class="fw-bold mb-3">Suivi discret</h4>
+                        <p class="text-muted">
+                            Historique privé, progression visible, rappels bienveillants.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Pourquoi Sahty (from Sahty version) -->
-    <section class="py-5">
+    <!-- POURQUOI SAHTY (Maram - section avec image) -->
+    <section class="why-sahty-section">
         <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="section-title">Pourquoi choisir Sahty ?</h2>
-                <p class="lead text-muted">Une application pensée pour vous accompagner</p>
-            </div>
-
-            <div class="row g-5 align-items-center">
-                <div class="col-lg-6">
-                    <img src="{{ asset('img/Bien-être.jpg') }}" 
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
                          class="img-fluid rounded-4 shadow-lg" 
                          alt="Bien-être mental">
                 </div>
 
                 <div class="col-lg-6">
-                    <ul class="list-unstyled fs-5">
-                        <li class="mb-4">
-                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
-                            <strong>Anonymat garanti</strong> — aucune information personnelle obligatoire
+                    <h2 class="section-title text-start mb-4">Pourquoi choisir Sahty ?</h2>
+                    <p class="lead mb-5">Une application pensée pour vous accompagner</p>
+                    
+                    <ul class="why-sahty-list">
+                        <li>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span><strong>Anonymat garanti</strong> — aucune information personnelle obligatoire</span>
                         </li>
-                        <li class="mb-4">
-                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
-                            <strong>Résultats immédiats</strong> — compréhensibles et sans jargon
+                        <li>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span><strong>Résultats immédiats</strong> — compréhensibles et sans jargon</span>
                         </li>
-                        <li class="mb-4">
-                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
-                            <strong>Conseils concrets</strong> — exercices, habitudes, quand consulter un professionnel
+                        <li>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span><strong>Conseils concrets</strong> — exercices, habitudes, quand consulter</span>
                         </li>
-                        <li class="mb-4">
-                            <i class="bi bi-check-circle-fill text-success me-3 fs-3"></i>
-                            <strong>Gratuit et sans pub</strong> — pour votre bien-être, pas pour le profit
+                        <li>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span><strong>Gratuit et sans pub</strong> — pour votre bien-être</span>
                         </li>
                     </ul>
 
-                    <a href="{{ path('app_sign') }}" class="btn btn-primary btn-lg mt-4 px-5">
-                        Je veux tester maintenant →
-                    </a>
+                    {% if not app.user %}
+                        <a href="{{ path('app_signup') }}" class="btn btn-primary btn-lg mt-4 px-5">
+                            Je veux tester maintenant →
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Grid (MEDINOVA style - 6 cards) -->
-    <section class="features-section">
+    <!-- FEATURES SECTION 2 - Services Médicaux (Medinova - 6 cards) -->
+    <section class="features-section-medinova">
         <div class="container">
             <div class="section-header fade-in">
                 <p class="section-subtitle">Nos Services</p>
@@ -575,105 +737,183 @@
                 </p>
             </div>
 
-            <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-calendar-check"></i>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h3 class="feature-title">Prise de RDV en Ligne</h3>
+                        <p class="feature-description">
+                            Réservez vos consultations en quelques clics, 24h/24 et 7j/7.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Prise de RDV en Ligne</h3>
-                    <p class="feature-description">
-                        Réservez vos consultations en quelques clics, 24h/24 et 7j/7.
-                    </p>
                 </div>
 
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-user-md"></i>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h3 class="feature-title">Médecins Qualifiés</h3>
+                        <p class="feature-description">
+                            Accédez à un réseau de spécialistes en santé mentale.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Médecins Qualifiés</h3>
-                    <p class="feature-description">
-                        Accédez à un réseau de spécialistes en santé mentale.
-                    </p>
                 </div>
 
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-medical"></i>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <h3 class="feature-title">Dossier Médical Digital</h3>
+                        <p class="feature-description">
+                            Consultez votre historique et vos évaluations en sécurité.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Dossier Médical Digital</h3>
-                    <p class="feature-description">
-                        Consultez votre historique et vos évaluations en sécurité.
-                    </p>
                 </div>
 
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-bell"></i>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3 class="feature-title">Rappels Automatiques</h3>
+                        <p class="feature-description">
+                            Recevez des notifications pour vos rendez-vous.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Rappels Automatiques</h3>
-                    <p class="feature-description">
-                        Recevez des notifications pour vos rendez-vous.
-                    </p>
                 </div>
 
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Sécurité Garantie</h3>
+                        <p class="feature-description">
+                            Vos données sont protégées et confidentielles.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Sécurité Garantie</h3>
-                    <p class="feature-description">
-                        Vos données sont protégées et confidentielles.
-                    </p>
                 </div>
 
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <i class="fas fa-headset"></i>
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card-medinova fade-in">
+                        <div class="feature-icon-medinova">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h3 class="feature-title">Support 24/7</h3>
+                        <p class="feature-description">
+                            Notre équipe est disponible pour vous accompagner.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Support 24/7</h3>
-                    <p class="feature-description">
-                        Notre équipe est disponible pour vous accompagner.
-                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section (MEDINOVA style) -->
-    <section class="stats-section">
+    <!-- STATS SECTION (Medinova) -->
+    <section class="stats-section-medinova">
         <div class="container">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" data-target="1250">0</div>
-                    <div class="stat-label">Utilisateurs</div>
+            <div class="stats-grid-medinova">
+                <div class="stat-card-medinova">
+                    <div class="stat-number-medinova" data-target="1250">0</div>
+                    <div class="stat-label-medinova">Utilisateurs</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="85">0</div>
-                    <div class="stat-label">Professionnels</div>
+                <div class="stat-card-medinova">
+                    <div class="stat-number-medinova" data-target="85">0</div>
+                    <div class="stat-label-medinova">Professionnels</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="15">0</div>
-                    <div class="stat-label">Spécialités</div>
+                <div class="stat-card-medinova">
+                    <div class="stat-number-medinova" data-target="15">0</div>
+                    <div class="stat-label-medinova">Spécialités</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" data-target="98">0</div>
-                    <div class="stat-label">% Satisfaction</div>
+                <div class="stat-card-medinova">
+                    <div class="stat-number-medinova" data-target="98">0</div>
+                    <div class="stat-label-medinova">% Satisfaction</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Final CTA Section (merged) -->
+    <!-- SECTION ÉVÉNEMENTS SUPPRIMÉE -->
+
+    <!-- TESTIMONIALS (Maram) -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Ce qu'ils disent de Sahty</h2>
+                <p class="lead text-muted">Témoignages de nos participants et partenaires</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/32.jpg" 
+                                 class="testimonial-avatar" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Dr. Sarah Chen</h6>
+                                <small class="text-muted">Pédopsychiatre</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "Les webinaires Sahty m'ont permis de rester à jour sur les dernières recherches 
+                            en santé mentale infantile. Une plateforme indispensable pour tout professionnel sérieux."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/men/54.jpg" 
+                                 class="testimonial-avatar" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Pierre Martin</h6>
+                                <small class="text-muted">Infirmier en psychiatrie</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "La qualité des intervenants est exceptionnelle. J'ai particulièrement apprécié 
+                            l'atelier sur les techniques de communication thérapeutique."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="testimonial-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://randomuser.me/api/portraits/women/67.jpg" 
+                                 class="testimonial-avatar" alt="Avatar">
+                            <div>
+                                <h6 class="fw-bold mb-0">Marie Dubois</h6>
+                                <small class="text-muted">Psychologue clinicienne</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">
+                            "En tant que jeune professionnelle, Sahty m'a offert des opportunités de networking 
+                            précieuses et des formations continues de grande qualité."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION FUSIONNÉE -->
     <section class="cta-section">
         <div class="container">
             <div class="cta-card">
                 <div class="cta-content">
                     <h2 class="cta-title">Prêt à prendre soin de vous ?</h2>
                     <p class="cta-description">
-                        Commencez maintenant. C'est gratuit, rapide et sans engagement.
+                        Inscrivez-vous gratuitement et accédez à tous nos événements, 
+                        ressources et outils pour votre développement personnel et professionnel.
                     </p>
                     {% if not app.user %}
-                        <a href="{{ path('app_sign') }}" class="hero-btn btn-primary-hero">
+                        <a href="{{ path('app_signup') }}" class="hero-btn btn-primary-hero">
                             <span>Créer Mon Compte</span>
                             <i class="fas fa-user-plus"></i>
                         </a>
@@ -688,66 +928,107 @@
         </div>
     </section>
 
+    <!-- Footer -->
+    {% include 'partials/footer.html.twig' %}
+
     <!-- Scripts -->
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
-    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
-    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
     <script>
-        // Intersection Observer pour les animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-
-        // Compteur animé pour les statistiques
-        function animateCounter(element) {
-            const target = parseInt(element.getAttribute('data-target'));
-            const duration = 2000;
-            const increment = target / (duration / 16);
-            let current = 0;
-
-            const updateCounter = () => {
-                current += increment;
-                if (current < target) {
-                    element.textContent = Math.floor(current);
-                    requestAnimationFrame(updateCounter);
-                } else {
-                    element.textContent = target + (element.parentElement.querySelector('.stat-label').textContent.includes('%') ? '%' : '+');
-                }
+        // Animation fade-in au scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
             };
 
-            updateCounter();
-        }
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
 
-        const statsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const counter = entry.target.querySelector('.stat-number');
-                    animateCounter(counter);
-                    statsObserver.unobserve(entry.target);
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            // Counter animation for Medinova stats
+            const statNumbers = document.querySelectorAll('.stat-number-medinova');
+            
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = parseInt(entry.target.getAttribute('data-target'));
+                        let current = 0;
+                        const increment = target / 50;
+                        
+                        const updateCounter = () => {
+                            if (current < target) {
+                                current += increment;
+                                entry.target.textContent = Math.ceil(current);
+                                setTimeout(updateCounter, 30);
+                            } else {
+                                entry.target.textContent = target + (entry.target.parentElement.querySelector('.stat-label-medinova').textContent.includes('%') ? '%' : '+');
+                            }
+                        };
+                        
+                        updateCounter();
+                        counterObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            statNumbers.forEach(counter => {
+                counterObserver.observe(counter);
+            });
+
+            // Counter animation for Sahty stats
+            const sahtyStats = document.querySelectorAll('.stat-number-sahty');
+            sahtyStats.forEach(stat => {
+                const targetText = stat.textContent;
+                const targetNum = parseInt(targetText.replace('+', '').replace('k', '000').replace('K', '000'));
+                if (!isNaN(targetNum)) {
+                    let current = 0;
+                    const increment = targetNum / 50;
+                    
+                    const updateCounter = () => {
+                        if (current < targetNum) {
+                            current += increment;
+                            if (targetText.includes('k') || targetText.includes('K')) {
+                                stat.textContent = Math.ceil(current/1000) + 'k+';
+                            } else if (targetText.includes('+')) {
+                                stat.textContent = Math.ceil(current) + '+';
+                            } else {
+                                stat.textContent = Math.ceil(current);
+                            }
+                            setTimeout(updateCounter, 30);
+                        } else {
+                            stat.textContent = targetText;
+                        }
+                    };
+                    
+                    // Only start animation when stats section is visible
+                    const section = stat.closest('.stats-section-sahty');
+                    if (section) {
+                        const sectionObserver = new IntersectionObserver((entries) => {
+                            entries.forEach(entry => {
+                                if (entry.isIntersecting) {
+                                    updateCounter();
+                                    sectionObserver.unobserve(entry.target);
+                                }
+                            });
+                        }, { threshold: 0.5 });
+                        
+                        sectionObserver.observe(section);
+                    }
                 }
             });
-        }, { threshold: 0.5 });
-
-        document.querySelectorAll('.stat-card').forEach(card => {
-            statsObserver.observe(card);
         });
 
-        console.log('🏥 Sahty - Page d\'accueil chargée avec succès!');
+        console.log('🏥 Sahty - Page d\'accueil fusionnée chargée avec succès!');
     </script>
 
 </body>

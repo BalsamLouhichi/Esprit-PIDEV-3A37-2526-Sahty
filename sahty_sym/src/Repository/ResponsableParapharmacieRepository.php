@@ -6,9 +6,6 @@ use App\Entity\ResponsableParapharmacie;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<ResponsableParapharmacie>
- */
 class ResponsableParapharmacieRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,28 +13,15 @@ class ResponsableParapharmacieRepository extends ServiceEntityRepository
         parent::__construct($registry, ResponsableParapharmacie::class);
     }
 
-    //    /**
-    //     * @return ResponsableParapharmacie[] Returns an array of ResponsableParapharmacie objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('r.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?ResponsableParapharmacie
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    // Méthode pour trouver un responsable avec sa parapharmacie
+    public function findWithParapharmacie(int $id): ?ResponsableParapharmacie
+    {
+        return $this->createQueryBuilder('rp')
+            ->leftJoin('rp.parapharmacie', 'p')
+            ->addSelect('p')
+            ->where('rp.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

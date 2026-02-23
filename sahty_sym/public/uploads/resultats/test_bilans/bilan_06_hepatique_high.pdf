@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 572 >>
+stream
+BT
+/F1 12 Tf
+72 800 Td (Bilan de test 06 - Atteinte hepatique cytolytique \(HIGH\)) Tj
+0 0 Td
+72 782 Td (Type: Bilan hepatique) Tj
+0 0 Td
+72 764 Td (ASAT 245 U/L \(<35\)) Tj
+0 0 Td
+72 746 Td (ALAT 390 U/L \(<45\)) Tj
+0 0 Td
+72 728 Td (GGT 210 U/L \(<55\)) Tj
+0 0 Td
+72 710 Td (PAL 180 U/L \(40-130\)) Tj
+0 0 Td
+72 692 Td (Bilirubine totale 38 mg/L \(3-12\)) Tj
+0 0 Td
+72 674 Td (TP 58 % \(70-100\)) Tj
+0 0 Td
+72 656 Td (Conclusion: cytolyse hepatique importante avec alteration de synthese.) Tj
+0 0 Td
+72 638 Td (Donnees synthetiques pour test IA uniquement.) Tj
+0 0 Td
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+934
+%%EOF

@@ -632,6 +632,16 @@
                                             </div>
                                         </div>
                                         
+                                        <div class="info-item">
+                                            <div class="info-item-icon">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </div>
+                                            <div class="info-item-content">
+                                                <div class="info-item-label">Ville</div>
+                                                <div class="info-item-value">{{ user.ville ?: 'Non renseignée' }}</div>
+                                            </div>
+                                        </div>
+
                                         {% if user.dateNaissance %}
                                         <div class="info-item">
                                             <div class="info-item-icon">
@@ -865,6 +875,22 @@
                             </div>
                         </div>
                         {% endif %}
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="profile-actions">
+                        <a href="{{ path('app_profile_edit') }}" class="btn-action btn-primary-action">
+                            <i class="fas fa-edit"></i>
+                            Modifier mon profil
+                        </a>
+                        <a href="{{ path('app_profile_change_password') }}" class="btn-action btn-outline-action">
+                            <i class="fas fa-key"></i>
+                            Changer le mot de passe
+                        </a>
+                        <a href="{{ path('app_home') }}" class="btn-action btn-outline-action">
+                            <i class="fas fa-home"></i>
+                            Retour à l'accueil
+                        </a>
                     </div>
                     
                    <!-- Actions -->

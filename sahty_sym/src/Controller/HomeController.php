@@ -26,7 +26,7 @@ class HomeController extends AbstractController
    
 
 
-    #[Route('/forgot', name: 'app_forgot_password_old')]
+    #[Route('/forgot', name: 'app_forgot_password')]
     public function forgot(): Response
     {
         // Redirection vers la nouvelle route

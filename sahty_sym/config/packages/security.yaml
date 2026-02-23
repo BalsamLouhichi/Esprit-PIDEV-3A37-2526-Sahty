@@ -63,9 +63,11 @@ security:
         - { path: ^/admin/, roles: ROLE_ADMIN }
         - { path: ^/medecin/, roles: ROLE_MEDECIN }
         - { path: ^/patient/, roles: ROLE_PATIENT }
+        - { path: ^/laboratoire/, roles: ROLE_PATIENT }
+        - { path: ^/responsable-labo/, roles: ROLE_RESPONSABLE_LABO }
+        - { path: ^/responsable/, roles: ROLE_RESPONSABLE_PARA }
         - { path: ^/laboratoire/, roles: ROLE_RESPONSABLE_LABO }
         - { path: ^/laboratoire/new$, roles: ROLE_RESPONSABLE_LABO }
-        - { path: ^/laboratoire/, roles: ROLE_PATIENT }
         - { path: ^/parapharmacie/, roles: ROLE_RESPONSABLE_PARA }
         
         # Toutes les autres pages nécessitent une connexion

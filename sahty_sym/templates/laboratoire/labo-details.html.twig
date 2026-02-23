@@ -19,7 +19,7 @@
 
     {# Bootstrap + Template CSS #}
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
     <style>
         .labo-header{
@@ -184,9 +184,29 @@
             font-style: italic;
         }
 
+        .header-map-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .header-map {
+            width: 100%;
+            height: 360px;
+            border-radius: 10px;
+        }
+
+        .map-note {
+            color: #ffffff;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
         @media (max-width: 768px){
             .protocol-grid{ grid-template-columns: 1fr; }
             .labo-main-image{ height: 250px; }
+            .header-map{ height: 260px; }
         }
     </style>
 </head>
@@ -194,7 +214,7 @@
 <body>
 
 {# ✅ Topbar + Navbar (ton include) #}
-{% include 'partials/header.html.twig' %}
+{% include 'partials/header.html.twig' with { header_compact: false } %}
 
 {# ===========================
    Header (dynamique)
@@ -202,7 +222,7 @@
 <div class="container-fluid labo-header py-5 mb-5">
     <div class="container py-5">
         <div class="row align-items-center">
-            <div class="col-lg-9">
+            <div class="col-lg-7">
 
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent p-0 mb-3">
@@ -221,7 +241,7 @@
                 <h1 class="display-2 text-white mb-4">{{ laboratoire.nom }}</h1>
 
                 <p class="text-white fs-5 mb-4">
-                    {{ laboratoire.description ?? 'Services de diagnostic complets avec équipement de pointe et pathologistes experts.' }}
+                    {{ (laboratoire.description|default('')|striptags|trim) ?: 'Services de diagnostic complets avec équipement de pointe et pathologistes experts.' }}
                 </p>
 
                 <div class="d-flex flex-wrap align-items-center gap-4">
@@ -249,6 +269,31 @@
                 </div>
 
             </div>
+
+            <div class="col-lg-5 mt-4 mt-lg-0">
+                {% if laboratoire.latitude is not null and laboratoire.longitude is not null %}
+                    <div class="header-map-card">
+                        <div id="laboratoire-map" class="header-map"></div>
+                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                            <div class="map-note">
+                                Position GPS: {{ laboratoire.latitude }}, {{ laboratoire.longitude }}
+                            </div>
+                            <a
+                                class="btn btn-sm btn-light"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href="https://www.google.com/maps?q={{ laboratoire.latitude }},{{ laboratoire.longitude }}"
+                            >
+                                Ouvrir Maps
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="header-map-card text-white">
+                        Coordonnees GPS non disponibles pour ce laboratoire.
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -274,8 +319,8 @@
                     <h2 class="mb-4">À Propos</h2>
 
                     <p class="mb-4">
-                        {{ laboratoire.description
-                            ?? "Ce laboratoire propose des services de tests médicaux avec des standards de qualité élevés." }}
+                        {{ (laboratoire.description|default('')|striptags|trim)
+                            ?: "Ce laboratoire propose des services de tests médicaux avec des standards de qualité élevés." }}
                     </p>
 
                     <div class="row g-4 mt-4">
@@ -696,9 +741,29 @@
 <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
 <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
 <script src="{{ asset('js/main.js') }}"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const laboLat = {{ laboratoire.latitude is not null ? laboratoire.latitude : 'null' }};
+    const laboLng = {{ laboratoire.longitude is not null ? laboratoire.longitude : 'null' }};
+    const mapContainer = document.getElementById('laboratoire-map');
+
+    if (mapContainer && laboLat !== null && laboLng !== null && window.L) {
+        const map = L.map('laboratoire-map', { scrollWheelZoom: false }).setView([laboLat, laboLng], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([laboLat, laboLng])
+            .addTo(map)
+            .bindPopup('<strong>{{ laboratoire.nom|e("js") }}</strong><br>{{ laboratoire.adresse|default("Adresse non renseignee")|e("js") }}')
+            .openPopup();
+
+        setTimeout(() => map.invalidateSize(), 200);
+    }
     // Éléments DOM
     const selectAnalyse = document.getElementById('type_analyse');
     const detailsDiv = document.getElementById('analyse-details');
@@ -907,3 +972,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
+

@@ -1,0 +1,74 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 868 >>
+stream
+BT
+/F1 12 Tf
+72 800 Td
+(Laboratoire Sahty - Rapport de bilan \(TEST\)) Tj
+0 -18 Td
+(Date: 17/02/2026 19:42) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Titre: Insuffisance renale probable \(HIGH\)) Tj
+0 -18 Td
+(Patient: Patient Test E) Tj
+0 -18 Td
+(Medecin: Dr Testmail) Tj
+0 -18 Td
+(Type de bilan: Fonction renale) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Resultats:) Tj
+0 -18 Td
+(- Creatinine: 28 mg/L \(6-12\)) Tj
+0 -18 Td
+(- Uree: 0.92 g/L \(0.15-0.45\)) Tj
+0 -18 Td
+(- DFG estime: 24 mL/min/1.73m2 \(>90 normal\)) Tj
+0 -18 Td
+(- K: 5.8 mmol/L \(3.5-5.1\)) Tj
+0 -18 Td
+(- HCO3-: 18 mmol/L \(22-28\)) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Conclusion:) Tj
+0 -18 Td
+(Insuffisance renale avancee avec hyperkaliemie.) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Avertissement: Donnees synthetiques pour test technique IA uniquement.) Tj
+0 -18 Td
+(Validation medicale humaine obligatoire avant toute decision clinique.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1230
+%%EOF

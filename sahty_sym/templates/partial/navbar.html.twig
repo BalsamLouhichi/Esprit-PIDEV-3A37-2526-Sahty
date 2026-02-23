@@ -1,0 +1,696 @@
+﻿{# templates/partials/header.html.twig #}
+
+<style>
+    /* ============ PALETTE DE COULEURS MEDINOVA ============ */
+    :root {
+        --primary: #1D5D9B;
+        --primary-light: #E8F4F8;
+        --primary-dark: #163A5F;
+        --secondary: #304D30;
+        --accent: #75C2F6;
+        --light: #F4F6FF;
+        --dark: #1A2332;
+        --success: #4A7C59;
+        --danger: #C1666B;
+        --danger-light: #F8D7DA;
+        --warning: #D4A574;
+    }
+
+    /* ============ TOPBAR ============ */
+    .medinova-topbar {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        padding: 12px 0;
+        border-bottom: 3px solid var(--accent);
+        box-shadow: 0 2px 10px rgba(29, 93, 155, 0.15);
+    }
+
+    .topbar-link {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .topbar-link:hover {
+        color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .topbar-link i {
+        font-size: 1rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .topbar-divider {
+        color: rgba(255, 255, 255, 0.3);
+        margin: 0 15px;
+    }
+
+    .topbar-social a {
+        width: 35px;
+        height: 35px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        margin: 0 5px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .topbar-social a:hover {
+        background: white;
+        color: var(--primary);
+        transform: translateY(-3px) rotate(5deg);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ============ NAVBAR ============ */
+    .medinova-navbar {
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        box-shadow: 0 8px 32px rgba(29, 93, 155, 0.12);
+        padding: 15px 0;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(117, 194, 246, 0.2);
+    }
+
+    .medinova-navbar.scrolled {
+        padding: 10px 0;
+        box-shadow: 0 12px 40px rgba(29, 93, 155, 0.18);
+    }
+
+    /* Logo */
+    .navbar-brand {
+        transition: all 0.3s ease;
+    }
+
+    .navbar-brand:hover {
+        transform: scale(1.05);
+    }
+
+    .navbar-brand h1 {
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .navbar-brand h1 i {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 8px rgba(29, 93, 155, 0.3));
+        animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+
+    /* Nav Links */
+    .navbar-nav .nav-link {
+        color: var(--dark);
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 10px 18px !important;
+        margin: 0 5px;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .navbar-nav .nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary-light) 0%, rgba(117, 194, 246, 0.2) 100%);
+        transition: left 0.4s ease;
+        z-index: -1;
+        border-radius: 12px;
+    }
+
+    .navbar-nav .nav-link:hover::before {
+        left: 0;
+    }
+
+    .navbar-nav .nav-link:hover {
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .navbar-nav .nav-link.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white !important;
+        box-shadow: 0 6px 20px rgba(29, 93, 155, 0.3);
+    }
+
+    .navbar-nav .nav-link.active:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(29, 93, 155, 0.4);
+    }
+
+    .navbar-nav .nav-link i {
+        margin-right: 6px;
+        transition: transform 0.3s ease;
+    }
+
+    .navbar-nav .nav-link:hover i {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    /* User Badge */
+    .user-badge {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-right: 8px;
+        display: inline-block;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .badge-success {
+        background: linear-gradient(135deg, var(--success) 0%, var(--secondary) 100%);
+        color: white;
+    }
+
+    .badge-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white;
+    }
+
+    .badge-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, #B85860 100%);
+        color: white;
+    }
+
+    /* Dropdown Menu */
+    .navbar-nav .dropdown-menu {
+        min-width: 280px;
+        border: none;
+        border-radius: 20px;
+        padding: 15px 0;
+        margin-top: 15px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        box-shadow: 
+            0 20px 60px rgba(29, 93, 155, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        border: 2px solid rgba(117, 194, 246, 0.2);
+        animation: dropdownSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+
+    @keyframes dropdownSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .dropdown-menu::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        right: 30px;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-left: 2px solid rgba(117, 194, 246, 0.2);
+        border-top: 2px solid rgba(117, 194, 246, 0.2);
+        transform: rotate(45deg);
+    }
+
+    .dropdown-item {
+        padding: 12px 25px;
+        font-weight: 600;
+        color: var(--dark);
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        margin: 3px 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .dropdown-item:hover {
+        background: linear-gradient(135deg, var(--primary-light) 0%, rgba(117, 194, 246, 0.15) 100%);
+        color: var(--primary);
+        transform: translateX(5px);
+        padding-left: 30px;
+    }
+
+    .dropdown-item.text-danger:hover {
+        background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%);
+        color: var(--danger) !important;
+    }
+
+    .dropdown-item i {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+
+    .dropdown-item:hover i {
+        opacity: 1;
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    .dropdown-divider {
+        margin: 10px 15px;
+        border-color: rgba(117, 194, 246, 0.2);
+        opacity: 1;
+    }
+
+    /* User Avatar */
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary);
+        transition: all 0.3s ease;
+    }
+
+    .user-avatar-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--light);
+        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--primary);
+    }
+
+    .nav-link.dropdown-toggle:hover .user-avatar {
+        transform: scale(1.1);
+        border-color: var(--accent);
+    }
+
+    /* Bouton Inscription */
+    .btn-inscription {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white !important;
+        border-radius: 25px;
+        padding: 10px 25px !important;
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        margin-left: 15px !important;
+    }
+
+    .btn-inscription:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(29, 93, 155, 0.4);
+        color: white !important;
+    }
+
+    .btn-inscription i {
+        margin-right: 8px;
+    }
+
+    /* Bouton Connexion */
+    .btn-connexion {
+        background: transparent;
+        color: var(--primary) !important;
+        border: 2px solid var(--primary);
+        border-radius: 25px;
+        padding: 10px 25px !important;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+
+    .btn-connexion:hover {
+        background: var(--primary);
+        color: white !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(29, 93, 155, 0.2);
+    }
+
+    /* Navbar Toggler */
+    .navbar-toggler {
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 8px 12px;
+        transition: all 0.3s ease;
+    }
+
+    .navbar-toggler:hover {
+        background: var(--primary-light);
+        transform: scale(1.05);
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 4px rgba(29, 93, 155, 0.2);
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231D5D9B' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+        .medinova-topbar {
+            display: none;
+        }
+
+        .navbar-brand h1 {
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav {
+            padding: 15px 0;
+        }
+
+        .navbar-nav .nav-link {
+            margin: 5px 0;
+            padding: 12px 20px !important;
+        }
+
+        .btn-inscription, .btn-connexion {
+            margin: 10px 0 0 0 !important;
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+
+        .dropdown-menu::before {
+            display: none;
+        }
+
+        .d-flex.align-items-center.ms-3 {
+            margin-left: 0 !important;
+            flex-direction: column;
+            width: 100%;
+        }
+    }
+
+    /* Sticky Navbar Effect */
+    .sticky-top {
+        transition: all 0.3s ease;
+    }
+
+    /* Nav Link Dropdown Toggle */
+    .nav-link.dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .nav-link.dropdown-toggle::after {
+        margin-left: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .dropdown.show .nav-link.dropdown-toggle::after {
+        transform: rotate(180deg);
+    }
+
+    /* Scrollbar pour dropdown */
+    .dropdown-menu {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-track {
+        background: var(--light);
+        border-radius: 10px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border-radius: 10px;
+    }
+</style>
+
+<!-- Topbar MEDINOVA Premium avec ├®l├®ments SAHTY ajout├®s -->
+<div class="medinova-topbar d-none d-lg-block">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-lg-start">
+                <div class="d-inline-flex align-items-center">
+                    <a class="topbar-link" href="tel:+0123456789">
+                        <i class="bi bi-telephone-fill"></i>
+                        <span>+012 345 6789</span>
+                    </a>
+                    <span class="topbar-divider">|</span>
+                    <a class="topbar-link" href="mailto:info@sahty.com">
+                        <i class="bi bi-envelope-fill"></i>
+                        <span>info@sahty.com</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 text-center text-lg-end">
+                <div class="topbar-social">
+                    <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar MEDINOVA Premium avec tous les ├®l├®ments SAHTY int├®gr├®s -->
+<nav class="navbar navbar-expand-lg medinova-navbar sticky-top">
+    <div class="container">
+        <a href="{{ path('app_home') }}" class="navbar-brand">
+            <h1>
+                <i class="fas fa-heartbeat"></i>
+                Sahty
+            </h1>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav ms-auto">
+                {# === NAVIGATION PRINCIPALE SAHTY === #}
+                <a href="{{ path('app_home') }}" 
+                   class="nav-link {% if app.request.get('_route') == 'app_home' %}active{% endif %}">
+                    <i class="fas fa-home"></i>Accueil
+                </a>
+
+                <a href="#" class="nav-link">
+                    <i class="fas fa-info-circle"></i>About
+                </a>
+
+                <a href="#" class="nav-link">
+                    <i class="fas fa-stethoscope"></i>Service
+                </a>
+
+                {# Menu Laboratoire (SAHTY) #}
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown">
+                        <i class="fas fa-flask"></i>Laboratoire
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{{ app_url|default('#') }}/laboratoire/" class="dropdown-item">
+                            <i class="fas fa-list"></i>Liste des laboratoires
+                        </a>
+                        {% if app.user and is_granted('ROLE_PATIENT') %}
+                            <a href="{{ app_url|default('#') }}/demande-analyse/mes-demandes" class="dropdown-item">
+                                <i class="fas fa-file-prescription"></i>Mes demandes
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# === NAVIGATION M├ëDICALE MEDINOVA === #}
+                {# Rendez-vous selon le r├┤le #}
+                {% if app.user %}
+                    {% if is_granted('ROLE_PATIENT') %}
+                        <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" 
+                           class="nav-link {% if app.request.get('_route') starts with 'app_rdv' %}active{% endif %}">
+                            <i class="fas fa-calendar-check"></i>Mes Rendez-vous
+                        </a>
+                    {% elseif is_granted('ROLE_MEDECIN') %}
+                        <a href="{{ path('app_medecin_rdv_liste')|default('#') }}" 
+                           class="nav-link {% if app.request.get('_route') starts with 'app_medecin_rdv' %}active{% endif %}">
+                            <i class="fas fa-stethoscope"></i>Mes Consultations
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                {# Fiches M├®dicales #}
+                {% if app.user and (is_granted('ROLE_PATIENT') or is_granted('ROLE_MEDECIN')) %}
+                    <a href="{{ path('app_fiche_medicale_index')|default('#') }}" 
+                       class="nav-link {% if app.request.get('_route') starts with 'app_fiche_medicale' %}active{% endif %}">
+                        <i class="fas fa-file-medical"></i>
+                        {% if is_granted('ROLE_PATIENT') %}Mes Fiches{% else %}Fiches Patients{% endif %}
+                    </a>
+                {% endif %}
+
+                {# === ESPACE UTILISATEUR FUSIONN├ë === #}
+                {% if app.user %}
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                            {% if app.user.photoProfil %}
+                                <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" class="user-avatar">
+                            {% else %}
+                                <span class="user-avatar-icon">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            {% endif %}
+                            
+                            {% if is_granted('ROLE_MEDECIN') %}
+                                <span class="user-badge badge-success">Dr.</span>
+                            {% elseif is_granted('ROLE_PATIENT') %}
+                                <span class="user-badge badge-primary">Patient</span>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <span class="user-badge badge-danger">Admin</span>
+                            {% endif %}
+                            
+                            <span class="fw-semibold">{{ app.user.nomComplet|default(app.user.prenom|default(app.user.email|split('@')[0])) }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            {# Profil #}
+                            <a href="{{ path('app_profile')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-user"></i>Mon Profil
+                            </a>
+                            
+                            {# Liens sp├®cifiques selon r├┤le #}
+                            {% if is_granted('ROLE_PATIENT') %}
+                                <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-calendar-alt"></i>Mes Rendez-vous
+                                </a>
+                                <a href="{{ path('app_fiche_medicale_index')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-file-medical"></i>Mes Fiches
+                                </a>
+                                <a href="{{ app_url|default('#') }}/demande-analyse/mes-demandes" class="dropdown-item">
+                                    <i class="fas fa-flask"></i>Mes demandes labo
+                                </a>
+                            {% elseif is_granted('ROLE_MEDECIN') %}
+                                <a href="{{ path('app_medecin_rdv_liste')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-stethoscope"></i>Mes Consultations
+                                </a>
+                                <a href="{{ path('app_fiche_medicale_index')|default('#') }}" class="dropdown-item">
+                                    <i class="fas fa-folder-open"></i>Fiches Patients
+                                </a>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <a href="{{ path('admin_index') }}" class="dropdown-item">
+                                    <i class="fas fa-tachometer-alt"></i>Dashboard Admin
+                                </a>
+                            {% endif %}
+                            
+                            <div class="dropdown-divider"></div>
+                            
+                            {# Param├¿tres du compte #}
+                            <a href="{{ path('app_profile_edit')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-edit"></i>Modifier mon profil
+                            </a>
+                            <a href="{{ path('app_profile_change_password')|default('#') }}" class="dropdown-item">
+                                <i class="fas fa-key"></i>Changer mot de passe
+                            </a>
+                            
+                            <div class="dropdown-divider"></div>
+                            
+                            {# D├®connexion #}
+                            <a href="{{ path('app_logout')|default('#') }}" class="dropdown-item text-danger">
+                                <i class="fas fa-sign-out-alt"></i>D├®connexion
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    {# Utilisateur non connect├® - Boutons SAHTY style MEDINOVA #}
+                    <div class="d-flex align-items-center ms-3">
+                        <a href="{{ path('app_sign')|default('#') }}" class="nav-link btn-inscription">
+                            <i class="fas fa-user-plus"></i>S'inscrire
+                        </a>
+                        <a href="{{ path('app_login')|default('#') }}" class="nav-link btn-connexion ms-2">
+                            <i class="fas fa-sign-in-alt"></i>Se connecter
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Effet scroll sur la navbar
+window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.medinova-navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+});
+
+// Animation au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+    navLinks.forEach((link, index) => {
+        link.style.opacity = '0';
+        link.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            link.style.transition = 'all 0.5s ease';
+            link.style.opacity = '1';
+            link.style.transform = 'translateY(0)';
+        }, 100 * index);
+    });
+});
+
+// Gestion des dropdowns au hover (desktop)
+if (window.innerWidth > 991) {
+    document.querySelectorAll('.navbar-nav .dropdown').forEach(dropdown => {
+        dropdown.addEventListener('mouseenter', function() {
+            this.querySelector('.dropdown-toggle').classList.add('show');
+            this.querySelector('.dropdown-menu').classList.add('show');
+        });
+        dropdown.addEventListener('mouseleave', function() {
+            this.querySelector('.dropdown-toggle').classList.remove('show');
+            this.querySelector('.dropdown-menu').classList.remove('show');
+        });
+    });
+}
+
+console.log('­ƒÅÑ SAHTY - Navbar Premium charg├®e avec succ├¿s!');
+</script>

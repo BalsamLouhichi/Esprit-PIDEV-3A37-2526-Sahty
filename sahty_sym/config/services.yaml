@@ -29,6 +29,14 @@ parameters:
         churn_days_cap: 90
         demand_score_per_request: 20
         cancel_min_count: 3
+    app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
+    app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
+    app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
+    app.fastapi_ai.model: '%env(FASTAPI_AI_MODEL)%'
+    app.fastapi_ai.use_ollama: '%env(bool:FASTAPI_AI_USE_OLLAMA)%'
+    app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
+    app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
+    produits_images_directory: '%kernel.project_dir%/public/uploads/produits'
 
 
 services:
@@ -72,6 +80,15 @@ services:
         arguments:
             $reportSender: '%report.sender%'
             $reportRecipients: '%report.recipients%'
+    App\Integration\FastApiLabAiClient:
+        arguments:
+            $endpoint: '%app.fastapi_ai.endpoint%'
+            $ocrEngine: '%app.fastapi_ai.ocr_engine%'
+            $lang: '%app.fastapi_ai.lang%'
+            $model: '%app.fastapi_ai.model%'
+            $useOllama: '%app.fastapi_ai.use_ollama%'
+            $timeout: '%app.fastapi_ai.timeout%'
+            $apiKey: '%app.fastapi_ai.api_key%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
