@@ -855,8 +855,6 @@
                     <div class="product-badge">POPULAIRE</div>
                     {% endif %}
                     
-                    <div class="product-price">{{ prod.prix }}  TND</div>
-                    
                     <div class="product-image">
                         {% if prod.image is defined and prod.image %}
                         <img src="{{ asset('uploads/images/produits/' ~ prod.image) }}" alt="{{ prod.nom }}">

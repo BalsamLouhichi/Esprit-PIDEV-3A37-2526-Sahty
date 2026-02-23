@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}MEDINOVA - Fiches Médicales{% endblock %}
 
@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        /* ============ PALETTE DE COULEURS MÉDICALE PROFESSIONNELLE ============ */
+        /* ============ PALETTE DE COULEURS MEDICALE PROFESSIONNELLE ============ */
         :root {
             /* Couleurs principales inspirées de l'image */
             --mughal-green: #304D30;
@@ -242,6 +242,87 @@
         .alert i {
             font-size: 1.6rem;
             filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Bouton dictée vocale */
+        .btn.js-dictate-btn {
+            margin: 8px 0 10px 0;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(29, 93, 155, 0.35);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 244, 248, 0.9) 100%);
+            color: var(--primary-dark);
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 16px rgba(22, 58, 95, 0.14);
+            transition: all 0.22s ease;
+        }
+
+        .btn.js-dictate-btn:hover {
+            border-color: rgba(29, 93, 155, 0.55);
+            background: linear-gradient(135deg, rgba(232, 244, 248, 1) 0%, rgba(180, 228, 255, 0.75) 100%);
+            color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(22, 58, 95, 0.2);
+        }
+
+        .btn.js-dictate-btn i {
+            font-size: 0.85rem;
+        }
+
+        .btn.js-dictate-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.85;
+            transform: none;
+            box-shadow: 0 4px 10px rgba(22, 58, 95, 0.14);
+        }
+
+        .fiche-translate-bar {
+            margin: 2px 0 18px 0;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(29, 93, 155, 0.2);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(232, 244, 248, 0.75) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .fiche-translate-title {
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-size: 0.92rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fiche-translate-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fiche-translate-actions .translate-lang {
+            min-width: 110px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 600;
+        }
+
+        .fiche-translate-actions .btn-translate-all {
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            border: 1px solid rgba(48, 77, 48, 0.35);
+            color: var(--secondary-dark);
+            background: linear-gradient(135deg, #ffffff 0%, #eef7ef 100%);
+            box-shadow: 0 5px 12px rgba(48, 77, 48, 0.14);
         }
 
         /* ============ ACTION BAR ============ */
@@ -493,7 +574,7 @@
             flex-wrap: wrap;
         }
 
-        /* ============ SEARCH CONTAINER - CORRIGÉ ============ */
+        /* ============ SEARCH CONTAINER - CORRIGE ============ */
         .search-container {
             display: flex;
             gap: 15px;
@@ -1065,6 +1146,24 @@
             color: var(--dark-light);
             font-size: 1.1rem;
             margin-bottom: 30px;
+        }
+
+        .pagination-wrap {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-indicator {
+            color: var(--dark-light);
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(117, 194, 246, 0.35);
         }
 
         /* ============ MODAL STYLES ============ */
@@ -1730,7 +1829,7 @@
                 </a>
             </div>
             
-            <!-- RECHERCHE AJAX CORRIGÉE -->
+            <!-- RECHERCHE AJAX CORRIGEE -->
             <div class="search-container">
                 <div class="search-box">
                     <div class="input-group">
@@ -1753,19 +1852,19 @@
         <!-- Statistics -->
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>{{ fiches|length }}</h3>
+                <h3>{{ stats.total|default(fiches|length) }}</h3>
                 <p>Total Fiches</p>
             </div>
             <div class="stat-card">
-                <h3>{{ fiches|filter(f => f.statut == 'actif')|length }}</h3>
+                <h3>{{ stats.actif|default(fiches|filter(f => f.statut == 'actif')|length) }}</h3>
                 <p>Actives</p>
             </div>
             <div class="stat-card">
-                <h3>{{ fiches|filter(f => f.statut == 'modifié')|length }}</h3>
+                <h3>{{ stats.modifie|default(fiches|filter(f => f.statut == 'modifié')|length) }}</h3>
                 <p>Modifiées</p>
             </div>
             <div class="stat-card">
-                <h3>{{ fiches|filter(f => f.imc is not null)|length }}</h3>
+                <h3>{{ stats.avec_imc|default(fiches|filter(f => f.imc is not null)|length) }}</h3>
                 <p>Avec IMC</p>
             </div>
         </div>
@@ -1801,7 +1900,7 @@
                         <div class="fiche-details">
                             {% if fiche.taille and fiche.poids %}
                                 <div class="detail-item">
-                                    <strong>📏 Mesures Physiques</strong>
+                                    <strong>Mesures Physiques</strong>
                                     <p>{{ fiche.taille }} m / {{ fiche.poids }} kg</p>
                                     {% if fiche.imc %}
                                         <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
@@ -1812,13 +1911,13 @@
                             {% endif %}
                             
                             <div class="detail-item">
-                                <strong>📅 Créée le</strong>
+                                <strong>Créée le</strong>
                                 <p>{{ fiche.creeLe|date('d/m/Y à H:i') }}</p>
                             </div>
                             
                             {% if fiche.modifieLe %}
                                 <div class="detail-item">
-                                    <strong>🔄 Modifiée le</strong>
+                                    <strong>Modifiée le</strong>
                                     <p>{{ fiche.modifieLe|date('d/m/Y à H:i') }}</p>
                                 </div>
                             {% endif %}
@@ -1847,7 +1946,7 @@
                                 
                                 {% if isPatient %}
                                     <form action="{{ path('app_fiche_medicale_index') }}" method="post" style="display: inline;" 
-                                          onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette fiche ?');">
+                                          onsubmit="return confirm('Etes-vous sûr de vouloir supprimer cette fiche ?');">
                                         <input type="hidden" name="delete_id" value="{{ fiche.id }}">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ fiche.id) }}">
                                         <button type="submit" 
@@ -1862,6 +1961,25 @@
                     </div>
                 {% endfor %}
             </div>
+            {% if total_pages|default(1) > 1 %}
+                <div class="pagination-wrap">
+                    {% if current_page > 1 %}
+                        <a class="btn btn-primary" href="{{ path('app_fiche_medicale_index', app.request.query.all|merge({'page': current_page - 1})) }}">
+                            <i class="fas fa-chevron-left"></i>
+                            <span>Précédent</span>
+                        </a>
+                    {% endif %}
+                    <span class="pagination-indicator">
+                        Page {{ current_page }} / {{ total_pages }} ({{ total_items|default(fiches|length) }} fiches)
+                    </span>
+                    {% if current_page < total_pages %}
+                        <a class="btn btn-primary" href="{{ path('app_fiche_medicale_index', app.request.query.all|merge({'page': current_page + 1})) }}">
+                            <span>Suivant</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% else %}
             <div class="empty-state">
                 <div class="empty-state-icon">
@@ -1897,6 +2015,24 @@
             
             <div class="modal-body">
                 {{ form_start(form) }}
+                <div class="fiche-translate-bar">
+                    <div class="fiche-translate-title">
+                        <i class="fas fa-language"></i>
+                        Traduire toute la fiche
+                    </div>
+                    <div class="fiche-translate-actions">
+                        <select id="translateAllLang" class="form-select form-select-sm translate-lang">
+                            <option value="en">Anglais</option>
+                            <option value="ar">Arabe</option>
+                            <option value="es">Espagnol</option>
+                            <option value="de">Allemand</option>
+                            <option value="it">Italien</option>
+                        </select>
+                        <button type="button" id="translateAllBtn" class="btn btn-sm btn-translate-all" aria-label="Traduire toute la fiche" title="Traduire toute la fiche">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </button>
+                    </div>
+                </div>
                 
                 <div class="form-split-container">
                     <!-- LEFT SIDE: PATIENT SECTION -->
@@ -1925,6 +2061,9 @@
                             {{ form_label(form.antecedents, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.antecedents.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.antecedents, {
                                 'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Décrivez vos antécédents médicaux...'}
                             }) }}
@@ -1934,6 +2073,9 @@
                             {{ form_label(form.allergies, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.allergies.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.allergies, {
                                 'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Listez vos allergies...'}
                             }) }}
@@ -1961,13 +2103,16 @@
                             {{ form_label(form.traitement_en_cours, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.traitement_en_cours.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.traitement_en_cours, {
                                 'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Traitements actuels...'}
                             }) }}
                         </div>
                     </div>
 
-                    <!-- RIGHT SIDE: MÉDECIN SECTION -->
+                    <!-- RIGHT SIDE: MEDECIN SECTION -->
                     <div class="medecin-section">
                         <div class="section-header">
                             <i class="fas fa-user-md"></i>
@@ -1979,7 +2124,7 @@
                             <div class="info-badge" style="background: linear-gradient(135deg, var(--danger-light) 0%, #FFCDD2 100%); border-color: var(--danger);">
                                 <i class="fas fa-lock" style="color: var(--danger);"></i>
                                 <div>
-                                    <strong style="color: var(--danger);">🔒 Section réservée aux médecins</strong>
+                                    <strong style="color: var(--danger);">Section réservée aux médecins</strong>
                                     <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: var(--dark-light);">
                                         Seuls les médecins peuvent modifier ces champs
                                     </p>
@@ -1989,7 +2134,7 @@
                             <div class="info-badge" style="background: linear-gradient(135deg, var(--success-light) 0%, #C8E6C9 100%); border-color: var(--success);">
                                 <i class="fas fa-user-md" style="color: var(--success);"></i>
                                 <div>
-                                    <strong style="color: var(--success);">✅ Accès médecin autorisé</strong>
+                                    <strong style="color: var(--success);">Accès médecin autorisé</strong>
                                     <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: var(--dark-light);">
                                         Vous pouvez modifier tous les champs
                                     </p>
@@ -2001,6 +2146,9 @@
                             {{ form_label(form.diagnostic, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.diagnostic.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.diagnostic, {
                                 'attr': {'class': 'form-control', 'rows': 4}
                             }) }}
@@ -2010,6 +2158,9 @@
                             {{ form_label(form.traitement_prescrit, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.traitement_prescrit.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.traitement_prescrit, {
                                 'attr': {'class': 'form-control', 'rows': 4}
                             }) }}
@@ -2019,6 +2170,9 @@
                             {{ form_label(form.observations, null, {
                                 'label_attr': {'class': 'form-label'}
                             }) }}
+                            <button type="button" class="btn btn-outline-primary btn-sm js-dictate-btn" data-target="{{ form.observations.vars.id }}">
+                                <i class="fas fa-microphone"></i> Dicter
+                            </button>
                             {{ form_widget(form.observations, {
                                 'attr': {'class': 'form-control', 'rows': 5}
                             }) }}
@@ -2079,7 +2233,7 @@
 
                         {% if fiche.patient %}
                             <div class="detail-item">
-                                <strong>👤 Patient</strong>
+                                <strong>Patient</strong>
                                 <p>
                                     {% if fiche.patient.nom is defined and fiche.patient.prenom is defined %}
                                         {{ fiche.patient.nom }} {{ fiche.patient.prenom }}
@@ -2092,21 +2246,21 @@
 
                         {% if fiche.antecedents %}
                             <div class="detail-item">
-                                <strong>📋 Antécédents</strong>
+                                <strong>Antécédents</strong>
                                 <p>{{ fiche.antecedents|nl2br }}</p>
                             </div>
                         {% endif %}
 
                         {% if fiche.allergies %}
                             <div class="detail-item">
-                                <strong>⚠️ Allergies</strong>
+                                <strong>Allergies</strong>
                                 <p>{{ fiche.allergies|nl2br }}</p>
                             </div>
                         {% endif %}
 
                         {% if fiche.taille and fiche.poids %}
                             <div class="detail-item">
-                                <strong>📏 Mesures</strong>
+                                <strong>Mesures</strong>
                                 <p>Taille: {{ fiche.taille }} m | Poids: {{ fiche.poids }} kg</p>
                                 {% if fiche.imc %}
                                     <span class="imc-indicator imc-{{ fiche.categorieImc|lower|replace({'é': 'e'}) }}">
@@ -2118,19 +2272,19 @@
 
                         {% if fiche.traitementEnCours %}
                             <div class="detail-item">
-                                <strong>💊 Traitements en cours</strong>
+                                <strong>Traitements en cours</strong>
                                 <p>{{ fiche.traitementEnCours|nl2br }}</p>
                             </div>
                         {% endif %}
 
                         <div class="detail-item">
-                            <strong>📅 Date de création</strong>
+                            <strong>Date de création</strong>
                             <p>{{ fiche.creeLe|date('d/m/Y à H:i') }}</p>
                         </div>
 
                         {% if fiche.modifieLe %}
                             <div class="detail-item">
-                                <strong>🔄 Dernière modification</strong>
+                                <strong>Dernière modification</strong>
                                 <p>{{ fiche.modifieLe|date('d/m/Y à H:i') }}</p>
                             </div>
                         {% endif %}
@@ -2143,7 +2297,7 @@
                         </div>
 
                         <div class="detail-item">
-                            <strong>📊 Statut</strong>
+                            <strong>Statut</strong>
                             <p>
                                 <span class="status-{{ fiche.statut|lower|replace({' ': '-', 'é': 'e'}) }} fiche-status" style="position: static;">
                                     {{ fiche.statut|default('Non défini') }}
@@ -2153,36 +2307,36 @@
 
                         {% if fiche.diagnostic %}
                             <div class="detail-item">
-                                <strong>🩺 Diagnostic</strong>
+                                <strong>Diagnostic</strong>
                                 <p>{{ fiche.diagnostic|nl2br }}</p>
                             </div>
                         {% else %}
                             <div class="detail-item">
-                                <strong>🩺 Diagnostic</strong>
+                                <strong>Diagnostic</strong>
                                 <p style="color: #999; font-style: italic;">Aucun diagnostic renseigné</p>
                             </div>
                         {% endif %}
 
                         {% if fiche.traitementPrescrit %}
                             <div class="detail-item">
-                                <strong>💉 Traitement Prescrit</strong>
+                                <strong>Traitement Prescrit</strong>
                                 <p>{{ fiche.traitementPrescrit|nl2br }}</p>
                             </div>
                         {% else %}
                             <div class="detail-item">
-                                <strong>💉 Traitement Prescrit</strong>
+                                <strong>Traitement Prescrit</strong>
                                 <p style="color: #999; font-style: italic;">Aucun traitement prescrit</p>
                             </div>
                         {% endif %}
 
                         {% if fiche.observations %}
                             <div class="detail-item">
-                                <strong>📝 Observations</strong>
+                                <strong>Observations</strong>
                                 <p>{{ fiche.observations|nl2br }}</p>
                             </div>
                         {% else %}
                             <div class="detail-item">
-                                <strong>📝 Observations</strong>
+                                <strong>Observations</strong>
                                 <p style="color: #999; font-style: italic;">Aucune observation</p>
                             </div>
                         {% endif %}
@@ -2284,26 +2438,26 @@
             calculerIMC();
         }
 
-        // ============ AJAX SEARCH FUNCTIONALITY - CORRIGÉ ============
+        // ============ AJAX SEARCH FUNCTIONALITY - CORRIGE ============
         (function() {
             const searchInput = document.getElementById('ajax-search-input');
             const searchResults = document.getElementById('search-results');
             const searchBtn = document.getElementById('search-btn');
             let searchTimeout = null;
 
-            console.log('🔍 Initialisation de la recherche AJAX...');
+            console.log('Initialisation de la recherche AJAX...');
             console.log('Input:', searchInput);
             console.log('Results container:', searchResults);
             console.log('Button:', searchBtn);
 
             if (!searchInput || !searchResults) {
-                console.error('❌ Éléments de recherche non trouvés!');
+                console.error('Eléments de recherche non trouvés!');
                 return;
             }
 
             // Fonction de recherche AJAX
             function performSearch(query) {
-                console.log('🔎 Recherche pour:', query);
+                console.log('Recherche pour:', query);
 
                 if (query.length < 2) {
                     searchResults.classList.remove('active');
@@ -2323,15 +2477,15 @@
                 // Effectuer la requête AJAX
                 fetch(`{{ path('app_fiche_medicale_search_ajax') }}?q=${encodeURIComponent(query)}`)
                     .then(response => {
-                        console.log('✅ Réponse reçue:', response.status);
+                        console.log('Réponse reçue:', response.status);
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Données reçues:', data);
+                        console.log('Données reçues:', data);
                         displayResults(data);
                     })
                     .catch(error => {
-                        console.error('❌ Erreur de recherche:', error);
+                        console.error('Erreur de recherche:', error);
                         searchResults.innerHTML = `
                             <div class="search-no-results">
                                 <i class="fas fa-exclamation-triangle"></i>
@@ -2397,15 +2551,15 @@
                 document.querySelectorAll('.search-result-item').forEach(item => {
                     item.addEventListener('click', function() {
                         const ficheId = this.dataset.ficheId;
-                        console.log('📋 Redirection vers fiche:', ficheId);
+                        console.log('Redirection vers fiche:', ficheId);
                         window.location.href = `{{ path('app_fiche_medicale_index') }}?view=${ficheId}`;
                     });
                 });
 
-                console.log('✅ Affichage de', results.length, 'résultats');
+                console.log('Affichage de', results.length, 'résultats');
             }
 
-            // Événement de saisie avec debounce
+            // Evénement de saisie avec debounce
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 const query = this.value.trim();
@@ -2419,7 +2573,7 @@
             if (searchBtn) {
                 searchBtn.addEventListener('click', function() {
                     const query = searchInput.value.trim();
-                    console.log('🔘 Clic sur bouton recherche:', query);
+                    console.log('Clic sur bouton recherche:', query);
                     if (query.length >= 2) {
                         performSearch(query);
                     } else {
@@ -2465,7 +2619,7 @@
                 }
             });
 
-            console.log('✅ Recherche AJAX complètement initialisée');
+            console.log('Recherche AJAX complètement initialisée');
         })();
 
         // Animation des boutons icônes au chargement
@@ -2509,7 +2663,7 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                const confirmDelete = confirm('⚠️ ATTENTION!\n\nÊtes-vous absolument sûr de vouloir supprimer cette fiche médicale?\n\nCette action est irréversible!');
+                const confirmDelete = confirm('ATTENTION!\n\nEtes-vous absolument sûr de vouloir supprimer cette fiche médicale?\n\nCette action est irréversible!');
                 
                 if (confirmDelete) {
                     this.submit();
@@ -2565,11 +2719,413 @@
         document.querySelectorAll('.stat-card').forEach(card => {
             statObserver.observe(card);
         });
+        console.log('MEDINOVA - Interface medicale professionnelle chargee');
+        console.log('Palette: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
+        console.log('Design moderne avec bouton de recherche avant l input');
+        console.log('Recherche AJAX fonctionnelle avec bouton cliquable');
+        console.log('Modaux harmonises avec le theme principal');
+    </script>
+    <script>
+        // Dictee multi-navigateur: SpeechRecognition si disponible, sinon fallback API (MediaRecorder)
+        (function () {
+            function bindFicheDictation() {
+                const buttons = document.querySelectorAll('.js-dictate-btn');
+                if (!buttons.length) return;
 
-        console.log('🏥 MEDINOVA - Interface médicale professionnelle chargée!');
-        console.log('🎨 Palette de couleurs: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
-        console.log('✨ Design moderne avec bouton de recherche AVANT l\'input');
-        console.log('🔍 Recherche AJAX fonctionnelle avec bouton cliquable');
-        console.log('🎭 Modaux harmonisés avec le thème principal');
+                const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const dictationApiUrl = '{{ path('api_dictation_transcribe') }}';
+                const states = new WeakMap();
+                const setVoiceState = (button, state) => {
+                    if (state === 'listening') {
+                        button.innerHTML = '<i class="fas fa-stop-circle"></i> Stop';
+                        button.setAttribute('aria-label', 'Arreter la dictee');
+                        return;
+                    }
+                    if (state === 'processing') {
+                        button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Finalisation...';
+                        button.setAttribute('aria-label', 'Finalisation de la dictee');
+                        return;
+                    }
+                    button.innerHTML = '<i class="fas fa-microphone"></i> Dicter';
+                    button.setAttribute('aria-label', 'Demarrer la dictee');
+                };
+
+                buttons.forEach((btn) => {
+                    if (btn.dataset.boundDictation === '1') return;
+                    btn.dataset.boundDictation = '1';
+                    setVoiceState(btn, 'idle');
+
+                    const targetId = btn.getAttribute('data-target');
+                    const field = targetId ? document.getElementById(targetId) : null;
+                    if (!field) return;
+                    const canUseSpeech = !!SpeechRecognitionClass;
+                    const canUseRecorder = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+                    if (!canUseSpeech && !canUseRecorder) {
+                        btn.style.display = 'none';
+                        return;
+                    }
+
+                    btn.addEventListener('click', () => {
+                        const currentState = states.get(btn);
+
+                        if (currentState && currentState.recognition && currentState.listening) {
+                            setVoiceState(btn, 'processing');
+                            btn.disabled = true;
+                            currentState.manualStop = true;
+                            states.set(btn, currentState);
+                            currentState.recognition.stop();
+                            return;
+                        }
+
+                        if (currentState && currentState.recorder && currentState.listening) {
+                            setVoiceState(btn, 'processing');
+                            btn.disabled = true;
+                            currentState.manualStop = true;
+                            states.set(btn, currentState);
+                            try {
+                                currentState.recorder.stop();
+                            } catch (e) {
+                                resetButton();
+                                states.delete(btn);
+                            }
+                            return;
+                        }
+
+                        if (canUseSpeech) {
+                            startBrowserDictation(btn, field);
+                            return;
+                        }
+                        startApiDictation(btn, field);
+                    });
+
+                    function resetButton() {
+                        setVoiceState(btn, 'idle');
+                        btn.disabled = false;
+                    }
+
+                    function appendRecognizedText(targetField, text) {
+                        if (!text) return;
+                        targetField.value = targetField.value ? (targetField.value.trim() + ' ' + text) : text;
+                        targetField.dispatchEvent(new Event('input'));
+                    }
+
+                    function startBrowserDictation(button, targetField) {
+                        const recognition = new SpeechRecognitionClass();
+                        recognition.lang = 'fr-FR';
+                        recognition.continuous = false;
+                        recognition.interimResults = false;
+                        recognition.maxAlternatives = 1;
+
+                        recognition.addEventListener('result', (event) => {
+                            let recognized = '';
+                            for (let i = event.resultIndex; i < event.results.length; i++) {
+                                if (event.results[i].isFinal) {
+                                    recognized += ' ' + (event.results[i][0]?.transcript || '');
+                                }
+                            }
+                            appendRecognizedText(targetField, recognized.trim());
+                        });
+
+                        recognition.addEventListener('error', (event) => {
+                            const current = states.get(button);
+                            if (event.error === 'aborted' && current && current.manualStop) {
+                                return;
+                            }
+                            if (event.error === 'aborted') {
+                                return;
+                            }
+                            if (event.error === 'network' && window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                                states.delete(button);
+                                resetButton();
+                                startApiDictation(button, targetField);
+                                return;
+                            }
+                            alert('Echec de la dictee vocale navigateur: ' + (event.error || 'inconnue'));
+                        });
+
+                        recognition.addEventListener('end', () => {
+                            resetButton();
+                            states.delete(button);
+                        });
+
+                        try {
+                            states.set(button, { recognition, listening: true, manualStop: false });
+                            recognition.start();
+                            setVoiceState(button, 'listening');
+                            button.disabled = false;
+                        } catch (e) {
+                            states.delete(button);
+                            if (window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                                startApiDictation(button, targetField);
+                                return;
+                            }
+                            alert('Impossible de demarrer la dictee (micro/permissions/navigateur).');
+                            resetButton();
+                        }
+                    }
+
+                    function getSupportedMimeType() {
+                        if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+                        const preferredTypes = [
+                            'audio/webm;codecs=opus',
+                            'audio/webm',
+                            'audio/ogg;codecs=opus',
+                            'audio/ogg',
+                            'audio/mp4',
+                        ];
+                        for (const type of preferredTypes) {
+                            if (MediaRecorder.isTypeSupported(type)) {
+                                return type;
+                            }
+                        }
+                        return '';
+                    }
+
+                    function getFilenameForMimeType(mimeType) {
+                        if (mimeType.includes('ogg')) return 'dictation.ogg';
+                        if (mimeType.includes('mp4')) return 'dictation.mp4';
+                        return 'dictation.webm';
+                    }
+
+                    async function transcribeAudioBlob(audioBlob) {
+                        const mimeType = audioBlob.type || 'audio/webm';
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, getFilenameForMimeType(mimeType));
+                        formData.append('language', 'fr');
+
+                        const response = await fetch(dictationApiUrl, {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok || !payload.success) {
+                            throw new Error(payload.error || 'Erreur de transcription serveur');
+                        }
+
+                        const text = (payload.text || '').trim();
+                        if (!text) {
+                            throw new Error('Transcription vide');
+                        }
+                        return text;
+                    }
+
+                    async function startApiDictation(button, targetField) {
+                        let stream;
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        } catch (e) {
+                            alert('Impossible d acceder au microphone (permission ou navigateur).');
+                            resetButton();
+                            return;
+                        }
+
+                        const mimeType = getSupportedMimeType();
+                        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                        const chunks = [];
+
+                        recorder.addEventListener('dataavailable', (event) => {
+                            if (event.data && event.data.size > 0) {
+                                chunks.push(event.data);
+                            }
+                        });
+
+                        recorder.addEventListener('error', () => {
+                            stream.getTracks().forEach((track) => track.stop());
+                            alert('Echec de l enregistrement audio navigateur.');
+                            resetButton();
+                            states.delete(button);
+                        });
+
+                        recorder.addEventListener('stop', async () => {
+                            stream.getTracks().forEach((track) => track.stop());
+                            try {
+                                if (!chunks.length) {
+                                    throw new Error('Aucun audio capture');
+                                }
+                                const audioBlob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
+                                const text = await transcribeAudioBlob(audioBlob);
+                                appendRecognizedText(targetField, text);
+                            } catch (e) {
+                                alert('Echec de la dictee via API: ' + (e.message || 'inconnue'));
+                            } finally {
+                                resetButton();
+                                states.delete(button);
+                            }
+                        });
+
+                        try {
+                            states.set(button, {
+                                recorder,
+                                listening: true,
+                                manualStop: false,
+                            });
+                            recorder.start();
+                            setVoiceState(button, 'listening');
+                            button.disabled = false;
+                        } catch (e) {
+                            stream.getTracks().forEach((track) => track.stop());
+                            alert('Impossible de demarrer l enregistrement audio.');
+                            resetButton();
+                            states.delete(button);
+                        }
+                    }
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindFicheDictation);
+            } else {
+                bindFicheDictation();
+            }
+        })();
+    </script>
+    <script>
+        (function () {
+            function bindTranslateAllFiche() {
+                const btn = document.getElementById('translateAllBtn');
+                const lang = document.getElementById('translateAllLang');
+                if (!btn || !lang) return;
+
+                const translationApiUrl = '{{ path('api_translation_texts') }}';
+
+                btn.addEventListener('click', async () => {
+                    const scope = document.querySelector('.modal-body');
+                    if (!scope) return;
+                    const valueFields = Array.from(
+                        scope.querySelectorAll('textarea.form-control, input.form-control[type="text"]')
+                    ).filter((el) => !el.disabled && (el.value || '').trim() !== '');
+                    const placeholderFields = Array.from(
+                        scope.querySelectorAll('textarea.form-control, input.form-control[type="text"]')
+                    ).filter((el) => !el.disabled && (el.getAttribute('placeholder') || '').trim() !== '');
+                    const uiTextNodes = [];
+                    const walker = document.createTreeWalker(
+                        scope,
+                        NodeFilter.SHOW_TEXT,
+                        {
+                            acceptNode(node) {
+                                const raw = node.nodeValue || '';
+                                const text = raw.trim();
+                                if (text === '') return NodeFilter.FILTER_REJECT;
+                                const parent = node.parentElement;
+                                if (!parent) return NodeFilter.FILTER_REJECT;
+                                if (parent.closest('.fiche-translate-bar')) return NodeFilter.FILTER_REJECT;
+                                if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) {
+                                    return NodeFilter.FILTER_REJECT;
+                                }
+                                if (parent.tagName === 'INPUT') return NodeFilter.FILTER_REJECT;
+                                return NodeFilter.FILTER_ACCEPT;
+                            },
+                        }
+                    );
+                    let currentNode;
+                    while ((currentNode = walker.nextNode())) {
+                        uiTextNodes.push(currentNode);
+                    }
+
+                    const texts = {};
+                    valueFields.forEach((field, index) => {
+                        const key = field.id ? `f_${field.id}` : `f_${index}`;
+                        texts[key] = field.value.trim();
+                        field.dataset.translateKey = key;
+                    });
+                    placeholderFields.forEach((field, index) => {
+                        const key = field.id ? `p_${field.id}` : `p_${index}`;
+                        texts[key] = (field.getAttribute('placeholder') || '').trim();
+                        field.dataset.translatePlaceholderKey = key;
+                    });
+                    uiTextNodes.forEach((node, index) => {
+                        const key = `n_${index}`;
+                        texts[key] = (node.nodeValue || '').trim();
+                        node.__translateKey = key;
+                    });
+
+                    if (Object.keys(texts).length === 0) {
+                        alert('Aucun contenu textuel a traduire dans la fiche.');
+                        return;
+                    }
+
+                    const original = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+                    try {
+                        const response = await fetch(translationApiUrl, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: JSON.stringify({
+                                source_language: 'auto',
+                                target_language: lang.value,
+                                texts,
+                            }),
+                        });
+
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok || !payload.success) {
+                            throw new Error(payload.error || 'Erreur de traduction');
+                        }
+
+                        const translatedMap = payload.translations?.[lang.value] || {};
+                        valueFields.forEach((field) => {
+                            const key = field.dataset.translateKey || '';
+                            const translated = (translatedMap[key] || '').trim();
+                            if (translated !== '') {
+                                field.value = translated;
+                                field.dispatchEvent(new Event('input'));
+                            }
+                        });
+                        placeholderFields.forEach((field) => {
+                            const key = field.dataset.translatePlaceholderKey || '';
+                            const translated = (translatedMap[key] || '').trim();
+                            if (translated !== '') {
+                                field.setAttribute('placeholder', translated);
+                            }
+                        });
+                        uiTextNodes.forEach((node) => {
+                            const key = node.__translateKey || '';
+                            const translated = (translatedMap[key] || '').trim();
+                            if (translated === '') return;
+                            const raw = node.nodeValue || '';
+                            const leading = (raw.match(/^\s*/) || [''])[0];
+                            const trailing = (raw.match(/\s*$/) || [''])[0];
+                            node.nodeValue = `${leading}${translated}${trailing}`;
+                        });
+                    } catch (e) {
+                        alert('Echec de traduction: ' + (e.message || 'inconnue'));
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = original;
+                    }
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindTranslateAllFiche);
+            } else {
+                bindTranslateAllFiche();
+            }
+        })();
     </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

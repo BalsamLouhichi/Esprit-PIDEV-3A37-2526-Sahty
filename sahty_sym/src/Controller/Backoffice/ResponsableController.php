@@ -107,6 +107,7 @@ class ResponsableController extends AbstractController
      */
     #[Route('/produits', name: 'app_responsable_produits')]
     public function produits(
+        Request $request,
         ProduitRepository $produitRepository
     ): Response {
         try {
@@ -114,12 +115,28 @@ class ResponsableController extends AbstractController
         } catch (AccessDeniedException $e) {
             return $this->redirectToRoute('app_home');
         }
-        
-        $produits = $produitRepository->findByParapharmacie($parapharmacie->getId());
-        
+
+        $searchTerm = trim((string) $request->query->get('search', ''));
+        if ($searchTerm !== '') {
+            $produits = $produitRepository->searchByParapharmacie($parapharmacie->getId(), $searchTerm);
+        } else {
+            $produits = $produitRepository->findByParapharmacie($parapharmacie->getId());
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json([
+                'success' => true,
+                'count' => count($produits),
+                'html' => $this->renderView('backoffice/responsable/_produits_rows.html.twig', [
+                    'produits' => $produits,
+                ]),
+            ]);
+        }
+
         return $this->render('backoffice/responsable/produits.html.twig', [
             'produits' => $produits,
-            'parapharmacie' => $parapharmacie
+            'parapharmacie' => $parapharmacie,
+            'searchTerm' => $searchTerm,
         ]);
     }
     
@@ -158,7 +175,7 @@ class ResponsableController extends AbstractController
                     );
                     $produit->setImage($newFilename);
                 } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image');
+                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image: ' . $e->getMessage());
                 }
             }
             
@@ -232,7 +249,7 @@ class ResponsableController extends AbstractController
                     
                     $produit->setImage($newFilename);
                 } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image');
+                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image: ' . $e->getMessage());
                 }
             }
             
@@ -370,6 +387,14 @@ class ResponsableController extends AbstractController
             return;
         }
 
+        $from = (string) (
+            $_ENV['APP_MAILER_FROM']
+            ?? getenv('APP_MAILER_FROM')
+            ?? $_ENV['MAILER_FROM']
+            ?? getenv('MAILER_FROM')
+            ?: 'no-reply@sahty.local'
+        );
+
         try {
             $html = $this->renderView('emails/commande_acceptee_patient.html.twig', [
                 'commande' => $commande,
@@ -377,7 +402,7 @@ class ResponsableController extends AbstractController
             ]);
 
             $email = (new Email())
-                ->from('commandes@sahty.com')
+                ->from($from)
                 ->to($emailClient)
                 ->subject('Votre commande #' . $commande->getNumero() . ' a ete acceptee')
                 ->html($html);
@@ -385,6 +410,7 @@ class ResponsableController extends AbstractController
             $mailer->send($email);
         } catch (\Throwable $e) {
             error_log('Erreur notification commande acceptee: ' . $e->getMessage());
+            $this->addFlash('warning', 'La commande est mise a jour, mais l email de notification a echoue.');
         }
     }
 
@@ -511,6 +537,64 @@ class ResponsableController extends AbstractController
         return $this->json([
             'success' => true,
             'data' => $generated,
+        ]);
+    }
+
+    /**
+     * API alertes stock faible + suggestion de reapprovisionnement.
+     */
+    #[Route('/api/stock/alertes', name: 'app_responsable_api_stock_alertes', methods: ['GET'])]
+    public function stockAlertesApi(
+        Request $request,
+        ProduitRepository $produitRepository
+    ): JsonResponse {
+        try {
+            $parapharmacie = $this->getCurrentParapharmacie();
+        } catch (AccessDeniedException $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Acces non autorise',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $threshold = max(1, (int) $request->query->get('threshold', 5));
+        $targetStock = max(10, $threshold * 3);
+        $produits = $produitRepository->findLowStockByParapharmacie((int) $parapharmacie->getId(), $threshold);
+
+        $alerts = array_map(static function (Produit $produit) use ($threshold, $targetStock): array {
+            $stock = max(0, (int) ($produit->getStock() ?? 0));
+            $suggestedQty = max(1, $targetStock - $stock);
+
+            $priority = 'moyenne';
+            if ($stock <= 0) {
+                $priority = 'critique';
+            } elseif ($stock < max(1, (int) ceil($threshold / 2))) {
+                $priority = 'haute';
+            }
+
+            return [
+                'produit_id' => $produit->getId(),
+                'nom' => $produit->getNom(),
+                'stock_actuel' => $stock,
+                'seuil_alerte' => $threshold,
+                'priorite' => $priority,
+                'suggestion_reapprovisionnement' => $suggestedQty,
+                'message' => sprintf(
+                    'Stock faible pour %s (%d). Suggestion: recommander %d unites.',
+                    (string) $produit->getNom(),
+                    $stock,
+                    $suggestedQty
+                ),
+            ];
+        }, $produits);
+
+        return $this->json([
+            'success' => true,
+            'generated_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'parapharmacie_id' => $parapharmacie->getId(),
+            'threshold' => $threshold,
+            'count' => count($alerts),
+            'alerts' => $alerts,
         ]);
     }
 }

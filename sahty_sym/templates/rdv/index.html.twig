@@ -1,4 +1,8 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
+
+{% block title %}Prendre rendez-vous - Sahty{% endblock %}
+
+{% block body %}
 
     <!-- Formulaire de Rendez-vous Start -->
     <div class="container-fluid py-5">
@@ -11,25 +15,25 @@
                         {% if is_patient %}
                             <div class="alert alert-info">
                                 {% if app.user %}
-                                    <p><strong>Patient connecté :</strong> 
+                                    <p><strong>Patient connectÃ© :</strong> 
                                         {{ app.user.nom|default('') }} 
                                         {{ app.user.prenom|default('') }}
                                     </p>
                                     {% if app.user.sexe is defined and app.user.sexe %}
-                                        <p><strong>Sexe :</strong> {{ app.user.sexe == 'M' ? 'Masculin' : 'Féminin' }}</p>
+                                        <p><strong>Sexe :</strong> {{ app.user.sexe == 'M' ? 'Masculin' : 'FÃ©minin' }}</p>
                                     {% endif %}
                                     {% if app.user.groupeSanguin is defined and app.user.groupeSanguin %}
                                         <p><strong>Groupe sanguin :</strong> {{ app.user.groupeSanguin }}</p>
                                     {% endif %}
                                 {% else %}
-                                    <p class="text-warning"><strong>Non connecté</strong></p>
+                                    <p class="text-warning"><strong>Non connectÃ©</strong></p>
                                 {% endif %}
                             </div>
                         {% else %}
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle"></i>
-                                Vous devez être connecté en tant que patient pour prendre un rendez-vous.
-                                <a href="#" class="btn btn-primary">Se connecter (à venir)</a>
+                                Vous devez Ãªtre connectÃ© en tant que patient pour prendre un rendez-vous.
+                                <a href="#" class="btn btn-primary">Se connecter (Ã  venir)</a>
                             </div>
                         {% endif %}
                     </div>
@@ -38,8 +42,8 @@
                 {% if is_patient %}
                     <div class="col-lg-12">
                         <div class="form-section">
-                            <h3 class="mb-4"><i class="fas fa-user-md text-primary me-2"></i> Choix du Médecin</h3>
-                            <p class="text-muted mb-4">Sélectionnez le spécialiste adapté à vos besoins</p>
+                            <h3 class="mb-4"><i class="fas fa-user-md text-primary me-2"></i> Choix du MÃ©decin</h3>
+                            <p class="text-muted mb-4">SÃ©lectionnez le spÃ©cialiste adaptÃ© Ã  vos besoins</p>
                             
                             {% if medecins is defined and medecins|length > 0 %}
                                 <div class="row g-4 mb-4" id="doctorSelection">
@@ -56,7 +60,7 @@
                                                     <p class="card-text text-muted">{{ medecin.specialite }}</p>
                                                     <div class="mb-3">
                                                         {% if medecin.anneeExperience %}
-                                                            <span class="badge bg-info">{{ medecin.anneeExperience }} ans d'expérience</span>
+                                                            <span class="badge bg-info">{{ medecin.anneeExperience }} ans d'expÃ©rience</span>
                                                         {% endif %}
                                                     </div>
                                                     <p class="small text-muted mb-3">
@@ -64,7 +68,7 @@
                                                         {% if medecin.nomEtablissement %}{{ medecin.nomEtablissement }}{% endif %}
                                                     </p>
                                                     <button type="button" class="btn btn-outline-primary w-100 select-doctor-btn" data-id="{{ medecin.id }}">
-                                                        Sélectionner
+                                                        SÃ©lectionner
                                                     </button>
                                                 </div>
                                             </div>
@@ -74,7 +78,7 @@
                             {% else %}
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    Aucun médecin disponible pour le moment.
+                                    Aucun mÃ©decin disponible pour le moment.
                                 </div>
                             {% endif %}
 
@@ -82,7 +86,7 @@
                             {{ form_start(form, {'attr': {'id': 'rdvForm', 'class': 'needs-validation'}}) }}
                             
                             <div class="row g-4">
-                                <!-- Champ médecin caché -->
+                                <!-- Champ mÃ©decin cachÃ© -->
                                 {{ form_widget(form.medecin, {'attr': {'class': 'd-none'}}) }}
                                 
                                 <div class="col-md-6">
@@ -108,28 +112,28 @@
                                 <div class="col-12">
                                     <div class="mb-3">
                                         {{ form_label(form.raison, 'Motif de la consultation *', {'label_attr': {'class': 'form-label'}}) }}
-                                        {{ form_widget(form.raison, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Décrivez brièvement la raison de votre visite...'}}) }}
+                                        {{ form_widget(form.raison, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'DÃ©crivez briÃ¨vement la raison de votre visite...'}}) }}
                                         <div class="invalid-feedback">
                                             {{ form_errors(form.raison) }}
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Champ patient caché (automatiquement rempli) -->
+                                <!-- Champ patient cachÃ© (automatiquement rempli) -->
                                 {% if form.patient is defined %}
                                     {{ form_widget(form.patient, {'attr': {'class': 'd-none'}}) }}
                                 {% endif %}
                                 
-                                <!-- Message d'alerte pour la sélection du médecin -->
+                                <!-- Message d'alerte pour la sÃ©lection du mÃ©decin -->
                                 <div id="medecinAlert" class="alert alert-warning d-none">
-                                    <i class="fas fa-exclamation-circle"></i> Veuillez sélectionner un médecin.
+                                    <i class="fas fa-exclamation-circle"></i> Veuillez sÃ©lectionner un mÃ©decin.
                                 </div>
                                 
                                 <div class="col-12">
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" id="consent" required>
                                         <label class="form-check-label" for="consent">
-                                            Je consens au traitement de mes données personnelles conformément à la politique de confidentialité <span class="text-danger">*</span>
+                                            Je consens au traitement de mes donnÃ©es personnelles conformÃ©ment Ã  la politique de confidentialitÃ© <span class="text-danger">*</span>
                                         </label>
                                     </div>
                                 </div>
@@ -142,7 +146,7 @@
                                 </button>
                                 <p class="text-muted mt-3 small">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Vous recevrez une confirmation par email. La consultation dure généralement 30 minutes.
+                                    Vous recevrez une confirmation par email. La consultation dure gÃ©nÃ©ralement 30 minutes.
                                 </p>
                             </div>
                             
@@ -160,7 +164,7 @@
         <div class="container">
             <div class="text-center mb-5">
                 <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">FAQ</h5>
-                <h1 class="display-6">Questions Fréquentes</h1>
+                <h1 class="display-6">Questions FrÃ©quentes</h1>
             </div>
             <div class="row justify-content-center">
                 <div class="col-lg-10">
@@ -173,7 +177,7 @@
                             </h2>
                             <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    Oui, vous pouvez annuler ou modifier votre rendez-vous gratuitement jusqu'à 24 heures avant l'heure prévue. Contactez-nous par téléphone ou via votre espace patient.
+                                    Oui, vous pouvez annuler ou modifier votre rendez-vous gratuitement jusqu'Ã  24 heures avant l'heure prÃ©vue. Contactez-nous par tÃ©lÃ©phone ou via votre espace patient.
                                 </div>
                             </div>
                         </div>
@@ -186,12 +190,12 @@
                             </h2>
                             <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    Pour votre première visite, nous vous recommandons d'apporter :
+                                    Pour votre premiÃ¨re visite, nous vous recommandons d'apporter :
                                     <ul>
-                                        <li>Votre carte d'identité</li>
+                                        <li>Votre carte d'identitÃ©</li>
                                         <li>Votre carte Vitale</li>
                                         <li>Votre carte de mutuelle</li>
-                                        <li>Tous vos documents médicaux pertinents</li>
+                                        <li>Tous vos documents mÃ©dicaux pertinents</li>
                                     </ul>
                                 </div>
                             </div>
@@ -200,12 +204,12 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                    Quels sont les modes de paiement acceptés ?
+                                    Quels sont les modes de paiement acceptÃ©s ?
                                 </button>
                             </h2>
                             <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    Nous acceptons les paiements par carte bancaire (CB, Visa, Mastercard), chèque, espèces et virement bancaire. Le tiers payant est accepté.
+                                    Nous acceptons les paiements par carte bancaire (CB, Visa, Mastercard), chÃ¨que, espÃ¨ces et virement bancaire. Le tiers payant est acceptÃ©.
                                 </div>
                             </div>
                         </div>
@@ -223,8 +227,8 @@
                 <div class="col-lg-3 col-md-6">
                     <h4 class="d-inline-block text-primary text-uppercase border-bottom border-5 border-secondary mb-4">
                         Nous Contacter</h4>
-                    <p class="mb-4">Votre santé est notre priorité. N'hésitez pas à nous contacter.</p>
-                    <p class="mb-2"><i class="fa fa-map-marker-alt text-primary me-3"></i>123 Rue de la Santé, Paris</p>
+                    <p class="mb-4">Votre santÃ© est notre prioritÃ©. N'hÃ©sitez pas Ã  nous contacter.</p>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt text-primary me-3"></i>123 Rue de la SantÃ©, Paris</p>
                     <p class="mb-2"><i class="fa fa-envelope text-primary me-3"></i>info@medinova.fr</p>
                     <p class="mb-0"><i class="fa fa-phone-alt text-primary me-3"></i>+01 23 45 67 89</p>
                 </div>
@@ -233,7 +237,7 @@
                         Liens Rapides</h4>
                     <div class="d-flex flex-column justify-content-start">
                         <a class="text-light mb-2" href="{{ path('app_home') }}"><i class="fa fa-angle-right me-2"></i>Accueil</a>
-                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>À Propos</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Ã€ Propos</a>
                         <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Nos Services</a>
                         <a class="text-light mb-2" href="{{ path('app_rdv_prendre') }}"><i class="fa fa-angle-right me-2"></i>Rendez-vous</a>
                         <a class="text-light" href="#"><i class="fa fa-angle-right me-2"></i>Contact</a>
@@ -243,9 +247,9 @@
                     <h4 class="d-inline-block text-primary text-uppercase border-bottom border-5 border-secondary mb-4">
                         Services</h4>
                     <div class="d-flex flex-column justify-content-start">
-                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Consultation Générale</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Consultation GÃ©nÃ©rale</a>
                         <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Cardiologie</a>
-                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Pédiatrie</a>
+                        <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>PÃ©diatrie</a>
                         <a class="text-light mb-2" href="#"><i class="fa fa-angle-right me-2"></i>Dermatologie</a>
                     </div>
                 </div>
@@ -259,13 +263,13 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i> Rendez-vous Confirmé</h5>
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i> Rendez-vous ConfirmÃ©</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center mb-4">
                         <i class="fas fa-calendar-check text-success fa-4x mb-3"></i>
-                        <h4 class="mb-3">Votre rendez-vous est confirmé !</h4>
+                        <h4 class="mb-3">Votre rendez-vous est confirmÃ© !</h4>
                         <p class="text-muted">Vous recevrez un email de confirmation.</p>
                     </div>
                     <div class="d-grid">
@@ -297,39 +301,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Sélection des médecins
+            // SÃ©lection des mÃ©decins
             const doctorCards = document.querySelectorAll('.doctor-card');
             const selectButtons = document.querySelectorAll('.select-doctor-btn');
             const medecinInput = document.getElementById('{{ form.medecin.vars.id }}');
             const medecinAlert = document.getElementById('medecinAlert');
             const form = document.getElementById('rdvForm');
             
-            // Fonction pour sélectionner un médecin
+            // Fonction pour sÃ©lectionner un mÃ©decin
             function selectDoctor(id, nom, specialite) {
-                // Retirer la sélection précédente
+                // Retirer la sÃ©lection prÃ©cÃ©dente
                 doctorCards.forEach(card => {
                     card.classList.remove('selected');
                     card.style.borderColor = '';
                 });
                 
                 selectButtons.forEach(btn => {
-                    btn.textContent = 'Sélectionner';
+                    btn.textContent = 'SÃ©lectionner';
                     btn.classList.remove('btn-success');
                     btn.classList.add('btn-outline-primary');
                 });
                 
-                // Sélectionner la carte
+                // SÃ©lectionner la carte
                 const selectedCard = document.querySelector('.doctor-card[data-id="' + id + '"]');
                 const selectedBtn = selectedCard ? selectedCard.querySelector('.select-doctor-btn') : null;
                 
                 if (selectedCard && selectedBtn) {
                     selectedCard.classList.add('selected');
                     selectedCard.style.borderColor = '#0d6efd';
-                    selectedBtn.textContent = 'Sélectionné ✓';
+                    selectedBtn.textContent = 'SÃ©lectionnÃ© âœ“';
                     selectedBtn.classList.remove('btn-outline-primary');
                     selectedBtn.classList.add('btn-success');
                     
-                    // Mettre à jour le champ caché
+                    // Mettre Ã  jour le champ cachÃ©
                     if (medecinInput) {
                         medecinInput.value = id;
                     }
@@ -368,7 +372,7 @@
             // Validation avant soumission
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    // Vérifier si un médecin est sélectionné
+                    // VÃ©rifier si un mÃ©decin est sÃ©lectionnÃ©
                     if (medecinInput && !medecinInput.value) {
                         e.preventDefault();
                         if (medecinAlert) {
@@ -376,22 +380,22 @@
                             medecinAlert.scrollIntoView({ behavior: 'smooth' });
                         }
                         
-                        // Surligner les cartes médecin
+                        // Surligner les cartes mÃ©decin
                         doctorCards.forEach(card => {
                             card.style.border = '2px solid #ffc107';
                         });
                         return false;
                     }
                     
-                    // Vérifier le consentement
+                    // VÃ©rifier le consentement
                     const consentCheckbox = document.getElementById('consent');
                     if (!consentCheckbox || !consentCheckbox.checked) {
                         e.preventDefault();
-                        alert('Veuillez accepter le traitement de vos données personnelles.');
+                        alert('Veuillez accepter le traitement de vos donnÃ©es personnelles.');
                         return false;
                     }
                     
-                    // Vérifier la date (aujourd'hui ou futur)
+                    // VÃ©rifier la date (aujourd'hui ou futur)
                     const dateInput = document.getElementById('{{ form.dateRdv.vars.id }}');
                     if (dateInput) {
                         const selectedDate = new Date(dateInput.value);
@@ -400,13 +404,13 @@
                         
                         if (selectedDate < today) {
                             e.preventDefault();
-                            alert('La date doit être aujourd\'hui ou dans le futur.');
+                            alert('La date doit Ãªtre aujourd\'hui ou dans le futur.');
                             dateInput.focus();
                             return false;
                         }
                     }
                     
-                    // Désactiver le bouton pour éviter les doubles clics
+                    // DÃ©sactiver le bouton pour Ã©viter les doubles clics
                     const submitBtn = document.getElementById('submitBtn');
                     if (submitBtn) {
                         submitBtn.disabled = true;
@@ -425,7 +429,7 @@
                 
                 dateInput.addEventListener('change', function() {
                     if (this.value < today) {
-                        alert('La date doit être aujourd\'hui ou dans le futur');
+                        alert('La date doit Ãªtre aujourd\'hui ou dans le futur');
                         this.value = today;
                     }
                 });

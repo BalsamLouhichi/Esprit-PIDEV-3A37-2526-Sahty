@@ -6,6 +6,7 @@ use App\Entity\Commande;
 use App\Entity\Parapharmacie;
 use App\Entity\Produit;
 use App\Form\CommandeType;
+use App\Integration\FastApiSemanticSearchClient;
 use App\Payment\BtcPayPaymentService;
 use App\Repository\CommandeRepository;
 use App\Repository\ParapharmacieRepository;
@@ -170,6 +171,18 @@ final class ProduitController extends AbstractController
                 return $this->redirectToRoute('app_panier');
             }
 
+            $quantiteDemandee = max(1, (int) $commande->getQuantite());
+            $stockActuel = $produit->getStock();
+            if ($stockActuel !== null) {
+                if ($stockActuel < $quantiteDemandee) {
+                    $this->addFlash('error', sprintf('Stock insuffisant pour "%s". Disponible: %d.', (string) $produit->getNom(), $stockActuel));
+                    return $this->redirectToRoute('app_commander', ['id' => $produit->getId()]);
+                }
+
+                $produit->setStock($stockActuel - $quantiteDemandee);
+            }
+
+            $commande->setQuantite($quantiteDemandee);
             $commande->calculerPrixTotal();
             $commande->setDateModification(new \DateTime());
             $commande->setStatut('en_attente_paiement');
@@ -194,7 +207,6 @@ final class ProduitController extends AbstractController
                     'description' => sprintf('Commande %s - %s', $commande->getNumero(), $produit->getNom()),
                     'redirectUrl' => $this->generateUrl('app_commander_confirmation', [
                         'id' => $commande->getId(),
-                        'payment_id' => '{payment_id}',
                     ], UrlGeneratorInterface::ABSOLUTE_URL),
                     'webhookUrl' => $this->mollieWebhookUrl ?: $this->generateUrl('app_mollie_webhook', [], UrlGeneratorInterface::ABSOLUTE_URL),
                     'metadata' => [
@@ -233,7 +245,7 @@ final class ProduitController extends AbstractController
     {
         $paymentId = $request->query->get('payment_id');
 
-        if ($paymentId && !empty($this->mollieApiKey)) {
+        if ($paymentId && !empty($this->mollieApiKey) && preg_match('/^tr_/', (string) $paymentId) === 1) {
             $mollie = new MollieApiClient();
             $mollie->setApiKey($this->mollieApiKey);
 
@@ -386,7 +398,8 @@ final class ProduitController extends AbstractController
         Request $request,
         ProduitRepository $produitRepository,
         ParapharmacieRepository $parapharmacieRepository,
-        ProduitSemanticModelService $semanticModelService
+        ProduitSemanticModelService $semanticModelService,
+        FastApiSemanticSearchClient $semanticSearchClient
     ): Response
     {
         $searchTerm = trim((string) $request->query->get('q', ''));
@@ -397,12 +410,36 @@ final class ProduitController extends AbstractController
         if ($searchTerm !== '') {
             $semanticKeywords = $this->buildSemanticKeywords($searchTerm);
             $matchedIntents = $this->detectSemanticIntents($searchTerm);
-            $results = $semanticModelService->search($searchTerm, $semanticKeywords, 30, 0.09);
+
+            $externalIds = $semanticSearchClient->searchProductIds($searchTerm, 5, $semanticKeywords);
+            if (!empty($externalIds)) {
+                $results = $produitRepository->findActiveByIdsOrdered($externalIds);
+            }
+
+            if (empty($results)) {
+                $results = $semanticModelService->search($searchTerm, $semanticKeywords, 5, 0.20);
+            }
 
             if (empty($results) && !empty($semanticKeywords)) {
-                $results = $produitRepository->semanticSearch($semanticKeywords, 12);
+                $results = $produitRepository->semanticSearch($semanticKeywords, 5);
             }
         }
+
+        // Afficher un seul produit par nom (evite les doublons multi-parapharmacies)
+        $uniqueByName = [];
+        $dedupedResults = [];
+        foreach ($results as $result) {
+            if (!$result instanceof Produit) {
+                continue;
+            }
+            $nameKey = mb_strtolower(trim((string) $result->getNom()), 'UTF-8');
+            if ($nameKey === '' || isset($uniqueByName[$nameKey])) {
+                continue;
+            }
+            $uniqueByName[$nameKey] = true;
+            $dedupedResults[] = $result;
+        }
+        $results = array_slice($dedupedResults, 0, 5);
 
         return $this->render('produit/recherche.html.twig', [
             'searchTerm' => $searchTerm,

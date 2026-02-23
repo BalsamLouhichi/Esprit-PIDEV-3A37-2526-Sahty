@@ -198,32 +198,28 @@ class PanierController extends AbstractController
         ParapharmacieRepository $parapharmacieRepository
     ): Response {
         $panier = $session->get('panier', []);
-        
+
         if (empty($panier)) {
             $this->addFlash('error', 'Votre panier est vide.');
             return $this->redirectToRoute('app_panier');
         }
-        
-        // Récupérer les données du formulaire
+
         $nomClient = $request->request->get('nomClient');
         $email = $request->request->get('email');
         $telephone = $request->request->get('telephone');
         $adresseLivraison = $request->request->get('adresseLivraison');
         $notes = $request->request->get('notes');
-        
-        // Valider les données
+
         if (!$nomClient || !$email || !$telephone || !$adresseLivraison) {
             $this->addFlash('error', 'Veuillez remplir tous les champs obligatoires.');
             return $this->redirectToRoute('app_commande_formulaire_panier');
         }
-        
-        // Grouper les articles par parapharmacie
+
         $articlesParPharmacie = [];
         $articlesIgnores = 0;
         foreach ($panier as $item) {
             $pharmacieId = isset($item['pharmacie_id']) ? (int) $item['pharmacie_id'] : 0;
 
-            // Fallback: si la pharmacie n'est pas dans la session, essayer de la déduire du produit
             if ($pharmacieId <= 0 && isset($item['produit_id'])) {
                 $produit = $entityManager->getRepository(Produit::class)->find((int) $item['produit_id']);
                 if ($produit && $produit->getParapharmacies()->count() === 1) {
@@ -244,12 +240,12 @@ class PanierController extends AbstractController
                 $articlesParPharmacie[$pharmacieId] = [
                     'pharmacie_nom' => $item['pharmacie_nom'] ?? '',
                     'articles' => [],
-                    'total' => 0
+                    'total' => 0,
                 ];
             }
-            
+
             $articlesParPharmacie[$pharmacieId]['articles'][] = $item;
-            $articlesParPharmacie[$pharmacieId]['total'] += $item['prix'] * $item['quantite'];
+            $articlesParPharmacie[$pharmacieId]['total'] += (float) $item['prix'] * (int) $item['quantite'];
         }
 
         if ($articlesIgnores > 0) {
@@ -260,83 +256,107 @@ class PanierController extends AbstractController
             $this->addFlash('error', 'Impossible de creer la commande: aucune parapharmacie valide trouvee.');
             return $this->redirectToRoute('app_panier');
         }
-        
+
         $commandesCrees = [];
-        $totalGeneral = 0;
-        
-        // Créer une commande pour chaque parapharmacie
-        foreach ($articlesParPharmacie as $pharmacieId => $data) {
-            $parapharmacie = $entityManager->getRepository(Parapharmacie::class)->find($pharmacieId);
-            
-            if (!$parapharmacie) {
-                continue;
-            }
-            
-            // Créer la commande principale
-            $commande = new Commande();
-            $commande->setParapharmacie($parapharmacie);
-            $commande->setNomClient($nomClient);
-            $commande->setEmail($email);
-            $commande->setTelephone($telephone);
-            $commande->setAdresseLivraison($adresseLivraison);
-            $commande->setNotes($notes);
-            $commande->setStatut('en_attente');
-            $commande->setDateCreation(new \DateTime());
-            $commande->setPrixTotal((string)$data['total']);
-            
-            // Pour le premier article, on garde la compatibilité avec l'ancien système
-            if (!empty($data['articles'])) {
-                $premierArticle = $data['articles'][0];
-                $produit = $entityManager->getRepository(Produit::class)->find($premierArticle['produit_id']);
-                if ($produit) {
-                    $commande->setProduit($produit);
-                    $commande->setQuantite($premierArticle['quantite']);
-                    $commande->setPrixUnitaire((string)$premierArticle['prix']);
+        $notificationsParPharmacie = [];
+        $totalGeneral = 0.0;
+        $connection = $entityManager->getConnection();
+
+        try {
+            $connection->beginTransaction();
+
+            foreach ($articlesParPharmacie as $pharmacieId => $data) {
+                $parapharmacie = $entityManager->getRepository(Parapharmacie::class)->find($pharmacieId);
+                if (!$parapharmacie) {
+                    continue;
                 }
-            }
-            
-            $entityManager->persist($commande);
-            
-            // Créer les lignes de commande pour chaque article
-            foreach ($data['articles'] as $article) {
-                $produit = $entityManager->getRepository(Produit::class)->find($article['produit_id']);
-                if ($produit) {
+
+                $commande = new Commande();
+                $commande->setParapharmacie($parapharmacie);
+                $commande->setNomClient($nomClient);
+                $commande->setEmail($email);
+                $commande->setTelephone($telephone);
+                $commande->setAdresseLivraison($adresseLivraison);
+                $commande->setNotes($notes);
+                $commande->setStatut('en_attente');
+                $commande->setDateCreation(new \DateTime());
+                $commande->setPrixTotal((string) $data['total']);
+
+                if (!empty($data['articles'])) {
+                    $premierArticle = $data['articles'][0];
+                    $produit = $entityManager->getRepository(Produit::class)->find((int) $premierArticle['produit_id']);
+                    if ($produit) {
+                        $commande->setProduit($produit);
+                        $commande->setQuantite(max(1, (int) $premierArticle['quantite']));
+                        $commande->setPrixUnitaire((string) $premierArticle['prix']);
+                    }
+                }
+
+                $entityManager->persist($commande);
+
+                foreach ($data['articles'] as $article) {
+                    $produit = $entityManager->getRepository(Produit::class)->find((int) ($article['produit_id'] ?? 0));
+                    if (!$produit) {
+                        continue;
+                    }
+
+                    $quantiteArticle = max(1, (int) ($article['quantite'] ?? 1));
+                    $stockActuel = $produit->getStock();
+                    if ($stockActuel !== null) {
+                        if ($stockActuel < $quantiteArticle) {
+                            throw new \RuntimeException(sprintf('Stock insuffisant pour "%s". Disponible: %d.', (string) $produit->getNom(), $stockActuel));
+                        }
+                        $produit->setStock($stockActuel - $quantiteArticle);
+                    }
+
                     $ligneCommande = new LigneCommande();
                     $ligneCommande->setCommande($commande);
                     $ligneCommande->setProduit($produit);
-                    $ligneCommande->setQuantite($article['quantite']);
-                    $ligneCommande->setPrixUnitaire((string)$article['prix']);
+                    $ligneCommande->setQuantite($quantiteArticle);
+                    $ligneCommande->setPrixUnitaire((string) ($article['prix'] ?? 0));
                     $ligneCommande->calculerSousTotal();
-                    
                     $entityManager->persist($ligneCommande);
                 }
+
+                $commandesCrees[] = $commande;
+                $totalGeneral += (float) $data['total'];
+                $notificationsParPharmacie[] = [
+                    'commande' => $commande,
+                    'articles' => $data['articles'],
+                ];
             }
-            
+
             $entityManager->flush();
-            $commandesCrees[] = $commande;
-            $totalGeneral += $data['total'];
-            
-            // NOTIFIER LA PARAPHARMACIE (email)
-            $this->notifierParapharmacie($commande, $data['articles'], $mailer);
-        }
-        
-        // Vérifier si des commandes ont été créées
-        if (empty($commandesCrees)) {
-            $this->addFlash('error', 'Aucune commande n\'a pu être créée. Veuillez réessayer.');
+            $connection->commit();
+        } catch (\RuntimeException $e) {
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+            $this->addFlash('error', $e->getMessage());
+            return $this->redirectToRoute('app_panier');
+        } catch (\Throwable $e) {
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+            $this->addFlash('error', 'Erreur lors de la validation de la commande. Veuillez reessayer.');
             return $this->redirectToRoute('app_panier');
         }
-        
-        // Vider le panier
+
+        if (empty($commandesCrees)) {
+            $this->addFlash('error', 'Aucune commande n\'a pu etre creee. Veuillez reessayer.');
+            return $this->redirectToRoute('app_panier');
+        }
+
+        foreach ($notificationsParPharmacie as $notification) {
+            $this->notifierParapharmacie($notification['commande'], $notification['articles'], $mailer);
+        }
+
         $session->remove('panier');
-        
-        // Notifier le client
         $this->notifierClient($nomClient, $email, $commandesCrees, $totalGeneral, $mailer);
-        
-        // Message de succès avec le numéro de la première commande
-        $this->addFlash('success', 'Votre commande a été enregistrée avec succès ! Les parapharmacies concernées ont été notifiées.');
-        $this->addFlash('info', 'Commande #' . $commandesCrees[0]->getNumero() . ' créée avec succès !');
-        
-        // Rediriger vers le panier (maintenant vide)
+
+        $this->addFlash('success', 'Votre commande a ete enregistree avec succes ! Les parapharmacies concernees ont ete notifiees.');
+        $this->addFlash('info', 'Commande #' . $commandesCrees[0]->getNumero() . ' creee avec succes !');
+
         return $this->redirectToRoute('app_panier');
     }
 
@@ -395,3 +415,4 @@ class PanierController extends AbstractController
         }
     }
 }
+

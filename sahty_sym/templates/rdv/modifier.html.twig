@@ -759,6 +759,22 @@
             </div>
         </div>
 
+        <!-- Type de consultation Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="fas fa-laptop-medical"></i>
+                Type de Consultation
+            </h3>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-video"></i>
+                    Mode de consultation
+                </label>
+                {{ form_widget(form.typeConsultation, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(form.typeConsultation) }}
+            </div>
+        </div>
+
         <!-- Motif Section -->
         <div class="form-section">
             <h3 class="form-section-title">
@@ -770,7 +786,7 @@
                     <i class="fas fa-file-medical-alt"></i>
                     Décrivez votre motif (optionnel)
                 </label>
-                {{ form_widget(form.raison, {'attr': {'class': 'form-control', 'placeholder': 'Exemple: Consultation de routine, douleur abdominale, suivi médical...'}}) }}
+                {{ form_widget(form.raison, {'attr': {'class': 'form-control', 'id': 'reasonInput', 'placeholder': 'Exemple: Consultation de routine, douleur abdominale, suivi médical...'}}) }}
                 {{ form_errors(form.raison) }}
             </div>
         </div>

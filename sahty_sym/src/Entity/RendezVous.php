@@ -32,6 +32,18 @@ class RendezVous
     #[ORM\Column(nullable: true)]
     private ?\DateTime $dateValidation = null;
 
+    #[ORM\Column(length: 20)]
+    private string $typeConsultation = 'cabinet';
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $meetingUrl = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $meetingProvider = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $meetingCreatedAt = null;
+
     #[ORM\ManyToOne]
     private ?Patient $patient = null;
 
@@ -125,6 +137,54 @@ class RendezVous
     public function setDateValidation(?\DateTime $dateValidation): static
     {
         $this->dateValidation = $dateValidation;
+
+        return $this;
+    }
+
+    public function getTypeConsultation(): string
+    {
+        return $this->typeConsultation;
+    }
+
+    public function setTypeConsultation(string $typeConsultation): static
+    {
+        $this->typeConsultation = $typeConsultation;
+
+        return $this;
+    }
+
+    public function getMeetingUrl(): ?string
+    {
+        return $this->meetingUrl;
+    }
+
+    public function setMeetingUrl(?string $meetingUrl): static
+    {
+        $this->meetingUrl = $meetingUrl;
+
+        return $this;
+    }
+
+    public function getMeetingProvider(): ?string
+    {
+        return $this->meetingProvider;
+    }
+
+    public function setMeetingProvider(?string $meetingProvider): static
+    {
+        $this->meetingProvider = $meetingProvider;
+
+        return $this;
+    }
+
+    public function getMeetingCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->meetingCreatedAt;
+    }
+
+    public function setMeetingCreatedAt(?\DateTimeImmutable $meetingCreatedAt): static
+    {
+        $this->meetingCreatedAt = $meetingCreatedAt;
 
         return $this;
     }

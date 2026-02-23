@@ -28,9 +28,24 @@ final class ParapharmacieController extends AbstractController
         $parapharmacies = $parapharmacieRepository->findAll();
         $produits = $produitRepository->findAll();
 
+        // Afficher chaque produit une seule fois (meme nom => un seul item)
+        $seenNames = [];
+        $uniqueProduits = [];
+        foreach ($produits as $produit) {
+            if (!$produit instanceof Produit) {
+                continue;
+            }
+            $name = mb_strtolower(trim((string) $produit->getNom()), 'UTF-8');
+            if ($name === '' || isset($seenNames[$name])) {
+                continue;
+            }
+            $seenNames[$name] = true;
+            $uniqueProduits[] = $produit;
+        }
+
         return $this->render('parapharmacie/list_all.html.twig', [
             'parapharmacies' => $parapharmacies,
-            'produits' => $produits,
+            'produits' => $uniqueProduits,
         ]);
     }
 

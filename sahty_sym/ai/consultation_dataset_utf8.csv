@@ -1,0 +1,31 @@
+﻿motif_rendez_vous,antecedents,allergies,traitement_en_cours,taille,poids,imc,categorie_imc,diagnostic,traitement_prescrit,observations,statut,duree_consultation_min
+controle,aucun,aucune,rien,1.70,68.0,23.53,Normal,rhume leger,paracetamol,etat stable,actif,12
+controle,asthme,penicilline,inhalateur,1.65,72.0,26.45,Surpoids,infection gorge,antibiotique,controle apres 5 jours,actif,19
+suivi_diabete,diabete type 2,aucune,metformine,1.72,89.0,30.08,Obese,hyperglycemie,metformine + regime,suivi mensuel,actif,31
+suivi_diabete,diabete type 2,aspirine,insuline,1.68,86.0,30.47,Obese,diabete desequilibre,insuline rapide,surveillance stricte,actif,38
+urgence,hta,aucune,amlodipine,1.75,92.0,30.04,Obese,douleur thoracique,bilan cardio,orientation cardiologie,actif,47
+controle,aucun,aucune,rien,1.60,54.0,21.09,Normal,controle general,vitamines,RAS,actif,11
+renouvellement,hta,aucune,amlodipine,1.66,74.0,26.85,Surpoids,renouvellement traitement,amlodipine,observance correcte,actif,14
+infection,aucun,ibuprofene,rien,1.78,81.0,25.56,Surpoids,angine bacterienne,amoxicilline,hydratation + repos,actif,22
+infection,aucun,aucune,rien,1.73,77.0,25.73,Surpoids,infection urinaire,antibiotique,culture urinaire demandee,actif,24
+bilan_annuel,hta;cholesterol,aucune,statine,1.69,83.0,29.06,Surpoids,bilan annuel,adaptation hygiéno-dietetique,controle 3 mois,actif,27
+bilan_annuel,aucun,aucune,rien,1.82,79.0,23.85,Normal,bilan annuel normal,aucun,RAS,actif,18
+suivi_hypertension,hta,aucune,amlodipine,1.71,84.0,28.73,Surpoids,hta non controlee,augmenter dose,mesures tension domicile,actif,29
+suivi_hypertension,hta,penicilline,losartan,1.63,70.0,26.35,Surpoids,hta controlee,maintien traitement,bonne evolution,actif,23
+urgence,asthme,aucune,inhalateur,1.67,69.0,24.74,Normal,crise asthmatique,corticoide + nebulisation,surveillance 24h,actif,42
+controle,aucun,aucune,rien,1.74,76.0,25.10,Surpoids,allergie saisonniere,antihistaminique,eviter allergenes,actif,16
+renouvellement,diabete type 2,aucune,metformine,1.70,88.0,30.45,Obese,renouvellement metformine,metformine,controle glycemie,actif,17
+suivi_diabete,diabete type 2;hta,aucune,insuline;amlodipine,1.64,91.0,33.83,Obese,diabete + hta,ajustement insuline,suivi rapproche,actif,41
+infection,aucun,aucune,rien,1.58,52.0,20.83,Normal,otite,antibiotique,controle si douleur persistante,actif,18
+urgence,cardiopathie,aspirine,beta bloquant,1.76,95.0,30.67,Obese,dyspnee aigue,orientation urgence,bilan immediat,actif,52
+bilan_annuel,asthme,aucune,inhalateur,1.62,63.0,24.01,Normal,bilan respiratoire,maintien traitement,spirometrie proposee,actif,21
+suivi_hypertension,hta;obesite,aucune,losartan,1.68,98.0,34.72,Obese,hta severe,double therapie,regime strict sel,actif,36
+controle,aucun,penicilline,rien,1.80,85.0,26.23,Surpoids,pharyngite,macrolide,controle apres 1 semaine,actif,20
+renouvellement,cholesterol,aucune,statine,1.73,82.0,27.40,Surpoids,renouvellement statine,statine,bon suivi,actif,13
+suivi_diabete,diabete type 1,aucune,insuline,1.66,60.0,21.77,Normal,ajustement doses,insuline basale bolus,education therapeutique,actif,34
+suivi_hypertension,hta,aucune,amlodipine,1.72,78.0,26.37,Surpoids,tension limite,maintenir dose,suivi 2 mois,actif,22
+infection,asthme,aucune,inhalateur,1.65,67.0,24.61,Normal,bronchite,antibiotique + bronchodilatateur,controle souffle,actif,26
+urgence,hta;diabete,aucune,insuline;losartan,1.69,93.0,32.56,Obese,douleur thoracique atypique,bilan complet,surveillance continue,actif,49
+controle,aucun,aucune,rien,1.61,58.0,22.38,Normal,controle post traitement,aucun,amelioration nette,actif,12
+bilan_annuel,obesite,aucune,rien,1.57,84.0,34.08,Obese,bilan metabolique,programme perte poids,motivation moyenne,actif,28
+renouvellement,hta,aucune,losartan,1.70,80.0,27.68,Surpoids,renouvellement anti-hta,losartan,adhesion correcte,actif,15

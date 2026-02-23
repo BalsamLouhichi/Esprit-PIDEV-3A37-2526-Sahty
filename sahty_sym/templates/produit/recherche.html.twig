@@ -76,8 +76,7 @@
                                         {% if produit.description %}
                                             <p class="card-text text-muted small">{{ produit.description|striptags|slice(0, 120) }}...</p>
                                         {% endif %}
-                                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                                            <strong>{{ produit.prix|number_format(2, ',', ' ') }} EUR</strong>
+                                        <div class="mt-auto d-flex justify-content-end align-items-center">
                                             <a href="{{ path('app_produit_details', {'id': produit.id}) }}" class="btn btn-outline-primary btn-sm">Voir</a>
                                         </div>
                                     </div>

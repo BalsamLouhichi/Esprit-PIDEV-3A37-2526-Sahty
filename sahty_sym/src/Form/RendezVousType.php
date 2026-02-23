@@ -11,6 +11,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class RendezVousType extends AbstractType
 {
@@ -48,6 +49,16 @@ class RendezVousType extends AbstractType
                     'class' => 'form-control',
                     'rows' => 4,
                 ],
+            ])
+
+            ->add('typeConsultation', ChoiceType::class, [
+                'label' => 'Type de consultation',
+                'choices' => [
+                    'Presentiel (cabinet)' => 'cabinet',
+                    'En ligne' => 'en_ligne',
+                ],
+                'required' => true,
+                'attr' => ['class' => 'form-select'],
             ]);
     }
 

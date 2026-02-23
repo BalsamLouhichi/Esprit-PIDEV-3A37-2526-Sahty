@@ -131,6 +131,26 @@ class ProduitRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @return Produit[]
+     */
+    public function findLowStockByParapharmacie(int $parapharmacieId, int $threshold = 5): array
+    {
+        $threshold = max(1, $threshold);
+
+        return $this->createQueryBuilder('p')
+            ->join('p.parapharmacies', 'ph')
+            ->where('ph.id = :parapharmacieId')
+            ->andWhere('p.stock IS NOT NULL')
+            ->andWhere('p.stock < :threshold')
+            ->setParameter('parapharmacieId', $parapharmacieId)
+            ->setParameter('threshold', $threshold)
+            ->orderBy('p.stock', 'ASC')
+            ->addOrderBy('p.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
    /**
  * Produits les plus vendus par parapharmacie
  */
@@ -186,5 +206,38 @@ public function findTopSellingByParapharmacie($parapharmacieId, $limit = 10)
             ->setParameter('nom', $nom)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @param int[] $ids
+     * @return Produit[]
+     */
+    public function findActiveByIdsOrdered(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $items = $this->createQueryBuilder('p')
+            ->where('p.id IN (:ids)')
+            ->andWhere('(p.estActif = true OR p.estActif IS NULL)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+
+        $byId = [];
+        foreach ($items as $item) {
+            $byId[(int) $item->getId()] = $item;
+        }
+
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $ordered[] = $byId[$id];
+            }
+        }
+
+        return $ordered;
     }
 }
