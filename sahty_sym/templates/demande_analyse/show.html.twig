@@ -203,6 +203,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const hasResult = {{ has_result ? 'true' : 'false' }};
+    const iaInitialPayload = {{ ia_initial_payload is defined and ia_initial_payload ? ia_initial_payload|json_encode|raw : 'null' }};
     const iaInterpretationUrl = '{{ ia_interpretation_url }}';
     const iaQaUrl = '{{ ia_qa_url }}';
     const iaStatus = document.getElementById('iaStatus');
@@ -364,20 +365,18 @@ document.addEventListener('DOMContentLoaded', function() {
             li.appendChild(icon);
             li.appendChild(text);
 
-            const description = findMetricDescription(line);
-            if (description) {
-                const help = document.createElement('details');
-                help.className = 'metric-help';
-                const summary = document.createElement('summary');
-                const labelName = String(line.metric_name || '').trim() || 'ce parametre';
-                summary.setAttribute('aria-label', 'Aide pour ' + labelName);
-                summary.textContent = '?';
-                const detail = document.createElement('div');
-                detail.textContent = description;
-                help.appendChild(summary);
-                help.appendChild(detail);
-                li.appendChild(help);
-            }
+            const description = findMetricDescription(line) || 'Description indisponible pour ce parametre.';
+            const help = document.createElement('details');
+            help.className = 'metric-help';
+            const summary = document.createElement('summary');
+            const labelName = String(line.metric_name || '').trim() || 'ce parametre';
+            summary.setAttribute('aria-label', 'Aide pour ' + labelName);
+            summary.textContent = '?';
+            const detail = document.createElement('div');
+            detail.textContent = description;
+            help.appendChild(summary);
+            help.appendChild(detail);
+            li.appendChild(help);
 
             if (line.is_critical) {
                 const badge = document.createElement('span');
@@ -389,26 +388,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+    const applyIaPayload = (d) => {
+        iaMetricGlossary = normalizeMetricGlossary(d.metric_glossary || {});
+        if (iaStatus) iaStatus.textContent = (d.ai_status || 'done') === 'done' ? 'Terminee' : (d.ai_status || '-');
+        if (iaRisk) iaRisk.textContent = (d.danger_level_label || d.danger_level || '-') + ((d.danger_score !== null && d.danger_score !== undefined) ? ` (${d.danger_score}/100)` : '');
+        if (iaModel) iaModel.textContent = d.model || '-';
+        if (iaUpdated) iaUpdated.textContent = d.updated_at || '-';
+        if (iaSummary) iaSummary.textContent = d.summary || 'Aucun resume IA.';
+        renderEvidence(d.evidence_items || d.evidence_lines || []);
+        renderRec(d.recommendations || []);
+    };
+
     if (hasResult) {
-        fetch(iaInterpretationUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(async (r) => { const d = await r.json(); if (!r.ok || d.ok === false) throw new Error(d.message || 'IA indisponible'); return d; })
-            .then((d) => {
-                iaMetricGlossary = normalizeMetricGlossary(d.metric_glossary || {});
-                if (iaStatus) iaStatus.textContent = (d.ai_status || 'done') === 'done' ? 'Terminee' : (d.ai_status || '-');
-                if (iaRisk) iaRisk.textContent = (d.danger_level_label || d.danger_level || '-') + ((d.danger_score !== null && d.danger_score !== undefined) ? ` (${d.danger_score}/100)` : '');
-                if (iaModel) iaModel.textContent = d.model || '-';
-                if (iaUpdated) iaUpdated.textContent = d.updated_at || '-';
-                if (iaSummary) iaSummary.textContent = d.summary || 'Aucun resume IA.';
-                renderEvidence(d.evidence_items || d.evidence_lines || []);
-                renderRec(d.recommendations || []);
-            })
-            .catch((e) => {
-                iaMetricGlossary = {};
-                if (iaStatus) iaStatus.textContent = 'Indisponible';
-                if (iaSummary) iaSummary.textContent = e.message || 'Erreur IA';
-                renderEvidence([]);
-                renderRec([]);
-            });
+        if (iaInitialPayload && iaInitialPayload.ok !== false) {
+            applyIaPayload(iaInitialPayload);
+        } else {
+            fetch(iaInterpretationUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(async (r) => { const d = await r.json(); if (!r.ok || d.ok === false) throw new Error(d.message || 'IA indisponible'); return d; })
+                .then((d) => applyIaPayload(d))
+                .catch((e) => {
+                    iaMetricGlossary = {};
+                    if (iaStatus) iaStatus.textContent = 'Indisponible';
+                    if (iaSummary) iaSummary.textContent = e.message || 'Erreur IA';
+                    renderEvidence([]);
+                    renderRec([]);
+                });
+        }
     }
 
     const openChat = () => { if (!chatPanel) return; chatPanel.classList.add('open'); chatPanel.setAttribute('aria-hidden', 'false'); if (chatInput) chatInput.focus(); };

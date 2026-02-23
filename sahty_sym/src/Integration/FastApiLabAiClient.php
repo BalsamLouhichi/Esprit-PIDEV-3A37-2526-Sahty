@@ -57,6 +57,73 @@ class FastApiLabAiClient
     }
 
     /**
+     * @param array<int,string> $metricNames
+     * @return array<string,string>
+     */
+    public function generateMetricGlossary(array $metricNames): array
+    {
+        if (!$this->endpoint) {
+            return [];
+        }
+
+        $cleanNames = array_values(array_unique(array_filter(array_map(
+            static fn (mixed $v): string => trim((string) $v),
+            $metricNames
+        ), static fn (string $v): bool => $v !== '')));
+
+        if ($cleanNames === []) {
+            return [];
+        }
+
+        $glossaryEndpoint = $this->resolveGlossaryEndpoint();
+        try {
+            $response = $this->httpClient->request('POST', $glossaryEndpoint, [
+                'headers' => array_filter([
+                    'Content-Type' => 'application/json',
+                    $this->apiKey ? ('X-API-Key: ' . $this->apiKey) : null,
+                ]),
+                'json' => [
+                    'metric_names' => $cleanNames,
+                    'model' => $this->model !== '' ? $this->model : null,
+                ],
+                'timeout' => $this->resolveTimeoutSeconds(true),
+                'max_duration' => $this->resolveTimeoutSeconds(true),
+            ]);
+        } catch (TransportExceptionInterface) {
+            return [];
+        }
+
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+            return [];
+        }
+
+        $payload = json_decode($response->getContent(false), true);
+        if (!is_array($payload)) {
+            return [];
+        }
+
+        $rawGlossary = $payload['metric_glossary'] ?? [];
+        if (!is_array($rawGlossary)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($rawGlossary as $name => $description) {
+            if (!is_string($name) || !is_scalar($description)) {
+                continue;
+            }
+            $metric = trim($name);
+            $text = trim((string) $description);
+            if ($metric === '' || $text === '') {
+                continue;
+            }
+            $result[$metric] = $text;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return array<string,mixed>
      */
     private function sendAnalyzeRequest(
@@ -158,5 +225,21 @@ class FastApiLabAiClient
         }
 
         return $mode;
+    }
+
+    private function resolveGlossaryEndpoint(): string
+    {
+        $trimmed = trim($this->endpoint);
+        if ($trimmed === '') {
+            return '/api/metric-glossary';
+        }
+
+        $parts = parse_url($trimmed);
+        $path = (string) ($parts['path'] ?? '');
+        if ($path !== '' && str_ends_with($path, '/api/analyze')) {
+            return substr($trimmed, 0, -strlen('/api/analyze')) . '/api/metric-glossary';
+        }
+
+        return rtrim($trimmed, '/') . '/api/metric-glossary';
     }
 }

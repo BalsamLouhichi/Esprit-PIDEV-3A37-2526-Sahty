@@ -1279,20 +1279,18 @@ document.addEventListener('DOMContentLoaded', function() {
             li.appendChild(icon);
             li.appendChild(text);
 
-            const description = findMetricDescription(line);
-            if (description) {
-                const help = document.createElement('details');
-                help.className = 'metric-help';
-                const summary = document.createElement('summary');
-                const labelName = String(line.metric_name || '').trim() || 'ce parametre';
-                summary.setAttribute('aria-label', 'Aide pour ' + labelName);
-                summary.textContent = '?';
-                const detail = document.createElement('div');
-                detail.textContent = description;
-                help.appendChild(summary);
-                help.appendChild(detail);
-                li.appendChild(help);
-            }
+            const description = findMetricDescription(line) || 'Description indisponible pour ce parametre.';
+            const help = document.createElement('details');
+            help.className = 'metric-help';
+            const summary = document.createElement('summary');
+            const labelName = String(line.metric_name || '').trim() || 'ce parametre';
+            summary.setAttribute('aria-label', 'Aide pour ' + labelName);
+            summary.textContent = '?';
+            const detail = document.createElement('div');
+            detail.textContent = description;
+            help.appendChild(summary);
+            help.appendChild(detail);
+            li.appendChild(help);
 
             if (line.is_critical) {
                 const badge = document.createElement('span');

@@ -10,6 +10,7 @@ use App\Entity\Medecin;
 use App\Entity\ResultatAnalyse;
 use App\Entity\ResponsableLaboratoire;
 use App\Form\DemandeAnalyseType;
+use App\Integration\FastApiLabAiClient;
 use App\Repository\DemandeAnalyseRepository;
 use App\Service\PatientResultQaService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,11 +28,17 @@ class DemandeAnalyseController extends AbstractController
 {
     private Security $security;
     private EntityManagerInterface $entityManager;
+    private FastApiLabAiClient $fastApiLabAiClient;
 
-    public function __construct(Security $security, EntityManagerInterface $entityManager)
+    public function __construct(
+        Security $security,
+        EntityManagerInterface $entityManager,
+        FastApiLabAiClient $fastApiLabAiClient
+    )
     {
         $this->security = $security;
         $this->entityManager = $entityManager;
+        $this->fastApiLabAiClient = $fastApiLabAiClient;
     }
 
     /**
@@ -196,6 +203,13 @@ class DemandeAnalyseController extends AbstractController
         $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
         $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
         $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        if ($metricGlossary === []) {
+            $metricGlossary = $this->refreshMetricGlossaryFromFastApi($demandeAnalyse, $resultatAnalyse, $raw);
+        }
+        if ($metricGlossary !== [] && !is_array($raw['metric_glossary'] ?? null)) {
+            $this->persistMetricGlossaryCache($resultatAnalyse, $raw, $metricGlossary);
+            $raw['metric_glossary'] = $metricGlossary;
+        }
 
         $summary = $this->resolveAiSummary(
             $llmInterpretation,
@@ -223,6 +237,60 @@ class DemandeAnalyseController extends AbstractController
             'model' => $resultatAnalyse->getModeleVersion(),
             'updated_at' => $resultatAnalyse->getUpdatedAt()?->format('d/m/Y H:i'),
         ]);
+    }
+
+    /**
+     * @param array<string,mixed> $raw
+     * @return array<string,string>
+     */
+    private function refreshMetricGlossaryFromFastApi(
+        DemandeAnalyse $demandeAnalyse,
+        ResultatAnalyse $resultatAnalyse,
+        array $raw
+    ): array {
+        $resultatPdf = trim((string) ($demandeAnalyse->getResultatPdf() ?? ''));
+        if ($resultatPdf === '') {
+            return [];
+        }
+
+        $fullPdfPath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+        if (!is_file($fullPdfPath)) {
+            return [];
+        }
+
+        try {
+            $payload = $this->fastApiLabAiClient->analyzePdf($fullPdfPath, basename($fullPdfPath) ?: null);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $retryAnalysis = is_array($payload['analysis'] ?? null) ? $payload['analysis'] : [];
+        $retryGlossary = $this->resolveMetricGlossary($retryAnalysis, $payload);
+        if ($retryGlossary === []) {
+            return [];
+        }
+
+        $raw['metric_glossary'] = $retryGlossary;
+        $resultatAnalyse->setAiRawResponse($raw);
+        $resultatAnalyse->touch();
+        $this->entityManager->flush();
+
+        return $retryGlossary;
+    }
+
+    /**
+     * @param array<string,mixed> $raw
+     * @param array<string,string> $metricGlossary
+     */
+    private function persistMetricGlossaryCache(
+        ResultatAnalyse $resultatAnalyse,
+        array $raw,
+        array $metricGlossary
+    ): void {
+        $raw['metric_glossary'] = $metricGlossary;
+        $resultatAnalyse->setAiRawResponse($raw);
+        $resultatAnalyse->touch();
+        $this->entityManager->flush();
     }
 
     #[Route('/{id}/ia-qa', name: 'app_demande_analyse_ia_qa', methods: ['POST'])]
@@ -951,16 +1019,11 @@ class DemandeAnalyseController extends AbstractController
             }
         }
 
-        // Fallback: if IA glossary is missing, build short explanations from
-        // detected metric names so the "?" helper remains available.
-        $fallbackDefinitions = $this->defaultMetricGlossaryDefinitions();
         $metricNames = $this->extractMetricNamesForGlossary($analysis, $raw);
+        $missingMetricNames = [];
         foreach ($metricNames as $metricName) {
             $normalizedMetric = $this->normalizeMetricGlossaryKey($metricName);
             if ($normalizedMetric === '') {
-                continue;
-            }
-            if (!isset($fallbackDefinitions[$normalizedMetric])) {
                 continue;
             }
             if (!isset($normalizedToCanonical[$normalizedMetric])) {
@@ -968,11 +1031,31 @@ class DemandeAnalyseController extends AbstractController
             }
 
             $canonicalName = $normalizedToCanonical[$normalizedMetric];
-            if (isset($glossary[$canonicalName])) {
+            if (!isset($glossary[$canonicalName])) {
+                $missingMetricNames[] = $canonicalName;
+            }
+        }
+
+        if ($missingMetricNames === []) {
+            return $glossary;
+        }
+
+        $generatedDescriptions = $this->fastApiLabAiClient->generateMetricGlossary($missingMetricNames);
+        foreach ($missingMetricNames as $canonicalName) {
+            if (!isset($generatedDescriptions[$canonicalName])) {
                 continue;
             }
 
-            $glossary[$canonicalName] = $fallbackDefinitions[$normalizedMetric];
+            $description = $this->localizeAiText((string) $generatedDescriptions[$canonicalName]);
+            if ($description === '') {
+                continue;
+            }
+
+            if (mb_strlen($description, 'UTF-8') > 260) {
+                $description = rtrim(mb_substr($description, 0, 257, 'UTF-8')) . '...';
+            }
+
+            $glossary[$canonicalName] = $description;
         }
 
         return $glossary;
@@ -1029,38 +1112,6 @@ class DemandeAnalyseController extends AbstractController
         }
 
         return array_values(array_unique($names));
-    }
-
-    /**
-     * @return array<string,string>
-     */
-    private function defaultMetricGlossaryDefinitions(): array
-    {
-        return [
-            'asat' => 'ASAT (AST): enzyme hepatique. Une hausse peut indiquer une atteinte du foie ou du muscle.',
-            'ast' => 'AST (ASAT): enzyme hepatique. Une hausse peut indiquer une atteinte du foie ou du muscle.',
-            'alat' => 'ALAT (ALT): enzyme du foie. Une elevation peut traduire une irritation hepatique.',
-            'alt' => 'ALT (ALAT): enzyme du foie. Une elevation peut traduire une irritation hepatique.',
-            'hemoglobine' => 'Hemoglobine (Hb): proteine des globules rouges qui transporte l oxygene.',
-            'hb' => 'Hb (hemoglobine): proteine des globules rouges qui transporte l oxygene.',
-            'leucocytes' => 'Leucocytes (WBC): globules blancs impliques dans la defense immunitaire.',
-            'wbc' => 'WBC (leucocytes): globules blancs impliques dans la defense immunitaire.',
-            'plaquettes' => 'Plaquettes (PLT): cellules de la coagulation qui limitent les saignements.',
-            'plt' => 'PLT (plaquettes): cellules de la coagulation qui limitent les saignements.',
-            'glycemieajeun' => 'Glycemie a jeun: taux de glucose sanguin apres une periode de jeune.',
-            'glycemie' => 'Glycemie: taux de glucose dans le sang.',
-            'creatinine' => 'Creatinine: marqueur de la fonction renale.',
-            'crp' => 'CRP: proteine de l inflammation. Une hausse peut suggerer un processus inflammatoire.',
-            'hba1c' => 'HbA1c: reflet de l equilibre glycemique moyen des 2 a 3 derniers mois.',
-            'cholesteroltotal' => 'Cholesterol total: indicateur lipidique global a interpreter avec LDL/HDL.',
-            'ldl' => 'LDL cholesterol: fraction associee au risque cardiovasculaire en cas d elevation.',
-            'hdl' => 'HDL cholesterol: fraction generalement protectrice du profil lipidique.',
-            'triglycerides' => 'Triglycerides: graisses sanguines, elevees en cas de risque cardio-metabolique.',
-            'ferritine' => 'Ferritine: reflet des reserves en fer de l organisme.',
-            'vitamined' => 'Vitamine D: intervient notamment dans la sante osseuse et immunitaire.',
-            'tsh' => 'TSH: hormone de regulation thyroidienne (fonction thyroide).',
-            'uree' => 'Uree: parametre utile pour evaluer l equilibre renal et metabolique.',
-        ];
     }
 
     /**
@@ -1290,10 +1341,67 @@ class DemandeAnalyseController extends AbstractController
             $this->checkAccess($demandeAnalyse);
         }
 
+        $iaInitialPayload = $this->buildIaPayloadForView($demandeAnalyse);
+
         return $this->render('demande_analyse/show.html.twig', [
             'demande_analyse' => $demandeAnalyse,
             'test_mode' => $this->isTestMode(),
+            'ia_initial_payload' => $iaInitialPayload,
         ]);
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function buildIaPayloadForView(DemandeAnalyse $demandeAnalyse): ?array
+    {
+        if (!$demandeAnalyse->getResultatPdf()) {
+            return null;
+        }
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        if (!$resultatAnalyse || $resultatAnalyse->getAiStatus() !== ResultatAnalyse::AI_STATUS_DONE) {
+            return null;
+        }
+
+        $raw = $resultatAnalyse->getAiRawResponse();
+        if (!is_array($raw)) {
+            $raw = [];
+        }
+
+        $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
+        $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
+        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        if ($metricGlossary !== [] && !is_array($raw['metric_glossary'] ?? null)) {
+            $this->persistMetricGlossaryCache($resultatAnalyse, $raw, $metricGlossary);
+            $raw['metric_glossary'] = $metricGlossary;
+        }
+
+        $summary = $this->resolveAiSummary(
+            $llmInterpretation,
+            $analysis,
+            (string) $resultatAnalyse->getResumeBilan()
+        );
+        $evidenceItems = $this->resolveAiEvidenceItems($resultatAnalyse, $analysis, $llmInterpretation, $raw);
+
+        return [
+            'ok' => true,
+            'available' => true,
+            'ai_status' => $resultatAnalyse->getAiStatus(),
+            'danger_level' => $resultatAnalyse->getDangerLevel(),
+            'danger_level_label' => $this->localizeDangerLevel($resultatAnalyse->getDangerLevel()),
+            'danger_score' => $resultatAnalyse->getDangerScore(),
+            'summary' => $summary,
+            'evidence_items' => $evidenceItems,
+            'evidence_lines' => array_values(array_map(
+                static fn (array $item): string => (string) ($item['line'] ?? ''),
+                $evidenceItems
+            )),
+            'recommendations' => $this->resolveAiRecommendations($analysis, $llmInterpretation, $raw),
+            'metric_glossary' => $metricGlossary,
+            'model' => $resultatAnalyse->getModeleVersion(),
+            'updated_at' => $resultatAnalyse->getUpdatedAt()?->format('d/m/Y H:i'),
+        ];
     }
 
     /**
