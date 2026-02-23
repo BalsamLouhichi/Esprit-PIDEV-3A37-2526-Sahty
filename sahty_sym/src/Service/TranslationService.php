@@ -6,6 +6,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class TranslationService
 {
+    private const MAX_TEXTS_PER_CHUNK = 24;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient
     ) {
@@ -92,6 +94,27 @@ class TranslationService
         string $sourceLanguage,
         string $targetLanguage
     ): array {
+        if (count($texts) > self::MAX_TEXTS_PER_CHUNK) {
+            $merged = [];
+            foreach (array_chunk($texts, self::MAX_TEXTS_PER_CHUNK, true) as $chunk) {
+                $chunkResult = $this->translateOneLanguage(
+                    $provider,
+                    $endpoint,
+                    $apiKey,
+                    $model,
+                    $chunk,
+                    $sourceLanguage,
+                    $targetLanguage
+                );
+                if (!($chunkResult['ok'] ?? false)) {
+                    return $chunkResult;
+                }
+                $merged = array_replace($merged, (array) ($chunkResult['texts'] ?? []));
+            }
+
+            return ['ok' => true, 'texts' => $merged];
+        }
+
         $systemPrompt = 'Tu es un traducteur medical fiable. Traduis sans ajouter ni retirer des informations. Reponds uniquement en JSON.';
         $userPrompt = sprintf(
             "Traduis les valeurs JSON ci-dessous.\n".
@@ -132,31 +155,52 @@ class TranslationService
                 return ['ok' => false, 'error' => 'Erreur API traduction' . ($providerError !== '' ? ': ' . $providerError : '')];
             }
 
-            $content = trim((string) ($data['choices'][0]['message']['content'] ?? ''));
+            $content = $this->extractAssistantContent($data);
+            if ($content === '') {
+                return ['ok' => false, 'error' => 'Reponse de traduction vide'];
+            }
+
             $decoded = $this->parseJsonFromText($content);
-            if (!is_array($decoded)) {
-                // Fallback robuste: traduire cle par cle si la reponse JSON globale est invalide.
+            $translatedTexts = $this->hydrateTranslatedTextsFromDecoded($texts, $decoded);
+
+            if (count($translatedTexts) < count($texts)) {
+                $missingKeys = array_keys(array_diff_key($texts, $translatedTexts));
+                $fromLooseText = $this->extractTranslationsFromLooseText($content, $missingKeys);
+                foreach ($fromLooseText as $key => $value) {
+                    $translatedTexts[$key] = $value;
+                }
+            }
+
+            if (count($translatedTexts) < count($texts)) {
+                $missingTexts = array_intersect_key($texts, array_diff_key($texts, $translatedTexts));
                 $fallback = $this->translatePerKeyFallback(
                     $provider,
                     $endpoint,
                     $apiKey,
                     $model,
-                    $texts,
+                    $missingTexts,
                     $sourceLanguage,
                     $targetLanguage
                 );
                 if (($fallback['ok'] ?? false) === true) {
-                    return $fallback;
+                    foreach ((array) ($fallback['texts'] ?? []) as $key => $value) {
+                        $translatedTexts[(string) $key] = trim((string) $value);
+                    }
+                } else {
+                    return ['ok' => false, 'error' => (string) ($fallback['error'] ?? 'Reponse de traduction invalide')];
                 }
+            }
+
+            if (count($translatedTexts) < count($texts)) {
                 return ['ok' => false, 'error' => 'Reponse de traduction invalide'];
             }
 
-            $translatedTexts = [];
+            $orderedTexts = [];
             foreach ($texts as $key => $_value) {
-                $translatedTexts[$key] = trim((string) ($decoded[$key] ?? ''));
+                $orderedTexts[$key] = trim((string) ($translatedTexts[$key] ?? ''));
             }
 
-            return ['ok' => true, 'texts' => $translatedTexts];
+            return ['ok' => true, 'texts' => $orderedTexts];
         } catch (\Throwable $e) {
             return ['ok' => false, 'error' => 'Echec de traduction ' . $provider . ': ' . $e->getMessage()];
         }
@@ -164,7 +208,7 @@ class TranslationService
 
     /**
      * @param array<string, string> $texts
-     * @return array{ok: bool, texts?: array<string, string>}
+     * @return array{ok: bool, texts?: array<string, string>, error?: string}
      */
     private function translatePerKeyFallback(
         string $provider,
@@ -188,16 +232,31 @@ class TranslationService
                 $targetLanguage
             );
             if (!($single['ok'] ?? false)) {
-                return ['ok' => false];
+                $singleError = trim((string) ($single['error'] ?? ''));
+                return [
+                    'ok' => false,
+                    'error' => sprintf(
+                        'Echec fallback pour la cle "%s"%s',
+                        (string) $key,
+                        $singleError !== '' ? ': ' . $singleError : ''
+                    ),
+                ];
             }
-            $translated[$key] = (string) ($single['text'] ?? '');
+            $textValue = trim((string) ($single['text'] ?? ''));
+            if ($textValue === '') {
+                return [
+                    'ok' => false,
+                    'error' => sprintf('Traduction vide pour la cle "%s"', (string) $key),
+                ];
+            }
+            $translated[$key] = $textValue;
         }
 
         return ['ok' => true, 'texts' => $translated];
     }
 
     /**
-     * @return array{ok: bool, text?: string}
+     * @return array{ok: bool, text?: string, error?: string}
      */
     private function translateSingleText(
         string $provider,
@@ -238,22 +297,28 @@ class TranslationService
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
             if ($statusCode >= 400 || !is_array($data)) {
-                return ['ok' => false];
+                $providerError = trim((string) ($data['error']['message'] ?? $data['error'] ?? $data['message'] ?? ''));
+                return [
+                    'ok' => false,
+                    'error' => 'Erreur API traduction' . ($providerError !== '' ? ': ' . $providerError : ''),
+                ];
             }
 
-            $content = trim((string) ($data['choices'][0]['message']['content'] ?? ''));
+            $content = $this->extractAssistantContent($data);
             if ($content === '') {
-                return ['ok' => false];
+                return ['ok' => false, 'error' => 'Reponse vide du provider'];
             }
 
             // Nettoie les fences markdown eventuels.
-            $content = preg_replace('/^```[a-zA-Z]*\s*/', '', $content) ?? $content;
-            $content = preg_replace('/\s*```$/', '', $content) ?? $content;
-            $content = trim($content);
+            $content = $this->stripMarkdownCodeFence($content);
 
-            return ['ok' => $content !== '', 'text' => $content];
-        } catch (\Throwable) {
-            return ['ok' => false];
+            if ($content === '') {
+                return ['ok' => false, 'error' => 'Reponse vide du provider'];
+            }
+
+            return ['ok' => true, 'text' => $content];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => 'Echec de traduction ' . $provider . ': ' . $e->getMessage()];
         }
     }
 
@@ -301,21 +366,196 @@ class TranslationService
      */
     private function parseJsonFromText(string $text): ?array
     {
-        $trimmed = trim($text);
+        $trimmed = $this->stripMarkdownCodeFence(trim($text));
         if ($trimmed === '') {
             return null;
         }
 
-        $decoded = json_decode($trimmed, true);
-        if (is_array($decoded)) {
-            return $decoded;
+        $candidates = [$trimmed];
+        if (preg_match('/\{.*\}/s', $trimmed, $matches) === 1) {
+            $candidates[] = (string) $matches[0];
         }
 
-        if (preg_match('/\{.*\}/s', $trimmed, $matches) !== 1) {
-            return null;
+        foreach (array_values(array_unique($candidates)) as $candidate) {
+            $decoded = json_decode($candidate, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+
+            $sanitized = $this->sanitizeJsonCandidate($candidate);
+            if ($sanitized !== $candidate) {
+                $decoded = json_decode($sanitized, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
         }
 
-        $decoded = json_decode((string) $matches[0], true);
-        return is_array($decoded) ? $decoded : null;
+        return null;
+    }
+
+    private function extractAssistantContent(array $data): string
+    {
+        $content = $data['choices'][0]['message']['content'] ?? null;
+        if (is_string($content)) {
+            return trim($content);
+        }
+
+        if (is_array($content)) {
+            $parts = [];
+            foreach ($content as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $parts[] = trim($item);
+                    continue;
+                }
+                if (!is_array($item)) {
+                    continue;
+                }
+                $text = $item['text'] ?? $item['content'] ?? $item['value'] ?? null;
+                if (is_string($text) && trim($text) !== '') {
+                    $parts[] = trim($text);
+                }
+            }
+
+            if ($parts !== []) {
+                return trim(implode("\n", $parts));
+            }
+        }
+
+        $fallbackContent = $data['choices'][0]['text'] ?? $data['message']['content'] ?? $data['output'][0]['content'][0]['text'] ?? $data['output_text'] ?? null;
+        return is_string($fallbackContent) ? trim($fallbackContent) : '';
+    }
+
+    private function stripMarkdownCodeFence(string $text): string
+    {
+        $clean = preg_replace('/^```[a-zA-Z0-9_-]*\s*/', '', trim($text)) ?? trim($text);
+        $clean = preg_replace('/\s*```$/', '', $clean) ?? $clean;
+        return trim($clean);
+    }
+
+    private function sanitizeJsonCandidate(string $candidate): string
+    {
+        $clean = strtr($candidate, [
+            "\u{201C}" => '"',
+            "\u{201D}" => '"',
+            "\u{201E}" => '"',
+            "\u{201F}" => '"',
+            "\u{2019}" => "'",
+            "\u{2018}" => "'",
+            "\u{201A}" => "'",
+            "\u{201B}" => "'",
+        ]);
+
+        $clean = preg_replace('/,\s*([}\]])/', '$1', $clean) ?? $clean;
+        $clean = preg_replace('/\'([A-Za-z0-9_\-]+)\'\s*:/', '"$1":', $clean) ?? $clean;
+        $clean = preg_replace_callback(
+            '/:\s*\'((?:\\\\.|[^\'\\\\])*)\'/s',
+            static function (array $matches): string {
+                $decoded = stripcslashes((string) ($matches[1] ?? ''));
+                $encoded = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return ': ' . ($encoded !== false ? $encoded : '""');
+            },
+            $clean
+        ) ?? $clean;
+
+        return $clean;
+    }
+
+    /**
+     * @param array<string, string> $texts
+     * @param array<string, mixed>|null $decoded
+     * @return array<string, string>
+     */
+    private function hydrateTranslatedTextsFromDecoded(array $texts, ?array $decoded): array
+    {
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $sources = [$decoded];
+        foreach (['translations', 'data', 'result'] as $containerKey) {
+            if (isset($decoded[$containerKey]) && is_array($decoded[$containerKey])) {
+                $sources[] = $decoded[$containerKey];
+            }
+        }
+
+        $translated = [];
+        foreach ($sources as $source) {
+            foreach ($texts as $key => $_value) {
+                if (isset($translated[$key])) {
+                    continue;
+                }
+                if (!array_key_exists($key, $source)) {
+                    continue;
+                }
+                $value = $this->normalizeExtractedValue($source[$key]);
+                if ($value !== '') {
+                    $translated[$key] = $value;
+                }
+            }
+        }
+
+        return $translated;
+    }
+
+    /**
+     * @param array<int, string> $expectedKeys
+     * @return array<string, string>
+     */
+    private function extractTranslationsFromLooseText(string $content, array $expectedKeys): array
+    {
+        $translated = [];
+        $normalizedContent = $this->stripMarkdownCodeFence($content);
+        if ($normalizedContent === '') {
+            return $translated;
+        }
+
+        foreach ($expectedKeys as $key) {
+            $k = (string) $key;
+            if ($k === '') {
+                continue;
+            }
+
+            $quotedKey = preg_quote($k, '/');
+            $patterns = [
+                "/[\"']?" . $quotedKey . "[\"']?\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"/u",
+                "/[\"']?" . $quotedKey . "[\"']?\\s*:\\s*'((?:\\\\.|[^'\\\\])*)'/u",
+                "/[\"']?" . $quotedKey . "[\"']?\\s*:\\s*([^,\\r\\n}]+)/u",
+            ];
+
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $normalizedContent, $matches) !== 1) {
+                    continue;
+                }
+
+                $value = stripcslashes(trim((string) ($matches[1] ?? '')));
+                $value = trim($value, " \t\n\r\0\x0B\"'");
+                if ($value !== '') {
+                    $translated[$k] = $value;
+                    break;
+                }
+            }
+        }
+
+        return $translated;
+    }
+
+    private function normalizeExtractedValue(mixed $value): string
+    {
+        if (is_string($value) || is_numeric($value)) {
+            return trim((string) $value);
+        }
+
+        if (!is_array($value)) {
+            return '';
+        }
+
+        foreach (['text', 'content', 'value'] as $key) {
+            if (isset($value[$key]) && (is_string($value[$key]) || is_numeric($value[$key]))) {
+                return trim((string) $value[$key]);
+            }
+        }
+
+        return '';
     }
 }
