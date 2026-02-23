@@ -71,7 +71,7 @@ class CommandeType extends AbstractType
                 ]
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Confirmer la commande',
+                'label' => 'Payer avec Mollie',
                 'attr' => [
                     'class' => 'btn btn-primary btn-lg w-100'
                 ]

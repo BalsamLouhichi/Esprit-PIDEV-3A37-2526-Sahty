@@ -123,8 +123,7 @@ class ResponsableLaboratoireController extends AbstractController
         DemandeAnalyse $demandeAnalyse,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger,
-        MailerInterface $mailer,
-        FastApiLabAiClient $fastApiLabAiClient
+        MailerInterface $mailer
     ): Response {
         $responsable = $this->getUser();
         if (!$responsable instanceof ResponsableLaboratoire) {
@@ -151,6 +150,7 @@ class ResponsableLaboratoireController extends AbstractController
 
             $resultatFile = $request->files->get('resultat_pdf');
             $shouldSendEmail = false;
+            $shouldTriggerAiAnalysis = false;
 
             if ($resultatFile instanceof UploadedFile) {
                 $mimeType = $resultatFile->getMimeType();
@@ -171,15 +171,9 @@ class ResponsableLaboratoireController extends AbstractController
 
                 $resultatFile->move($uploadDir, $newFilename);
                 $demandeAnalyse->setResultatPdf('uploads/resultats/' . $newFilename);
+                $this->markResultatAnalysePending($demandeAnalyse);
                 $shouldSendEmail = true;
-
-                $fullFilePath = $uploadDir . '/' . $newFilename;
-                $this->analyzeAndAttachResultat(
-                    $demandeAnalyse,
-                    $fullFilePath,
-                    $newFilename,
-                    $fastApiLabAiClient
-                );
+                $shouldTriggerAiAnalysis = true;
 
                 if ($demandeAnalyse->getStatut() !== 'envoye') {
                     $demandeAnalyse->setStatut('envoye');
@@ -195,17 +189,154 @@ class ResponsableLaboratoireController extends AbstractController
 
             if ($shouldSendEmail) {
                 $this->sendResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
-                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
             }
 
             $this->addFlash('success', 'Demande mise a jour avec succes.');
-            return $this->redirectToRoute('app_responsable_labo_demande_edit', ['id' => $demandeAnalyse->getId()]);
+            if ($shouldTriggerAiAnalysis) {
+                $this->addFlash('info', 'Le PDF est enregistre. Analyse IA en cours en arriere-plan.');
+            }
+
+            $redirectParams = ['id' => $demandeAnalyse->getId()];
+            if ($shouldTriggerAiAnalysis) {
+                $redirectParams['run_ai'] = 1;
+            }
+
+            return $this->redirectToRoute('app_responsable_labo_demande_edit', $redirectParams);
         }
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        $autoRetryFailedAi = (bool) $demandeAnalyse->getResultatPdf()
+            && $resultatAnalyse
+            && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_FAILED;
+        $autoRetryMissingGlossary = (bool) $demandeAnalyse->getResultatPdf()
+            && $resultatAnalyse
+            && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_DONE
+            && !$this->hasMetricGlossary($resultatAnalyse);
+        $shouldTriggerAiAnalysis = (
+                $request->query->getBoolean('run_ai')
+                || $autoRetryFailedAi
+                || $autoRetryMissingGlossary
+            )
+            && (bool) $demandeAnalyse->getResultatPdf()
+            && (
+                !$resultatAnalyse
+                || $resultatAnalyse->getAiStatus() !== ResultatAnalyse::AI_STATUS_DONE
+                || $autoRetryMissingGlossary
+            );
 
         return $this->render('responsable_labo/demande_edit.html.twig', [
             'demande' => $demandeAnalyse,
             'laboratoire' => $laboratoire,
+            'trigger_ai_analysis' => $shouldTriggerAiAnalysis,
         ]);
+    }
+
+    #[Route('/demandes/{id}/analyse-ia', name: 'app_responsable_labo_demande_analyse_ia', methods: ['POST'])]
+    public function analyseIaDemande(
+        Request $request,
+        DemandeAnalyse $demandeAnalyse,
+        EntityManagerInterface $entityManager,
+        FastApiLabAiClient $fastApiLabAiClient,
+        MailerInterface $mailer
+    ): JsonResponse {
+        $responsable = $this->getUser();
+        if (!$responsable instanceof ResponsableLaboratoire) {
+            throw new AccessDeniedException('Acces reserve au responsable laboratoire.');
+        }
+
+        $laboratoire = $responsable->getLaboratoire();
+        if (!$laboratoire || $demandeAnalyse->getLaboratoire() !== $laboratoire) {
+            throw new AccessDeniedException('Acces non autorise a cette demande.');
+        }
+
+        $submittedToken = (string) ($request->request->get('_token') ?: $request->headers->get('X-CSRF-TOKEN', ''));
+        if (!$this->isCsrfTokenValid('resp-labo-update' . $demandeAnalyse->getId(), $submittedToken)) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Token CSRF invalide.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $resultatPdf = (string) ($demandeAnalyse->getResultatPdf() ?? '');
+        if ($resultatPdf === '') {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Aucun PDF resultat a analyser.',
+            ], Response::HTTP_CONFLICT);
+        }
+
+        // Continue processing even if user leaves the page while the background call is running.
+        ignore_user_abort(true);
+        @set_time_limit(0);
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        $alreadyDoneBeforeRun = $resultatAnalyse
+            && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_DONE;
+        if (
+            $resultatAnalyse
+            && $resultatAnalyse->getAiStatus() === ResultatAnalyse::AI_STATUS_DONE
+            && $resultatAnalyse->getSourcePdf() === $resultatPdf
+            && $this->hasMetricGlossary($resultatAnalyse)
+        ) {
+            return $this->json([
+                'ok' => true,
+                'ai_status' => ResultatAnalyse::AI_STATUS_DONE,
+                'message' => 'Analyse IA deja disponible.',
+            ]);
+        }
+
+        $fullFilePath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+        if (!is_file($fullFilePath)) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Le fichier PDF resultat est introuvable sur le serveur.',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->markResultatAnalysePending($demandeAnalyse);
+        $filename = basename($fullFilePath) ?: ('resultat-' . $demandeAnalyse->getId() . '.pdf');
+        $this->analyzeAndAttachResultat(
+            $demandeAnalyse,
+            $fullFilePath,
+            $filename,
+            $fastApiLabAiClient,
+            false
+        );
+        $entityManager->flush();
+
+        $status = $demandeAnalyse->getResultatAnalyse()?->getAiStatus() ?? ResultatAnalyse::AI_STATUS_PENDING;
+        $message = 'Analyse IA indisponible pour ce document.';
+        if ($status === ResultatAnalyse::AI_STATUS_DONE) {
+            $message = 'Analyse IA terminee.';
+            if (!$alreadyDoneBeforeRun) {
+                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
+            }
+        } elseif ($status === ResultatAnalyse::AI_STATUS_PENDING) {
+            $message = 'Analyse IA en attente (service IA temporairement indisponible, reessayez dans quelques instants).';
+        }
+
+        return $this->json([
+            'ok' => true,
+            'ai_status' => $status,
+            'message' => $message,
+        ]);
+    }
+
+    private function markResultatAnalysePending(DemandeAnalyse $demandeAnalyse): void
+    {
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse() ?? new ResultatAnalyse();
+        $resultatAnalyse->setDemandeAnalyse($demandeAnalyse);
+        $resultatAnalyse->setSourcePdf($demandeAnalyse->getResultatPdf());
+        $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_PENDING);
+        $resultatAnalyse->setAnomalies(null);
+        $resultatAnalyse->setDangerScore(null);
+        $resultatAnalyse->setDangerLevel(null);
+        $resultatAnalyse->setResumeBilan(null);
+        $resultatAnalyse->setModeleVersion(null);
+        $resultatAnalyse->setAiRawResponse(null);
+        $resultatAnalyse->setAnalyseLe(null);
+        $resultatAnalyse->touch();
+        $demandeAnalyse->setResultatAnalyse($resultatAnalyse);
     }
 
     private function sendResultEmail(
@@ -463,7 +594,8 @@ HTML;
         DemandeAnalyse $demandeAnalyse,
         string $fullPdfPath,
         string $filename,
-        FastApiLabAiClient $fastApiLabAiClient
+        FastApiLabAiClient $fastApiLabAiClient,
+        bool $addFlashOnFailure = true
     ): void {
         $resultatAnalyse = $demandeAnalyse->getResultatAnalyse() ?? new ResultatAnalyse();
         $resultatAnalyse->setDemandeAnalyse($demandeAnalyse);
@@ -510,18 +642,82 @@ HTML;
             $resultatAnalyse->setAnalyseLe(new \DateTime());
             $resultatAnalyse->touch();
         } catch (\Throwable $e) {
-            $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_FAILED);
-            $resultatAnalyse->setResumeBilan('Analyse IA indisponible: ' . $e->getMessage());
-            $resultatAnalyse->setAiRawResponse([
-                'error' => $e->getMessage(),
-            ]);
-            $resultatAnalyse->setAnalyseLe(new \DateTime());
-            $resultatAnalyse->touch();
+            $errorMessage = trim((string) $e->getMessage());
+            if ($this->isTransientAiFailure($errorMessage)) {
+                $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_PENDING);
+                $resultatAnalyse->setResumeBilan('Analyse IA en attente: service IA temporairement indisponible.');
+                $resultatAnalyse->setAiRawResponse([
+                    'error' => $errorMessage,
+                    'transient' => true,
+                ]);
+                $resultatAnalyse->setAnalyseLe(new \DateTime());
+                $resultatAnalyse->touch();
 
-            $this->addFlash('warning', 'Le resultat PDF est enregistre, mais l\'analyse IA distante a echoue.');
+                if ($addFlashOnFailure) {
+                    $this->addFlash('info', 'Le resultat PDF est enregistre. L analyse IA est en attente (timeout service IA).');
+                }
+            } else {
+                $resultatAnalyse->setAiStatus(ResultatAnalyse::AI_STATUS_FAILED);
+                $resultatAnalyse->setResumeBilan('Analyse IA indisponible: ' . $errorMessage);
+                $resultatAnalyse->setAiRawResponse([
+                    'error' => $errorMessage,
+                ]);
+                $resultatAnalyse->setAnalyseLe(new \DateTime());
+                $resultatAnalyse->touch();
+
+                if ($addFlashOnFailure) {
+                    $this->addFlash('warning', 'Le resultat PDF est enregistre, mais l\'analyse IA distante a echoue.');
+                }
+            }
+
         }
 
         $demandeAnalyse->setResultatAnalyse($resultatAnalyse);
+    }
+
+    private function isTransientAiFailure(string $message): bool
+    {
+        $m = strtolower($message);
+        return str_contains($m, 'timeout')
+            || str_contains($m, 'timed out')
+            || str_contains($m, 'idle timeout')
+            || str_contains($m, 'temporarily')
+            || str_contains($m, 'temporary')
+            || str_contains($m, 'echec de connexion');
+    }
+
+    private function hasMetricGlossary(ResultatAnalyse $resultatAnalyse): bool
+    {
+        $raw = $resultatAnalyse->getAiRawResponse();
+        if (!is_array($raw)) {
+            return false;
+        }
+
+        $sources = [
+            $raw['metric_glossary'] ?? null,
+            $raw['analysis']['metric_glossary'] ?? null,
+            $raw['glossary'] ?? null,
+        ];
+
+        foreach ($sources as $source) {
+            if (!is_array($source)) {
+                continue;
+            }
+
+            foreach ($source as $value) {
+                if (is_scalar($value) && trim((string) $value) !== '') {
+                    return true;
+                }
+                if (is_array($value)) {
+                    $description = $value['description'] ?? $value['text'] ?? $value['summary'] ?? null;
+                    if (is_scalar($description) && trim((string) $description) !== '') {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

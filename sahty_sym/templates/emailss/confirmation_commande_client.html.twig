@@ -1,0 +1,63 @@
+{# templates/emails/confirmation_commande_client.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation de commande</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; }
+        .header { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 30px 20px; background: white; }
+        .commande-card { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #0dcaf0; }
+        .pharmacie-name { color: #0dcaf0; font-weight: bold; font-size: 1.2em; margin-bottom: 10px; }
+        .footer { text-align: center; padding: 20px; background: #f1f3f5; color: #666; font-size: 0.9em; }
+        .total-general { font-size: 1.5em; font-weight: bold; color: #28a745; text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6; }
+        .btn { display: inline-block; padding: 12px 30px; background: #0dcaf0; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 2em;">✅ Commande confirmée</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9;">Merci {{ nomClient }} pour votre commande</p>
+        </div>
+        
+        <div class="content">
+            <p style="font-size: 1.1em;">Votre commande a été enregistrée avec succès. Les parapharmacies concernées ont été notifiées et vous contacteront prochainement.</p>
+            
+            <h3 style="color: #333; margin-top: 30px;">Récapitulatif de vos commandes</h3>
+            
+            {% for commande in commandes %}
+                <div class="commande-card">
+                    <div class="pharmacie-name">
+                        🏪 {{ commande.parapharmacie.nom }}
+                    </div>
+                    <p><strong>Commande #{{ commande.numero }}</strong></p>
+                    <p>Produit : {{ commande.produit.nom }}</p>
+                    <p>Quantité : {{ commande.quantite }}</p>
+                    <p style="font-size: 1.2em; color: #28a745;">Total : {{ commande.prixTotal|number_format(2, ',', ' ') }} €</p>
+                </div>
+            {% endfor %}
+            
+            <div class="total-general">
+                Total général : {{ totalGeneral|number_format(2, ',', ' ') }} €
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{{ url('app_mes_commandes') }}" class="btn">
+                    Suivre mes commandes
+                </a>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; color: #666;">
+                <small>Vous recevrez un email dès que votre commande sera traitée.</small>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© {{ "now"|date("Y") }} Sahty - Tous droits réservés</p>
+        </div>
+    </div>
+</body>
+</html>

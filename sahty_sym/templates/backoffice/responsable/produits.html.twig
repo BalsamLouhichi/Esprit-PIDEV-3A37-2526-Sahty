@@ -1,350 +1,169 @@
-{# templates/backoffice/responsable/produits.html.twig #}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des produits - {{ parapharmacie.nom }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }
+{% extends 'backoffice/responsable/base.html.twig' %}
 
-        /* Sidebar styles */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 250px;
-            background: linear-gradient(135deg, #0dcaf0 0%, #0a9ec7 100%);
-            color: white;
-            padding: 20px 0;
-            overflow-y: auto;
-            z-index: 1000;
-        }
+{% block title %}Gestion des produits - {{ parapharmacie.nom }}{% endblock %}
 
-        .sidebar-brand {
-            padding: 0 20px 20px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 20px;
-        }
-
-        .sidebar-brand a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar-menu li {
-            margin-bottom: 5px;
-        }
-
-        .sidebar-menu a {
-            display: block;
-            padding: 12px 20px;
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .sidebar-menu a:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-
-        .sidebar-menu a i {
-            width: 25px;
-            margin-right: 10px;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-
-        /* Messages flash */
-        .alert {
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        /* Cards */
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        /* Table */
-        .table {
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .table thead th {
-            border-bottom: none;
-            background-color: #f8f9fa;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-
-        .badge {
-            padding: 8px 12px;
-            border-radius: 30px;
-            font-weight: 500;
-        }
-
-        .btn-outline-primary {
-            border-radius: 8px;
-            padding: 5px 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0dcaf0 0%, #0a9ec7 100%);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #0a9ec7 0%, #0dcaf0 100%);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <a href="{{ path('app_responsable_dashboard') }}">
-                <i class="fas fa-clinic-medical me-2"></i>sahty - {{ parapharmacie.nom }}
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-boxes me-2"></i>Gestion des produits</h1>
+            <p class="text-muted mb-1">{{ parapharmacie.nom }}</p>
+            <small class="text-muted">Resultats: <span id="productsCount">{{ produits|length }}</span></small>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ path('app_responsable_produit_ajouter') }}" class="btn btn-success">
+                <i class="fas fa-plus-circle me-2"></i>Nouveau produit
             </a>
         </div>
-        
-        <ul class="sidebar-menu">
-            <li>
-                <a href="{{ path('app_responsable_dashboard') }}">
-                    <i class="fas fa-tachometer-alt"></i>Dashboard
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_responsable_produits') }}">
-                    <i class="fas fa-boxes"></i>Produits
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_responsable_commandes') }}">
-                    <i class="fas fa-shopping-cart"></i>Commandes
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_responsable_statistiques') }}">
-                    <i class="fas fa-chart-line"></i>Statistiques
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_responsable_parametres') }}">
-                    <i class="fas fa-cog"></i>Paramètres
-                </a>
-            </li>
-            <li>
-                <a href="{{ path('app_home') }}" target="_blank">
-                    <i class="fas fa-external-link-alt"></i>Voir le site
-                </a>
-            </li>
-        </ul>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Messages flash -->
-        {% for label, messages in app.flashes %}
-            {% for message in messages %}
-                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endfor %}
-
-        <!-- Contenu principal -->
-        <div class="container-fluid py-4">
-            <div class="row mb-4">
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_responsable_produits') }}" class="row g-3" id="productSearchForm">
                 <div class="col-md-8">
-                    <h1><i class="fas fa-boxes me-2"></i>Gestion des produits</h1>
-                    <p class="text-muted">{{ parapharmacie.nom }}</p>
+                    <input type="text"
+                           id="productSearchInput"
+                           name="search"
+                           class="form-control"
+                           placeholder="Rechercher un produit..."
+                           value="{{ searchTerm|default('') }}"
+                           autocomplete="off">
                 </div>
-                <div class="col-md-4 text-end">
-                    <a href="{{ path('app_responsable_produit_ajouter') }}" class="btn btn-success">
-                        <i class="fas fa-plus-circle me-2"></i>Nouveau produit
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100" id="productSearchBtn">
+                        <i class="fas fa-search me-2"></i>Rechercher
+                    </button>
+                    <a href="{{ path('app_responsable_produits') }}" class="btn btn-outline-secondary" id="productResetBtn">
+                        Reset
                     </a>
                 </div>
-            </div>
-
-            {# Barre de recherche #}
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="get" action="" class="row g-3">
-                        <div class="col-md-8">
-                            <input type="text" 
-                                   name="search" 
-                                   class="form-control" 
-                                   placeholder="Rechercher un produit..." 
-                                   value="{{ app.request.get('search') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-search me-2"></i>Rechercher
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            {# Tableau des produits #}
-            <div class="card">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Référence</th>
-                                    <th>Nom</th>
-                                    <th>Catégorie</th>
-                                    <th>Prix</th>
-                                    <th>Stock</th>
-                                    <th>Promo</th>
-                                    <th>Statut</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for produit in produits %}
-                                <tr>
-                                    <td>
-                                        {% if produit.image %}
-                                            <img src="{{ asset('uploads/images/produits/' ~ produit.image) }}" 
-                                                 alt="{{ produit.nom }}" 
-                                                 style="width: 50px; height: 50px; object-fit: cover;"
-                                                 class="rounded">
-                                        {% else %}
-                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
-                                                 style="width: 50px; height: 50px;">
-                                                <i class="fas fa-image text-muted"></i>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-                                    <td><small class="text-muted">{{ produit.reference }}</small></td>
-                                    <td>
-                                        <strong>{{ produit.nom }}</strong>
-                                        {% if produit.marque %}
-                                            <br><small class="text-muted">{{ produit.marque }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ produit.categorie|default('Non catégorisé') }}</span>
-                                    </td>
-                                    <td>
-                                        {% if produit.promotion %}
-                                            <span class="text-decoration-line-through text-muted">{{ produit.prix }}€</span>
-                                            <br>
-                                            <strong class="text-danger">{{ (produit.prix * (1 - produit.promotion/100))|number_format(2) }}€</strong>
-                                            <small class="text-success">-{{ produit.promotion }}%</small>
-                                        {% else %}
-                                            <strong>{{ produit.prix }}€</strong>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if produit.stock > 10 %}
-                                            <span class="badge bg-success">{{ produit.stock }}</span>
-                                        {% elseif produit.stock > 0 %}
-                                            <span class="badge bg-warning">{{ produit.stock }}</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Rupture</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if produit.promotion %}
-                                            <span class="badge bg-danger">-{{ produit.promotion }}%</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if produit.estActif %}
-                                            <span class="badge bg-success">Actif</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Inactif</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ path('app_responsable_produit_modifier', {'id': produit.id}) }}" 
-                                               class="btn btn-sm btn-outline-primary" 
-                                               title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form method="post" 
-                                                  action="{{ path('app_responsable_produit_supprimer', {'id': produit.id}) }}" 
-                                                  style="display: inline-block;"
-                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="9" class="text-center py-5">
-                                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Aucun produit trouvé</p>
-                                        <a href="{{ path('app_responsable_produit_ajouter') }}" class="btn btn-primary">
-                                            Ajouter votre premier produit
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="card">
+        <div class="card-body">
+            <div class="d-none mb-3" id="productsLoading">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Recherche en cours...
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Image</th>
+                            <th>Reference</th>
+                            <th>Nom</th>
+                            <th>Categorie</th>
+                            <th>Prix</th>
+                            <th>Stock</th>
+                            <th>Promo</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        {% include 'backoffice/responsable/_produits_rows.html.twig' with { produits: produits } %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('productSearchForm');
+            const input = document.getElementById('productSearchInput');
+            const tbody = document.getElementById('productsTableBody');
+            const count = document.getElementById('productsCount');
+            const loading = document.getElementById('productsLoading');
+            const resetBtn = document.getElementById('productResetBtn');
+
+            if (!form || !input || !tbody) {
+                return;
+            }
+
+            let controller = null;
+            let debounceTimer = null;
+            const endpoint = '{{ path('app_responsable_produits') }}';
+
+            const setLoading = (state) => {
+                if (!loading) return;
+                loading.classList.toggle('d-none', !state);
+            };
+
+            const fetchResults = async (term) => {
+                if (controller) {
+                    controller.abort();
+                }
+                controller = new AbortController();
+
+                const params = new URLSearchParams();
+                if (term && term.trim() !== '') {
+                    params.set('search', term.trim());
+                }
+
+                setLoading(true);
+                try {
+                    const response = await fetch(endpoint + (params.toString() ? ('?' + params.toString()) : ''), {
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        signal: controller.signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+
+                    const data = await response.json();
+                    if (!data || data.success !== true) {
+                        throw new Error('Invalid payload');
+                    }
+
+                    tbody.innerHTML = data.html || '';
+                    if (count) {
+                        count.textContent = String(data.count ?? 0);
+                    }
+
+                    const url = new URL(window.location.href);
+                    if (term && term.trim() !== '') {
+                        url.searchParams.set('search', term.trim());
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.history.replaceState({}, '', url.toString());
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('Search failed', error);
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                fetchResults(input.value);
+            });
+
+            input.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    fetchResults(input.value);
+                }, 300);
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    input.value = '';
+                    fetchResults('');
+                });
+            }
+        });
+    </script>
+{% endblock %}

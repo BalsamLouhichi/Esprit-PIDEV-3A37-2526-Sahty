@@ -9,8 +9,12 @@ use App\Entity\Medecin;
 use App\Entity\RendezVous;
 use App\Repository\FicheMedicaleRepository;
 use App\Repository\PatientRepository;
+use App\Service\ConsultationDurationAiService;
+use App\Service\DictationTranscriptionService;
+use App\Service\TranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -236,6 +240,25 @@ class FicheMedicaleController extends AbstractController
                 $fiches = $ficheMedicaleRepository->searchByText($searchTerm, $user);
             }
         }
+
+        $allFiches = $fiches;
+        $totalItems = count($allFiches);
+        $perPage = 8;
+        $totalPages = max(1, (int) ceil($totalItems / $perPage));
+        $currentPage = max(1, (int) $request->query->get('page', 1));
+        if ($currentPage > $totalPages) {
+            $currentPage = $totalPages;
+        }
+
+        $offset = ($currentPage - 1) * $perPage;
+        $fiches = array_slice($allFiches, $offset, $perPage);
+
+        $stats = [
+            'total' => $totalItems,
+            'actif' => count(array_filter($allFiches, static fn (FicheMedicale $f): bool => $f->getStatut() === 'actif')),
+            'modifie' => count(array_filter($allFiches, static fn (FicheMedicale $f): bool => $f->getStatut() === 'modifié')),
+            'avec_imc' => count(array_filter($allFiches, static fn (FicheMedicale $f): bool => $f->getImc() !== null)),
+        ];
         
         return $this->render('fiche_medicale/index.html.twig', [
             'fiches' => $fiches,
@@ -244,6 +267,10 @@ class FicheMedicaleController extends AbstractController
             'form' => $form ? $form->createView() : null,
             'isPatient' => $isPatient,
             'isMedecin' => $isMedecin,
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total_items' => $totalItems,
+            'stats' => $stats,
         ]);
     }
     
@@ -290,7 +317,7 @@ class FicheMedicaleController extends AbstractController
             }
         }
         
-        // Recalculer l'IMC si nécessaire
+        // Recalculer l'IMC si nécessaire 
         if (!$fiche->getImc() && $fiche->getTaille() && $fiche->getPoids()) {
             $fiche->calculerImc();
         }
@@ -301,7 +328,7 @@ class FicheMedicaleController extends AbstractController
     }
     
     /**
-     * 📄 EXPORT PDF - TOUTES LES FICHES
+     * 📄 EXPORT PDF - TOUTES LES FICHES 
      */
     #[Route('/export-all-pdf', name: 'app_fiche_medicale_export_all_pdf', methods: ['GET'])]
     public function exportAllPdf(
@@ -331,7 +358,7 @@ class FicheMedicaleController extends AbstractController
     }
     
     /**
-     * 🔍 AJAX SEARCH avec permissions - CORRIGÉ
+     * 🔍 AJAX SEARCH avec permissions - CORRIGÉ 
      */
     /**
  * 🔍 AJAX SEARCH avec permissions - CORRIGÉ
@@ -377,7 +404,7 @@ public function searchAjax(
 
     
     /**
-     * ✅ REDIRECTIONS pour les anciennes routes
+     * ✅ REDIRECTIONS pour les anciennes route
      */
     #[Route('/new', name: 'app_fiche_medicale_new', methods: ['GET', 'POST'])]
     public function newRedirect(): Response
@@ -414,7 +441,7 @@ public function searchAjax(
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
         
-        // Vérifier les permissions
+        // Vérifier les permissions 
         $user = $this->getUser();
         if ($user instanceof Patient && $user->getId() !== $patient->getId()) {
             $this->addFlash('error', '❌ Vous ne pouvez créer une fiche que pour vous-même');
@@ -434,7 +461,7 @@ public function searchAjax(
                 $fiche->setStatut('actif');
             }
             
-            // Calculer l'IMC
+            // Calculer l'IMC correctement
             $fiche->calculerImc();
             
             $entityManager->persist($fiche);
@@ -462,9 +489,10 @@ public function searchAjax(
     public function newForRdv(
         Request $request,
         int $rdvId,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ConsultationDurationAiService $consultationDurationAiService
     ): Response {
-        // Récupérer le rendez-vous
+        // Récupérer le rendez-vous 
         $rdv = $entityManager->getRepository(RendezVous::class)->find($rdvId);
         
         if (!$rdv) {
@@ -478,7 +506,8 @@ public function searchAjax(
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
         
-        // Vérifier si une fiche existe déjà pour ce rendez-vous
+        // Vérifier si une fiche existe déjà pour ce rendez-vous vous vous
+        
         if ($rdv->getFicheMedicale()) {
             $this->addFlash('info', 'ℹ️ Une fiche médicale existe déjà pour ce rendez-vous.');
             return $this->redirectToRoute('app_fiche_medicale_index', ['view' => $rdv->getFicheMedicale()->getId()]);
@@ -509,6 +538,19 @@ public function searchAjax(
             $entityManager->flush();
             
             $this->addFlash('success', '✅ Fiche médicale créée avec succès et associée à votre rendez-vous !');
+            $predictionMinutes = $consultationDurationAiService->predict($rdv, $fiche);
+            if ($predictionMinutes !== null) {
+                $session = $request->getSession();
+                $predictions = (array) $session->get('consultation_duration_predictions', []);
+                $predictions[(string) $rdv->getId()] = [
+                    'minutes' => number_format($predictionMinutes, 1, '.', ''),
+                    'updated_at' => (new \DateTimeImmutable())->format('c'),
+                ];
+                $session->set('consultation_duration_predictions', $predictions);
+                $this->addFlash('info', 'Duree estimee de consultation enregistree.');
+            } else {
+                $this->addFlash('warning', 'Prediction IA indisponible pour le moment.');
+            }
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
         
@@ -521,6 +563,92 @@ public function searchAjax(
             'isMedecin' => false,
             'isFromRdv' => true,
             'rdv' => $rdv,
+        ]);
+    }
+
+    #[Route('/api/dictation/transcribe', name: 'api_dictation_transcribe', methods: ['POST'])]
+    public function transcribeDictation(
+        Request $request,
+        DictationTranscriptionService $dictationTranscriptionService
+    ): JsonResponse {
+        if (!$this->getUser()) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Authentification requise.',
+            ], 401);
+        }
+
+        $audio = $request->files->get('audio');
+        if (!$audio instanceof UploadedFile) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Fichier audio manquant.',
+            ], 400);
+        }
+
+        $language = (string) $request->request->get('language', 'fr');
+        $result = $dictationTranscriptionService->transcribe($audio, $language);
+        if (!($result['ok'] ?? false)) {
+            return $this->json([
+                'success' => false,
+                'error' => (string) ($result['error'] ?? 'Erreur de transcription.'),
+            ], 502);
+        }
+
+        return $this->json([
+            'success' => true,
+            'text' => (string) ($result['text'] ?? ''),
+        ]);
+    }
+
+    #[Route('/api/translation/texts', name: 'api_translation_texts', methods: ['POST'])]
+    public function translateTexts(
+        Request $request,
+        TranslationService $translationService
+    ): JsonResponse {
+        if (!$this->getUser()) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Authentification requise.',
+            ], 401);
+        }
+
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Payload JSON invalide.',
+            ], 400);
+        }
+
+        $texts = $payload['texts'] ?? [];
+        $targetLanguage = trim((string) ($payload['target_language'] ?? ''));
+        $sourceLanguage = trim((string) ($payload['source_language'] ?? 'auto'));
+
+        if (!is_array($texts) || $texts === []) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Aucun texte a traduire.',
+            ], 422);
+        }
+        if ($targetLanguage === '') {
+            return $this->json([
+                'success' => false,
+                'error' => 'Langue cible manquante.',
+            ], 422);
+        }
+
+        $result = $translationService->translateBatch($texts, [$targetLanguage], $sourceLanguage);
+        if (!($result['ok'] ?? false)) {
+            return $this->json([
+                'success' => false,
+                'error' => (string) ($result['error'] ?? 'Erreur de traduction.'),
+            ], 502);
+        }
+
+        return $this->json([
+            'success' => true,
+            'translations' => (array) ($result['translations'] ?? []),
         ]);
     }
 }

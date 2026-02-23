@@ -52,7 +52,6 @@ security:
         - { path: ^/signup$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/forgot, roles: PUBLIC_ACCESS }
-        - { path: ^/payment/btcpay/webhook$, roles: PUBLIC_ACCESS }
         
         # Backoffice Admin (EasyAdmin)
         - { path: ^/admin, roles: ROLE_ADMIN }
@@ -61,8 +60,9 @@ security:
         - { path: ^/medecin/, roles: ROLE_MEDECIN }
         - { path: ^/patient/, roles: ROLE_PATIENT }
         - { path: ^/responsable-labo, roles: ROLE_RESPONSABLE_LABO }
-        - { path: ^/laboratoire/new$, roles: [ROLE_RESPONSABLE_LABO, ROLE_ADMIN] }
-        - { path: ^/laboratoire/, roles: ROLE_PATIENT }
+        - { path: ^/laboratoire/new$, roles: ROLE_RESPONSABLE_LABO }
+        - { path: ^/laboratoire/, roles: [ROLE_PATIENT, ROLE_MEDECIN] }
+        - { path: ^/parapharmacie/\d+$, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/parapharmacie/, roles: ROLE_RESPONSABLE_PARA }
         - { path: ^/profile, roles: IS_AUTHENTICATED_FULLY }
         

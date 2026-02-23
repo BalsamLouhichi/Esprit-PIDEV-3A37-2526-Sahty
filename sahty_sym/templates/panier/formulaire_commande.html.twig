@@ -1,0 +1,140 @@
+{# templates/panier/formulaire_commande.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Finaliser ma commande{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .panier-primary-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+            color: #fff !important;
+        }
+
+        .text-panier-primary {
+            color: var(--primary) !important;
+        }
+
+        .btn-panier-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-panier-primary:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1 class="mb-4">Finaliser ma commande</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header panier-primary-header">
+                    <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Informations de livraison</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('app_panier_commander_valider') }}" id="commande-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label required">Nom complet</label>
+                                <input type="text" name="nomClient" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required">Email</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Téléphone</label>
+                            <input type="tel" name="telephone" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required">Adresse de livraison</label>
+                            <textarea name="adresseLivraison" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes supplémentaires</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Instructions spéciales..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-panier-primary btn-lg w-100" id="submit-btn">
+                            <i class="bi bi-check-circle me-2"></i>Confirmer la commande
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-bag-check me-2"></i>Récapitulatif</h5>
+                </div>
+                <div class="card-body">
+                    {% set pharmacies = {} %}
+                    {% for item in panier %}
+                        {% set pharmacieId = item.pharmacie_id %}
+                        {% if pharmacies[pharmacieId] is not defined %}
+                            {% set pharmacies = pharmacies|merge({(pharmacieId): {'nom': item.pharmacie_nom, 'total': 0, 'articles': []}}) %}
+                        {% endif %}
+                        {% set pharmacies = pharmacies|merge({
+                            (pharmacieId): {
+                                'nom': item.pharmacie_nom,
+                                'total': pharmacies[pharmacieId].total + (item.prix * item.quantite),
+                                'articles': pharmacies[pharmacieId].articles|merge([item])
+                            }
+                        }) %}
+                    {% endfor %}
+                    
+                    {% for pharmacieId, data in pharmacies %}
+                        <div class="mb-3 pb-2 border-bottom">
+                            <h6 class="text-panier-primary">
+                                <i class="bi bi-shop me-1"></i>{{ data.nom }}
+                            </h6>
+                            {% for item in data.articles %}
+                                <div class="d-flex justify-content-between mb-1 small">
+                                    <span>{{ item.produit_nom }} (x{{ item.quantite }})</span>
+                                    <span>{{ (item.prix * item.quantite)|number_format(2, ',', ' ') }} €</span>
+                                </div>
+                            {% endfor %}
+                            <div class="d-flex justify-content-between fw-bold mt-2">
+                                <span>Sous-total :</span>
+                                <span class="text-success">{{ data.total|number_format(2, ',', ' ') }} €</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-3 fw-bold fs-5">
+                        <span>Total TTC :</span>
+                        <span class="text-panier-primary">{{ total|number_format(2, ',', ' ') }} €</span>
+                    </div>
+                    
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Votre commande sera traitée par <strong>{{ pharmacies|length }} parapharmacie(s)</strong>.
+                    </div>
+                    
+                    <a href="{{ path('app_panier') }}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="bi bi-arrow-left me-2"></i>Retour au panier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('commande-form').addEventListener('submit', function(e) {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Traitement en cours...';
+});
+</script>
+{% endblock %}

@@ -83,7 +83,7 @@ class SecurityController extends AbstractController
         }
 
         if ($this->isGranted('ROLE_PATIENT')) {
-            return $this->redirectToRoute('app_labo_index');
+            return $this->redirectToRoute('app_profile');
         }
 
         return $this->redirectToRoute('app_profile');
