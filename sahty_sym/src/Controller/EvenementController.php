@@ -32,6 +32,7 @@ use App\Service\EvenementSeriesInsightsAIService;
 use App\Service\EvenementVenueRecommendationService;
 use App\Service\EvenementPlanningModelService;
 use App\Service\InscriptionPreferencesStorageService;
+use App\Service\EventRegistrationEmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -1602,7 +1603,12 @@ class EvenementController extends AbstractController
 
     #[Route('/{id}/inscrire', name: 'evenement_inscrire', methods: ['POST'])]
 
-    public function inscrire(Request $request, Evenement $evenement, EntityManagerInterface $em): Response
+    public function inscrire(
+        Request $request,
+        Evenement $evenement,
+        EntityManagerInterface $em,
+        EventRegistrationEmailService $eventRegistrationEmailService
+    ): Response
 
     {
 
@@ -1820,6 +1826,8 @@ class EvenementController extends AbstractController
 
         ]);
 
+        $eventRegistrationEmailService->sendConfirmation($inscription);
+
 
 
         $this->addFlash('success', 'Operation effectuee avec succes.');
@@ -1834,7 +1842,12 @@ class EvenementController extends AbstractController
 
     #[Route('/{id}/desinscrire', name: 'evenement_desinscrire', methods: ['POST'])]
 
-    public function desinscrire(Request $request, Evenement $evenement, EntityManagerInterface $em): Response
+    public function desinscrire(
+        Request $request,
+        Evenement $evenement,
+        EntityManagerInterface $em,
+        EventRegistrationEmailService $eventRegistrationEmailService
+    ): Response
 
     {
 
@@ -1858,6 +1871,7 @@ class EvenementController extends AbstractController
 
         if ($inscription) {
 
+            $eventRegistrationEmailService->sendCancellation($inscription);
             $this->inscriptionPreferencesStorageService->removeForInscription((int) $inscription->getId());
 
             $em->remove($inscription);
@@ -1871,8 +1885,7 @@ class EvenementController extends AbstractController
 
 
         $route = $this->isGranted('ROLE_ADMIN') ? 'evenements_evenement_view' : 'evenements_client_event_view';
-
-        return $this->redirectToRoute($route, ['id' => $evenement->getId()]);
+        return $this->redirect($this->resolveBackUrl($request, $this->generateUrl($route, ['id' => $evenement->getId()])));
 
     }
 
@@ -3395,6 +3408,10 @@ class EvenementController extends AbstractController
 
         }
 
+        if (((float) ($evenement->getTarif() ?? 0)) > 0) {
+            return $this->redirectToRoute('payment_event_checkout', ['id' => $evenement->getId()]);
+        }
+
 
 
         $inscriptions = $em->getRepository(InscriptionEvenement::class)
@@ -3421,7 +3438,12 @@ class EvenementController extends AbstractController
 
     #[Route('/client/{id}/desinscrire', name: 'client_desinscrire', methods: ['POST'])]
 
-    public function clientDesinscrire(Request $request, Evenement $evenement, EntityManagerInterface $em): Response
+    public function clientDesinscrire(
+        Request $request,
+        Evenement $evenement,
+        EntityManagerInterface $em,
+        EventRegistrationEmailService $eventRegistrationEmailService
+    ): Response
 
     {
 
@@ -3443,7 +3465,7 @@ class EvenementController extends AbstractController
 
             $this->addFlash('error', 'Une erreur est survenue.');
 
-            return $this->redirectToRoute('evenements_client_mes_inscriptions');
+            return $this->redirect($this->resolveBackUrl($request, $this->generateUrl('evenements_client_mes_inscriptions')));
 
         }
 
@@ -3463,7 +3485,7 @@ class EvenementController extends AbstractController
 
             $this->addFlash('error', 'Desole, vous ne pouvez plus vous desinscrire moins de 24h avant l\'evenement.');
 
-            return $this->redirectToRoute('evenements_client_mes_inscriptions');
+            return $this->redirect($this->resolveBackUrl($request, $this->generateUrl('evenements_client_mes_inscriptions')));
 
         }
 
@@ -3477,6 +3499,8 @@ class EvenementController extends AbstractController
 
         if ($inscription) {
 
+            $eventRegistrationEmailService->sendCancellation($inscription);
+            $this->inscriptionPreferencesStorageService->removeForInscription((int) $inscription->getId());
             $em->remove($inscription);
 
             $em->flush();
@@ -3487,7 +3511,7 @@ class EvenementController extends AbstractController
 
 
 
-        return $this->redirectToRoute('evenements_client_mes_inscriptions');
+        return $this->redirect($this->resolveBackUrl($request, $this->generateUrl('evenements_client_mes_inscriptions')));
 
     }
 
@@ -4384,6 +4408,22 @@ class EvenementController extends AbstractController
     }
 
 
+
+    private function resolveBackUrl(Request $request, string $fallbackUrl): string
+    {
+        $referer = (string) $request->headers->get('referer', '');
+        if ($referer === '') {
+            return $fallbackUrl;
+        }
+
+        $refererHost = (string) (parse_url($referer, PHP_URL_HOST) ?? '');
+        $currentHost = (string) $request->getHost();
+        if ($refererHost !== '' && $currentHost !== '' && strtolower($refererHost) !== strtolower($currentHost)) {
+            return $fallbackUrl;
+        }
+
+        return $referer;
+    }
 
     private function buildSeriesCandidateChoices(int $excludeEventId = null): array
 

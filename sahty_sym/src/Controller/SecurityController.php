@@ -67,7 +67,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('app_labo_new');
             }
 
-            return $this->redirectToRoute('app_demande_analyse_index');
+            return $this->redirectToRoute('app_responsable_labo_demandes');
         }
 
         // MODIFICATION : Redirection pour responsable parapharmacie
@@ -85,7 +85,7 @@ class SecurityController extends AbstractController
         }
 
         if ($this->isGranted('ROLE_MEDECIN')) {
-            return $this->redirectToRoute('app_demande_analyse_index');
+            return $this->redirectToRoute('home');
         }
 
         if ($this->isGranted('ROLE_PATIENT')) {

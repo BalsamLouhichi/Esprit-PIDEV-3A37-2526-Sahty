@@ -738,15 +738,24 @@
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 {% if evenement.userInscrit is defined and evenement.userInscrit %}
-                                                    <span class="btn btn-sm btn-success" title="Vous etes deja inscrit a cet evenement.">
-                                                        <i class="fas fa-check-circle me-1"></i> Deja inscrit
-                                                    </span>
+                                                    <form method="post" action="{{ path('evenements_client_desinscrire', {'id': evenement.id}) }}" class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('desinscrire' ~ evenement.id) }}">
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Se desinscrire de cet evenement.">
+                                                            <i class="fas fa-user-minus me-1"></i> Se desinscrire
+                                                        </button>
+                                                    </form>
                                                 {% elseif actions[evenement.id] is defined and actions[evenement.id].can_inscribe %}
-                                                    <button type="button" class="btn btn-sm btn-primary" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#inscriptionModal{{ evenement.id }}">
-                                                        <i class="fas fa-check-circle me-1"></i> S'inscrire
-                                                    </button>
+                                                    {% if evenement.tarif > 0 %}
+                                                        <a href="{{ path('payment_event_checkout', {'id': evenement.id}) }}" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-credit-card me-1"></i> Payer et s'inscrire
+                                                        </a>
+                                                    {% else %}
+                                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#inscriptionModal{{ evenement.id }}">
+                                                            <i class="fas fa-check-circle me-1"></i> S'inscrire
+                                                        </button>
+                                                    {% endif %}
                                                 {% elseif evenement.createur == app.user %}
                                                     <span class="btn btn-sm btn-outline-secondary" disabled>
                                                         <i class="fas fa-user-cog me-1"></i> Votre evenement

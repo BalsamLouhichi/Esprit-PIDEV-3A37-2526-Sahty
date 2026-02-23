@@ -34,21 +34,21 @@ class EvenementType extends AbstractType
 
         $builder
             ->add('titre', TextType::class, [
-                'label' => 'Titre de l\'Ã©vÃ©nement',
+                'label' => 'Titre de l\'événement',
                 'attr' => ['placeholder' => 'Ex: Webinaire sur la nutrition'],
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Description dÃ©taillÃ©e',
+                'label' => 'Description détaillée',
                 'required' => false,
                 'attr' => ['rows' => 5],
             ])
             ->add('type', ChoiceType::class, [
-                'label' => 'Type d\'Ã©vÃ©nement',
+                'label' => 'Type d\'événement',
                 'choices' => [
                     'Webinaire' => 'webinaire',
                     'Atelier' => 'atelier',
-                    'DÃ©pistage' => 'depistage',
-                    'ConfÃ©rence' => 'conference',
+                    'Dépistage' => 'depistage',
+                    'Conférence' => 'conference',
                     'Groupe de parole' => 'groupe_parole',
                     'Formation' => 'formation',
                 ],
@@ -58,31 +58,31 @@ class EvenementType extends AbstractType
                 'label' => 'Mode de participation',
                 'choices' => [
                     'En ligne' => 'en_ligne',
-                    'PrÃ©sentiel' => 'presentiel',
+                    'Présentiel' => 'presentiel',
                     'Hybride' => 'hybride',
                 ],
             ])
             ->add('meetingPlatform', ChoiceType::class, [
-                'label' => 'Plateforme de rÃ©union (en ligne)',
+                'label' => 'Plateforme de réunion (en ligne)',
                 'required' => false,
-                'placeholder' => 'GÃ©nÃ©ration automatique (Jitsi)',
+                'placeholder' => 'Génération automatique (Jitsi)',
                 'choices' => [
                     'Jitsi (gratuit)' => 'jitsi',
-                    'Lien personnalisÃ©' => 'custom',
+                    'Lien personnalisé' => 'custom',
                 ],
-                'help' => 'Pour les Ã©vÃ©nements en ligne/hybrides. Le lien est gÃ©nÃ©rÃ© Ã  l\'approbation si vous choisissez Jitsi.',
+                'help' => 'Pour les événements en ligne/hybrides. Le lien est généré à l\'approbation si vous choisissez Jitsi.',
             ])
             ->add('meetingLink', TextType::class, [
-                'label' => 'Lien personnalisÃ©',
+                'label' => 'Lien personnalisé',
                 'required' => false,
-                'help' => 'Obligatoire seulement si plateforme = Lien personnalisÃ©.',
+                'help' => 'Obligatoire seulement si plateforme = Lien personnalisé.',
                 'attr' => [
                     'placeholder' => 'https://...',
                     'maxlength' => 500,
                 ],
             ])
             ->add('dateDebut', DateTimeType::class, [
-                'label' => 'Date de dÃ©but',
+                'label' => 'Date de début',
                 'widget' => 'single_text',
                 'html5' => true,
                 'required' => true,
@@ -102,7 +102,7 @@ class EvenementType extends AbstractType
             ->add('lieu', TextType::class, [
                 'label' => 'Lieu / Lien',
                 'required' => false,
-                'help' => 'Adresse physique ou lien de rÃ©union',
+                'help' => 'Adresse physique ou lien de réunion',
             ])
             ->add('placesMax', IntegerType::class, [
                 'label' => 'Nombre de places maximum',
@@ -171,21 +171,21 @@ class EvenementType extends AbstractType
 
         if (!$isDemande) {
             $statutChoices = [
-                'PlanifiÃ©' => 'planifie',
+                'Planifié' => 'planifie',
                 'En cours' => 'en_cours',
-                'TerminÃ©' => 'termine',
-                'AnnulÃ©' => 'annule',
+                'Terminé' => 'termine',
+                'Annulé' => 'annule',
             ];
 
             if ($isAdmin) {
                 $statutChoices = array_merge($statutChoices, [
                     'En attente d\'approbation' => 'en_attente_approbation',
-                    'ApprouvÃ©' => 'approuve',
+                    'Approuvé' => 'approuve',
                 ]);
             }
 
             $builder->add('statut', ChoiceType::class, [
-                'label' => 'Statut de l\'Ã©vÃ©nement',
+                'label' => 'Statut de l\'événement',
                 'choices' => $statutChoices,
                 'required' => true,
             ]);
@@ -216,4 +216,3 @@ class EvenementType extends AbstractType
         $resolver->setAllowedTypes('series_edition_number', ['null', 'int']);
     }
 }
-

@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 #[Route('/payments', name: 'payment_')]
 class PaymentController extends AbstractController
 {
-    #[Route('/evenements/{id}/checkout', name: 'event_checkout', methods: ['POST'])]
+    #[Route('/evenements/{id}/checkout', name: 'event_checkout', methods: ['GET', 'POST'])]
     public function checkout(
         Request $request,
         Evenement $evenement,
@@ -35,7 +35,7 @@ class PaymentController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if (!$this->isCsrfTokenValid('checkout' . $evenement->getId(), $request->request->get('_token'))) {
+        if ($request->isMethod('POST') && !$this->isCsrfTokenValid('checkout' . $evenement->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'Requete invalide. Merci de reessayer.');
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
@@ -63,15 +63,7 @@ class PaymentController extends AbstractController
         }
 
         if (!$stripeCheckoutService->isConfigured()) {
-            $createdInscription = $this->createConfirmedInscription($em, $evenement, $user);
-            if ($createdInscription instanceof InscriptionEvenement) {
-                $eventRegistrationEmailService->sendConfirmation($createdInscription);
-            }
-            $this->addFlash(
-                'success',
-                'Inscription confirmee en mode test gratuit (paiement simule, Stripe non configure).'
-            );
-            return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
+            return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
         }
 
         $successUrl = $urlGenerator->generate(
@@ -95,9 +87,75 @@ class PaymentController extends AbstractController
 
             return $this->redirect($session['url']);
         } catch (\Throwable $e) {
+            if ($this->getParameter('kernel.environment') !== 'prod') {
+                return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
+            }
+
             $this->addFlash('danger', 'Creation du paiement impossible: ' . $e->getMessage());
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
+    }
+
+    #[Route('/evenements/{id}/checkout/simule', name: 'event_checkout_simulated', methods: ['GET', 'POST'])]
+    public function checkoutSimulated(
+        Request $request,
+        Evenement $evenement,
+        EntityManagerInterface $em,
+        EventRegistrationEmailService $eventRegistrationEmailService
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof Utilisateur) {
+            $this->addFlash('warning', 'Vous devez etre connecte pour finaliser le paiement.');
+            return $this->redirectToRoute('app_login');
+        }
+
+        if (((float) ($evenement->getTarif() ?? 0)) <= 0) {
+            return $this->redirectToRoute('evenements_evenement_inscrire', ['id' => $evenement->getId()]);
+        }
+
+        $already = $em->getRepository(InscriptionEvenement::class)
+            ->findOneBy(['evenement' => $evenement, 'utilisateur' => $user]);
+        if ($already) {
+            $this->addFlash('info', 'Vous etes deja inscrit a cet evenement.');
+            return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
+        }
+
+        $eligibility = $this->canUserSubscribe($user, $evenement, $em);
+        if (($eligibility['can_subscribe'] ?? false) !== true) {
+            $this->addFlash('warning', (string) ($eligibility['message'] ?? 'Inscription indisponible.'));
+            return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
+        }
+
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('checkout_simule' . $evenement->getId(), (string) $request->request->get('_token'))) {
+                $this->addFlash('danger', 'Requete de paiement invalide.');
+                return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
+            }
+
+            $cardNumber = preg_replace('/\D+/', '', (string) $request->request->get('card_number', ''));
+            $cardHolder = trim((string) $request->request->get('card_holder', ''));
+            $expMonth = (int) $request->request->get('exp_month', 0);
+            $expYear = (int) $request->request->get('exp_year', 0);
+            $cvc = preg_replace('/\D+/', '', (string) $request->request->get('cvc', ''));
+
+            if (strlen($cardNumber) < 12 || strlen($cardNumber) > 19 || $cardHolder === '' || $expMonth < 1 || $expMonth > 12 || $expYear < (int) date('Y') || strlen($cvc) < 3) {
+                $this->addFlash('danger', 'Informations de carte invalides (mode test).');
+                return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
+            }
+
+            $createdInscription = $this->createConfirmedInscription($em, $evenement, $user);
+            if ($createdInscription instanceof InscriptionEvenement) {
+                $eventRegistrationEmailService->sendConfirmation($createdInscription);
+            }
+
+            $this->addFlash('success', 'Paiement test accepte. Inscription confirmee.');
+            return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
+        }
+
+        return $this->render('payment/event_checkout_simulated.html.twig', [
+            'evenement' => $evenement,
+            'amount' => number_format((float) ($evenement->getTarif() ?? 0), 2, '.', ''),
+        ]);
     }
 
     #[Route('/stripe/webhook', name: 'stripe_webhook', methods: ['POST'])]

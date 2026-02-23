@@ -886,9 +886,12 @@
                                         </a>
                                         
                                         {% if evenement.userInscrit is defined and evenement.userInscrit %}
-                                            <span class="btn-event btn-registered">
-                                                <i class="fas fa-check-circle"></i> Déjà inscrit
-                                            </span>
+                                            <form method="post" action="{{ path('evenements_client_desinscrire', {'id': evenement.id}) }}" class="w-100">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('desinscrire' ~ evenement.id) }}">
+                                                <button type="submit" class="btn-event btn-registered w-100 border-0">
+                                                    <i class="fas fa-user-minus"></i> Se desinscrire
+                                                </button>
+                                            </form>
                                         {% elseif evenement.statut == 'planifie' or evenement.statut == 'approuve' %}
                                             {% if app.user and evenement.createur and evenement.createur.id == app.user.id %}
                                                 <span class="btn-event btn-disabled">
@@ -903,9 +906,18 @@
                                                     <i class="fas fa-clock"></i> Passé
                                                 </span>
                                             {% else %}
-                                                <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn-event btn-register">
-                                                    <i class="fas fa-user-plus"></i> S'inscrire
-                                                </a>
+                                                {% if evenement.tarif is defined and evenement.tarif > 0 %}
+                                                    <a href="{{ path('payment_event_checkout', {'id': evenement.id}) }}" class="btn-event btn-register">
+                                                        <i class="fas fa-credit-card"></i> Payer et s'inscrire
+                                                    </a>
+                                                {% else %}
+                                                    <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" class="w-100">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
+                                                        <button type="submit" class="btn-event btn-register w-100 border-0">
+                                                            <i class="fas fa-user-plus"></i> S'inscrire
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
                                             {% endif %}
                                         {% else %}
                                             <span class="btn-event btn-disabled">

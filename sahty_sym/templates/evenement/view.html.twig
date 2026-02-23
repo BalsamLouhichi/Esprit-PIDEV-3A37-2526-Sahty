@@ -50,6 +50,7 @@
         .event-header h1 {
             font-size: 2.25rem;
             margin-bottom: 0.25rem;
+            color: #ffffff;
         }
 
         .back-btn {
@@ -854,11 +855,6 @@
                     {# Bouton d'inscription/désinscription - HIDDEN FOR ADMIN #}
                     {% if not is_granted('ROLE_ADMIN') %}
                         {% if user_inscription %}
-                            <div class="btn-disabled">
-                                <i class="fas fa-check-circle me-2"></i>Deja inscrit
-                            </div>
-                        {% elseif false %}
-                            {# L'utilisateur est déjà inscrit #}
                             <form method="post" action="{{ path('evenements_client_desinscrire', {'id': evenement.id}) }}"
                                   onsubmit="return confirm('Êtes-vous sûr de vouloir vous désinscrire de cet événement ?');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('desinscrire' ~ evenement.id) }}">
@@ -868,12 +864,9 @@
                             </form>
                         {% elseif perms.can_inscribe %}
                             {% if evenement.tarif and evenement.tarif > 0 %}
-                                <form method="post" action="{{ path('payment_event_checkout', {'id': evenement.id}) }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('checkout' ~ evenement.id) }}">
-                                    <button type="submit" class="btn-subscribe">
-                                        <i class="fas fa-credit-card me-2"></i>Payer et s'inscrire
-                                    </button>
-                                </form>
+                                <a href="{{ path('payment_event_checkout', {'id': evenement.id}) }}" class="btn-subscribe text-decoration-none d-inline-flex justify-content-center align-items-center">
+                                    <i class="fas fa-credit-card me-2"></i>Payer et s'inscrire
+                                </a>
                             {% else %}
                                 <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
