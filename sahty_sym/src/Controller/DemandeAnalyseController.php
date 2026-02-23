@@ -950,7 +950,7 @@ class DemandeAnalyseController extends AbstractController
      * @param array<string,mixed> $raw
      * @return array<string,string>
      */
-    private function resolveMetricGlossary(array $analysis, array $raw): array
+    private function resolveMetricGlossary(array $analysis, array $raw, bool $allowGeneration = true): array
     {
         $sources = [
             $raw['metric_glossary'] ?? null,
@@ -1017,6 +1017,10 @@ class DemandeAnalyseController extends AbstractController
                     $glossary[$canonicalName] = $description;
                 }
             }
+        }
+
+        if (!$allowGeneration) {
+            return $glossary;
         }
 
         $metricNames = $this->extractMetricNamesForGlossary($analysis, $raw);
@@ -1371,7 +1375,7 @@ class DemandeAnalyseController extends AbstractController
 
         $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
         $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
-        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw, false);
         if ($metricGlossary !== [] && !is_array($raw['metric_glossary'] ?? null)) {
             $this->persistMetricGlossaryCache($resultatAnalyse, $raw, $metricGlossary);
             $raw['metric_glossary'] = $metricGlossary;
