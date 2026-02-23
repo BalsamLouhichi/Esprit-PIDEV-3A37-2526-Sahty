@@ -7,9 +7,9 @@
     {{ parent() }}
     <style>
         :root {
-            --primary: #0dcaf0;
+            --primary: var(--primary);
             --primary-light: #e8f7ff;
-            --primary-dark: #0bb6d9;
+            --primary-dark: var(--primary-dark);
             --secondary: #6c757d;
             --success: #198754;
             --warning: #ffc107;
@@ -269,7 +269,7 @@
         .empty-icon {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(13, 202, 240, 0.1) 100%);
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(29, 93, 155, 0.1) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -318,12 +318,12 @@
                 box-shadow: var(--shadow);
             }
         }
-        .btn-outline-cyan {
-    color: #0dcaf0;
-    border-color: #0dcaf0;
+.btn-outline-cyan {
+    color: var(--primary);
+    border-color: var(--primary);
 }
 .btn-outline-cyan:hover {
-    background-color: #0dcaf0;
+    background-color: var(--primary);
     color: white;
 }
 

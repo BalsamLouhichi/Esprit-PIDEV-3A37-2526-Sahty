@@ -94,6 +94,16 @@ class EvenementSeriesInsightsAIService
             $loyalty
         );
 
+        $syntheseText = $fallbackSynthesis;
+        if (is_array($aiSynthesis)) {
+            $msg = trim((string) ($aiSynthesis['message'] ?? ''));
+            if ($msg !== '') {
+                $syntheseText = $msg;
+            }
+        } elseif (is_string($aiSynthesis) && trim($aiSynthesis) !== '') {
+            $syntheseText = trim($aiSynthesis);
+        }
+
         return [
             'series_nom' => $this->humanizeSeriesName($seriesBase, (string) $referenceEvent->getTitre()),
             'is_series' => count($seriesEvents) > 1,
@@ -107,7 +117,8 @@ class EvenementSeriesInsightsAIService
             'evolution_audience' => $audienceEvolution,
             'progression_pedagogique' => $knowledge,
             'fidelite' => $loyalty,
-            'synthese' => $aiSynthesis ?? $fallbackSynthesis,
+            'synthese' => $syntheseText,
+            'synthese_detail' => is_array($aiSynthesis) ? $aiSynthesis : null,
             'synthese_source' => $aiSynthesis !== null ? 'external_api' : 'local_fallback',
         ];
     }

@@ -31,6 +31,53 @@ class ProduitRepository extends ServiceEntityRepository
     }
 
     /**
+     * Recherche semantique basique a partir d'une liste de mots-clés enrichis.
+     *
+     * @param string[] $keywords
+     */
+    public function semanticSearch(array $keywords, int $limit = 30): array
+    {
+        $keywords = array_values(array_filter(array_unique(array_map(
+            static fn (string $k) => trim(mb_strtolower($k)),
+            $keywords
+        ))));
+
+        if (empty($keywords)) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('p');
+        $orX = $qb->expr()->orX();
+        $scoreParts = [];
+
+        foreach ($keywords as $i => $keyword) {
+            $param = 'k' . $i;
+            $like = '%' . $keyword . '%';
+
+            $orX->add("LOWER(p.nom) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.description, '')) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.categorie, '')) LIKE :$param");
+            $orX->add("LOWER(COALESCE(p.marque, '')) LIKE :$param");
+
+            $scoreParts[] = "(CASE WHEN LOWER(p.nom) LIKE :$param THEN 6 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.categorie, '')) LIKE :$param THEN 4 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.marque, '')) LIKE :$param THEN 3 ELSE 0 END"
+                . " + CASE WHEN LOWER(COALESCE(p.description, '')) LIKE :$param THEN 2 ELSE 0 END)";
+
+            $qb->setParameter($param, $like);
+        }
+
+        $qb->where($orX);
+        $qb->andWhere('(p.estActif = true OR p.estActif IS NULL)');
+        $qb->addSelect(implode(' + ', $scoreParts) . ' AS HIDDEN relevance');
+        $qb->orderBy('relevance', 'DESC');
+        $qb->addOrderBy('p.nom', 'ASC');
+        $qb->setMaxResults($limit);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Trouver les produits par catégorie
      */
     public function findByCategorie(string $categorie): array
@@ -84,6 +131,26 @@ class ProduitRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @return Produit[]
+     */
+    public function findLowStockByParapharmacie(int $parapharmacieId, int $threshold = 5): array
+    {
+        $threshold = max(1, $threshold);
+
+        return $this->createQueryBuilder('p')
+            ->join('p.parapharmacies', 'ph')
+            ->where('ph.id = :parapharmacieId')
+            ->andWhere('p.stock IS NOT NULL')
+            ->andWhere('p.stock < :threshold')
+            ->setParameter('parapharmacieId', $parapharmacieId)
+            ->setParameter('threshold', $threshold)
+            ->orderBy('p.stock', 'ASC')
+            ->addOrderBy('p.nom', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
    /**
  * Produits les plus vendus par parapharmacie
  */
@@ -127,5 +194,50 @@ public function findTopSellingByParapharmacie($parapharmacieId, $limit = 10)
             ->orderBy('p.nom', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Trouver les produits avec un nom equivalent (insensible a la casse et aux espaces en bordure)
+     */
+    public function findByNormalizedName(string $nom): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('LOWER(TRIM(p.nom)) = LOWER(TRIM(:nom))')
+            ->setParameter('nom', $nom)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param int[] $ids
+     * @return Produit[]
+     */
+    public function findActiveByIdsOrdered(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $items = $this->createQueryBuilder('p')
+            ->where('p.id IN (:ids)')
+            ->andWhere('(p.estActif = true OR p.estActif IS NULL)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+
+        $byId = [];
+        foreach ($items as $item) {
+            $byId[(int) $item->getId()] = $item;
+        }
+
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $ordered[] = $byId[$id];
+            }
+        }
+
+        return $ordered;
     }
 }

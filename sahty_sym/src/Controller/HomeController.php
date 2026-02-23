@@ -30,6 +30,7 @@ class HomeController extends AbstractController
         return $this->render('home/index.html.twig');
     }
 
+
     #[Route('/forgot', name: 'app_forgot_password')]
     public function forgot(): Response
     {
@@ -39,6 +40,7 @@ class HomeController extends AbstractController
     #[Route('/admin_dashboard', name: 'admin_dashboard')]
     public function dashboard(EntityManagerInterface $em, EvenementRepository $evenementRepository): Response
     {
+
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $user = $this->getUser();
@@ -110,6 +112,8 @@ class HomeController extends AbstractController
             'evenementsParType' => $evenementsParType,
             'user' => $user,
         ]);
+        return $this->render('admin_dashboard/index.html.twig');
+
     }
 
     // Note: Balsam had a duplicate profil() method - we keep yours only
@@ -118,10 +122,11 @@ class HomeController extends AbstractController
     {
         return $this->render('profile.html.twig');
     }
-    
+
     #[Route('/home', name: 'app_home')]
     public function appHome(): Response
     {
         return $this->render('home/index.html.twig');
     }
+
 }

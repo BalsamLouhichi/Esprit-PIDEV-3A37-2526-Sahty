@@ -16,7 +16,7 @@ class EvenementExperienceDesignService
     {
         $external = $this->buildExperiencePackFromExternalApi($evenement);
         if ($external !== null) {
-            return $external;
+            return $this->normalizePack($external, $evenement);
         }
 
         $durationMinutes = $this->computeDurationMinutes($evenement);
@@ -29,7 +29,7 @@ class EvenementExperienceDesignService
         $phasesWithTiming = $this->allocateTiming($phases, $durationMinutes, $evenement->getDateDebut());
         $theme = $this->themeForEvent($evenement);
 
-        return [
+        return $this->normalizePack([
             'poster' => [
                 'title' => (string) $evenement->getTitre(),
                 'subtitle' => $this->buildSubtitle($evenement, $durationMinutes),
@@ -40,7 +40,7 @@ class EvenementExperienceDesignService
             ],
             'cards' => $phasesWithTiming,
             'highlights' => $this->buildHighlights($evenement, $durationMinutes, count($phasesWithTiming)),
-        ];
+        ], $evenement);
     }
 
     private function buildExperiencePackFromExternalApi(Evenement $evenement): ?array
@@ -171,7 +171,18 @@ class EvenementExperienceDesignService
                 continue;
             }
 
-            $phases[] = ['title' => $clean, 'icon' => $this->iconForTitle($clean), 'intensity' => $this->intensityForTitle($clean)];
+            $durationHint = null;
+            if (preg_match('/\((\d{1,3})\s*min\)\s*$/i', $clean, $match) === 1) {
+                $durationHint = (int) $match[1];
+                $clean = trim((string) preg_replace('/\((\d{1,3})\s*min\)\s*$/i', '', $clean));
+            }
+
+            $phases[] = [
+                'title' => $clean,
+                'icon' => $this->iconForTitle($clean),
+                'intensity' => $this->intensityForTitle($clean),
+                'duration_hint' => $durationHint,
+            ];
         }
 
         return $phases;
@@ -208,14 +219,23 @@ class EvenementExperienceDesignService
 
     private function allocateTiming(array $phases, int $totalMinutes, ?\DateTimeInterface $start): array
     {
+        $hasExplicitDurations = count(array_filter($phases, static function (array $phase): bool {
+            $v = $phase['duration_hint'] ?? null;
+            return is_int($v) && $v > 0;
+        })) >= max(1, (int) ceil(count($phases) * 0.6));
+
         $weights = array_map(static fn (array $p): int => max(1, (int) ($p['intensity'] ?? 3)), $phases);
         $weightSum = array_sum($weights);
         $result = [];
         $cursor = $start ? \DateTimeImmutable::createFromInterface($start) : null;
 
         foreach ($phases as $index => $phase) {
-            $duration = (int) round(($weights[$index] / max(1, $weightSum)) * $totalMinutes);
-            $duration = max(10, min(90, $duration));
+            if ($hasExplicitDurations && is_int($phase['duration_hint'] ?? null) && (int) $phase['duration_hint'] > 0) {
+                $duration = max(10, min(180, (int) $phase['duration_hint']));
+            } else {
+                $duration = (int) round(($weights[$index] / max(1, $weightSum)) * $totalMinutes);
+                $duration = max(10, min(90, $duration));
+            }
 
             $timeLabel = null;
             if ($cursor instanceof \DateTimeImmutable) {
@@ -287,5 +307,113 @@ class EvenementExperienceDesignService
         if (str_contains($t, 'q&a') || str_contains($t, 'question')) return 3;
         if (str_contains($t, 'atelier') || str_contains($t, 'workshop')) return 4;
         return 3;
+    }
+
+    private function normalizePack(array $pack, Evenement $evenement): array
+    {
+        $duration = $this->computeDurationMinutes($evenement);
+        $theme = $this->themeForEvent($evenement);
+
+        $poster = is_array($pack['poster'] ?? null) ? $pack['poster'] : [];
+        $cards = is_array($pack['cards'] ?? null) ? $pack['cards'] : [];
+        $highlights = is_array($pack['highlights'] ?? null) ? $pack['highlights'] : [];
+
+        $normalizedCards = [];
+        foreach ($cards as $index => $card) {
+            if (!is_array($card)) {
+                continue;
+            }
+
+            $title = trim((string) ($card['title'] ?? 'Phase ' . ($index + 1)));
+            if ($title === '') {
+                $title = 'Phase ' . ($index + 1);
+            }
+
+            $durationMin = (int) ($card['duration'] ?? 0);
+            if ($durationMin <= 0) {
+                $durationMin = max(10, (int) round($duration / max(1, count($cards))));
+            }
+
+            $icon = trim((string) ($card['icon'] ?? 'fa-microphone'));
+            if ($icon === '') {
+                $icon = $this->iconForTitle($title);
+            }
+            if (!str_starts_with($icon, 'fa-')) {
+                $icon = 'fa-' . ltrim($icon, '-');
+            }
+
+            $timeLabel = trim((string) ($card['time_label'] ?? ''));
+            if ($timeLabel === '') {
+                $timeLabel = '~ ' . $durationMin . ' min';
+            }
+
+            $normalizedCards[] = [
+                'title' => $title,
+                'icon' => $icon,
+                'duration' => max(10, min(180, $durationMin)),
+                'time_label' => $timeLabel,
+                'intensity' => max(1, min(5, (int) ($card['intensity'] ?? 3))),
+            ];
+        }
+
+        if (count($normalizedCards) === 0) {
+            $phases = $this->defaultPhasesByType((string) $evenement->getType());
+            $normalizedCards = $this->allocateTiming($phases, $duration, $evenement->getDateDebut());
+        }
+
+        $normalizedHighlights = [];
+        foreach ($highlights as $highlight) {
+            $text = trim((string) $highlight);
+            if ($text !== '') {
+                $normalizedHighlights[] = $text;
+            }
+        }
+        if (count($normalizedHighlights) === 0) {
+            $normalizedHighlights = $this->buildHighlights($evenement, $duration, count($normalizedCards));
+        }
+        $normalizedHighlights = array_values(array_slice($normalizedHighlights, 0, 6));
+
+        $posterTheme = is_array($poster['theme'] ?? null) ? $poster['theme'] : [];
+        $posterThemeBg = trim($this->toSafeText($posterTheme['bg'] ?? $theme['bg']));
+        $posterThemeChip = trim($this->toSafeText($posterTheme['chip'] ?? $theme['chip']));
+        if ($posterThemeBg === '') {
+            $posterThemeBg = $theme['bg'];
+        }
+        if ($posterThemeChip === '') {
+            $posterThemeChip = $theme['chip'];
+        }
+
+        $title = trim($this->toSafeText($poster['title'] ?? $evenement->getTitre() ?? 'Evenement SAHTY'));
+        if ($title === '') {
+            $title = 'Evenement SAHTY';
+        }
+
+        return [
+            'poster' => [
+                'title' => $title,
+                'subtitle' => trim($this->toSafeText($poster['subtitle'] ?? $this->buildSubtitle($evenement, $duration))),
+                'date_label' => trim($this->toSafeText($poster['date_label'] ?? ($evenement->getDateDebut() ? $evenement->getDateDebut()->format('d/m/Y H:i') : 'Date a definir'))),
+                'mode_label' => trim($this->toSafeText($poster['mode_label'] ?? ucfirst((string) $evenement->getMode()))),
+                'lieu_label' => trim($this->toSafeText($poster['lieu_label'] ?? ($evenement->getLieu() ?: (($evenement->getMode() === 'en_ligne') ? 'Session en ligne' : 'Lieu a confirmer')))),
+                'theme' => [
+                    'bg' => $posterThemeBg,
+                    'chip' => $posterThemeChip,
+                ],
+            ],
+            'cards' => $normalizedCards,
+            'highlights' => $normalizedHighlights,
+        ];
+    }
+
+    private function toSafeText(mixed $value, string $default = ''): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+        if (is_int($value) || is_float($value) || is_bool($value)) {
+            return (string) $value;
+        }
+
+        return $default;
     }
 }

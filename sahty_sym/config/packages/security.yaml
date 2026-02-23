@@ -22,7 +22,7 @@ security:
             lazy: true
             provider: app_user_provider
             user_checker: App\Security\UserChecker
-            
+
             form_login:
                 login_path: app_login
                 check_path: app_login
@@ -34,11 +34,11 @@ security:
                 default_target_path: app_login_redirect
                 always_use_default_target_path: true
                 failure_path: app_login
-            
+
             logout:
                 path: app_logout
-                target: app_home  # ou app_login selon vos préférences
-            
+                target: app_home
+
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800
@@ -47,26 +47,23 @@ security:
                 remember_me_parameter: _remember_me
 
     access_control:
-        # Pages publiques
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/signup$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/forgot, roles: PUBLIC_ACCESS }
         - { path: ^/payments/stripe/webhook$, roles: PUBLIC_ACCESS }
-        
-        # Backoffice Admin (EasyAdmin)
+
         - { path: ^/admin, roles: ROLE_ADMIN }
-        
-        # Pages protégées par rôle
+
         - { path: ^/medecin/, roles: ROLE_MEDECIN }
         - { path: ^/patient/, roles: ROLE_PATIENT }
         - { path: ^/responsable-labo, roles: ROLE_RESPONSABLE_LABO }
         - { path: ^/laboratoire/new$, roles: ROLE_RESPONSABLE_LABO }
-        - { path: ^/laboratoire/, roles: ROLE_PATIENT }
+        - { path: ^/laboratoire/, roles: [ROLE_PATIENT, ROLE_MEDECIN] }
+        - { path: ^/parapharmacie/\d+$, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/parapharmacie/, roles: ROLE_RESPONSABLE_PARA }
         - { path: ^/profile, roles: IS_AUTHENTICATED_FULLY }
-        
-        # Toutes les autres pages nécessitent une connexion
+
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

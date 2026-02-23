@@ -849,6 +849,13 @@
             </div>
         {% endfor %}
 
+        {% for message in app.flashes('warning') %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+
         <!-- Filters & Search -->
         <div class="filters-section">
             <form method="GET" action="{{ path('app_medecin_rdv_liste') }}" class="filters-wrapper" id="searchForm">

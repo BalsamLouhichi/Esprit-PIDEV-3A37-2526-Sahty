@@ -506,6 +506,7 @@ class EvenementController extends AbstractController
 
             $this->attachPlanningDecisionMetadata($evenement, $request);
 
+            $this->attachPlanningDecisionMetadata($evenement, $request);
             $em->persist($evenement);
 
             $em->flush();
@@ -1028,6 +1029,7 @@ class EvenementController extends AbstractController
             'perms' => $perms,
 
             'participants' => $participants,
+            'display_description' => $this->buildEvenementDisplayDescription($evenement),
 
             'series_insights' => $this->evenementSeriesInsightsAIService->analyzeSeriesForEvent($evenement),
 
@@ -1416,6 +1418,7 @@ class EvenementController extends AbstractController
             'perms' => $perms,
 
             'participants' => $participants,
+            'display_description' => $this->buildEvenementDisplayDescription($evenement),
 
             'is_admin' => $isAdmin,
 
@@ -2925,10 +2928,38 @@ class EvenementController extends AbstractController
 
     }
 
+    #[Route('/{id}/affiche-print', name: 'evenement_affiche_print', methods: ['GET'])]
+    public function affichePrint(Evenement $evenement, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            throw new AccessDeniedException('Connexion requise.');
+        }
+
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $isCreator = $evenement->getCreateur() && $evenement->getCreateur() === $user;
+
+        if (!$isAdmin && !$isCreator) {
+            $canSubscribe = $this->canUserSubscribe($user, $evenement, $em);
+            if (($canSubscribe['can_subscribe'] ?? false) !== true) {
+                throw new AccessDeniedException('Acces refuse a l affiche de cet evenement.');
+            }
+        }
+
+        return $this->render('evenement/affiche_print.html.twig', [
+            'evenement' => $evenement,
+            'experience_pack' => $this->evenementExperienceDesignService->buildExperiencePack($evenement),
+            'display_description' => $this->buildEvenementDisplayDescription($evenement),
+        ]);
+    }
+
     private function attachPlanningDecisionMetadata(Evenement $evenement, Request $request): void
     {
         $decision = trim((string) $request->request->get('planning_ia_decision', ''));
-        if (!in_array($decision, ['accepted', 'customized', 'rejected'], true)) {
+        $isDecisionValid = in_array($decision, ['accepted', 'customized', 'rejected'], true);
+        $scenarioPayload = $this->extractScenarioPayloadFromRequest($request);
+
+        if (!$isDecisionValid && count($scenarioPayload['phases']) === 0) {
             return;
         }
 
@@ -2941,17 +2972,83 @@ class EvenementController extends AbstractController
             }
         }
 
-        $stamp = (new \DateTime())->format('Y-m-d H:i');
-        $meta = sprintf('[IA_PLAN decision=%s phases=%d at=%s]', $decision, $phasesCount, $stamp);
-
         $description = trim((string) $evenement->getDescription());
-        if (mb_strlen($description) > 4700) {
+        if (mb_strlen($description) > 9000) {
             return;
         }
 
-        $evenement->setDescription(
-            $description === '' ? $meta : ($description . PHP_EOL . PHP_EOL . $meta)
-        );
+        $description = $this->stripIaPlanMetadata($description);
+        $blocks = [];
+
+        if ($description !== '') {
+            $blocks[] = $description;
+        }
+
+        if ($isDecisionValid) {
+            $stamp = (new \DateTime())->format('Y-m-d H:i');
+            $blocks[] = sprintf('[IA_PLAN decision=%s phases=%d at=%s]', $decision, $phasesCount, $stamp);
+        }
+
+        if (count($scenarioPayload['phases']) > 0) {
+            $blocks[] = '[SCENARIO_START]';
+            $blocks[] = 'Programme previsionnel';
+            foreach ($scenarioPayload['phases'] as $phase) {
+                $blocks[] = sprintf('- %s (%d min)', $phase['title'], $phase['duration']);
+            }
+            $blocks[] = '[SCENARIO_END]';
+        }
+
+        $evenement->setDescription(trim(implode(PHP_EOL . PHP_EOL, $blocks)));
+    }
+
+    private function extractScenarioPayloadFromRequest(Request $request): array
+    {
+        $raw = (string) $request->request->get('scenario_timeline_json', '');
+        if ($raw === '') {
+            return ['phases' => []];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded) || !is_array($decoded['phases'] ?? null)) {
+            return ['phases' => []];
+        }
+
+        $phases = [];
+        foreach ($decoded['phases'] as $phase) {
+            if (!is_array($phase)) {
+                continue;
+            }
+            $title = trim((string) ($phase['title'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $duration = (int) ($phase['duration'] ?? 15);
+            $phases[] = [
+                'title' => mb_substr($title, 0, 120),
+                'duration' => max(5, min(180, $duration)),
+            ];
+        }
+
+        return ['phases' => array_slice($phases, 0, 10)];
+    }
+
+    private function stripIaPlanMetadata(string $description): string
+    {
+        $clean = preg_replace('/\n?\[IA_PLAN[^\]]*\]/', '', $description) ?? $description;
+        $clean = preg_replace('/\[SCENARIO_START\][\s\S]*?\[SCENARIO_END\]/', '', $clean) ?? $clean;
+        return trim((string) $clean);
+    }
+
+    private function buildEvenementDisplayDescription(Evenement $evenement): string
+    {
+        $description = trim((string) $evenement->getDescription());
+        if ($description === '') {
+            return '';
+        }
+
+        $clean = preg_replace('/\n?\[IA_PLAN[^\]]*\]/', '', $description) ?? $description;
+        $clean = str_replace(['[SCENARIO_START]', '[SCENARIO_END]'], '', (string) $clean);
+        return trim((string) $clean);
     }
 
 

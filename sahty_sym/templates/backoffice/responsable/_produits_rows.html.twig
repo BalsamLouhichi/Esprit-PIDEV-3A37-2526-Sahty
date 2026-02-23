@@ -1,0 +1,88 @@
+{% for produit in produits %}
+<tr>
+    <td>
+        {% if produit.image %}
+            <img src="{{ asset('uploads/images/produits/' ~ produit.image) }}"
+                 alt="{{ produit.nom }}"
+                 style="width: 50px; height: 50px; object-fit: cover;"
+                 class="rounded">
+        {% else %}
+            <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                 style="width: 50px; height: 50px;">
+                <i class="fas fa-image text-muted"></i>
+            </div>
+        {% endif %}
+    </td>
+    <td><small class="text-muted">{{ produit.reference }}</small></td>
+    <td>
+        <strong>{{ produit.nom }}</strong>
+        {% if produit.marque %}
+            <br><small class="text-muted">{{ produit.marque }}</small>
+        {% endif %}
+    </td>
+    <td>
+        <span class="badge bg-info">{{ produit.categorie|default('Non categorise') }}</span>
+    </td>
+    <td>
+        {% if produit.promotion %}
+            <span class="text-decoration-line-through text-muted">{{ produit.prix }} EUR</span>
+            <br>
+            <strong class="text-danger">{{ (produit.prix * (1 - produit.promotion/100))|number_format(2) }} EUR</strong>
+            <small class="text-success">-{{ produit.promotion }}%</small>
+        {% else %}
+            <strong>{{ produit.prix }} EUR</strong>
+        {% endif %}
+    </td>
+    <td>
+        {% if produit.stock > 10 %}
+            <span class="badge bg-success">{{ produit.stock }}</span>
+        {% elseif produit.stock > 0 %}
+            <span class="badge bg-warning">{{ produit.stock }}</span>
+        {% else %}
+            <span class="badge bg-danger">Rupture</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if produit.promotion %}
+            <span class="badge bg-danger">-{{ produit.promotion }}%</span>
+        {% else %}
+            <span class="badge bg-secondary">-</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if produit.estActif %}
+            <span class="badge bg-success">Actif</span>
+        {% else %}
+            <span class="badge bg-secondary">Inactif</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="btn-group" role="group">
+            <a href="{{ path('app_responsable_produit_modifier', {'id': produit.id}) }}"
+               class="btn btn-sm btn-outline-primary"
+               title="Modifier">
+                <i class="fas fa-edit"></i>
+            </a>
+            <form method="post"
+                  action="{{ path('app_responsable_produit_supprimer', {'id': produit.id}) }}"
+                  style="display: inline-block;"
+                  onsubmit="return confirm('Etes-vous sur de vouloir supprimer ce produit ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="9" class="text-center py-5">
+        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+        <p class="text-muted mb-3">Aucun produit trouve</p>
+        <a href="{{ path('app_responsable_produit_ajouter') }}" class="btn btn-primary">
+            Ajouter votre premier produit
+        </a>
+    </td>
+</tr>
+{% endfor %}

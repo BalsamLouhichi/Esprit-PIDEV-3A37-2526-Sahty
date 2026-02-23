@@ -4,6 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+
     app.ia_evenement.python_default: 'python'
     app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
 
@@ -20,16 +21,24 @@ parameters:
         masques: 220
         speaker_monitors: 1
 
+
+    produits_images_directory: '%kernel.project_dir%/public/uploads/images/produits'
+
     app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
     app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
     app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
     app.fastapi_ai.model: '%env(FASTAPI_AI_MODEL)%'
     app.fastapi_ai.use_ollama: '%env(bool:FASTAPI_AI_USE_OLLAMA)%'
+    app.fastapi_ai.ollama_mode: '%env(default::FASTAPI_AI_OLLAMA_MODE)%'
     app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
     app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
+    app.fastapi_semantic.endpoint: '%env(default::FASTAPI_SEMANTIC_ENDPOINT)%'
+    app.fastapi_semantic.timeout: '%env(int:FASTAPI_SEMANTIC_TIMEOUT)%'
+    app.fastapi_semantic.api_key: '%env(default::FASTAPI_SEMANTIC_API_KEY)%'
 
 
 services:
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -77,8 +86,36 @@ services:
             $lang: '%app.fastapi_ai.lang%'
             $model: '%app.fastapi_ai.model%'
             $useOllama: '%app.fastapi_ai.use_ollama%'
+            $ollamaMode: '%app.fastapi_ai.ollama_mode%'
             $timeout: '%app.fastapi_ai.timeout%'
             $apiKey: '%app.fastapi_ai.api_key%'
+
+    App\Integration\FastApiSemanticSearchClient:
+        arguments:
+            $endpoint: '%app.fastapi_semantic.endpoint%'
+            $timeout: '%app.fastapi_semantic.timeout%'
+            $apiKey: '%app.fastapi_semantic.api_key%'
+
+    App\Service\AppointmentNotificationMailer:
+        arguments:
+            $fromAddress: 'no-reply@sahty.local'
+
+    App\Service\MeetingSchedulerService:
+        arguments:
+            $provider: '%env(default::APP_MEETING_PROVIDER)%'
+
+    App\Service\MeetingLinkGenerator:
+        arguments:
+            $provider: '%env(default::APP_MEETING_PROVIDER)%'
+            $jitsiDomain: '%env(default::APP_JITSI_DOMAIN)%'
+
+    App\Service\GoogleMeetApiService:
+        arguments:
+            $clientId: '%env(default::GOOGLE_CLIENT_ID)%'
+            $clientSecret: '%env(default::GOOGLE_CLIENT_SECRET)%'
+            $refreshToken: '%env(default::GOOGLE_REFRESH_TOKEN)%'
+            $calendarId: '%env(default::GOOGLE_CALENDAR_ID)%'
+            $timezone: '%env(default::GOOGLE_MEET_TIMEZONE)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

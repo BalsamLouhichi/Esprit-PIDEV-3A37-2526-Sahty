@@ -381,6 +381,80 @@
             border: 2px solid rgba(117, 194, 246, 0.2);
         }
 
+        .recommendation-panel {
+            background: #fff;
+            border: 2px solid rgba(117, 194, 246, 0.35);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .recommendation-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .recommendation-title {
+            color: var(--primary-dark);
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .recommendation-subtitle {
+            color: var(--dark-light);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .recommendation-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+        }
+
+        .recommendation-card {
+            border: 1px solid rgba(117, 194, 246, 0.4);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(29, 93, 155, 0.15);
+            border-color: var(--primary);
+        }
+
+        .recommendation-name {
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .recommendation-specialty {
+            font-size: 0.82rem;
+            color: var(--dark-light);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .recommendation-distance {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .recommendation-status {
+            font-size: 0.85rem;
+            color: var(--dark-light);
+            font-weight: 600;
+        }
+
         /* ============ CUSTOM DROPDOWN POUR RECHERCHE ============ */
         .custom-dropdown {
             position: relative;
@@ -1019,9 +1093,38 @@
                         <div class="form-field">
                             <label for="searchDoctor"><i class="fas fa-user-md"></i> Sélectionner un médecin</label>
                             
+                            <div class="recommendation-panel">
+                                <div class="recommendation-header">
+                                    <div>
+                                        <div class="recommendation-title">
+                                            <i class="fas fa-location-dot"></i> Médecins les plus proches
+                                        </div>
+                                        <div class="recommendation-subtitle">Basé sur votre position actuelle</div>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="askGeoBtn" title="Activer la position">
+                                            <i class="fas fa-location-crosshairs"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="refreshRecommendationsBtn" title="Rafraîchir">
+                                            <i class="fas fa-rotate-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="recommendation-status" id="recommendationStatus">Chargement des recommandations...</div>
+                                <div class="recommendation-list" id="recommendationList"></div>
+                            </div>
+
                             <div class="custom-dropdown">
-                                
-                                
+                                <div class="search-wrapper">
+                                    <input
+                                        type="text"
+                                        class="search-input"
+                                        id="searchDoctor"
+                                        placeholder="Rechercher un médecin par nom ou spécialité..."
+                                        autocomplete="off"
+                                    >
+                                    <i class="fas fa-search search-icon"></i>
+                                </div>
                                 <div class="dropdown-list" id="dropdownList"></div>
                             </div>
 
@@ -1098,6 +1201,23 @@
                     </div>
                 </div>
 
+                <!-- Section type de consultation -->
+                <div class="section-block">
+                    <div class="section-header">
+                        <div class="section-icon"><i class="fas fa-laptop-medical"></i></div>
+                        <div class="section-title-wrap">
+                            <h2>Type de consultation</h2>
+                            <p>Choisissez entre présentiel et consultation en ligne</p>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        {{ form_label(form.typeConsultation, 'Mode de consultation') }}
+                        {{ form_widget(form.typeConsultation, {attr: {class: 'form-control'}}) }}
+                        {{ form_errors(form.typeConsultation) }}
+                    </div>
+                </div>
+
                 <!-- Section motif -->
                 <div class="section-block">
                     <div class="section-header">
@@ -1134,24 +1254,43 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const medecinsData = {{ medecins|default([])|json_encode|raw }};
+    const ENDPOINT_LOCATION_LATEST = '{{ path('api_patient_location_latest') }}';
+    const ENDPOINT_LOCATION_SAVE = '{{ path('api_patient_location_save') }}';
+    const ENDPOINT_RECOMMENDATION = '{{ path('api_rdv_recommendation_nearest') }}';
+
+    const medecinsData = {{ medecins_json|default([])|json_encode|raw }};
     const medecinsById = {};
     medecinsData.forEach(m => medecinsById[m.id] = m);
 
     const searchInput = document.getElementById('searchDoctor');
-    const medecinSelect = document.getElementById('medecinSelect');
+    const medecinSelect = document.getElementById('medecinSelect') || document.querySelector('select[name$="[medecin]"]');
     const dropdownList = document.getElementById('dropdownList');
     const doctorDetailsCard = document.getElementById('doctorDetailsCard');
     const noResults = document.getElementById('noResults');
-    const dateInput = document.getElementById('dateInput');
-    const timeInput = document.getElementById('timeInput');
+    const dateInput = document.getElementById('dateInput') || document.querySelector('input[name$="[dateRdv]"]');
+    const timeInput = document.getElementById('timeInput') || document.querySelector('input[name$="[heureRdv]"]');
     const reasonInput = document.getElementById('reasonInput');
     const form = document.getElementById('rdvForm');
     const submitBtn = document.getElementById('submitBtn');
     const dateError = document.getElementById('dateError');
     const timeError = document.getElementById('timeError');
+    const recommendationStatus = document.getElementById('recommendationStatus');
+    const recommendationList = document.getElementById('recommendationList');
+    const refreshRecommendationsBtn = document.getElementById('refreshRecommendationsBtn');
+    const askGeoBtn = document.getElementById('askGeoBtn');
 
     let selectedMedecinId = null;
+    let patientCoordinates = null;
+
+    function setRecommendationStatus(message) {
+        if (recommendationStatus) {
+            recommendationStatus.textContent = message;
+        }
+    }
+
+    function appendRecommendationDebug(message) {
+        setRecommendationStatus(message);
+    }
 
     /* === Fonction pour afficher la liste déroulante === */
     function renderDropdown(filteredMedecins) {
@@ -1191,24 +1330,244 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.classList.add('active');
     }
 
+    function renderRecommendations(items) {
+        recommendationList.innerHTML = '';
+
+        if (!Array.isArray(items) || items.length === 0) {
+            recommendationStatus.textContent = 'Aucun médecin proche trouvé (vérifiez les adresses cabinet).';
+            return;
+        }
+
+        recommendationStatus.textContent = `Top ${items.length} médecin(s) proches de vous`;
+
+        items.forEach(item => {
+            const med = medecinsById[item.id];
+            if (!med) {
+                return;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'recommendation-card';
+            card.innerHTML = `
+                <div class="recommendation-name">Dr. ${med.prenom || ''} ${med.nom || ''}</div>
+                <div class="recommendation-specialty">${med.specialite || 'Généraliste'}</div>
+                <div class="recommendation-distance"><i class="fas fa-route"></i> ${Number(item.distance_km).toFixed(2)} km</div>
+            `;
+
+            card.addEventListener('click', function() {
+                selectMedecin(med);
+                searchInput.focus();
+            });
+
+            recommendationList.appendChild(card);
+        });
+    }
+
+    async function hasLatestPatientLocation() {
+        if (!ENDPOINT_LOCATION_LATEST) {
+            return false;
+        }
+        try {
+            const response = await fetch(ENDPOINT_LOCATION_LATEST, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                return false;
+            }
+            const data = await response.json();
+            return !!(data && data.success && data.location);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async function requestAndSavePatientLocation() {
+        if (!('geolocation' in navigator)) {
+            recommendationStatus.textContent = 'Géolocalisation non supportée par ce navigateur.';
+            return false;
+        }
+        if (!window.isSecureContext) {
+            recommendationStatus.textContent = 'La géolocalisation nécessite HTTPS (ou localhost).';
+            return false;
+        }
+
+        recommendationStatus.textContent = 'Demande de permission de localisation...';
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                });
+            });
+
+            patientCoordinates = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+            };
+
+            if (!ENDPOINT_LOCATION_SAVE) {
+                recommendationStatus.textContent = 'Position detectee. Enregistrement serveur indisponible.';
+                return true;
+            }
+
+            const saveUrl = new URL(ENDPOINT_LOCATION_SAVE, window.location.origin).toString();
+            const saveResponse = await fetch(saveUrl, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    latitude: patientCoordinates.latitude,
+                    longitude: patientCoordinates.longitude,
+                    accuracy: patientCoordinates.accuracy,
+                }),
+            });
+
+            if (!saveResponse.ok) {
+                recommendationStatus.textContent = 'Position détectée mais non enregistrée.';
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            if (error && error.code === 1) {
+                recommendationStatus.textContent = 'Permission refusée. Activez la localisation pour voir les médecins proches.';
+                return false;
+            }
+            recommendationStatus.textContent = 'Impossible de récupérer votre position.';
+            return false;
+        }
+    }
+
+    async function autoAskGeolocationOnLoad() {
+        await requestAndSavePatientLocation();
+    }
+
+    async function ensurePatientLocation() {
+        const hasLocation = await hasLatestPatientLocation();
+        if (hasLocation) {
+            return true;
+        }
+        return await requestAndSavePatientLocation();
+    }
+
+    async function loadNearbyRecommendations() {
+        if (!ENDPOINT_RECOMMENDATION) {
+            recommendationStatus.textContent = 'Recommandations indisponibles pour le moment.';
+            recommendationList.innerHTML = '';
+            return;
+        }
+        recommendationStatus.textContent = 'Chargement des recommandations...';
+        recommendationList.innerHTML = '';
+        let timer = null;
+
+        try {
+            const ready = await ensurePatientLocation();
+            if (!ready) {
+                return;
+            }
+
+            recommendationStatus.textContent = 'Recherche des médecins proches...';
+            const controller = new AbortController();
+            timer = setTimeout(() => controller.abort(), 12000);
+            const response = await fetch(`${ENDPOINT_RECOMMENDATION}?limit=3&max_km=25`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (e) {
+                recommendationStatus.textContent = 'Réponse API invalide (JSON).';
+                return;
+            }
+
+            if (!response.ok || !data.success) {
+                recommendationStatus.textContent = data.error || 'Recommandation indisponible pour le moment.';
+                return;
+            }
+
+            renderRecommendations(data.recommendations || []);
+            if (data.used_distance_fallback) {
+                const fallbackKm = Number(data.fallback_max_km || 60);
+                recommendationStatus.textContent = `Top ${(data.recommendations || []).length} médecin(s) proches (rayon étendu à ${fallbackKm} km)`;
+            }
+        } catch (error) {
+            recommendationStatus.textContent = (error && error.name === 'AbortError')
+                ? 'Recommandation trop lente (timeout). Vérifiez les adresses cabinet.'
+                : 'Impossible de charger les recommandations.';
+        } finally {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        }
+    }
+
+    // Bind immediat des boutons (anti-blocage si une erreur JS survient plus bas).
+    if (refreshRecommendationsBtn) {
+        refreshRecommendationsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setRecommendationStatus('Rafraichissement...');
+            autoAskGeolocationOnLoad();
+    loadNearbyRecommendations();
+        });
+    }
+    if (askGeoBtn) {
+        askGeoBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setRecommendationStatus('Activation position...');
+            const ok = await requestAndSavePatientLocation();
+            if (ok) {
+                await loadNearbyRecommendations();
+            }
+        });
+    }
+
     /* === Fonction pour sélectionner un médecin === */
     function selectMedecin(med) {
         selectedMedecinId = med.id;
-        medecinSelect.value = med.id;
-        searchInput.value = `Dr. ${med.prenom || ''} ${med.nom || ''} - ${med.specialite || 'Généraliste'}`;
+        if (!medecinSelect) {
+            appendRecommendationDebug('Champ medecin introuvable dans le formulaire.');
+            return;
+        }
+
+        medecinSelect.value = String(med.id);
+        if (searchInput) {
+            searchInput.value = `Dr. ${med.prenom || ''} ${med.nom || ''} - ${med.specialite || 'Généraliste'}`;
+        }
         
         dropdownList.classList.remove('show');
-        searchInput.classList.remove('active');
+        if (searchInput) {
+            searchInput.classList.remove('active');
+        }
         
         // Afficher les détails
-        document.getElementById('doctorName').textContent = `Dr. ${med.prenom || ''} ${med.nom || ''}`.trim();
-        document.getElementById('doctorSpecialty').textContent = med.specialite || 'Généraliste';
-        document.getElementById('doctorExperience').textContent = med.anneeExperience ? `${med.anneeExperience} an${med.anneeExperience>1?'s':''}` : '-';
-        document.getElementById('doctorGrade').textContent = med.grade || '-';
-        document.getElementById('doctorEstablishment').textContent = med.nomEtablissement || '-';
+        const doctorNameEl = document.getElementById('doctorName');
+        const doctorSpecialtyEl = document.getElementById('doctorSpecialty');
+        const doctorExperienceEl = document.getElementById('doctorExperience');
+        const doctorGradeEl = document.getElementById('doctorGrade');
+        const doctorEstablishmentEl = document.getElementById('doctorEstablishment');
+        const doctorAvatarEl = document.getElementById('doctorAvatar');
+
+        if (doctorNameEl) doctorNameEl.textContent = `Dr. ${med.prenom || ''} ${med.nom || ''}`.trim();
+        if (doctorSpecialtyEl) doctorSpecialtyEl.textContent = med.specialite || 'Généraliste';
+        if (doctorExperienceEl) doctorExperienceEl.textContent = med.anneeExperience ? `${med.anneeExperience} an${med.anneeExperience>1?'s':''}` : '-';
+        if (doctorGradeEl) doctorGradeEl.textContent = med.grade || '-';
+        if (doctorEstablishmentEl) doctorEstablishmentEl.textContent = med.nomEtablissement || '-';
         
         const initials = ((med.prenom||'').charAt(0) + (med.nom||'').charAt(0)).toUpperCase();
-        document.getElementById('doctorAvatar').textContent = initials || '👨‍⚕️';
+        if (doctorAvatarEl) doctorAvatarEl.textContent = initials || '👨‍⚕️';
         
         doctorDetailsCard.classList.add('show');
         updateTimeline(1);
@@ -1258,52 +1617,71 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+
     /* === Date ≥ aujourd'hui et week-end bloqués === */
     const today = new Date();
     today.setHours(0,0,0,0);
-    dateInput.min = today.toISOString().split('T')[0];
+    if (dateInput) {
+        dateInput.min = today.toISOString().split('T')[0];
 
-    dateInput.addEventListener('change', function() {
-        const selectedDate = new Date(this.value);
-        selectedDate.setHours(0,0,0,0);
+        dateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            selectedDate.setHours(0,0,0,0);
 
-        if(selectedDate < today) {
-            dateError.textContent = 'La date doit être à partir d'aujourd'hui.';
-            dateError.style.display = 'flex';
-            this.value = '';
-            return;
-        }
-        const day = selectedDate.getDay();
-        if(day === 0 || day === 6){
-            dateError.textContent = 'Les rendez-vous ne sont pas disponibles le week-end.';
-            dateError.style.display = 'flex';
-            this.value = '';
-            return;
-        }
-        dateError.style.display = 'none';
-        updateTimeline(2);
-    });
+            if(selectedDate < today) {
+                if (dateError) {
+                    dateError.textContent = "La date doit être à partir d'aujourd'hui.";
+                    dateError.style.display = 'flex';
+                }
+                this.value = '';
+                return;
+            }
+            const day = selectedDate.getDay();
+            if(day === 0 || day === 6){
+                if (dateError) {
+                    dateError.textContent = 'Les rendez-vous ne sont pas disponibles le week-end.';
+                    dateError.style.display = 'flex';
+                }
+                this.value = '';
+                return;
+            }
+            if (dateError) {
+                dateError.style.display = 'none';
+            }
+            updateTimeline(2);
+        });
+    } else {
+    }
 
     /* === Heure 09:00 → 17:00 === */
-    timeInput.addEventListener('change', function() {
-        if(!this.value) return;
-        const [h,m] = this.value.split(':').map(Number);
-        if(h < 9 || h > 17 || (h === 17 && m > 0)){
-            timeError.textContent = 'L'heure doit être entre 09:00 et 17:00.';
-            timeError.style.display = 'flex';
-            this.value = '';
-            return;
-        }
-        timeError.style.display = 'none';
-        updateTimeline(3);
-    });
+    if (timeInput) {
+        timeInput.addEventListener('change', function() {
+            if(!this.value) return;
+            const [h,m] = this.value.split(':').map(Number);
+            if(h < 9 || h > 17 || (h === 17 && m > 0)){
+                if (timeError) {
+                    timeError.textContent = "L'heure doit être entre 09:00 et 17:00.";
+                    timeError.style.display = 'flex';
+                }
+                this.value = '';
+                return;
+            }
+            if (timeError) {
+                timeError.style.display = 'none';
+            }
+            updateTimeline(3);
+        });
+    } else {
+    }
 
     /* === Motif === */
-    reasonInput.addEventListener('input', function() {
-        if(this.value.trim()) {
-            updateTimeline(4);
-        }
-    });
+    if (reasonInput) {
+        reasonInput.addEventListener('input', function() {
+            if(this.value.trim()) {
+                updateTimeline(4);
+            }
+        });
+    }
 
     /* === Mise à jour de la timeline === */
     function updateTimeline(step) {
@@ -1322,38 +1700,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /* === Validation finale formulaire === */
-    form.addEventListener('submit', function(e){
-        let hasError = false;
-        
-        if(!dateInput.value){ 
-            dateError.textContent='Veuillez choisir une date valide.'; 
-            dateError.style.display='flex'; 
-            hasError=true; 
-        }
-        
-        if(!timeInput.value){ 
-            timeError.textContent='Veuillez choisir une heure valide.'; 
-            timeError.style.display='flex'; 
-            hasError=true; 
-        }
-        
-        if(!medecinSelect.value || medecinSelect.value==='0'){ 
-            alert('⚠️ Veuillez sélectionner un médecin'); 
-            searchInput.focus(); 
-            hasError=true; 
-        }
-        
-        if(hasError){ 
-            e.preventDefault(); 
-            return false; 
-        }
-        
-        submitBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> <span>Traitement en cours...</span>';
-        submitBtn.disabled=true;
-    });
+    if (form) {
+        form.addEventListener('submit', function(e){
+            let hasError = false;
+            
+            if(!dateInput || !dateInput.value){ 
+                if (dateError) {
+                    dateError.textContent='Veuillez choisir une date valide.'; 
+                    dateError.style.display='flex'; 
+                }
+                hasError=true; 
+            }
+            
+            if(!timeInput || !timeInput.value){ 
+                if (timeError) {
+                    timeError.textContent='Veuillez choisir une heure valide.'; 
+                    timeError.style.display='flex'; 
+                }
+                hasError=true; 
+            }
+            
+            if(!medecinSelect || !medecinSelect.value || medecinSelect.value==='0'){ 
+                alert('⚠️ Veuillez sélectionner un médecin'); 
+                if (searchInput) {
+                    searchInput.focus(); 
+                }
+                hasError=true; 
+            }
+            
+            if(hasError){ 
+                e.preventDefault(); 
+                return false; 
+            }
+            
+            if (submitBtn) {
+                submitBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> <span>Traitement en cours...</span>';
+                submitBtn.disabled=true;
+            }
+        });
+    } else {
+    }
+
+    autoAskGeolocationOnLoad();
+    loadNearbyRecommendations();
 
     console.log('🏥 MEDINOVA - Formulaire de rendez-vous avec recherche interactive chargé!');
     console.log(`📊 ${medecinsData.length} médecins disponibles`);
 });
 </script>
 {% endblock %}
+
+
+

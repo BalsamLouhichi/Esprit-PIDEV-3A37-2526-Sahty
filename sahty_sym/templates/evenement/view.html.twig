@@ -363,9 +363,12 @@
 
         .experience-poster {
             border-radius: 12px;
-            color: #fff;
+            color: #0f172a;
             padding: 1rem;
             min-height: 260px;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
         }
 
         .poster-title {
@@ -376,7 +379,7 @@
         }
 
         .poster-subtitle {
-            opacity: 0.95;
+            color: #334155;
             margin-bottom: 0.7rem;
         }
 
@@ -387,7 +390,32 @@
             padding: 0.2rem 0.55rem;
             margin: 0 0.35rem 0.35rem 0;
             font-size: 0.75rem;
-            background: rgba(255,255,255,0.16);
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .poster-ribbon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.78rem;
+            padding: 0.3rem 0.75rem;
+            margin-bottom: 0.65rem;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .poster-plan-list {
+            margin: 0.75rem 0 0;
+            padding-left: 1.1rem;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+
+        .poster-plan-list li {
+            margin-bottom: 0.35rem;
         }
 
         .programme-grid {
@@ -735,8 +763,11 @@
             <div class="event-card mb-4">
                 <h5 class="section-title"><i class="fas fa-palette"></i> Affiche et programme IA</h5>
                 <div class="poster-frame">
-                    <div id="event-poster-printable" class="experience-poster" style="background: {{ experience_pack.poster.theme.bg }};">
-                        <div class="small fw-bold mb-2">SAHTY EVENTS</div>
+                    <div id="event-poster-printable" class="experience-poster">
+                        <div class="poster-ribbon" style="background: {{ experience_pack.poster.theme.bg }};">
+                            <i class="fas fa-star"></i>
+                            SAHTY EVENTS
+                        </div>
                         <div class="poster-title">{{ experience_pack.poster.title }}</div>
                         <div class="poster-subtitle">{{ experience_pack.poster.subtitle }}</div>
                         <div class="small mb-2"><i class="fas fa-calendar-alt me-1"></i>{{ experience_pack.poster.date_label }}</div>
@@ -747,12 +778,28 @@
                                 <span class="poster-chip">{{ chip }}</span>
                             {% endfor %}
                         </div>
+                        {% if experience_pack.cards is defined and experience_pack.cards|length > 0 %}
+                            <div class="small fw-semibold mt-3 mb-1">Programme detaille</div>
+                            <ol class="poster-plan-list">
+                                {% for card in experience_pack.cards %}
+                                    <li>
+                                        <strong>{{ card.title }}</strong>
+                                        <span class="text-muted"> - {{ card.time_label }} ({{ card.duration }} min)</span>
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="d-flex justify-content-end mb-3">
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="telechargerAffichePdf()">
-                        <i class="fas fa-file-pdf me-1"></i>Telecharger l affiche PDF
-                    </button>
+                    <a
+                        class="btn btn-sm btn-outline-primary"
+                        href="{{ path('evenements_evenement_affiche_print', {'id': evenement.id}) }}"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <i class="fas fa-file-pdf me-1"></i>Ouvrir l affiche imprimable
+                    </a>
                 </div>
                 <div class="programme-grid">
                     {% for card in experience_pack.cards %}
@@ -770,7 +817,7 @@
             <div class="event-card">
                 <h5 class="section-title"><i class="fas fa-align-left"></i> Description</h5>
                 <div class="event-description">
-                    {{ evenement.description ?: 'Aucune description fournie pour cet événement.' }}
+                    {{ (display_description ?: 'Aucune description fournie pour cet événement.')|nl2br }}
                 </div>
             </div>
         </div>
@@ -956,7 +1003,6 @@
 
 {% include 'partials/footer.html.twig' %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-dismiss alerts after 4 seconds (shorter time)
@@ -981,20 +1027,6 @@
         });
     });
 
-    function telechargerAffichePdf() {
-        const node = document.getElementById('event-poster-printable');
-        if (!node || typeof html2pdf === 'undefined') {
-            return;
-        }
-        const titre = '{{ evenement.titre|default("evenement")|replace({" ": "-", "/": "-"})|lower }}';
-        html2pdf().set({
-            margin: [8, 8, 8, 8],
-            filename: `affiche-sahty-${titre}.pdf`,
-            image: { type: 'jpeg', quality: 0.97 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(node).save();
-    }
 </script>
 </body>
 </html>

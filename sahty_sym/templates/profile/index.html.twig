@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -31,7 +31,7 @@
             min-height: 100vh;
         }
 
-        /* ============ NAVBAR PERSONNALISÉE ============ */
+        /* ============ NAVBAR PERSONNALISÃ‰E ============ */
         .profile-navbar {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -515,45 +515,7 @@
 </head>
 
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg profile-navbar sticky-top">
-        <div class="container">
-            <a href="{{ path('app_home') }}" class="navbar-brand">
-                <i class="fas fa-heartbeat"></i>
-                Sahty
-            </a>
-            
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
-                        {% if app.user.photoProfil %}
-                            <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 2px solid var(--primary);">
-                        {% else %}
-                            <span style="width: 35px; height: 35px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; margin-right: 10px;">
-                                <i class="fas fa-user"></i>
-                            </span>
-                        {% endif %}
-                        {{ app.user.prenom|default(app.user.email|split('@')[0]) }}
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <a href="{{ path('app_profile') }}" class="dropdown-item">
-                            <i class="fas fa-user"></i>Mon Profil
-                        </a>
-                        <a href="{{ path('app_profile_edit') }}" class="dropdown-item">
-                            <i class="fas fa-edit"></i>Modifier Profil
-                        </a>
-                        <a href="{{ path('app_profile_change_password') }}" class="dropdown-item">
-                            <i class="fas fa-key"></i>Changer mot de passe
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="{{ path('app_logout') }}" class="dropdown-item text-danger">
-                            <i class="fas fa-sign-out-alt"></i>Déconnexion
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+    {% include 'partials/navbar.html.twig' %}
 
     <div class="container profile-container">
         <div class="row justify-content-center">
@@ -596,7 +558,7 @@
                         
                         <div class="role-badge">
                             {% if user.role == 'medecin' %}
-                                <i class="fas fa-user-md"></i> MÉDECIN
+                                <i class="fas fa-user-md"></i> MÃ‰DECIN
                             {% elseif user.role == 'patient' %}
                                 <i class="fas fa-user-injured"></i> PATIENT
                             {% elseif user.role == 'responsable_labo' %}
@@ -626,8 +588,8 @@
                                                 <i class="fas fa-phone"></i>
                                             </div>
                                             <div class="info-item-content">
-                                                <div class="info-item-label">Téléphone</div>
-                                                <div class="info-item-value">{{ user.telephone ?: 'Non renseigné' }}</div>
+                                                <div class="info-item-label">TÃ©lÃ©phone</div>
+                                                <div class="info-item-value">{{ user.telephone ?: 'Non renseignÃ©' }}</div>
                                             </div>
                                         </div>
                                         
@@ -671,7 +633,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Informations spécifiques au rôle -->
+                            <!-- Informations spÃ©cifiques au rÃ´le -->
                             <div class="col-md-6">
                                 <div class="info-card">
                                     <div class="info-card-header">
@@ -695,7 +657,7 @@
                                         </div>
                                         <h3 class="info-card-title">
                                             {% if user.role == 'medecin' %}Informations professionnelles
-                                            {% elseif user.role == 'patient' %}Informations de santé
+                                            {% elseif user.role == 'patient' %}Informations de santÃ©
                                             {% elseif user.role == 'responsable_labo' %}Laboratoire
                                             {% elseif user.role == 'responsable_para' %}Pharmacie
                                             {% endif %}
@@ -708,8 +670,8 @@
                                                     <i class="fas fa-stethoscope"></i>
                                                 </div>
                                                 <div class="info-item-content">
-                                                    <div class="info-item-label">Spécialité</div>
-                                                    <div class="info-item-value">{{ user.specialite ?: 'Non renseignée' }}</div>
+                                                    <div class="info-item-label">SpÃ©cialitÃ©</div>
+                                                    <div class="info-item-value">{{ user.specialite ?: 'Non renseignÃ©e' }}</div>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -717,8 +679,8 @@
                                                     <i class="fas fa-briefcase"></i>
                                                 </div>
                                                 <div class="info-item-content">
-                                                    <div class="info-item-label">Expérience</div>
-                                                    <div class="info-item-value">{{ user.anneeExperience ? user.anneeExperience ~ ' ans' : 'Non renseignée' }}</div>
+                                                    <div class="info-item-label">ExpÃ©rience</div>
+                                                    <div class="info-item-value">{{ user.anneeExperience ? user.anneeExperience ~ ' ans' : 'Non renseignÃ©e' }}</div>
                                                 </div>
                                             </div>
                                             {% if user.adresseCabinet %}
@@ -738,7 +700,7 @@
                                                     <i class="fas fa-phone-alt"></i>
                                                 </div>
                                                 <div class="info-item-content">
-                                                    <div class="info-item-label">Tél. cabinet</div>
+                                                    <div class="info-item-label">TÃ©l. cabinet</div>
                                                     <div class="info-item-value">{{ user.telephoneCabinet }}</div>
                                                 </div>
                                             </div>
@@ -753,8 +715,8 @@
                                                     <div class="info-item-label">Sexe</div>
                                                     <div class="info-item-value">
                                                         {% if user.sexe == 'M' %}Masculin
-                                                        {% elseif user.sexe == 'F' %}Féminin
-                                                        {% else %}Non renseigné
+                                                        {% elseif user.sexe == 'F' %}FÃ©minin
+                                                        {% else %}Non renseignÃ©
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -765,7 +727,7 @@
                                                 </div>
                                                 <div class="info-item-content">
                                                     <div class="info-item-label">Groupe sanguin</div>
-                                                    <div class="info-item-value">{{ user.groupeSanguin ?: 'Non renseigné' }}</div>
+                                                    <div class="info-item-value">{{ user.groupeSanguin ?: 'Non renseignÃ©' }}</div>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -774,7 +736,7 @@
                                                 </div>
                                                 <div class="info-item-content">
                                                     <div class="info-item-label">Contact urgence</div>
-                                                    <div class="info-item-value">{{ user.contactUrgence ?: 'Non renseigné' }}</div>
+                                                    <div class="info-item-value">{{ user.contactUrgence ?: 'Non renseignÃ©' }}</div>
                                                 </div>
                                             </div>
                                             
@@ -785,7 +747,7 @@
                                                 </div>
                                                 <div class="info-item-content">
                                                     <div class="info-item-label">ID Laboratoire</div>
-                                                    <div class="info-item-value">{{ user.laboratoireId ?: 'Non renseigné' }}</div>
+                                                    <div class="info-item-value">{{ user.laboratoireId ?: 'Non renseignÃ©' }}</div>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -807,7 +769,7 @@
                                                 </div>
                                                 <div class="info-item-content">
                                                     <div class="info-item-label">ID Pharmacie</div>
-                                                    <div class="info-item-value">{{ user.parapharmacieId ?: 'Non renseigné' }}</div>
+                                                    <div class="info-item-value">{{ user.parapharmacieId ?: 'Non renseignÃ©' }}</div>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -837,7 +799,7 @@
                                     </div>
                                     <div class="document-info">
                                         <div class="document-title">Document professionnel</div>
-                                        <small class="text-muted">Diplôme, certificat ou pièce jointe</small>
+                                        <small class="text-muted">DiplÃ´me, certificat ou piÃ¨ce jointe</small>
                                     </div>
                                     <div class="document-action">
                                         <a href="{{ asset(user.documentPdf) }}" target="_blank" class="btn-document">
@@ -849,7 +811,7 @@
                         </div>
                         {% endif %}
 
-                        <!-- Section Disponibilités -->
+                        <!-- Section DisponibilitÃ©s -->
                         {% if user.role == 'medecin' and user.disponibilite %}
                         <div class="row mt-4">
                             <div class="col-12">
@@ -858,7 +820,7 @@
                                         <div class="info-card-icon icon-medecin">
                                             <i class="fas fa-calendar-check"></i>
                                         </div>
-                                        <h3 class="info-card-title">Disponibilités</h3>
+                                        <h3 class="info-card-title">DisponibilitÃ©s</h3>
                                     </div>
                                     <div class="info-card-body">
                                         <div class="info-item">
@@ -888,7 +850,7 @@
                         </a>
                         <a href="{{ path('app_home') }}" class="btn-action btn-outline-action">
                             <i class="fas fa-home"></i>
-                            Retour à l'accueil
+                            Retour Ã  l'accueil
                         </a>
                     </div>
                 </div>
@@ -906,7 +868,7 @@
             });
         });
 
-        console.log('👤 SAHTY - Page de profil premium chargée avec succès!');
+        console.log('ðŸ‘¤ SAHTY - Page de profil premium chargÃ©e avec succÃ¨s!');
     </script>
 </body>
 </html>

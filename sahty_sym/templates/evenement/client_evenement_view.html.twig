@@ -658,9 +658,14 @@
                                     </form>
                                 {% endif %}
                                 
-                                <button class="btn-secondary-custom" onclick="window.print()">
-                                    <i class="fas fa-share-alt me-2"></i>Partager
-                                </button>
+                                <a
+                                    class="btn-secondary-custom text-decoration-none d-inline-flex align-items-center justify-content-center"
+                                    href="{{ path('evenements_evenement_affiche_print', {'id': evenement.id}) }}"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    <i class="fas fa-file-pdf me-2"></i>Affiche PDF
+                                </a>
                             </div>
                         </div>
                     </div>

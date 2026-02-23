@@ -5,10 +5,15 @@ namespace App\Controller;
 use App\Entity\RendezVous;
 use App\Entity\FicheMedicale;
 use App\Entity\Patient;
+use App\Entity\Medecin;
 use App\Form\RendezVousType;
 use App\Repository\MedecinRepository;
 use App\Repository\RendezVousRepository;
+use App\Service\ConsultationDurationAiService;
+use App\Service\MedecinProximityRecommendationService;
+use App\Service\PatientAppointmentGuidanceService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +22,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class RDVController extends AbstractController
 {
+    private const SESSION_KEY_PATIENT_LOCATION = 'patient_location_latest';
+
     /**
      * 📋 Page de prise de rendez-vous (GET/POST)
      */
@@ -88,9 +95,15 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
+        $medecinsActifs = $medecinRepository->findBy(['estActif' => true]);
+
         return $this->render('rdv/prendre.html.twig', [
             'form' => $form->createView(),
-            'medecins' => $medecinRepository->findBy(['estActif' => true]),
+            'medecins' => $medecinsActifs,
+            'medecins_json' => array_map(
+                fn (Medecin $medecin) => $this->buildMedecinPayload($medecin),
+                $medecinsActifs
+            ),
         ]);
     }
 
@@ -211,13 +224,29 @@ class RDVController extends AbstractController
         ]);
     }
 
+    private function buildMedecinPayload(Medecin $medecin): array
+    {
+        return [
+            'id' => $medecin->getId(),
+            'nom' => $medecin->getNom(),
+            'prenom' => $medecin->getPrenom(),
+            'specialite' => $medecin->getSpecialite(),
+            'anneeExperience' => $medecin->getAnneeExperience(),
+            'grade' => $medecin->getGrade(),
+            'nomEtablissement' => $medecin->getNomEtablissement(),
+            'adresseCabinet' => $medecin->getAdresseCabinet(),
+        ];
+    }
+
     /**
      * 📅 Liste des rendez-vous du patient
      */
     #[Route('/rdv/mes-rdv', name: 'app_rdv_mes_rdv')]
     #[IsGranted('ROLE_PATIENT')]
     public function mesRendezVous(
-        RendezVousRepository $rdvRepository
+        RendezVousRepository $rdvRepository,
+        Request $request,
+        ConsultationDurationAiService $consultationDurationAiService
     ): Response {
         $patient = $this->getUser();
 
@@ -225,14 +254,91 @@ class RDVController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $rdvs = $rdvRepository->findBy(
+        $allRdvs = $rdvRepository->findBy(
             ['patient' => $patient],
             ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']
         );
 
+        $totalItems = count($allRdvs);
+        $perPage = 6;
+        $totalPages = max(1, (int) ceil($totalItems / $perPage));
+        $currentPage = max(1, (int) $request->query->get('page', 1));
+        if ($currentPage > $totalPages) {
+            $currentPage = $totalPages;
+        }
+
+        $offset = ($currentPage - 1) * $perPage;
+        $rdvs = array_slice($allRdvs, $offset, $perPage);
+
+        $stats = [
+            'total' => $totalItems,
+            'attente' => count(array_filter($allRdvs, static fn (RendezVous $r): bool => $r->getStatut() === 'en attente')),
+            'confirme' => count(array_filter(
+                $allRdvs,
+                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'confirm')
+            )),
+            'annule' => count(array_filter(
+                $allRdvs,
+                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'annul')
+            )),
+        ];
+
+        $session = $request->getSession();
+        $predictions = (array) $session->get('consultation_duration_predictions', []);
+        $updated = false;
+
+        foreach ($rdvs as $rdv) {
+            $rdvId = (string) $rdv->getId();
+            if (
+                isset($predictions[$rdvId]) &&
+                array_key_exists('minutes', $predictions[$rdvId]) &&
+                $predictions[$rdvId]['minutes'] !== null
+            ) {
+                continue;
+            }
+
+            $fiche = $rdv->getFicheMedicale();
+            $minutes = $consultationDurationAiService->predict($rdv, $fiche);
+            if ($minutes === null) {
+                $minutes = 22.0;
+            }
+
+            $predictions[$rdvId] = [
+                'minutes' => number_format($minutes, 1, '.', ''),
+                'updated_at' => (new \DateTimeImmutable())->format('c'),
+            ];
+            $updated = true;
+        }
+
+        if ($updated) {
+            $session->set('consultation_duration_predictions', $predictions);
+        }
+
         return $this->render('rdv/mes_rdv.html.twig', [
             'rendez_vous' => $rdvs,
+            'consultation_duration_predictions' => $predictions,
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total_items' => $totalItems,
+            'stats' => $stats,
         ]);
+    }
+
+    #[Route('/rdv/hide-duration-prediction/{id}', name: 'app_rdv_hide_duration_prediction', methods: ['POST'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function hideDurationPrediction(int $id, Request $request, RendezVousRepository $rdvRepository): JsonResponse
+    {
+        $rdv = $rdvRepository->find($id);
+        if (!$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $this->getUser()?->getId()) {
+            return $this->json(['ok' => false, 'message' => 'Rendez-vous introuvable'], 404);
+        }
+
+        $session = $request->getSession();
+        $predictions = (array) $session->get('consultation_duration_predictions', []);
+        unset($predictions[(string) $id]);
+        $session->set('consultation_duration_predictions', $predictions);
+
+        return $this->json(['ok' => true]);
     }
 
     /**
@@ -306,4 +412,141 @@ class RDVController extends AbstractController
         $this->addFlash('success', '✅ Rendez-vous annulé avec succès');
         return $this->redirectToRoute('app_rdv_mes_rdv');
     }
+
+    #[Route('/api/patient/location/latest', name: 'api_patient_location_latest', methods: ['GET'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function patientLocationLatest(Request $request): JsonResponse
+    {
+        $location = $request->getSession()->get(self::SESSION_KEY_PATIENT_LOCATION);
+        if (!is_array($location)) {
+            return $this->json([
+                'success' => true,
+                'location' => null,
+            ]);
+        }
+
+        return $this->json([
+            'success' => true,
+            'location' => [
+                'latitude' => (float) ($location['latitude'] ?? 0.0),
+                'longitude' => (float) ($location['longitude'] ?? 0.0),
+                'accuracy' => isset($location['accuracy']) ? (float) $location['accuracy'] : null,
+                'updated_at' => (string) ($location['updated_at'] ?? ''),
+            ],
+        ]);
+    }
+
+    #[Route('/api/patient/location/save', name: 'api_patient_location_save', methods: ['POST'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function patientLocationSave(Request $request): JsonResponse
+    {
+        $payload = json_decode((string) $request->getContent(), true);
+        if (!is_array($payload)) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Payload JSON invalide.',
+            ], 400);
+        }
+
+        $latitude = isset($payload['latitude']) ? (float) $payload['latitude'] : null;
+        $longitude = isset($payload['longitude']) ? (float) $payload['longitude'] : null;
+        $accuracy = isset($payload['accuracy']) ? (float) $payload['accuracy'] : null;
+
+        if ($latitude === null || $longitude === null || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Coordonnees invalides.',
+            ], 422);
+        }
+
+        $location = [
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'accuracy' => $accuracy,
+            'updated_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+        ];
+        $request->getSession()->set(self::SESSION_KEY_PATIENT_LOCATION, $location);
+
+        return $this->json([
+            'success' => true,
+            'location' => $location,
+        ]);
+    }
+
+    #[Route('/api/rdv/recommendation/nearest', name: 'api_rdv_recommendation_nearest', methods: ['GET'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function recommendationNearest(
+        Request $request,
+        MedecinRepository $medecinRepository,
+        MedecinProximityRecommendationService $recommendationService
+    ): JsonResponse {
+        $location = $request->getSession()->get(self::SESSION_KEY_PATIENT_LOCATION);
+        if (!is_array($location) || !isset($location['latitude'], $location['longitude'])) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Position patient manquante. Autorisez la geolocalisation.',
+            ], 400);
+        }
+
+        $limit = max(1, min(10, (int) $request->query->get('limit', 3)));
+        $maxKm = (float) $request->query->get('max_km', 25);
+        if ($maxKm <= 0) {
+            $maxKm = 25.0;
+        }
+
+        $medecinsActifs = $medecinRepository->findBy(['estActif' => true]);
+
+        $recommendations = $recommendationService->recommendNearest(
+            $medecinsActifs,
+            (float) $location['latitude'],
+            (float) $location['longitude'],
+            $limit,
+            $maxKm
+        );
+
+        $usedDistanceFallback = false;
+        $fallbackMaxKm = null;
+        if ($recommendations === []) {
+            $fallbackMaxKm = max(60.0, $maxKm * 2);
+            $recommendations = $recommendationService->recommendNearest(
+                $medecinsActifs,
+                (float) $location['latitude'],
+                (float) $location['longitude'],
+                $limit,
+                $fallbackMaxKm
+            );
+            $usedDistanceFallback = true;
+        }
+
+        return $this->json([
+            'success' => true,
+            'recommendations' => $recommendations,
+            'used_distance_fallback' => $usedDistanceFallback,
+            'fallback_max_km' => $fallbackMaxKm,
+        ]);
+    }
+
+    #[Route('/api/rdv/{id}/patient-guidance', name: 'api_rdv_patient_guidance', methods: ['GET'])]
+    #[IsGranted('ROLE_PATIENT')]
+    public function patientGuidance(
+        int $id,
+        RendezVousRepository $rdvRepository,
+        PatientAppointmentGuidanceService $guidanceService
+    ): JsonResponse {
+        $rdv = $rdvRepository->find($id);
+        if (!$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $this->getUser()?->getId()) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Rendez-vous introuvable.',
+            ], 404);
+        }
+
+        $guidance = $guidanceService->generate($rdv);
+
+        return $this->json([
+            'success' => true,
+            'guidance' => $guidance,
+        ]);
+    }
 }
+

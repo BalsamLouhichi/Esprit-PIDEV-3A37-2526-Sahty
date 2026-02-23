@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}MEDINOVA - Mes Rendez-vous{% endblock %}
 
@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        /* ============ PALETTE DE COULEURS MÉDICALE PROFESSIONNELLE ============ */
+        /* ============ PALETTE DE COULEURS MEDICALE PROFESSIONNELLE ============ */
         :root {
             --mughal-green: #304D30;
             --prussian-blue: #163A5F;
@@ -259,6 +259,108 @@
             border-left-color: var(--info);
         }
 
+        .duration-prediction-banner {
+            margin-bottom: 22px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid #b9d9f3;
+            background: linear-gradient(135deg, #f5fbff 0%, #e7f4ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .duration-prediction-text {
+            color: #12426a;
+            font-weight: 700;
+        }
+
+        .duration-prediction-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: #d64545;
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .duration-prediction-close:hover {
+            background: #b83232;
+        }
+
+        .pagination-wrap {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-indicator {
+            color: var(--dark-light);
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(117, 194, 246, 0.35);
+        }
+
+        .doctor-notification {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .doctor-notification.confirmed {
+            background: #eaf7ef;
+            border-color: #b6dfc2;
+            color: #1f5f35;
+        }
+
+        .doctor-notification.cancelled {
+            background: #fdecec;
+            border-color: #f5c2c7;
+            color: #8a2530;
+        }
+
+        .doctor-notification.is-hidden {
+            display: none;
+        }
+
+        .btn-notif-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid rgba(29, 93, 155, 0.25);
+            border-radius: 10px;
+            background: #f0f7ff;
+            color: #0f4c81;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-notif-toggle:hover {
+            background: #e2f0ff;
+            border-color: rgba(29, 93, 155, 0.4);
+        }
+
         .alert i {
             font-size: 1.6rem;
             filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
@@ -416,6 +518,12 @@
             background: linear-gradient(135deg, var(--warning) 0%, #C89B5E 100%);
             color: white;
             box-shadow: 0 8px 25px rgba(212, 165, 116, 0.35);
+        }
+
+        .btn-icon-ai {
+            background: linear-gradient(135deg, #2b9348 0%, #1b6b36 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(43, 147, 72, 0.35);
         }
 
         /* Tooltip */
@@ -831,6 +939,49 @@
             z-index: 1;
         }
 
+        .ai-guidance-panel {
+            margin-top: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(29, 93, 155, 0.2);
+            background: linear-gradient(135deg, #f7fbff 0%, #eef6ff 100%);
+            padding: 14px;
+            color: var(--dark);
+        }
+
+        .ai-guidance-panel.is-hidden {
+            display: none;
+        }
+
+        .ai-guidance-panel h5 {
+            margin: 0 0 10px 0;
+            color: var(--primary-dark);
+            font-size: 1rem;
+        }
+
+        .ai-guidance-panel ul {
+            margin: 8px 0 10px 20px;
+            padding: 0;
+        }
+
+        .ai-guidance-badge {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .ai-guidance-badge.low {
+            background: #d7f3df;
+            color: #1f6a35;
+        }
+
+        .ai-guidance-badge.high {
+            background: #ffe2e2;
+            color: #8c1d1d;
+        }
+
         /* ============ EMPTY STATE ============ */
         .empty-state {
             background: rgba(255, 255, 255, 0.95);
@@ -953,7 +1104,7 @@
             <div class="header-content">
                 <div class="header-title">
                     <h1><i class="fas fa-calendar-check"></i> Mes Rendez-vous</h1>
-                    <p>Gérez vos consultations médicales en toute simplicité</p>
+                    <p>Reservez vos consultations medicales en toute simplicite</p>
                 </div>
                 <a href="{{ path('app_rdv_prendre') }}" class="btn btn-primary btn-lg">
                     <i class="fas fa-plus-circle"></i> <span>Nouveau rendez-vous</span>
@@ -990,28 +1141,28 @@
                     <div class="stat-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <h3>{{ rendez_vous|length }}</h3>
+                    <h3>{{ stats.total|default(rendez_vous|length) }}</h3>
                     <p>Total RDV</p>
                 </div>
                 <div class="stat-card attente">
                     <div class="stat-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <h3>{{ rendez_vous|filter(r => r.statut == 'en attente')|length }}</h3>
+                    <h3>{{ stats.attente|default(rendez_vous|filter(r => r.statut == 'en attente')|length) }}</h3>
                     <p>En attente</p>
                 </div>
                 <div class="stat-card confirme">
                     <div class="stat-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <h3>{{ rendez_vous|filter(r => r.statut == 'Confirmé')|length }}</h3>
+                    <h3>{{ stats.confirme|default(rendez_vous|filter(r => r.statut|lower|replace({'é':'e'}) starts with 'confirm')|length) }}</h3>
                     <p>Confirmés</p>
                 </div>
                 <div class="stat-card annule">
                     <div class="stat-icon">
                         <i class="fas fa-times-circle"></i>
                     </div>
-                    <h3>{{ rendez_vous|filter(r => r.statut == 'Annulé')|length }}</h3>
+                    <h3>{{ stats.annule|default(rendez_vous|filter(r => r.statut|lower|replace({'é':'e'}) starts with 'annul')|length) }}</h3>
                     <p>Annulés</p>
                 </div>
             </div>
@@ -1019,7 +1170,7 @@
             <!-- RDV Cards Grid -->
             <div class="rdv-grid">
                 {% for rdv in rendez_vous %}
-                    <div class="rdv-card {% if rdv.statut == 'Annulé' %}rdv-annule{% endif %}">
+                    <div class="rdv-card {% if rdv.statut|lower|replace({'é':'e'}) starts with 'annul' %}rdv-annule{% endif %}">
                         <div class="rdv-header">
                             <div class="rdv-date-time">
                                 <div class="rdv-date">
@@ -1042,19 +1193,84 @@
                             </div>
                             <div class="doctor-info">
                                 <div class="doctor-name">Dr. {{ rdv.medecin.nom }} {{ rdv.medecin.prenom }}</div>
-                                <div class="doctor-specialty">{{ rdv.medecin.specialite|default('Médecin généraliste') }}</div>
+                                <div class="doctor-specialty">{{ rdv.medecin.specialite|default('Medecin generaliste') }}</div>
                             </div>
                         </div>
 
                         {% if rdv.raison %}
                             <div class="rdv-reason">
-                                <strong>📝 Motif de consultation</strong>
+                                <strong> Motif de consultation</strong>
                                 <p>{{ rdv.raison }}</p>
+                            </div>
+                        {% endif %}
+                        {% set durationPrediction = consultation_duration_predictions[rdv.id ~ ''] ?? null %}
+                        {% if durationPrediction %}
+                            <div class="duration-prediction-banner" id="duration-prediction-{{ rdv.id }}">
+                                <div class="duration-prediction-text">
+                                    {% if durationPrediction.minutes is not null %}
+                                        Duree estimee de consultation: {{ durationPrediction.minutes }} min
+                                    {% else %}
+                                        Estimation IA indisponible pour ce rendez-vous.
+                                    {% endif %}
+                                </div>
+                                <button
+                                    type="button"
+                                    class="duration-prediction-close js-hide-duration-prediction"
+                                    data-rdv-id="{{ rdv.id }}"
+                                    data-url="{{ path('app_rdv_hide_duration_prediction', {id: rdv.id}) }}"
+                                    title="Fermer"
+                                    aria-label="Fermer"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        {% endif %}
+
+                        {% set is_online = rdv.typeConsultation == 'en_ligne' %}
+                        {% set is_confirmed = rdv.statut|lower|replace({'é':'e'}) starts with 'confirm' %}
+                        {% if is_online %}
+                            <div class="rdv-reason">
+                                <strong>Mode de consultation</strong>
+                                <p>Consultation en ligne</p>
+                                {% if is_confirmed and rdv.meetingUrl %}
+                                    <p style="margin-top:10px;">
+                                        <a href="{{ rdv.meetingUrl }}" target="_blank" rel="noopener noreferrer">
+                                            Rejoindre la reunion
+                                        </a>
+                                    </p>
+                                {% elseif is_confirmed %}
+                                    <p style="margin-top:10px;">Le lien de reunion sera disponible bientot.</p>
+                                {% else %}
+                                    <p style="margin-top:10px;">
+                                        En attente de validation medicale. Le lien de visioconsultation sera transmis des la confirmation du rendez-vous.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% set status_key = rdv.statut|lower|replace({' ': '-', 'é': 'e'}) %}
+                        {% if rdv.dateValidation and (status_key == 'confirme' or status_key == 'annule') %}
+                            <button
+                                type="button"
+                                class="btn-notif-toggle js-notif-toggle"
+                                data-target="notif-{{ rdv.id }}"
+                            >
+                                <i class="fas fa-bell"></i>
+                                Voir notification
+                            </button>
+                            <div
+                                id="notif-{{ rdv.id }}"
+                                class="doctor-notification {{ status_key == 'confirme' ? 'confirmed' : 'cancelled' }} is-hidden"
+                            >
+                                <i class="fas {{ status_key == 'confirme' ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                                <span>
+                                    Notification: votre medecin a {{ status_key == 'confirme' ? 'valide' : 'annule' }} ce rendez-vous
+                                    le {{ rdv.dateValidation|date('d/m/Y H:i') }}.
+                                </span>
                             </div>
                         {% endif %}
 
                         <div class="rdv-actions">
-                            {% if rdv.statut == 'Annulé' %}
+                            {% if rdv.statut|lower|replace({'é':'e'}) starts with 'annul' %}
                                 {# RDV Annulé : Seulement consulter #}
                                 <a href="{{ path('app_rdv_consulter', {id: rdv.id}) }}" 
                                    class="btn-icon btn-icon-warning" 
@@ -1070,7 +1286,7 @@
                                     </a>
                                 {% endif %}
                             {% else %}
-                                {# RDV Actif : Modifier RDV + Gérer fiche #}
+                                {# RDV Actif : Modifier RDV + Grer fiche #}
                                 <a href="{{ path('app_rdv_modifier', {id: rdv.id}) }}" 
                                    class="btn-icon btn-icon-primary" 
                                    data-tooltip="Modifier RDV">
@@ -1080,23 +1296,34 @@
                                 <form action="{{ path('app_rdv_annuler', {id: rdv.id}) }}" 
                                       method="post" 
                                       style="display:inline;"
-                                      onsubmit="return confirm('⚠️ Voulez-vous vraiment annuler ce rendez-vous ?')">
+                                      onsubmit="return confirm('Voulez-vous vraiment annuler ce rendez-vous ?')">
                                     <button type="submit" 
                                             class="btn-icon btn-icon-danger" 
                                             data-tooltip="Annuler RDV">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
+
+                                <button
+                                    type="button"
+                                    class="btn-icon btn-icon-ai js-ai-guidance"
+                                    data-tooltip="Guidance IA"
+                                    data-rdv-id="{{ rdv.id }}"
+                                    data-target="ai-guidance-{{ rdv.id }}"
+                                    data-motif="{{ rdv.raison|default('')|e('html_attr') }}"
+                                >
+                                    <i class="fas fa-brain"></i>
+                                </button>
                                 
                                 {% if not rdv.ficheMedicale %}
-                                    {# Créer une fiche médicale #}
+                                    {# Créer une fiche mdicale #}
                                     <a href="{{ path('app_fiche_medicale_new_for_rdv', {rdvId: rdv.id}) }}" 
                                        class="btn-icon btn-icon-success" 
                                        data-tooltip="Créer Fiche">
                                         <i class="fas fa-file-medical-alt"></i>
                                     </a>
                                 {% else %}
-                                    {# Modifier la fiche médicale existante #}
+                                    {# Modifier la fiche mdicale existante #}
                                     <a href="{{ path('app_fiche_medicale_edit', {id: rdv.ficheMedicale.id}) }}" 
                                        class="btn-icon btn-icon-info" 
                                        data-tooltip="Modifier Fiche">
@@ -1105,9 +1332,29 @@
                                 {% endif %}
                             {% endif %}
                         </div>
+                        <div id="ai-guidance-{{ rdv.id }}" class="ai-guidance-panel is-hidden"></div>
                     </div>
                 {% endfor %}
             </div>
+            {% if total_pages|default(1) > 1 %}
+                <div class="pagination-wrap">
+                    {% if current_page > 1 %}
+                        <a class="btn btn-primary" href="{{ path('app_rdv_mes_rdv', app.request.query.all|merge({'page': current_page - 1})) }}">
+                            <i class="fas fa-chevron-left"></i>
+                            <span>Précédent</span>
+                        </a>
+                    {% endif %}
+                    <span class="pagination-indicator">
+                        Page {{ current_page }} / {{ total_pages }} ({{ total_items|default(rendez_vous|length) }} rendez-vous)
+                    </span>
+                    {% if current_page < total_pages %}
+                        <a class="btn btn-primary" href="{{ path('app_rdv_mes_rdv', app.request.query.all|merge({'page': current_page + 1})) }}">
+                            <span>Suivant</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% else %}
             <!-- Empty State -->
             <div class="empty-state">
@@ -1193,9 +1440,175 @@
         card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(card);
     });
+    // Notification: bouton pour afficher/masquer la decision du medecin
+    document.querySelectorAll('.js-notif-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-target');
+            const panel = document.getElementById(targetId);
+            if (!panel) return;
 
-    console.log('🏥 MEDINOVA - Mes Rendez-vous chargés avec succès!');
-    console.log('🎨 Palette de couleurs: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
-    console.log('✨ Design harmonisé avec les fiches médicales');
+            panel.classList.toggle('is-hidden');
+            button.innerHTML = panel.classList.contains('is-hidden')
+                ? '<i class="fas fa-bell"></i> Voir notification'
+                : '<i class="fas fa-bell-slash"></i> Masquer notification';
+        });
+    });
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderList(items) {
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<ul><li>Aucun element.</li></ul>';
+        }
+        return '<ul>' + items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
+    }
+
+    function normalizeSimple(text) {
+        return String(text || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isMotifLikelyInvalid(motifRaw) {
+        const motif = normalizeSimple(motifRaw);
+        if (!motif) return true;
+        if (motif.length < 8) return true;
+        if (/([a-z0-9])\1{4,}/.test(motif)) return true;
+
+        const words = motif.split(' ').filter(Boolean);
+        if (words.length < 2) return true;
+
+        const meaningless = new Set(['ok', 'test', 'valide', 'validation', 'bonjour', 'salut', 'rien']);
+        const usefulWords = words.filter((w) => !meaningless.has(w));
+        if (usefulWords.length < 2) return true;
+
+        const medicalKeywords = [
+            'douleur', 'fievre', 'toux', 'gorge', 'migraine', 'mal', 'vomissement', 'nausee',
+            'vertige', 'fatigue', 'diarrhee', 'allergie', 'respirer', 'essoufflement',
+            'palpitation', 'thoracique', 'abdominale', 'rhume', 'grippe', 'infection',
+            'saignement', 'tension', 'glycemie', 'suivi', 'controle'
+        ];
+        const hasMedicalHint = medicalKeywords.some((k) => motif.includes(k));
+        return !hasMedicalHint && words.length < 4;
+    }
+
+    function renderGuidance(guidance) {
+        const emergency = guidance.emergency || {};
+        const motifSource = (guidance.sources && guidance.sources.motif) ? guidance.sources.motif : '';
+        const inputInsufficient = guidance.input_status === 'insufficient' || isMotifLikelyInvalid(motifSource);
+        const emergencyDetected = !!emergency.detected;
+        const badgeClass = inputInsufficient ? 'high' : (emergencyDetected ? 'high' : 'low');
+        const badgeText = inputInsufficient
+            ? 'Motif insuffisant'
+            : (emergencyDetected ? 'Urgence detectee' : 'Pas d urgence detectee');
+
+        if (inputInsufficient) {
+            return `
+                <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
+                <span class="ai-guidance-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+                <p><strong>Important:</strong> ${escapeHtml(guidance.disclaimer || '')}</p>
+                <p><strong>Motif detecte</strong></p>
+                ${renderList(emergency.reasons || [])}
+                <p><strong>Veuillez renseigner</strong></p>
+                ${renderList(guidance.general_recommendations)}
+            `;
+        }
+
+        const tmp = Array.isArray(guidance.temporary_advice) ? guidance.temporary_advice : [];
+        const alerts = Array.isArray(guidance.safety_alerts) ? guidance.safety_alerts : [];
+        const actions = Array.isArray(emergency.actions) ? emergency.actions : [];
+        const shortAdvice = tmp.slice(0, 1);
+        const shortAlerts = alerts.slice(0, 1);
+        const shortActions = actions.slice(0, 1);
+
+        return `
+            <h5><i class="fas fa-shield-heart"></i> Guidance IA pre-consultation</h5>
+            <span class="ai-guidance-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+            <p><strong>Resume:</strong> conseils simples en attendant la consultation.</p>
+            ${renderList(shortAdvice)}
+            ${shortAlerts.length ? `<p><strong>Point de vigilance</strong></p>${renderList(shortAlerts)}` : ''}
+            ${shortActions.length ? `<p><strong>A faire si aggravation</strong></p>${renderList(shortActions)}` : ''}
+        `;
+    }
+
+    document.querySelectorAll('.js-ai-guidance').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const rdvId = button.getAttribute('data-rdv-id');
+            const targetId = button.getAttribute('data-target');
+            const panel = document.getElementById(targetId);
+            if (!rdvId || !panel) return;
+
+            if (panel.dataset.loaded === '1') {
+                panel.classList.toggle('is-hidden');
+                return;
+            }
+
+            panel.classList.remove('is-hidden');
+            panel.innerHTML = '<h5><i class="fas fa-circle-notch fa-spin"></i> Analyse en cours...</h5>';
+
+            try {
+                const response = await fetch(`/api/rdv/${encodeURIComponent(rdvId)}/patient-guidance`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.success || !payload.guidance) {
+                    panel.innerHTML = '<p>Impossible de generer la guidance IA pour le moment.</p>';
+                    return;
+                }
+
+                panel.innerHTML = renderGuidance(payload.guidance);
+                panel.dataset.loaded = '1';
+            } catch (e) {
+                panel.innerHTML = '<p>Erreur reseau pendant la guidance IA.</p>';
+            }
+        });
+    });
+
+    document.querySelectorAll('.js-hide-duration-prediction').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const rdvId = button.getAttribute('data-rdv-id');
+            const url = button.getAttribute('data-url');
+            const banner = document.getElementById(`duration-prediction-${rdvId}`);
+            if (!rdvId || !url || !banner) return;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) return;
+                banner.remove();
+            } catch (e) {
+                // Keep banner visible if request fails.
+            }
+        });
+    });
+    console.log('MEDINOVA - Mes Rendez-vous charges avec succes');
+    console.log('Palette: Mughal Green, Prussian Blue, Teal Blue, Pastel Blue, Light Silver');
+    console.log('Design harmonise avec les fiches medicales');
 </script>
 {% endblock %}
+
+
+
+
+
+
+

@@ -27,7 +27,7 @@ class Parapharmacie
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
-    #[ORM\ManyToMany(targetEntity: Produit::class, inversedBy: 'parapharmacies')]
+    #[ORM\ManyToMany(targetEntity: Produit::class, mappedBy: 'parapharmacies')]
     private Collection $produits;
 
     public function __construct()

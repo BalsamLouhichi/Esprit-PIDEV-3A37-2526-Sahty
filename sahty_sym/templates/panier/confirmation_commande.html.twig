@@ -1,0 +1,87 @@
+{# templates/panier/confirmation_commande.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande confirmÃ©e{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .panier-primary-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+            color: #fff !important;
+        }
+
+        .text-panier-primary {
+            color: var(--primary) !important;
+        }
+
+        .btn-panier-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            color: #fff;
+        }
+
+        .btn-panier-primary:hover {
+            background: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn-panier-outline {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-panier-outline:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <div class="display-1 text-success mb-3">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h1 class="mb-3">Merci pour votre commande !</h1>
+        <p class="lead">Votre commande a Ã©tÃ© enregistrÃ©e avec succÃ¨s.</p>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header panier-primary-header">
+                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>RÃ©capitulatif des commandes</h5>
+                </div>
+                <div class="card-body">
+                    {% for commande in commandes %}
+                        <div class="mb-4 pb-3 border-bottom">
+                            <h5 class="text-panier-primary">
+                                <i class="bi bi-shop me-2"></i>{{ commande.parapharmacie.nom }}
+                            </h5>
+                            <p class="mb-1"><strong>Commande #{{ commande.numero }}</strong></p>
+                            <p class="mb-1">Produit : {{ commande.produit.nom }}</p>
+                            <p class="mb-1">QuantitÃ© : {{ commande.quantite }}</p>
+                            <p class="mb-0 fw-bold">Total : {{ commande.prixTotal|number_format(2, ',', ' ') }} â‚¬</p>
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="alert alert-success mt-3">
+                        <h6 class="alert-heading">âœ¨ Prochaines Ã©tapes</h6>
+                        <p class="mb-0">Les parapharmacies vous contacteront dans les plus brefs dÃ©lais pour finaliser votre commande.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ path('app_produits_list') }}" class="btn btn-panier-outline">
+                    <i class="bi bi-arrow-left me-2"></i>Continuer mes achats
+                </a>
+                <a href="{{ path('app_mes_commandes') }}" class="btn btn-panier-primary">
+                    <i class="bi bi-list-check me-2"></i>Suivre mes commandes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
