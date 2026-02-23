@@ -88,6 +88,13 @@
                                 </a> #}
                                
                                 <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Gestion des quiz et recommandations</h6>
+                                <a href="{{ path('app_quiz_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-question-circle me-2"></i>Tous les quizzes
+                                </a>
+                                <a href="{{ path('app_recommandation_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-lightbulb me-2"></i>Toutes les recommandations
+                                </a>
                                 <h6 class="dropdown-header">Gestion des événements</h6>
                                 <a href="{{ path('evenements_evenement_list') }}" class="dropdown-item">
                                     <i class="fa fa-list me-2"></i>Tous les événements
@@ -478,3 +485,4 @@ window.addEventListener('scroll', function() {
     }
 });
 </script>
+

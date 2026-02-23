@@ -1,0 +1,198 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Quiz Analytics{% endblock %}
+
+{% block content %}
+<section class="quiz-analytics-page">
+    <div class="analytics-header mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-chart-line me-2"></i>Quiz Analytics</h2>
+            <p class="mb-0 text-muted">Suivi de completion, abandon et score moyen.</p>
+        </div>
+        <a href="{{ path('admin_quiz_index') }}" class="btn btn-outline-secondary rounded-pill px-4">Retour aux quizzes</a>
+    </div>
+
+    <form method="get" class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label">Quiz</label>
+                <select class="form-select" name="quiz_id">
+                    <option value="0">Tous les quizzes</option>
+                    {% for quiz in quizzes %}
+                        <option value="{{ quiz.id }}" {{ selected_quiz_id == quiz.id ? 'selected' : '' }}>{{ quiz.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Appliquer</button>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ path('admin_quiz_index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <article class="metric-card">
+                <span class="metric-label">Tentatives</span>
+                <strong class="metric-value">{{ total_attempts }}</strong>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="metric-card">
+                <span class="metric-label">Completion</span>
+                <strong class="metric-value">{{ completion_rate }}%</strong>
+                <small class="text-muted">{{ completed_count }} completees</small>
+            </article>
+        </div>
+        <div class="col-md-4">
+            <article class="metric-card">
+                <span class="metric-label">Score moyen</span>
+                <strong class="metric-value">{{ average_score }}</strong>
+            </article>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">Dropout par question (inactif > 30 min)</h5>
+                    {% if dropout_by_question is empty %}
+                        <p class="text-muted mb-0">Aucun abandon detecte pour ce filtre.</p>
+                    {% else %}
+                        {% set max_drop = 1 %}
+                        {% for value in dropout_by_question %}
+                            {% if value > max_drop %}{% set max_drop = value %}{% endif %}
+                        {% endfor %}
+                        <div class="d-grid gap-2">
+                            {% for qIndex, count in dropout_by_question %}
+                                <div>
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>Question {{ qIndex }}</span>
+                                        <strong>{{ count }}</strong>
+                                    </div>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-warning" style="width: {{ (count / max_drop) * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">Score moyen par categorie (30 jours)</h5>
+                    {% if average_score_by_category is empty %}
+                        <p class="text-muted mb-0">Aucune tentative completee recente.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Categorie</th>
+                                        <th>Score moyen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in average_score_by_category %}
+                                        <tr>
+                                            <td>{{ row.category }}</td>
+                                            <td><strong>{{ row.avg }}</strong></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Score moyen par jour (30 jours)</h5>
+                    {% if average_score_by_day is empty %}
+                        <p class="text-muted mb-0">Aucune donnee disponible.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Jour</th>
+                                        <th>Score moyen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in average_score_by_day %}
+                                        <tr>
+                                            <td>{{ row.period }}</td>
+                                            <td><strong>{{ row.avg }}</strong></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .quiz-analytics-page {
+        animation: fadeIn .25s ease-out;
+    }
+
+    .analytics-header {
+        background: linear-gradient(120deg, #ffffff 0%, #f3fbff 100%);
+        border: 1px solid #d9edf5;
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 8px 22px rgba(29, 42, 77, .06);
+    }
+
+    .metric-card {
+        background: #fff;
+        border: 1px solid #e7eef2;
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        box-shadow: 0 6px 18px rgba(29, 42, 77, .05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: .25rem;
+    }
+
+    .metric-label {
+        color: #6c7a89;
+        font-size: .82rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .metric-value {
+        font-size: 1.6rem;
+        color: #1d2a4d;
+        line-height: 1.1;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
