@@ -9,13 +9,13 @@ use Doctrine\Persistence\ManagerRegistry;
 /**
  * @extends ServiceEntityRepository<Medecin>
  */
+
 class MedecinRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Medecin::class);
     }
-
 
     /**
      * Récupère tous les médecins triés par nom complet
@@ -67,7 +67,6 @@ class MedecinRepository extends ServiceEntityRepository
     }
 }
 
-
     //    /**
     //     * @return Medecin[] Returns an array of Medecin objects
     //     */
@@ -92,4 +91,3 @@ class MedecinRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
-

@@ -114,6 +114,15 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
 
+                                    <button type="button"
+                                            class="btn btn-sm btn-info text-white js-ai-result"
+                                            title="Interpreter avec IA"
+                                            data-bs-toggle="tooltip"
+                                            data-status="{{ demande.resultatPdf ? 'envoye' : 'en_attente' }}"
+                                            data-ai-url="{{ path('app_demande_analyse_ia_interpretation', {'id': demande.id}) }}">
+                                        <i class="fas fa-brain"></i>
+                                    </button>
+
                                     {% if demande.resultatPdf is null %}
                                         <a href="{{ path('app_demande_analyse_edit', {'id': demande.id}) }}"
                                            class="btn btn-sm btn-warning"

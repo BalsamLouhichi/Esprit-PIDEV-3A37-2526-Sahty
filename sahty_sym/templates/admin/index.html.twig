@@ -1,3 +1,4 @@
+
 {% set app_name = app_name ?? 'Sahty' %}
 {% set app_version = app_version ?? '1.0.0' %}
 
@@ -224,7 +225,9 @@
             font-weight: 600;
         }
 
+
         /* Menu déroulant pour laboratoires */
+
         .submenu {
             list-style: none;
             padding-left: 2.5rem !important;
@@ -1045,7 +1048,9 @@
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h3><i class="fas fa-heartbeat"></i> {{ app_name }}</h3>
+
         <small>Système de Gestion Hospitalière</small>
+
     </div>
 
     <div class="sidebar-menu">
@@ -1064,7 +1069,9 @@
                 </a>
             </li>
             
+
             <!-- MENU LABORATOIRES AVEC SOUS-MENU DÉROULANT -->
+
             <li>
                 <a href="#laboratoireSubmenu" data-bs-toggle="collapse" aria-expanded="{{ app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' ? 'true' : 'false' }}" class="{% if app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' %}active{% endif %}">
                     <i class="fas fa-flask"></i>
@@ -1074,7 +1081,9 @@
                 </a>
                 <ul class="submenu collapse {% if app.request.attributes.get('_route') starts with 'admin_laboratoire' or app.request.attributes.get('_route') starts with 'admin_type_analyse' or app.request.attributes.get('_route') starts with 'admin_demande_analyse' %}show{% endif %}" id="laboratoireSubmenu">
                     <li>
+
                         <a href="{{ path('admin_laboratoires') }}" {% if app.request.attributes.get('_route') in ['admin_laboratoires', 'admin_laboratoire_view', 'admin_laboratoire_edit'] %}class="active"{% endif %}>
+
                             <i class="fas fa-list"></i>
                             <span>Tous les laboratoires</span>
                         </a>
@@ -1150,6 +1159,7 @@
                 </ul>
             </li>
             
+
             <!-- MENU ÉVÉNEMENTS - PARTIE ADMIN -->
             <li>
                 <a href="#evenementSubmenu" data-bs-toggle="collapse" aria-expanded="{{ app.request.attributes.get('route') starts with 'evenements' ? 'true' : 'false' }}" class="{% if app.request.attributes.get('route') starts with 'evenements' %}active{% endif %}">
@@ -1161,6 +1171,7 @@
                 <ul class="submenu collapse {% if app.request.attributes.get('route') starts with 'evenements' %}show{% endif %}" id="evenementSubmenu">
                     
                     <!-- Liste des événements (admin) -->
+
                     <li>
                         <a href="{{ path('evenements_evenement_list') }}" {% if app.request.attributes.get('_route') == 'evenements_evenement_list' %}class="active"{% endif %}>
                             <i class="fas fa-list"></i>
@@ -1168,6 +1179,7 @@
                         </a>
                     </li>
                     
+
                     <!-- Ajouter un événement -->
                     <li>
                         <a href="{{ path('evenements_evenement_add') }}" {% if app.request.attributes.get('_route') == 'evenements_evenement_add' %}class="active"{% endif %}>
@@ -1177,6 +1189,7 @@
                     </li>
                     
                     <!-- Demandes d'événements (en attente d'approbation) -->
+
                     <li>
                         <a href="{{ path('evenements_admin_demandes_evenements') }}" {% if app.request.attributes.get('_route') == 'evenements_admin_demandes_evenements' %}class="active"{% endif %}>
                             <i class="fas fa-clock"></i>
@@ -1215,11 +1228,13 @@
                 </a>
             </li>
             
+
             <!-- MENU FICHES MÉDICALES avec badge -->
             <li>
                 <a href="{{ path('admin_all_medical_records') }}" {% if app.request.attributes.get('_route') in ['admin_all_medical_records', 'admin_view_medical_record', 'admin_edit_medical_record'] %}class="active"{% endif %}>
                     <i class="fas fa-file-medical"></i>
                     <span>Fiches médicales</span>
+
                     <span class="badge badge-info-custom">{{ totalFichesMedicales|default(0) }}</span>
                 </a>
             </li>
@@ -1233,7 +1248,9 @@
             <li>
                 <a href="#">
                     <i class="fas fa-cog"></i>
+
                     <span>Paramètres</span>
+
                 </a>
             </li>
         </ul>
@@ -1275,11 +1292,13 @@
                             <i class="fas fa-user"></i>Mon Profil
                         </a>
                         <a class="dropdown-item" href="#">
+
                             <i class="fas fa-cog"></i>Paramètres
                         </a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ path('app_logout') }}">
                             <i class="fas fa-sign-out-alt"></i>Déconnexion
+
                         </a>
                     </div>
                 </div>
@@ -1428,7 +1447,9 @@
             <!-- System Status & User Distribution -->
             <div class="content-grid">
                 <div class="chart-container animate-slide-in" style="animation-delay: 0.9s;">
+
                     <h5><i class="fas fa-server"></i> État du système</h5>
+
                     <div class="progress-container">
                         <div class="progress-label">
                             <span>Charge serveur</span>
@@ -1459,14 +1480,18 @@
                     <div class="system-status-alert">
                         <i class="fas fa-check-circle"></i>
                         <div>
+
                             <strong>Système opérationnel</strong>
+
                             <p>Tous les services fonctionnent normalement</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="chart-container animate-slide-in" style="animation-delay: 1s;">
+
                     <h5><i class="fas fa-chart-pie"></i> Répartition des utilisateurs</h5>
+
                     <div class="chart">
                         <canvas id="userDistributionChart"></canvas>
                     </div>
@@ -1486,7 +1511,9 @@
                         <div class="quick-stat-item">
                             <i class="fas fa-user-md text-success"></i>
                             <h4>{{ stats.available_doctors|default(totalMedecins ?? 0) }}</h4>
+
                             <small>Médecins disponibles</small>
+
                         </div>
                         <div class="quick-stat-item">
                             <i class="fas fa-ambulance text-warning"></i>
@@ -1510,12 +1537,16 @@
                 </div>
 
                 <div class="chart-container animate-slide-in" style="animation-delay: 1.2s;">
+
                     <h5><i class="fas fa-info-circle"></i> Informations générales</h5>
+
                     <div class="quick-stats">
                         <div class="quick-stat-item">
                             <i class="fas fa-file-medical text-info"></i>
                             <h4>{{ totalFichesMedicales|default(0) }}</h4>
+
                             <small>Fiches médicales</small>
+
                         </div>
                         <div class="quick-stat-item">
                             <i class="fas fa-calendar-check text-success"></i>
@@ -1530,7 +1561,9 @@
                         <div class="quick-stat-item">
                             <i class="fas fa-check-circle text-success"></i>
                             <h4>{{ stats.analyses_terminees|default(0) }}</h4>
+
                             <small>Analyses terminées</small>
+
                         </div>
                     </div>
                 </div>
@@ -1541,7 +1574,9 @@
                 <h5><i class="fas fa-filter"></i> Filtrer par type d'utilisateur</h5>
                 <div class="filter-buttons">
                     <a href="{{ path('admin_users', {role: 'medecin'}) }}" class="btn-filter">
+
                         <i class="fas fa-user-md me-1"></i> Médecins ({{ totalMedecins|default(0) }})
+
                     </a>
                     <a href="{{ path('admin_users', {role: 'patient'}) }}" class="btn-filter">
                         <i class="fas fa-user-injured me-1"></i> Patients ({{ totalPatients|default(0) }})
@@ -1562,7 +1597,9 @@
             <div class="content-grid mt-4">
                 <div class="table-container animate-slide-in" style="animation-delay: 1.4s;">
                     <div class="table-header">
+
                         <h5><i class="fas fa-flask"></i> Laboratoires récents</h5>
+
                         <a href="{{ path('admin_laboratoires') }}" class="btn btn-primary btn-sm">
                             Voir tous <i class="fas fa-arrow-right ms-1"></i>
                         </a>
@@ -1574,7 +1611,9 @@
                                     <th>Laboratoire</th>
                                     <th>Ville</th>
                                     <th>Responsable</th>
+
                                     <th>Téléphone</th>
+
                                     <th>Statut</th>
                                     <th>Actions</th>
                                 </tr>
@@ -1598,7 +1637,9 @@
                                         {% if laboratoire.responsable %}
                                             <span>{{ laboratoire.responsable.prenom }} {{ laboratoire.responsable.nom }}</span>
                                         {% else %}
+
                                             <span class="text-muted">—</span>
+
                                         {% endif %}
                                     </td>
                                     <td>{{ laboratoire.telephone }}</td>
@@ -1641,7 +1682,9 @@
                 <!-- Recent Demandes d'analyse -->
                 <div class="table-container animate-slide-in" style="animation-delay: 1.5s;">
                     <div class="table-header">
+
                         <h5><i class="fas fa-file-medical"></i> Demandes d'analyse récentes</h5>
+
                         <a href="{{ path('admin_demande_analyse_list') }}" class="btn btn-primary btn-sm">
                             Voir toutes <i class="fas fa-arrow-right ms-1"></i>
                         </a>
@@ -1677,7 +1720,9 @@
                                         {% if demande.laboratoire %}
                                             <span class="fw-medium">{{ demande.laboratoire.nom }}</span>
                                         {% else %}
+
                                             <span class="text-muted">—</span>
+
                                         {% endif %}
                                     </td>
                                     <td>{{ demande.typeBilan }}</td>
@@ -1710,7 +1755,9 @@
                                             </a>
                                             {% endif %}
                                             {% if demande.resultatPdf %}
+
                                             <a href="{{ asset('uploads/resultats/' ~ demande.resultatPdf) }}" class="row-action-btn" title="Télécharger résultat" target="_blank">
+
                                                 <i class="fas fa-download"></i>
                                             </a>
                                             {% endif %}
@@ -1745,7 +1792,9 @@
                             <thead>
                                 <tr>
                                     <th>Patient</th>
+
                                     <th>Médecin</th>
+
                                     <th>Date</th>
                                     <th>Heure</th>
                                     <th>Statut</th>
@@ -1773,6 +1822,7 @@
                                                 Dr. {{ appointment.medecin.prenom }} {{ appointment.medecin.nom }}
                                             </div>
                                         {% else %}
+
                                             <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
@@ -1788,6 +1838,7 @@
                                                 {% if appointment.statut == 'Confirmé' %}fa-check-circle
                                                 {% elseif appointment.statut == 'En attente' %}fa-clock
                                                 {% elseif appointment.statut == 'Annulé' %}fa-times-circle
+
                                                 {% endif %}">
                                             </i>
                                             {{ appointment.statut|capitalize }}
@@ -1798,7 +1849,9 @@
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-4">
                                         <i class="fas fa-calendar-times fa-2x mb-2"></i>
+
                                         <p class="mb-0">Aucun rendez-vous récent</p>
+
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -1810,7 +1863,9 @@
                 <!-- Recent Users -->
                 <div class="table-container animate-slide-in" style="animation-delay: 1.7s;">
                     <div class="table-header">
+
                         <h5><i class="fas fa-users"></i> Utilisateurs récents</h5>
+
                         <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> Ajouter
                         </a>
@@ -1820,7 +1875,9 @@
                             <thead>
                                 <tr>
                                     <th>Nom</th>
+
                                     <th>Rôle</th>
+
                                     <th>Statut</th>
                                     <th>Actions</th>
                                 </tr>
@@ -1850,7 +1907,9 @@
                                             {% elseif user.role == 'responsable_labo' %}labo
                                             {% elseif user.role == 'responsable_para' %}para
                                             {% else %}admin{% endif %}">
+
                                             {% if user.role == 'medecin' %}Médecin
+
                                             {% elseif user.role == 'patient' %}Patient
                                             {% elseif user.role == 'responsable_labo' %}Labo
                                             {% elseif user.role == 'responsable_para' %}Parapharmacie
@@ -1874,7 +1933,9 @@
                                                 <i class="fas fa-calendar-check"></i>
                                             </a>
                                             {% if user.role == 'patient' %}
+
                                                 <a href="{{ path('admin_patient_medical_records', {id: user.id}) }}" class="row-action-btn" title="Fiches médicales">
+
                                                     <i class="fas fa-file-medical"></i>
                                                 </a>
                                             {% endif %}
@@ -1884,7 +1945,9 @@
                                                         <i class="fas fa-flask"></i>
                                                     </a>
                                                 {% else %}
+
                                                     <span class="row-action-btn opacity-50" title="Laboratoire non assigné" style="cursor: not-allowed;">
+
                                                         <i class="fas fa-flask text-muted"></i>
                                                     </span>
                                                 {% endif %}
@@ -1896,7 +1959,9 @@
                                 <tr>
                                     <td colspan="4" class="text-center text-muted py-4">
                                         <i class="fas fa-users fa-2x mb-2"></i>
+
                                         <p class="mb-0">Aucun utilisateur récent</p>
+
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -1910,7 +1975,9 @@
             <div class="content-grid mt-4">
                 <div class="table-container animate-slide-in" style="animation-delay: 1.8s;">
                     <div class="table-header">
+
                         <h5><i class="fas fa-file-medical"></i> Fiches médicales récentes</h5>
+
                         <a href="{{ path('admin_all_medical_records') }}" class="btn btn-primary btn-sm">
                             Voir toutes <i class="fas fa-arrow-right ms-1"></i>
                         </a>
@@ -1922,7 +1989,9 @@
                                     <th>Patient</th>
                                     <th>Date</th>
                                     <th>IMC</th>
+
                                     <th>Catégorie</th>
+
                                     <th>Statut</th>
                                 </tr>
                             </thead>
@@ -1941,20 +2010,26 @@
                                             <span class="fw-medium">{{ record.patient ? record.patient.prenom ~ ' ' ~ record.patient.nom : 'Patient inconnu' }}</span>
                                         </div>
                                     </td>
+
                                     <td>{{ record.creeLe ? record.creeLe|date('d/m/Y') : '—' }}</td>
                                     <td><span class="fw-medium">{{ record.imc ? record.imc|number_format(1) : '—' }}</span></td>
+
                                     <td>
                                         {% if record.categorieImc %}
                                             <span class="role-badge 
                                                 {% if record.categorieImc == 'Maigreur' %}warning
                                                 {% elseif record.categorieImc == 'Normal' %}success
                                                 {% elseif record.categorieImc == 'Surpoids' %}info
+
                                                 {% elseif record.categorieImc == 'Obésité' %}danger
+
                                                 {% endif %}">
                                                 {{ record.categorieImc }}
                                             </span>
                                         {% else %}
+
                                             <span class="text-muted">—</span>
+
                                         {% endif %}
                                     </td>
                                     <td>
@@ -1970,7 +2045,9 @@
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-4">
                                         <i class="fas fa-file-medical fa-2x mb-2"></i>
+
                                         <p class="mb-0">Aucune fiche médicale récente</p>
+
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -1984,10 +2061,12 @@
             <footer class="animate-slide-in" style="animation-delay: 2s;">
                 <div class="row align-items-center">
                     <div class="col-md-6">
+
                         <p>&copy; {{ "now"|date("Y") }} {{ app_name }}. Tous droits réservés.</p>
                     </div>
                     <div class="col-md-6 text-md-end">
                         <p>Version {{ app_version }} | Dernière mise à jour: {{ "now"|date("d/m/Y") }}</p>
+
                     </div>
                 </div>
             </footer>
@@ -2025,7 +2104,9 @@
                 new Chart(ctx, {
                     type: 'doughnut',
                     data: {
+
                         labels: ['Médecins', 'Patients', 'Staff', 'Administrateurs'],
+
                         datasets: [{
                             data: [
                                 userDistributionData.doctors,
@@ -2083,4 +2164,6 @@
         });
     </script>
 </body>
+
 </html>
+

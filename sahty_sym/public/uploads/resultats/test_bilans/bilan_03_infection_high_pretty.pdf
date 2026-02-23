@@ -1,0 +1,76 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 889 >>
+stream
+BT
+/F1 12 Tf
+72 800 Td
+(Laboratoire Sahty - Rapport de bilan \(TEST\)) Tj
+0 -18 Td
+(Date: 17/02/2026 19:42) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Titre: Syndrome infectieux marque \(HIGH\)) Tj
+0 -18 Td
+(Patient: Patient Test C) Tj
+0 -18 Td
+(Medecin: Dr Testmail) Tj
+0 -18 Td
+(Type de bilan: NFS + Inflammation) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Resultats:) Tj
+0 -18 Td
+(- GB: 18.9 G/L \(4-10\)) Tj
+0 -18 Td
+(- PNN: 15.2 G/L \(1.5-7.5\)) Tj
+0 -18 Td
+(- CRP: 186 mg/L \(<5\)) Tj
+0 -18 Td
+(- Procalcitonine: 4.8 ng/mL \(<0.5\)) Tj
+0 -18 Td
+(- Hb: 12.8 g/dL \(12-16\)) Tj
+0 -18 Td
+(- Plaquettes: 380 G/L \(150-400\)) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Conclusion:) Tj
+0 -18 Td
+(Forte suspicion d infection bacterienne aigue.) Tj
+0 -18 Td
+() Tj
+0 -18 Td
+(Avertissement: Donnees synthetiques pour test technique IA uniquement.) Tj
+0 -18 Td
+(Validation medicale humaine obligatoire avant toute decision clinique.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1251
+%%EOF

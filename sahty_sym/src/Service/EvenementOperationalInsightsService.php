@@ -10,6 +10,7 @@ class EvenementOperationalInsightsService
     private const MAPBOX_URL = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
     private const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
     private const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
+    private const FREE_AI_URL = 'https://text.pollinations.ai';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -17,7 +18,7 @@ class EvenementOperationalInsightsService
     ) {
     }
 
-    public function analyze(Evenement $evenement): array
+    public function analyze(Evenement $evenement, array $context = []): array
     {
         $insights = [
             'location_valid' => true,
@@ -40,6 +41,14 @@ class EvenementOperationalInsightsService
         if ($geo === null) {
             $insights['location_valid'] = false;
             $insights['location_message'] = 'Le lieu saisi n\'a pas pu etre verifie automatiquement. Merci de verifier l\'adresse (ville, rue, etablissement).';
+
+            // For manual input, add an external AI hint to guide correction.
+            if (($context['venue_source'] ?? null) === 'manual') {
+                $aiHint = $this->buildExternalAiLocationHint($lieu);
+                if ($aiHint !== null) {
+                    $insights['location_message'] .= ' ' . $aiHint;
+                }
+            }
             return $insights;
         }
 
@@ -53,6 +62,45 @@ class EvenementOperationalInsightsService
         }
 
         return $insights;
+    }
+
+    private function buildExternalAiLocationHint(string $lieu): ?string
+    {
+        try {
+            $prompt = 'Analyse cette adresse/lien de lieu et réponds uniquement en JSON '
+                . '{"valid":true|false,"suggestion":"..."} : ' . $lieu;
+
+            $response = $this->httpClient->request('GET', self::FREE_AI_URL . '/' . rawurlencode($prompt), [
+                'headers' => ['Accept' => 'application/json,text/plain'],
+                'timeout' => 6,
+            ]);
+
+            $raw = trim($response->getContent(false));
+            if ($raw === '') {
+                return null;
+            }
+
+            $json = json_decode($raw, true);
+            if (!is_array($json) && preg_match('/\{[\s\S]*\}/', $raw, $m) === 1) {
+                $json = json_decode((string) $m[0], true);
+            }
+            if (!is_array($json)) {
+                return null;
+            }
+
+            $suggestion = trim((string) ($json['suggestion'] ?? ''));
+            if ($suggestion === '') {
+                return null;
+            }
+
+            if (preg_match('/\b(street|address|postal|code|contact|location|city|you|might|want|add|make|more|precise|easier|locate)\b/i', $suggestion) === 1) {
+                $suggestion = 'Ajoutez des details: ville, rue, code postal ou nom d\'etablissement pour rendre le lieu verifiable.';
+            }
+
+            return 'Suggestion IA: ' . $suggestion;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function isPhysicalEvent(Evenement $evenement): bool

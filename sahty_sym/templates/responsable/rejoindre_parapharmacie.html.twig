@@ -1,0 +1,160 @@
+{# templates/backoffice/responsable/rejoindre_parapharmacie.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejoindre une parapharmacie</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .join-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .join-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .join-header h1 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .join-header p {
+            color: #666;
+        }
+        .join-icon {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: none;
+        }
+        .btn-join {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .btn-join:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
+        }
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .info-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="join-card">
+        <a href="{{ path('app_responsable_para_configurer') }}" class="btn-back">
+            <i class="fas fa-arrow-left me-2"></i>Retour
+        </a>
+
+        <div class="join-header">
+            <div class="join-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <h1>Rejoindre une parapharmacie</h1>
+            <p>Si votre parapharmacie existe déjà, rejoignez-la ici</p>
+        </div>
+
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="info-text">
+            <i class="fas fa-info-circle me-2"></i>
+            Pour rejoindre une parapharmacie existante, vous aurez besoin de son identifiant 
+            et éventuellement d'un code d'accès fourni par l'administrateur.
+        </div>
+
+        <form method="post" action="{{ path('app_responsable_para_rejoindre') }}">
+            <div class="form-group">
+                <label for="parapharmacie_id"><i class="fas fa-store me-2"></i>Sélectionner une parapharmacie</label>
+                <select class="form-select" id="parapharmacie_id" name="parapharmacie_id" required>
+                    <option value="">Choisir...</option>
+                    {% for parapharmacie in parapharmacies %}
+                        <option value="{{ parapharmacie.id }}">{{ parapharmacie.nom }} - {{ parapharmacie.adresse }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="code_acces"><i class="fas fa-key me-2"></i>Code d'accès (optionnel)</label>
+                <input type="text" class="form-control" id="code_acces" name="code_acces" placeholder="Code fourni par l'administrateur">
+            </div>
+
+            <button type="submit" class="btn-join">
+                <i class="fas fa-sign-in-alt me-2"></i>Rejoindre
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

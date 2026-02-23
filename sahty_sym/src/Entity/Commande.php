@@ -58,6 +58,21 @@ class Commande
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateModification = null;
 
+    #[ORM\Column(length: 30, options: ['default' => 'cash_on_delivery'])]
+    private string $modePaiement = 'cash_on_delivery';
+
+    #[ORM\Column(length: 30, options: ['default' => 'not_required'])]
+    private string $paymentStatus = 'not_required';
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $paymentProvider = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $paymentReference = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $paymentUrl = null;
+
     public function __construct()
     {
         $this->dateCreation = new \DateTime();
@@ -227,6 +242,61 @@ class Commande
     public function setDateModification(?\DateTimeInterface $dateModification): self
     {
         $this->dateModification = $dateModification;
+        return $this;
+    }
+
+    public function getModePaiement(): string
+    {
+        return $this->modePaiement;
+    }
+
+    public function setModePaiement(string $modePaiement): self
+    {
+        $this->modePaiement = $modePaiement;
+        return $this;
+    }
+
+    public function getPaymentStatus(): string
+    {
+        return $this->paymentStatus;
+    }
+
+    public function setPaymentStatus(string $paymentStatus): self
+    {
+        $this->paymentStatus = $paymentStatus;
+        return $this;
+    }
+
+    public function getPaymentProvider(): ?string
+    {
+        return $this->paymentProvider;
+    }
+
+    public function setPaymentProvider(?string $paymentProvider): self
+    {
+        $this->paymentProvider = $paymentProvider;
+        return $this;
+    }
+
+    public function getPaymentReference(): ?string
+    {
+        return $this->paymentReference;
+    }
+
+    public function setPaymentReference(?string $paymentReference): self
+    {
+        $this->paymentReference = $paymentReference;
+        return $this;
+    }
+
+    public function getPaymentUrl(): ?string
+    {
+        return $this->paymentUrl;
+    }
+
+    public function setPaymentUrl(?string $paymentUrl): self
+    {
+        $this->paymentUrl = $paymentUrl;
         return $this;
     }
 

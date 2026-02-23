@@ -3,13 +3,13 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div>
                 <h6 class="mb-1 fw-bold text-primary">
-                    <i class="fas fa-project-diagram me-2"></i>Studio de scénario IA
+                    <i class="fas fa-project-diagram me-2"></i>Studio de scenario IA
                 </h6>
-                <div class="small text-muted">Glissez-déposez les phases, ajustez la durée et laissez l’IA optimiser le rythme.</div>
+                <div class="small text-muted">Glissez les phases, ajustez la duree, puis finalisez un scenario solide pour votre demo.</div>
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-outline-primary" id="scenario-generate-btn">
-                    <i class="fas fa-magic me-1"></i>Générer 3 plans IA
+                    <i class="fas fa-magic me-1"></i>Generer 3 plans IA
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="scenario-add-phase-btn">
                     <i class="fas fa-plus me-1"></i>Ajouter phase
@@ -31,7 +31,7 @@
                             <span id="scenario-score-value">0</span>
                         </div>
                         <div>
-                            <div class="fw-semibold">Score de préparation</div>
+                            <div class="fw-semibold">Score de preparation</div>
                             <div class="small text-muted" id="scenario-score-label">En construction</div>
                         </div>
                     </div>
@@ -39,7 +39,7 @@
                     <div class="small mb-2"><strong>Checklist intelligente</strong></div>
                     <ul class="scenario-checklist mb-3" id="scenario-checklist"></ul>
 
-                    <div class="small mb-2"><strong>Courbe d’énergie</strong></div>
+                    <div class="small mb-2"><strong>Courbe d energie</strong></div>
                     <div class="scenario-energy" id="scenario-energy"></div>
 
                     <div class="small mt-3 mb-2"><strong>Suggestions IA</strong></div>
@@ -186,34 +186,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const basePlan = [
         { id: 1, title: 'Ouverture', duration: 15, intensity: 2, type: 'intro' },
         { id: 2, title: 'Intervention 1', duration: 35, intensity: 4, type: 'talk' },
-        { id: 3, title: 'Pause / Networking', duration: 15, intensity: 1, type: 'break' },
+        { id: 3, title: 'Pause networking', duration: 15, intensity: 1, type: 'break' },
         { id: 4, title: 'Atelier pratique', duration: 40, intensity: 4, type: 'workshop' },
-        { id: 5, title: 'Invité spécial', duration: 25, intensity: 3, type: 'guest' },
-        { id: 6, title: 'Clôture', duration: 10, intensity: 2, type: 'close' }
+        { id: 5, title: 'Invite special', duration: 25, intensity: 3, type: 'guest' },
+        { id: 6, title: 'Cloture', duration: 10, intensity: 2, type: 'close' }
     ];
 
     const aiPlans = {
         classique: [
             { title: 'Ouverture institutionnelle', duration: 20, intensity: 2, type: 'intro' },
             { title: 'Discours principal', duration: 35, intensity: 4, type: 'talk' },
-            { title: 'Pause café', duration: 15, intensity: 1, type: 'break' },
+            { title: 'Pause cafe', duration: 15, intensity: 1, type: 'break' },
             { title: 'Table ronde', duration: 30, intensity: 3, type: 'talk' },
-            { title: 'Questions & Réponses', duration: 20, intensity: 3, type: 'qa' },
-            { title: 'Clôture', duration: 10, intensity: 2, type: 'close' }
+            { title: 'Questions et reponses', duration: 20, intensity: 3, type: 'qa' },
+            { title: 'Cloture', duration: 10, intensity: 2, type: 'close' }
         ],
         dynamique: [
             { title: 'Ice breaker', duration: 12, intensity: 3, type: 'intro' },
             { title: 'Intervention flash', duration: 20, intensity: 4, type: 'talk' },
             { title: 'Atelier collaboratif', duration: 35, intensity: 5, type: 'workshop' },
             { title: 'Pause active', duration: 10, intensity: 1, type: 'break' },
-            { title: 'Invité spécial', duration: 25, intensity: 4, type: 'guest' },
-            { title: 'Synthèse actionnable', duration: 15, intensity: 3, type: 'close' }
+            { title: 'Invite special', duration: 25, intensity: 4, type: 'guest' },
+            { title: 'Synthese actionnable', duration: 15, intensity: 3, type: 'close' }
         ],
         premium: [
             { title: 'Accueil premium', duration: 15, intensity: 2, type: 'intro' },
             { title: 'Keynote expert', duration: 30, intensity: 4, type: 'talk' },
             { title: 'Case study live', duration: 25, intensity: 4, type: 'workshop' },
-            { title: 'Pause networking guidée', duration: 20, intensity: 1, type: 'break' },
+            { title: 'Pause networking guidee', duration: 20, intensity: 1, type: 'break' },
             { title: 'Panel VIP', duration: 30, intensity: 4, type: 'guest' },
             { title: 'Closing signature', duration: 12, intensity: 2, type: 'close' }
         ]
@@ -225,9 +225,9 @@ document.addEventListener('DOMContentLoaded', function () {
             talk: 'Intervention',
             workshop: 'Atelier',
             break: 'Pause',
-            guest: 'Invité',
+            guest: 'Invite',
             qa: 'Q&A',
-            close: 'Clôture'
+            close: 'Cloture'
         };
         return map[type] || 'Phase';
     };
@@ -251,20 +251,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="talk">Intervention</option>
                         <option value="workshop">Atelier</option>
                         <option value="break">Pause</option>
-                        <option value="guest">Invité</option>
+                        <option value="guest">Invite</option>
                         <option value="qa">Q&A</option>
-                        <option value="close">Clôture</option>
+                        <option value="close">Cloture</option>
                     </select>
                 </div>
                 <div class="col-4">
-                    <label class="form-label small mb-1">Durée</label>
+                    <label class="form-label small mb-1">Duree</label>
                     <div class="input-group input-group-sm">
                         <input type="number" min="5" max="180" class="form-control scenario-duration" value="${item.duration}">
                         <span class="input-group-text">min</span>
                     </div>
                 </div>
                 <div class="col-3">
-                    <label class="form-label small mb-1">Énergie</label>
+                    <label class="form-label small mb-1">Energie</label>
                     <input type="range" min="1" max="5" value="${item.intensity}" class="form-range scenario-intensity">
                 </div>
             </div>
@@ -333,10 +333,10 @@ document.addEventListener('DOMContentLoaded', function () {
         scoreValueEl.textContent = String(score);
         if (score >= 80) {
             scoreRingEl.style.borderColor = '#22c55e';
-            scoreLabelEl.textContent = 'Prêt à valider';
+            scoreLabelEl.textContent = 'Pret a valider';
         } else if (score >= 60) {
             scoreRingEl.style.borderColor = '#f59e0b';
-            scoreLabelEl.textContent = 'Bon, à optimiser';
+            scoreLabelEl.textContent = 'Bon, a optimiser';
         } else {
             scoreRingEl.style.borderColor = '#ef4444';
             scoreLabelEl.textContent = 'Structure fragile';
@@ -366,22 +366,22 @@ document.addEventListener('DOMContentLoaded', function () {
         score = Math.max(0, Math.min(100, score));
 
         const checklist = [
-            { ok: hasOpening, text: 'Commencer par une phase d’ouverture' },
-            { ok: hasClosure, text: 'Terminer avec une clôture explicite' },
-            { ok: hasBreak || totalDuration <= 90, text: 'Prévoir une pause pour les formats longs' },
-            { ok: !intenseSeries, text: 'Éviter 3 phases très denses consécutives' },
-            { ok: phases.length >= 4, text: 'Avoir une trame suffisamment riche (4 phases+)' }
+            { ok: hasOpening, text: 'Commencer par une phase d ouverture' },
+            { ok: hasClosure, text: 'Terminer avec une cloture explicite' },
+            { ok: hasBreak || totalDuration <= 90, text: 'Prevoir une pause pour les formats longs' },
+            { ok: !intenseSeries, text: 'Eviter 3 phases tres denses consecutives' },
+            { ok: phases.length >= 4, text: 'Avoir une trame riche (4 phases+)' }
         ];
 
         const suggestions = [];
-        if (!hasBreak && totalDuration > 90) suggestions.push('Ajoutez une pause de 10-15 min après le 2ème bloc.');
-        if (intenseSeries) suggestions.push('Insérez une phase légère (interaction, Q&A, pause active) pour équilibrer le rythme.');
-        if (!hasOpening) suggestions.push('Placez une ouverture claire pour cadrer les objectifs de la session.');
-        if (!hasClosure) suggestions.push('Ajoutez une clôture avec synthèse et prochaines actions.');
-        if (mode === 'hybride') suggestions.push('En mode hybride, ajoutez un segment Q&A pour aligner présentiel et en ligne.');
-        if (suggestions.length === 0) suggestions.push('Structure cohérente: vous pouvez valider ce scénario.');
+        if (!hasBreak && totalDuration > 90) suggestions.push('Ajoutez une pause de 10-15 min apres le 2eme bloc.');
+        if (intenseSeries) suggestions.push('Inserez une phase legere pour equilibrer le rythme.');
+        if (!hasOpening) suggestions.push('Placez une ouverture claire pour cadrer les objectifs.');
+        if (!hasClosure) suggestions.push('Ajoutez une cloture avec synthese et actions.');
+        if (mode === 'hybride') suggestions.push('En mode hybride, ajoutez un segment Q&A pour aligner les participants.');
+        if (suggestions.length === 0) suggestions.push('Structure coherente: vous pouvez valider ce scenario.');
 
-        checklistEl.innerHTML = checklist.map((item) => `<li class="${item.ok ? 'ok' : 'warn'}">${item.ok ? '✅' : '⚠'} ${item.text}</li>`).join('');
+        checklistEl.innerHTML = checklist.map((item) => `<li class="${item.ok ? 'ok' : 'warn'}">${item.ok ? 'OK' : '!' } ${item.text}</li>`).join('');
         suggestionsEl.innerHTML = suggestions.map((s) => `<li>${s}</li>`).join('');
         renderEnergy(phases);
         setScoreVisual(score);
@@ -406,6 +406,24 @@ document.addEventListener('DOMContentLoaded', function () {
         source.forEach((item) => {
             const row = { ...item, id: nextId++ };
             track.appendChild(buildCard(row));
+        });
+        updateInsights();
+    }
+
+    function applyPhases(phases) {
+        if (!Array.isArray(phases) || phases.length === 0) {
+            return;
+        }
+        track.innerHTML = '';
+        phases.forEach((item, idx) => {
+            const card = buildCard({
+                id: nextId++,
+                title: item.title || `Phase ${idx + 1}`,
+                duration: Math.max(5, parseInt(item.duration, 10) || 15),
+                intensity: Math.max(1, Math.min(5, parseInt(item.intensity, 10) || 3)),
+                type: item.type || 'talk'
+            });
+            track.appendChild(card);
         });
         updateInsights();
     }
@@ -448,6 +466,18 @@ document.addEventListener('DOMContentLoaded', function () {
     titleInput?.addEventListener('input', updateInsights);
     modeInput?.addEventListener('change', updateInsights);
     placesInput?.addEventListener('input', updateInsights);
+
+    window.addEventListener('sahty:planning-generated', function (event) {
+        const phases = event?.detail?.phases;
+        if (Array.isArray(phases) && phases.length > 0) {
+            applyPhases(phases);
+        }
+    });
+
+    window.SahtyScenarioStudio = {
+        applyPhases,
+        getPhases: getPhases
+    };
 
     initBase();
 });

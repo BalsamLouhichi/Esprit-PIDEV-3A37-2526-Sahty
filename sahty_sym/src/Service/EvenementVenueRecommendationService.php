@@ -34,7 +34,13 @@ class EvenementVenueRecommendationService
             ];
         }
 
-        $elements = $this->fetchNearbyPlaces((float) $geo['lat'], (float) $geo['lon'], $eventType);
+        $elements = $this->fetchNearbyPlaces((float) $geo['lat'], (float) $geo['lon'], $eventType, false);
+        $usedFallback = false;
+        if (count($elements) === 0) {
+            $elements = $this->fetchNearbyPlaces((float) $geo['lat'], (float) $geo['lon'], $eventType, true);
+            $usedFallback = true;
+        }
+
         $normalized = [];
 
         foreach ($elements as $element) {
@@ -74,10 +80,15 @@ class EvenementVenueRecommendationService
         return [
             'success' => true,
             'message' => count($normalized) > 0
-                ? 'Lieux recommandes generes avec succes.'
-                : 'Aucun lieu pertinent trouve dans cette zone.',
+                ? ($usedFallback
+                    ? 'Lieux recommandes generes avec succes (mode elargi active).'
+                    : 'Lieux recommandes generes avec succes.')
+                : ($usedFallback
+                    ? 'Aucun lieu pertinent trouve, meme apres elargissement de la recherche.'
+                    : 'Aucun lieu pertinent trouve dans cette zone.'),
             'ville' => (string) ($geo['display_name'] ?? $city),
             'lieux' => array_slice($normalized, 0, 10),
+            'fallback_used' => $usedFallback,
         ];
     }
 
@@ -113,10 +124,12 @@ class EvenementVenueRecommendationService
         }
     }
 
-    private function fetchNearbyPlaces(float $lat, float $lon, string $eventType): array
+    private function fetchNearbyPlaces(float $lat, float $lon, string $eventType, bool $broadSearch = false): array
     {
-        $radius = 7000;
-        $amenities = $this->mapTypeToAmenities($eventType);
+        $radius = $broadSearch ? 12000 : 7000;
+        $amenities = $broadSearch
+            ? $this->mapFallbackAmenities($eventType)
+            : $this->mapTypeToAmenities($eventType);
 
         $fragments = [];
         foreach ($amenities as $amenity) {
@@ -151,6 +164,24 @@ class EvenementVenueRecommendationService
             'webinaire' => ['university', 'college', 'community_centre'],
             default => ['conference_centre', 'community_centre', 'university', 'college'],
         };
+    }
+
+    private function mapFallbackAmenities(string $eventType): array
+    {
+        $base = $this->mapTypeToAmenities($eventType);
+        $fallback = [
+            'community_centre',
+            'townhall',
+            'theatre',
+            'arts_centre',
+            'social_centre',
+            'library',
+            'school',
+            'college',
+            'university',
+        ];
+
+        return array_values(array_unique(array_merge($base, $fallback)));
     }
 
     private function scorePlace(array $tags, string $eventType, ?int $capacity, array $context): int
@@ -329,4 +360,3 @@ class EvenementVenueRecommendationService
         return $earthRadius * $c;
     }
 }
-

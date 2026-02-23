@@ -1,0 +1,594 @@
+{# Footer Premium MEDINOVA #}
+
+<style>
+    /* ============ PALETTE DE COULEURS MEDINOVA ============ */
+    :root {
+        --primary: #1D5D9B;
+        --primary-light: #E8F4F8;
+        --primary-dark: #163A5F;
+        --secondary: #304D30;
+        --accent: #75C2F6;
+        --light: #F4F6FF;
+        --dark: #1A2332;
+    }
+
+    /* ============ FOOTER PRINCIPAL ============ */
+    .medinova-footer {
+        background: linear-gradient(135deg, var(--dark) 0%, var(--primary-dark) 100%);
+        position: relative;
+        overflow: hidden;
+        margin-top: 80px;
+        padding: 80px 0 40px;
+    }
+
+    .medinova-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(29, 93, 155, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(48, 77, 48, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .medinova-footer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+    }
+
+    /* Decorative Wave */
+    .footer-wave {
+        position: absolute;
+        top: -2px;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z' fill='%23F4F6FF'%3E%3C/path%3E%3C/svg%3E") no-repeat;
+        background-size: cover;
+        opacity: 0.1;
+    }
+
+    /* Footer Content */
+    .footer-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Footer Section Title */
+    .footer-section-title {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        position: relative;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .footer-section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+        border-radius: 2px;
+    }
+
+    /* Footer Description */
+    .footer-description {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.8;
+        margin-bottom: 25px;
+        font-weight: 400;
+    }
+
+    /* Contact Info */
+    .footer-contact-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 18px;
+        color: rgba(255, 255, 255, 0.85);
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .footer-contact-item:hover {
+        background: rgba(117, 194, 246, 0.1);
+        transform: translateX(5px);
+    }
+
+    .footer-contact-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+        box-shadow: 0 5px 15px rgba(117, 194, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .footer-contact-item:hover .footer-contact-icon {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 8px 20px rgba(117, 194, 246, 0.4);
+    }
+
+    /* Footer Links */
+    .footer-link {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        position: relative;
+    }
+
+    .footer-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+        transition: width 0.3s ease;
+    }
+
+    .footer-link:hover {
+        color: var(--accent);
+        padding-left: 10px;
+    }
+
+    .footer-link:hover::before {
+        width: 40px;
+    }
+
+    .footer-link i {
+        color: var(--accent);
+        font-size: 0.9rem;
+        transition: transform 0.3s ease;
+    }
+
+    .footer-link:hover i {
+        transform: translateX(5px);
+    }
+
+    /* Newsletter Form */
+    .newsletter-form {
+        margin-bottom: 25px;
+    }
+
+    .newsletter-input-group {
+        display: flex;
+        border-radius: 50px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        background: white;
+    }
+
+    .newsletter-input {
+        flex: 1;
+        padding: 16px 25px;
+        border: none;
+        outline: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        background: white;
+    }
+
+    .newsletter-input::placeholder {
+        color: #999;
+    }
+
+    .newsletter-btn {
+        padding: 16px 35px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .newsletter-btn:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        transform: scale(1.05);
+    }
+
+    /* Social Media */
+    .footer-social-title {
+        color: var(--accent);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 25px 0 15px;
+        font-size: 0.95rem;
+    }
+
+    .footer-social-links {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .footer-social-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-decoration: none;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .footer-social-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.5s ease, height 0.5s ease;
+    }
+
+    .footer-social-btn:hover::before {
+        width: 100px;
+        height: 100px;
+    }
+
+    .footer-social-btn i {
+        position: relative;
+        z-index: 1;
+        font-size: 1.2rem;
+    }
+
+    .footer-social-btn:hover {
+        transform: translateY(-5px) rotate(5deg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .social-twitter {
+        background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%);
+    }
+
+    .social-facebook {
+        background: linear-gradient(135deg, #1877F2 0%, #0d5dbf 100%);
+    }
+
+    .social-linkedin {
+        background: linear-gradient(135deg, #0A66C2 0%, #004182 100%);
+    }
+
+    .social-instagram {
+        background: linear-gradient(135deg, #E4405F 0%, #C13584 100%);
+    }
+
+    /* ============ FOOTER BOTTOM ============ */
+    .footer-bottom {
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(117, 194, 246, 0.2);
+        padding: 25px 0;
+        margin-top: 60px;
+    }
+
+    .footer-bottom-text {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .footer-bottom-link {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+
+    .footer-bottom-link:hover {
+        color: white;
+        text-decoration: underline;
+    }
+
+    /* Logo Footer */
+    .footer-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .footer-logo i {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 8px rgba(117, 194, 246, 0.5));
+    }
+
+    .footer-logo h3 {
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, white 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .medinova-footer {
+            padding: 50px 0 30px;
+            margin-top: 50px;
+        }
+
+        .footer-section-title {
+            font-size: 1.2rem;
+        }
+
+        .newsletter-input-group {
+            flex-direction: column;
+            border-radius: 15px;
+        }
+
+        .newsletter-btn {
+            border-radius: 0 0 15px 15px;
+        }
+
+        .footer-social-links {
+            justify-content: center;
+        }
+
+        .footer-bottom-text {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .footer-content > div {
+        animation: fadeInUp 0.6s ease;
+    }
+
+    .footer-content > div:nth-child(1) { animation-delay: 0.1s; }
+    .footer-content > div:nth-child(2) { animation-delay: 0.2s; }
+    .footer-content > div:nth-child(3) { animation-delay: 0.3s; }
+    .footer-content > div:nth-child(4) { animation-delay: 0.4s; }
+</style>
+
+<!-- Footer Start -->
+<footer class="medinova-footer">
+    <div class="footer-wave"></div>
+    
+    <div class="container footer-content">
+        <div class="row g-5">
+            <!-- À propos / Contact -->
+            <div class="col-lg-3 col-md-6">
+                <div class="footer-logo">
+                    <i class="fa fa-clinic-medical"></i>
+                    <h3>SAHTY</h3>
+                </div>
+                <p class="footer-description">
+                    Votre santé, notre priorité. SAHTY vous accompagne avec des services médicaux de qualité et une équipe dévouée à votre bien-être.
+                </p>
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fa fa-map-marker-alt"></i>
+                    </div>
+                    <span>123 Avenue de la Santé, 75001 Paris, France</span>
+                </div>
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fa fa-envelope"></i>
+                    </div>
+                    <span>info@medinova.fr</span>
+                </div>
+                <div class="footer-contact-item">
+                    <div class="footer-contact-icon">
+                        <i class="fa fa-phone-alt"></i>
+                    </div>
+                    <span>+33 1 23 45 67 89</span>
+                </div>
+            </div>
+
+            <!-- Liens Rapides -->
+            <div class="col-lg-3 col-md-6">
+                <h4 class="footer-section-title">Liens Rapides</h4>
+                <div class="d-flex flex-column">
+                    <a href="{{ path('app_home') }}" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Accueil
+                    </a>
+                    {% if app.user %}
+                        {% if is_granted('ROLE_PATIENT') %}
+                            <a href="{{ path('app_rdv_mes_rdv') }}" class="footer-link">
+                                <i class="fa fa-angle-right"></i>Mes Rendez-vous
+                            </a>
+                            <a href="{{ path('app_fiche_medicale_index') }}" class="footer-link">
+                                <i class="fa fa-angle-right"></i>Mes Fiches Médicales
+                            </a>
+                        {% elseif is_granted('ROLE_MEDECIN') %}
+                            <a href="{{ path('app_medecin_rdv_liste') }}" class="footer-link">
+                                <i class="fa fa-angle-right"></i>Mes Consultations
+                            </a>
+                            <a href="{{ path('app_fiche_medicale_index') }}" class="footer-link">
+                                <i class="fa fa-angle-right"></i>Fiches Patients
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('app_profile') }}" class="footer-link">
+                            <i class="fa fa-angle-right"></i>Mon Profil
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="footer-link">
+                            <i class="fa fa-angle-right"></i>Connexion
+                        </a>
+                        <a href="{{ path('app_sign') }}" class="footer-link">
+                            <i class="fa fa-angle-right"></i>Inscription
+                        </a>
+                    {% endif %}
+                    <a href="#contact" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Contact
+                    </a>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="col-lg-3 col-md-6">
+                <h4 class="footer-section-title">Nos Services</h4>
+                <div class="d-flex flex-column">
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Consultation Générale
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Médecine Spécialisée
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Examens Médicaux
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Suivi Patient
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Téléconsultation
+                    </a>
+                    <a href="#" class="footer-link">
+                        <i class="fa fa-angle-right"></i>Urgences 24/7
+                    </a>
+                </div>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="col-lg-3 col-md-6">
+                <h4 class="footer-section-title">Newsletter</h4>
+                <p class="footer-description">
+                    Inscrivez-vous pour recevoir nos actualités et conseils santé.
+                </p>
+                <form action="" method="post" class="newsletter-form">
+                    <div class="newsletter-input-group">
+                        <input type="email" 
+                               class="newsletter-input" 
+                               placeholder="Votre adresse email"
+                               required>
+                        <button type="submit" class="newsletter-btn">
+                            S'inscrire
+                        </button>
+                    </div>
+                </form>
+                
+                <h6 class="footer-social-title">Suivez-nous</h6>
+                <div class="footer-social-links">
+                    <a href="#" class="footer-social-btn social-twitter" title="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="footer-social-btn social-facebook" title="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="footer-social-btn social-linkedin" title="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="#" class="footer-social-btn social-instagram" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="footer-bottom-text">
+                        &copy; {{ 'now'|date('Y') }} 
+                        <a href="{{ path('app_home') }}" class="footer-bottom-link">SAHTY</a>. 
+                        Tous droits réservés.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="footer-bottom-text">
+                        Conçu avec <i class="fas fa-heart" style="color: #C1666B;"></i> par 
+                        <a href="#" class="footer-bottom-link">SAHTY</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Footer End -->
+
+<script>
+// Animation au scroll
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.footer-content > div').forEach(item => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(30px)';
+    item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(item);
+});
+
+// Newsletter form
+document.querySelector('.newsletter-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = this.querySelector('input[type="email"]').value;
+    if (email) {
+        alert('✅ Merci de votre inscription à notre newsletter!');
+        this.reset();
+    }
+});
+
+console.log('🏥 SAHTYs - Footer Premium chargé avec succès!');
+</script>

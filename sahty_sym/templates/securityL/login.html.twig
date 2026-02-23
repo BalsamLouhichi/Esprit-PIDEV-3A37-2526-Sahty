@@ -301,75 +301,37 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
-        /* Lien d'inscription */
-        .register-link-container { 
+        /* Lien mot de passe oublié - MODIFIÉ */
+        .forgot-password-container { 
             text-align: center; 
-            margin-top: 20px; 
-            padding-top: 20px;
-            border-top: 2px solid rgba(117, 194, 246, 0.2);
+            margin: 15px 0; 
+            padding: 10px;
+        }
+        .forgot-password-link { 
+            color: #0d6efd; 
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+        .forgot-password-link:hover { 
+            text-decoration: none;
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        .register-link-container p {
-            color: #6c757d;
-            margin-bottom: 10px;
-        }
-
-        .register-link { 
-            color: var(--primary); 
-            text-decoration: none; 
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .register-link:hover { 
-            color: var(--primary-dark);
-            gap: 12px;
-        }
-
-        /* Alertes */
-        .alert {
-            border-radius: 15px;
-            border: none;
-            border-left: 4px solid;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            background: white;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .alert-danger {
-            border-left-color: var(--danger, #C1666B);
-        }
-
-        .alert-success {
-            border-left-color: var(--success, #4A7C59);
-        }
-
-        /* Animation */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-card {
-            animation: fadeInUp 0.6s ease forwards;
+        /* Style pour le bouton de soumission externe */
+        .submit-button-container {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-
-    <!-- Navigation - Utilise le partial header existant -->
-    {% include 'partials/header.html.twig' %}
+    {% include 'partials/navbar.html.twig' %}
 
     <!-- Login Container -->
     <div class="login-container">
@@ -410,7 +372,7 @@
                     </div>
                 {% endfor %}
 
-                <!-- Formulaire de connexion Symfony (avec ID pour soumission externe) -->
+                <!-- Formulaire de connexion Symfony -->
                 <form method="post" action="{{ path('app_login') }}" id="loginForm">
                     {# Protection CSRF #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
@@ -445,9 +407,11 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- REMARQUE: Le lien "Mot de passe oublié" est maintenant EN DEHORS du formulaire -->
                 </form>
 
-                <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE (Balsam) -->
+                <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
                 <div class="forgot-password-container">
                     <a href="{{ path('app_forgot_password') }}" 
                        class="forgot-password-link"
@@ -465,7 +429,7 @@
                 </div>
 
                 <!-- Case à cocher "Se souvenir de moi" -->
-                <div class="form-check">
+                <div class="form-check mb-3" style="margin-top: 15px;">
                     <input type="checkbox" name="_remember_me" value="on" class="form-check-input" id="remember">
                     <label class="form-check-label" for="remember">Se souvenir de moi</label>
                 </div>
@@ -477,8 +441,8 @@
                 </div>
 
                 <div class="register-link-container">
-                    <p>Nouveau sur SAHTY ?</p>
-                    <a href="{{ path('app_signup') }}" class="register-link">
+                    <p>Nouveau sur Medinova ?</p>
+                    <a href="{{ path('app_sign') }}" class="register-link">
                         Créer un compte gratuit <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -536,7 +500,29 @@
 
         // Animation supplémentaire
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔐 Page de connexion SAHTY chargée avec succès!');
+            const loginCard = document.querySelector('.login-card');
+            loginCard.style.opacity = '0';
+            loginCard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                loginCard.style.transition = 'all 0.5s ease';
+                loginCard.style.opacity = '1';
+                loginCard.style.transform = 'translateY(0)';
+            }, 100);
+        });
+
+        // S'assurer que le lien "mot de passe oublié" fonctionne
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            console.log('Redirection vers la page de récupération de mot de passe');
+            // La navigation se fera normalement via l'attribut href
+        });
+
+        // Prévenir toute soumission accidentelle du formulaire
+        document.getElementById('loginForm').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                e.preventDefault();
+                document.querySelector('button[form="loginForm"]').click();
+            }
         });
     </script>
 </body>

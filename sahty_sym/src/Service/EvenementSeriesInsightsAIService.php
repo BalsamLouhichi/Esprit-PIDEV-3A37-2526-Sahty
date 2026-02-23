@@ -5,11 +5,15 @@ namespace App\Service;
 use App\Entity\Evenement;
 use App\Entity\InscriptionEvenement;
 use App\Repository\EvenementRepository;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class EvenementSeriesInsightsAIService
 {
+    private const FREE_AI_URL = 'https://text.pollinations.ai';
+
     public function __construct(
-        private readonly EvenementRepository $evenementRepository
+        private readonly EvenementRepository $evenementRepository,
+        private readonly HttpClientInterface $httpClient
     ) {
     }
 
@@ -80,6 +84,16 @@ class EvenementSeriesInsightsAIService
         $audienceEvolution = $this->buildAudienceEvolution($audienceScores);
         $loyalty = $this->buildLoyaltyMetrics($allParticipantIds, $retentionRates, $seriesEvents);
 
+        $fallbackSynthesis = $this->buildSeriesSynthesis($growth, $knowledge, $audienceEvolution, $loyalty);
+        $aiSynthesis = $this->buildExternalAiSeriesSynthesis(
+            $referenceEvent,
+            $editions,
+            $growth,
+            $knowledge,
+            $audienceEvolution,
+            $loyalty
+        );
+
         return [
             'series_nom' => $this->humanizeSeriesName($seriesBase, (string) $referenceEvent->getTitre()),
             'is_series' => count($seriesEvents) > 1,
@@ -93,8 +107,82 @@ class EvenementSeriesInsightsAIService
             'evolution_audience' => $audienceEvolution,
             'progression_pedagogique' => $knowledge,
             'fidelite' => $loyalty,
-            'synthese' => $this->buildSeriesSynthesis($growth, $knowledge, $audienceEvolution, $loyalty),
+            'synthese' => $aiSynthesis ?? $fallbackSynthesis,
+            'synthese_source' => $aiSynthesis !== null ? 'external_api' : 'local_fallback',
         ];
+    }
+
+    private function buildExternalAiSeriesSynthesis(
+        Evenement $referenceEvent,
+        array $editions,
+        array $growth,
+        array $knowledge,
+        array $audienceEvolution,
+        array $loyalty
+    ): ?array {
+        try {
+            $compactEditions = array_map(static function (array $edition): array {
+                return [
+                    'numero' => (int) ($edition['numero'] ?? 0),
+                    'titre' => (string) ($edition['titre'] ?? ''),
+                    'participants' => (int) ($edition['participants'] ?? 0),
+                ];
+            }, $editions);
+
+            $payload = [
+                'titre_reference' => (string) $referenceEvent->getTitre(),
+                'editions' => $compactEditions,
+                'croissance' => $growth,
+                'progression_pedagogique' => $knowledge,
+                'evolution_audience' => $audienceEvolution,
+                'fidelite' => $loyalty,
+            ];
+
+            $prompt = 'Tu es analyste d editions d evenements medicaux. '
+                .'Reponds uniquement en JSON avec les cles "niveau" et "message". '
+                .'Le message doit etre en francais, court (max 180 caracteres), actionnable, sans emojis. '
+                .'Niveaux autorises: excellent, bon, moyen, faible. '
+                .'Donnees: '.json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+            $response = $this->httpClient->request(
+                'GET',
+                self::FREE_AI_URL.'/'.rawurlencode($prompt),
+                [
+                    'headers' => ['Accept' => 'application/json,text/plain'],
+                    'timeout' => 8,
+                ]
+            );
+
+            $raw = trim($response->getContent(false));
+            if ($raw === '') {
+                return null;
+            }
+
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded) && preg_match('/\{[\s\S]*\}/', $raw, $m) === 1) {
+                $decoded = json_decode((string) $m[0], true);
+            }
+            if (!is_array($decoded)) {
+                return null;
+            }
+
+            $niveau = mb_strtolower(trim((string) ($decoded['niveau'] ?? '')));
+            $message = trim((string) ($decoded['message'] ?? ''));
+
+            if ($message === '') {
+                return null;
+            }
+            if (!in_array($niveau, ['excellent', 'bon', 'moyen', 'faible'], true)) {
+                $niveau = 'moyen';
+            }
+
+            return [
+                'niveau' => $niveau,
+                'message' => mb_substr($message, 0, 180),
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function buildNextEditionTitle(Evenement $event): string

@@ -20,8 +20,14 @@
 </head>
 <body>
 
-    {# Navbar partial #}
-    {% include 'partials/navbar.html.twig' %}
+    {# Header / Navbar #}
+    {% block header %}
+        {% if app.user and is_granted('ROLE_PATIENT') %}
+            {% include 'partials/header.html.twig' %}
+        {% else %}
+            {% include 'partials/navbar.html.twig' %}
+        {% endif %}
+    {% endblock %}
 
     <main class="container mt-4">
         {% block body %}{% endblock %}
@@ -36,3 +42,4 @@
     {% block javascripts %}{% endblock %}
 </body>
 </html>
+

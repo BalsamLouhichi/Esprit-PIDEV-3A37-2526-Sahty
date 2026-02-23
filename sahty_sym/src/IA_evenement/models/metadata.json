@@ -1,0 +1,15 @@
+{
+  "rows_count": 2757,
+  "events_count": 500,
+  "features": [
+    "event_type",
+    "mode",
+    "audience",
+    "level",
+    "duration_total_min"
+  ],
+  "target": "target_sequence",
+  "model": "RandomForestClassifier",
+  "model_path": "models\\planning_model.joblib",
+  "phase_stats_path": "models\\phase_stats.json"
+}

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Laboratoire;
+use App\Entity\Patient;
 use App\Entity\ResponsableLaboratoire;
 use App\Entity\LaboratoireTypeAnalyse;
 use App\Form\LaboratoireType;
@@ -33,6 +34,15 @@ class LaboratoireController extends AbstractController
         $villes = $laboratoireRepository->findDistinctVilles();
         $typeBilans = $laboratoireRepository->findDistinctTypeBilans();
 
+        $recommendedLaboratoires = [];
+        $patientVille = null;
+
+        $user = $this->getUser();
+        if ($user instanceof Patient && $user->getVille()) {
+            $patientVille = $user->getVille();
+            $recommendedLaboratoires = $laboratoireRepository->findRecommendedForVille($patientVille, 6);
+        }
+
         return $this->render('laboratoire/labo.html.twig', [
             'laboratoires' => $laboratoires,
             'filter_name' => $name,
@@ -40,6 +50,8 @@ class LaboratoireController extends AbstractController
             'filter_type_bilan' => $typeBilan,
             'filter_villes' => $villes,
             'filter_type_bilans' => $typeBilans,
+            'patient_ville' => $patientVille,
+            'recommended_laboratoires' => $recommendedLaboratoires,
         ]);
     }
 
@@ -101,7 +113,6 @@ class LaboratoireController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-
 
     #[Route('/{id}', name: 'app_labo_show', methods: ['GET'])]
     public function show(Laboratoire $laboratoire, MedecinRepository $medecinRepository): Response

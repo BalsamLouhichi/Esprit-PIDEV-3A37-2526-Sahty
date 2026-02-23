@@ -50,6 +50,9 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
     /**
      * Recherche avancée d'utilisateurs avec filtres
      */
+   /**
+     * Recherche avancée d'utilisateurs avec filtres
+     */
     public function search(?string $query = null, ?string $role = null): array
     {
         $qb = $this->createQueryBuilder('u');
@@ -112,4 +115,13 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
     //        ;
     //    }
 
+    /**
+     * Recherche avancée d'utilisateurs avec filtres
+     */
+    
+
+    /**
+     * Compte les utilisateurs par rôle
+     */
+    
 }

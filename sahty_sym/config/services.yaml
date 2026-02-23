@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.ia_evenement.python_default: 'python'
+    app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
+
     event_resource_stock:
         chaises: 150
         tables: 30
@@ -16,6 +19,14 @@ parameters:
         gants: 400
         masques: 220
         speaker_monitors: 1
+
+    app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
+    app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
+    app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
+    app.fastapi_ai.model: '%env(FASTAPI_AI_MODEL)%'
+    app.fastapi_ai.use_ollama: '%env(bool:FASTAPI_AI_USE_OLLAMA)%'
+    app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
+    app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
 
 
 services:
@@ -59,5 +70,20 @@ services:
             $appUrl: '%env(default::APP_URL)%'
             $mailerDsn: '%env(default::MAILER_DSN)%'
 
+    App\Integration\FastApiLabAiClient:
+        arguments:
+            $endpoint: '%app.fastapi_ai.endpoint%'
+            $ocrEngine: '%app.fastapi_ai.ocr_engine%'
+            $lang: '%app.fastapi_ai.lang%'
+            $model: '%app.fastapi_ai.model%'
+            $useOllama: '%app.fastapi_ai.use_ollama%'
+            $timeout: '%app.fastapi_ai.timeout%'
+            $apiKey: '%app.fastapi_ai.api_key%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\EvenementPlanningModelService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBin: '%app.ia_evenement.python%'

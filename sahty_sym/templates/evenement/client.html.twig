@@ -1,4 +1,4 @@
-{# templates/evenement/client.html.twig #}
+﻿{# templates/evenement/client.html.twig #}
 <!DOCTYPE html>
 <html lang="fr" data-bs-theme="light">
 <head>
@@ -366,6 +366,38 @@
             background: #dcfce7;
             color: #10b981;
         }
+
+        .event-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+        }
+
+        .event-actions .btn,
+        .event-actions span.btn {
+            min-height: 42px;
+            padding: 0.45rem 0.95rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .event-actions .btn[aria-label="Voir les details"] {
+            width: 42px;
+            min-width: 42px;
+            padding: 0;
+        }
+
+        @media (max-width: 992px) {
+            .event-actions {
+                justify-content: flex-start;
+            }
+        }
     </style>
 </head>
 <body>
@@ -455,10 +487,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-calendar-check"></i>
                         </div>
-                        <h4 class="fw-bold mb-3">Événements Médicaux</h4>
+                        <h4 class="fw-bold mb-3">Evenements medicaux</h4>
                         <p class="text-muted">
-                            Webinaires, ateliers et conférences animés par des experts reconnus. 
-                            Formations continues pour les professionnels de santé.
+                            Webinaires, ateliers et conferences animes par des experts reconnus.
+                            Formations continues pour les professionnels de sante.
                         </p>
                     </div>
                 </div>
@@ -468,10 +500,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-brain"></i>
                         </div>
-                        <h4 class="fw-bold mb-3">Ressources Santé Mentale</h4>
+                        <h4 class="fw-bold mb-3">Ressources sante mentale</h4>
                         <p class="text-muted">
-                            Articles scientifiques, outils d'auto-évaluation et guides pratiques 
-                            pour mieux comprendre et gérer la santé mentale.
+                            Articles scientifiques, outils d'auto-evaluation et guides pratiques
+                            pour mieux comprendre et gerer la sante mentale.
                         </p>
                     </div>
                 </div>
@@ -481,10 +513,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <h4 class="fw-bold mb-3">Communauté Professionnelle</h4>
+                        <h4 class="fw-bold mb-3">Communaute professionnelle</h4>
                         <p class="text-muted">
-                            Échangez avec d'autres professionnels, partagez vos expériences 
-                            et développez votre réseau dans un environnement sécurisé.
+                            Echangez avec d'autres professionnels, partagez vos experiences
+                            et developpez votre reseau dans un environnement securise.
                         </p>
                     </div>
                 </div>
@@ -657,7 +689,7 @@
                                     <div class="text-muted small mb-3">
                                         <div class="mb-1">
                                             <i class="fas fa-calendar-alt me-2"></i> 
-                                            {{ evenement.dateDebut|date('d/m/Y') }} • {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}
+                                            {{ evenement.dateDebut|date('d/m/Y') }} â€¢ {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}
                                         </div>
                                         <div>
                                             <i class="fas fa-map-marker-alt me-2"></i> 
@@ -697,11 +729,17 @@
                                                 </span>
                                             {% endif %}
                                         </div>
-                                        <div class="d-flex gap-2">
+                                        <div class="event-actions">
                                             {% if app.user %}
+                                                <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Details"
+                                                   aria-label="Voir les details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
                                                 {% if evenement.userInscrit is defined and evenement.userInscrit %}
-                                                    <span class="btn btn-sm btn-success" title="Vous êtes déjà inscrit à cet événement.">
-                                                        <i class="fas fa-check-circle me-1"></i> Déjà inscrit
+                                                    <span class="btn btn-sm btn-success" title="Vous etes deja inscrit a cet evenement.">
+                                                        <i class="fas fa-check-circle me-1"></i> Deja inscrit
                                                     </span>
                                                 {% elseif actions[evenement.id] is defined and actions[evenement.id].can_inscribe %}
                                                     <button type="button" class="btn btn-sm btn-primary" 
@@ -711,19 +749,18 @@
                                                     </button>
                                                 {% elseif evenement.createur == app.user %}
                                                     <span class="btn btn-sm btn-outline-secondary" disabled>
-                                                        <i class="fas fa-user-cog me-1"></i> Votre événement
+                                                        <i class="fas fa-user-cog me-1"></i> Votre evenement
                                                     </span>
-                                                {% else %}
-                                                    <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn btn-sm btn-outline-primary">
-                                                        Détails
-                                                    </a>
                                                 {% endif %}
                                             {% else %}
                                                 <a href="{{ path('app_login') }}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-sign-in-alt me-1"></i> Se connecter
                                                 </a>
-                                                <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn btn-sm btn-outline-primary">
-                                                    Détails
+                                                <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Details"
+                                                   aria-label="Voir les details">
+                                                    <i class="fas fa-eye"></i>
                                                 </a>
                                             {% endif %}
                                         </div>
@@ -756,7 +793,7 @@
                                             <div class="bg-light p-3 rounded-3 mb-4">
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i class="fas fa-calendar-alt text-primary me-2"></i>
-                                                    <span>{{ evenement.dateDebut|date('d/m/Y') }} • {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}</span>
+                                                    <span>{{ evenement.dateDebut|date('d/m/Y') }} â€¢ {{ evenement.dateDebut|date('H:i') }} - {{ evenement.dateFin|date('H:i') }}</span>
                                                 </div>
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i class="fas fa-map-marker-alt text-primary me-2"></i>
@@ -1105,3 +1142,5 @@
     </script>
 </body>
 </html>
+
+

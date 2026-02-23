@@ -49,6 +49,11 @@ class SignupType extends AbstractType
                 'required' => false,
                 'attr' => ['class' => 'form-control', 'placeholder' => '06 12 34 56 78']
             ])
+            ->add('ville', TextType::class, [
+                'label' => 'Ville',
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'placeholder' => 'Votre ville']
+            ])
             ->add('dateNaissance', DateType::class, [
                 'label' => 'Date de naissance',
                 'required' => false,

@@ -1,836 +1,1672 @@
-﻿{# templates/calendar/index.html.twig #}
+{# templates/calendar/index.html.twig #}
+
 {% extends 'base.html.twig' %}
+
+
 
 {% block title %}Calendrier des événements - Sahty{% endblock %}
 
+
+
 {% block stylesheets %}
+
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
     <style>
+
         :root {
+
             --primary: #2563eb;
+
             --primary-light: #dbeafe;
+
             --primary-dark: #1d4ed8;
+
             --secondary: #475569;
+
             --success: #10b981;
+
             --success-light: #d1fae5;
+
             --warning: #f59e0b;
+
             --warning-light: #fef3c7;
+
             --danger: #ef4444;
+
             --danger-light: #fee2e2;
+
             --info: #3b82f6;
+
             --info-light: #dbeafe;
+
             --purple: #8b5cf6;
+
             --purple-light: #ede9fe;
+
             --dark: #0f172a;
+
             --dark-light: #1e293b;
+
             --light: #f8fafc;
+
             --gray-50: #f9fafb;
+
             --gray-100: #f3f4f6;
+
             --gray-200: #e5e7eb;
+
             --gray-300: #d1d5db;
+
             --gray-400: #9ca3af;
+
             --gray-500: #6b7280;
+
             --gray-600: #4b5563;
+
             --gray-700: #374151;
+
             --gray-800: #1f2937;
+
             --gray-900: #111827;
+
             
+
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
             --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
             
+
             --border-radius-sm: 0.375rem;
+
             --border-radius-md: 0.5rem;
+
             --border-radius-lg: 0.75rem;
+
             --border-radius-xl: 1rem;
+
             
+
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
         }
+
+
 
         body {
+
             font-family: 'Inter', sans-serif;
+
             background-color: var(--gray-50);
+
             color: var(--gray-700);
+
             line-height: 1.5;
+
             font-weight: 400;
+
             min-height: 100vh;
+
             padding: 2rem 0;
+
         }
+
+
 
         .container-fluid {
+
             max-width: 1400px;
+
             margin: 0 auto;
+
             padding: 0 24px;
+
         }
+
+
 
         .page-title-box {
+
             margin-bottom: 2rem;
+
             padding: 1rem 0;
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
             flex-wrap: wrap;
+
             gap: 1rem;
+
         }
+
+
 
         .page-title-box h4 {
+
             color: var(--gray-900);
+
             font-weight: 700;
+
             font-size: 1.75rem;
+
             margin: 0;
+
         }
+
+
 
         .page-title-box p {
+
             color: var(--gray-500);
+
             margin: 0.5rem 0 0 0;
+
         }
+
+
 
         .filter-section {
+
             margin-bottom: 2rem;
+
             padding: 1.5rem;
+
             background: white;
+
             border-radius: var(--border-radius-lg);
+
             border: 1px solid var(--gray-200);
+
             box-shadow: var(--shadow-sm);
+
         }
+
+
 
         .score-indicator {
+
             display: inline-block;
+
             width: 12px;
+
             height: 12px;
+
             border-radius: 50%;
+
             margin-right: 5px;
+
         }
+
         
+
         .score-high { background-color: var(--success); }
+
         .score-medium { background-color: var(--info); }
+
         .score-low { background-color: var(--warning); }
 
+
+
         /* Calendar customization */
+
         .fc {
+
             background: white;
+
             padding: 1.5rem;
+
             border-radius: var(--border-radius-lg);
+
             border: 1px solid var(--gray-200);
+
             box-shadow: var(--shadow-sm);
+
         }
+
+
 
         .fc-toolbar-title {
+
             color: var(--gray-900);
+
             font-weight: 600;
+
             font-size: 1.5rem !important;
+
         }
+
+
 
         .fc-button-primary {
+
             background-color: var(--primary) !important;
+
             border-color: var(--primary) !important;
+
         }
+
+
 
         .fc-button-primary:hover {
+
             background-color: var(--primary-dark) !important;
+
         }
+
+
 
         .fc-button-primary:not(:disabled):active,
+
         .fc-button-primary.fc-button-active {
+
             background-color: var(--primary-dark) !important;
+
         }
+
+
 
         .fc-event {
+
             cursor: pointer;
+
             transition: transform 0.2s, box-shadow 0.2s;
+
             border-radius: var(--border-radius-sm) !important;
+
             border: none !important;
+
             padding: 2px 4px !important;
+
         }
+
+
 
         .fc-event:hover {
+
             transform: translateY(-2px);
+
             box-shadow: var(--shadow-md);
+
         }
+
+
 
         .fc-event-title {
+
             font-weight: 500;
+
             font-size: 0.875rem;
+
             white-space: normal !important;
+
         }
+
+
 
         .fc-daygrid-event {
+
             white-space: normal !important;
+
         }
+
+
 
         .fc-day-today {
+
             background-color: var(--primary-light) !important;
+
         }
+
+
 
         .fc-col-header-cell {
+
             background-color: var(--gray-50);
+
             color: var(--gray-700);
+
             font-weight: 600;
+
             padding: 0.75rem 0;
+
         }
+
+
 
         /* Event tooltip */
+
         .event-tooltip {
+
             position: absolute;
+
             background: white;
+
             border: 1px solid var(--gray-200);
+
             border-radius: var(--border-radius-md);
+
             padding: 1rem;
+
             box-shadow: var(--shadow-lg);
+
             z-index: 1000;
+
             max-width: 300px;
+
             pointer-events: none;
+
             animation: fadeIn 0.2s ease;
+
         }
+
+
 
         @keyframes fadeIn {
+
             from { opacity: 0; transform: translateY(5px); }
+
             to { opacity: 1; transform: translateY(0); }
+
         }
+
+
 
         .event-tooltip h6 {
+
             color: var(--gray-900);
+
             font-weight: 600;
+
             margin-bottom: 0.5rem;
+
         }
+
+
 
         .event-tooltip p {
+
             margin-bottom: 0.25rem;
+
             font-size: 0.875rem;
+
         }
+
+
 
         .event-tooltip .badge {
+
             margin-right: 0.25rem;
+
         }
+
+
 
         /* AI recommendation badge */
+
         .ai-recommendation-badge {
+
             position: absolute;
+
             top: -2px;
+
             right: -2px;
+
             background: var(--success);
+
             color: white;
+
             border-radius: 50%;
+
             width: 20px;
+
             height: 20px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             font-size: 0.75rem;
+
             border: 2px solid white;
+
             box-shadow: var(--shadow-sm);
+
             z-index: 5;
+
         }
+
+
 
         .ai-recommendation-badge i {
+
             font-size: 0.625rem;
+
         }
+
+
 
         /* Recommendation legend */
+
         .recommendation-legend {
+
             display: flex;
+
             gap: 1.5rem;
+
             align-items: center;
+
         }
+
+
 
         .legend-item {
+
             display: flex;
+
             align-items: center;
+
             gap: 0.5rem;
+
             font-size: 0.875rem;
+
         }
+
+
 
         .legend-color {
+
             width: 16px;
+
             height: 16px;
+
             border-radius: 4px;
+
         }
+
+
 
         /* Stats cards */
+
         .stats-card {
+
             background: white;
+
             border-radius: var(--border-radius-lg);
+
             border: 1px solid var(--gray-200);
+
             padding: 1rem;
+
             text-align: center;
+
             box-shadow: var(--shadow-sm);
+
             transition: var(--transition);
+
         }
+
+
 
         .stats-card:hover {
+
             transform: translateY(-4px);
+
             box-shadow: var(--shadow-md);
+
         }
+
+
 
         .stats-card i {
+
             font-size: 2rem;
+
             color: var(--success);
+
             margin-bottom: 0.5rem;
+
         }
+
+
 
         .stats-card h3 {
+
             font-size: 1.5rem;
+
             font-weight: 700;
+
             color: var(--gray-900);
+
             margin: 0;
+
         }
+
+
 
         .stats-card p {
+
             color: var(--gray-500);
+
             font-size: 0.875rem;
+
             margin: 0;
+
         }
+
+
 
         /* Responsive */
+
         @media (max-width: 768px) {
+
             .fc-toolbar {
+
                 flex-direction: column;
+
                 gap: 1rem;
+
             }
+
             
+
             .recommendation-legend {
+
                 flex-wrap: wrap;
+
                 gap: 0.75rem;
+
             }
+
         }
+
     </style>
+
 {% endblock %}
+
+
 
 {% block body %}
+
 <div class="container-fluid">
+
     <!-- Header -->
+
     <div class="page-title-box d-flex align-items-center justify-content-between">
+
         <div>
+
             <h4 class="mb-0">
+
                 <i class="fas fa-calendar-alt me-2" style="color: var(--success);"></i>
+
                 Calendrier intelligent des événements
+
             </h4>
+
             <p class="text-muted mt-1">
+
                 Découvrez les événements recommandés spécialement pour vous
+
             </p>
+
         </div>
+
         <div>
+
             <span class="badge bg-success me-2">
+
                 <i class="fas fa-robot me-1"></i>
+
                 IA Active
+
             </span>
+
             <span class="badge bg-primary">
+
                 {{ "now"|date("d/m/Y") }}
+
             </span>
+
         </div>
+
     </div>
+
+
 
     <!-- Quick Stats Row -->
+
     <div class="row mb-4">
+
         <div class="col-md-3">
+
             <div class="stats-card">
+
                 <i class="fas fa-calendar-check"></i>
+
                 <h3>{{ totalEvenements|default(0) }}</h3>
+
                 <p>Événements ce mois</p>
+
             </div>
+
         </div>
+
         <div class="col-md-3">
+
             <div class="stats-card">
+
                 <i class="fas fa-star" style="color: var(--warning);"></i>
+
                 <h3>{{ recommandationsCount|default(0) }}</h3>
+
                 <p>Recommandés pour vous</p>
+
             </div>
+
         </div>
+
         <div class="col-md-3">
+
             <div class="stats-card">
+
                 <i class="fas fa-users" style="color: var(--info);"></i>
+
                 <h3>{{ vosInscriptions|default(0) }}</h3>
+
                 <p>Vos inscriptions</p>
+
             </div>
+
         </div>
+
         <div class="col-md-3">
+
             <div class="stats-card">
+
                 <i class="fas fa-heart" style="color: var(--danger);"></i>
+
                 <h3>{{ centresInteret|default(0) }}</h3>
+
                 <p>Centres d'intérêt</p>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <!-- AI Filter Section -->
+
     <div class="filter-section">
+
         <div class="row align-items-center">
+
             <div class="col-lg-4">
+
                 <h5 class="mb-3">
+
                     <i class="fas fa-magic me-2" style="color: var(--success);"></i>
+
                     Personnalisation IA
+
                 </h5>
+
                 <div class="form-check form-switch mb-2">
+
                     <input class="form-check-input" type="checkbox" id="aiRecommendations" checked>
+
                     <label class="form-check-label fw-medium" for="aiRecommendations">
+
                         Activer les recommandations intelligentes
+
                     </label>
+
                 </div>
+
                 <small class="text-muted">
+
                     Les événements sont classés selon votre profil, vos centres d'intérêt 
+
                     et votre historique de participation
+
                 </small>
+
             </div>
+
             <div class="col-lg-4">
+
                 <h6 class="mb-3">Légende des recommandations</h6>
+
                 <div class="recommendation-legend">
+
                     <div class="legend-item">
+
                         <span class="legend-color" style="background: var(--success);"></span>
+
                         <span>Score élevé (80-100)</span>
+
                     </div>
+
                     <div class="legend-item">
+
                         <span class="legend-color" style="background: var(--info);"></span>
+
                         <span>Score moyen (60-79)</span>
+
                     </div>
+
                     <div class="legend-item">
+
                         <span class="legend-color" style="background: var(--warning);"></span>
+
                         <span>Score faible (40-59)</span>
+
                     </div>
+
                 </div>
+
             </div>
+
             <div class="col-lg-4">
+
                 <div class="bg-light p-3 rounded">
+
                     <h6 class="mb-2">
+
                         <i class="fas fa-user-circle me-2" style="color: var(--primary);"></i>
+
                         Votre profil
+
                     </h6>
+
                     <div class="d-flex flex-wrap gap-2">
+
                         {% if app.user.genre is defined %}
+
                             <span class="badge bg-primary">
+
                                 <i class="fas fa-venus-mars me-1"></i>
+
                                 {{ app.user.genre|title }}
+
                             </span>
+
                         {% endif %}
+
                         {% if app.user.dateNaissance is defined %}
+
                             {% set age = date().diff(date(app.user.dateNaissance)).y %}
+
                             <span class="badge bg-info">
+
                                 <i class="fas fa-birthday-cake me-1"></i>
+
                                 {{ age }} ans
+
                             </span>
+
                         {% endif %}
+
                         <span class="badge bg-success">
+
                             <i class="fas fa-tag me-1"></i>
+
                             {{ categoriePrincipale|default('Santé générale') }}
+
                         </span>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <!-- Calendar Container -->
+
     <div id="calendar-holder"></div>
 
+
+
     <!-- Event Details Modal -->
+
     <div class="modal fade" id="eventModal" tabindex="-1">
+
         <div class="modal-dialog">
+
             <div class="modal-content">
+
                 <div class="modal-header">
+
                     <h5 class="modal-title" id="eventModalTitle">Détails de l'événement</h5>
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
                 </div>
+
                 <div class="modal-body" id="eventModalBody">
+
                     <!-- Content will be loaded dynamically -->
+
                 </div>
+
                 <div class="modal-footer">
+
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+
                     <a href="#" id="eventModalLink" class="btn btn-success">Voir plus de détails</a>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <!-- AI Explanation Card -->
+
     <div class="row mt-4">
+
         <div class="col-12">
+
             <div class="card">
+
                 <div class="card-header">
+
                     <h5 class="card-title mb-0">
+
                         <i class="fas fa-robot text-success me-2"></i>
+
                         Comment fonctionnent les recommandations ?
+
                     </h5>
+
                 </div>
+
                 <div class="card-body">
+
                     <div class="row">
+
                         <div class="col-md-3 text-center">
+
                             <div class="p-3">
+
                                 <div class="display-4 mb-2">1️⃣</div>
+
                                 <h6>Analyse de votre profil</h6>
-                                <small class="text-muted">Âge, genre, centres d'intérêt</small>
+
+                                <small class="text-muted">Age, genre, centres d'interet</small>
+
                             </div>
+
                         </div>
+
                         <div class="col-md-3 text-center">
+
                             <div class="p-3">
+
                                 <div class="display-4 mb-2">2️⃣</div>
+
                                 <h6>Historique des participations</h6>
+
                                 <small class="text-muted">Événements passés et préférences</small>
+
                             </div>
+
                         </div>
+
                         <div class="col-md-3 text-center">
+
                             <div class="p-3">
+
                                 <div class="display-4 mb-2">3️⃣</div>
+
                                 <h6>Correspondance sémantique</h6>
+
                                 <small class="text-muted">Mots-clés et catégories d'événements</small>
+
                             </div>
+
                         </div>
+
                         <div class="col-md-3 text-center">
+
                             <div class="p-3">
+
                                 <div class="display-4 mb-2">4️⃣</div>
+
                                 <h6>Score de recommandation</h6>
+
                                 <small class="text-muted">Classement par pertinence</small>
+
                             </div>
+
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
 {% endblock %}
 
+
+
 {% block javascripts %}
+
     {{ parent() }}
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     
+
     <script>
+
         document.addEventListener('DOMContentLoaded', function() {
+
             const calendarEl = document.getElementById('calendar-holder');
+
             const aiRecommendationsToggle = document.getElementById('aiRecommendations');
+
             const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+
             
+
             // Store tooltip elements
+
             let currentTooltip = null;
+
             
+
             // Initialize calendar
+
             const calendar = new FullCalendar.Calendar(calendarEl, {
+
                 initialView: 'dayGridMonth',
+
                 locale: 'fr',
+
                 firstDay: 1, // Monday
+
                 height: 'auto',
+
                 
+
                 headerToolbar: {
+
                     left: 'prev,next today',
+
                     center: 'title',
+
                     right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+
                 },
+
                 
+
                 buttonText: {
+
                     today: 'Aujourd\'hui',
+
                     month: 'Mois',
+
                     week: 'Semaine',
+
                     day: 'Jour',
+
                     list: 'Liste'
+
                 },
+
                 
+
                 // Event loading
+
                 events: function(fetchInfo, successCallback, failureCallback) {
+
                     // Show loading indicator
+
                     calendarEl.classList.add('loading');
+
                     
+
                     fetch('{{ path('fc_load_events') }}', {
+
                         method: 'POST',
+
                         headers: {
+
                             'Content-Type': 'application/json',
+
                             'X-Requested-With': 'XMLHttpRequest'
+
                         },
+
                         body: JSON.stringify({
+
                             start: fetchInfo.startStr,
+
                             end: fetchInfo.endStr,
+
                             filters: {
-                                ai_recommendations: aiRecommendationsToggle ? aiRecommendationsToggle.checked : true
+
+                                ai_recommendations: aiRecommendationsToggle ?aiRecommendationsToggle.checked : true
+
                             }
+
                         })
+
                     })
+
                     .then(response => {
+
                         if (!response.ok) {
+
                             throw new Error('Network response was not ok');
+
                         }
+
                         return response.json();
+
                     })
+
                     .then(events => {
+
                         calendarEl.classList.remove('loading');
+
                         
+
                         // Process events to add custom properties
+
                         events = events.map(event => {
+
                             // Parse event data if it's a string
+
                             if (event.eventData && typeof event.eventData === 'string') {
+
                                 try {
+
                                     event.extendedProps = JSON.parse(event.eventData);
+
                                 } catch (e) {
+
                                     console.warn('Could not parse event data:', e);
+
                                 }
+
                             } else if (event.eventData) {
+
                                 event.extendedProps = event.eventData;
+
                             }
+
                             
+
                             // Determine background color based on score
+
                             if (event.score !== undefined) {
+
                                 if (event.score >= 80) {
+
                                     event.backgroundColor = '#10b981'; // Success
+
                                     event.borderColor = '#10b981';
+
                                 } else if (event.score >= 60) {
+
                                     event.backgroundColor = '#3b82f6'; // Info
+
                                     event.borderColor = '#3b82f6';
+
                                 } else if (event.score >= 40) {
+
                                     event.backgroundColor = '#f59e0b'; // Warning
+
                                     event.borderColor = '#f59e0b';
+
                                 } else {
+
                                     event.backgroundColor = '#6b7280'; // Gray
+
                                     event.borderColor = '#6b7280';
+
                                 }
+
                             }
+
                             
+
                             return event;
+
                         });
+
                         
+
                         successCallback(events);
+
                     })
+
                     .catch(error => {
+
                         calendarEl.classList.remove('loading');
+
                         console.error('Error loading events:', error);
+
                         failureCallback(error);
+
                     });
+
                 },
+
                 
+
                 // Event click handler
+
                 eventClick: function(info) {
+
                     // Prevent default
+
                     info.jsEvent.preventDefault();
+
                     
+
                     const event = info.event;
+
                     const extendedProps = event.extendedProps || {};
+
                     
+
                     // Build modal content
+
                     let modalContent = `
+
                         <div class="text-center mb-3">
+
                             <span class="badge bg-${getStatusBadgeColor(extendedProps.statut)} mb-2">
+
                                 ${extendedProps.statut || 'Planifié'}
+
                             </span>
+
                             <h4>${event.title}</h4>
+
                     `;
+
                     
+
                     if (event.extendedProps.recommendationReason) {
+
                         modalContent += `
+
                             <div class="alert alert-success mt-2 mb-0 py-2">
+
                                 <i class="fas fa-robot me-2"></i>
+
                                 ${event.extendedProps.recommendationReason}
+
                             </div>
+
                         `;
+
                     }
+
                     
+
                     modalContent += `</div>`;
+
                     
+
                     modalContent += `
+
                         <table class="table table-sm">
+
                             <tr>
+
                                 <th width="40%">Date</th>
+
                                 <td>${formatDate(event.start)}</td>
+
                             </tr>
+
                     `;
+
                     
+
                     if (event.end) {
+
                         modalContent += `
+
                             <tr>
+
                                 <th>Date fin</th>
+
                                 <td>${formatDate(event.end)}</td>
+
                             </tr>
+
                         `;
+
                     }
+
                     
+
                     if (extendedProps.type) {
+
                         modalContent += `
+
                             <tr>
+
                                 <th>Type</th>
+
                                 <td>${extendedProps.type}</td>
+
                             </tr>
+
                         `;
+
                     }
+
                     
+
                     if (extendedProps.places) {
+
                         modalContent += `
+
                             <tr>
+
                                 <th>Places</th>
+
                                 <td>
+
                                     ${extendedProps.inscriptions || 0}/${extendedProps.places}
+
                                     <div class="progress mt-1" style="height: 5px;">
+
                                         <div class="progress-bar bg-success" 
+
                                              style="width: ${(extendedProps.inscriptions / extendedProps.places * 100)}%">
+
                                         </div>
+
                                     </div>
+
                                 </td>
+
                             </tr>
+
                         `;
+
                     }
+
                     
+
                     if (extendedProps.tarif) {
+
                         modalContent += `
+
                             <tr>
+
                                 <th>Tarif</th>
+
                                 <td class="fw-bold text-success">${extendedProps.tarif}</td>
+
                             </tr>
+
                         `;
+
                     }
+
                     
+
                     if (event.extendedProps.score) {
+
                         modalContent += `
+
                             <tr>
+
                                 <th>Score de pertinence</th>
+
                                 <td>
+
                                     <span class="badge bg-${getScoreBadgeColor(event.extendedProps.score)}">
+
                                         ${event.extendedProps.score}%
+
                                     </span>
+
                                 </td>
+
                             </tr>
+
                         `;
+
                     }
+
                     
+
                     modalContent += `</table>`;
+
                     
+
                     // Update modal
+
                     document.getElementById('eventModalTitle').textContent = event.title;
+
                     document.getElementById('eventModalBody').innerHTML = modalContent;
+
                     
+
                     // Update modal link
+
                     const modalLink = document.getElementById('eventModalLink');
+
                     if (event.url) {
+
                         modalLink.href = event.url;
+
                         modalLink.style.display = 'inline-block';
+
                     } else {
+
                         modalLink.style.display = 'none';
+
                     }
+
                     
+
                     // Show modal
+
                     eventModal.show();
+
                 },
+
                 
+
                 // Event mouseover for tooltip
+
                 eventMouseEnter: function(info) {
+
                     // Remove existing tooltip
+
                     if (currentTooltip) {
+
                         currentTooltip.remove();
+
                     }
+
                     
+
                     const event = info.event;
+
                     const extendedProps = event.extendedProps || {};
+
                     
+
                     // Create tooltip
+
                     const tooltip = document.createElement('div');
+
                     tooltip.className = 'event-tooltip';
+
                     
+
                     let tooltipContent = `
+
                         <h6>${event.title}</h6>
+
                         <p><i class="far fa-calendar me-2"></i>${formatDate(event.start)}</p>
+
                     `;
+
                     
+
                     if (extendedProps.recommendationReason) {
+
                         tooltipContent += `
+
                             <div class="mt-2 pt-2 border-top">
+
                                 <span class="badge bg-success">
+
                                     <i class="fas fa-robot me-1"></i>Recommandé
+
                                 </span>
+
                                 <small class="d-block mt-1 text-muted">
+
                                     ${extendedProps.recommendationReason}
+
                                 </small>
+
                             </div>
+
                         `;
+
                     }
+
                     
+
                     tooltip.innerHTML = tooltipContent;
+
                     
+
                     // Position tooltip
+
                     document.body.appendChild(tooltip);
+
                     
+
                     const rect = info.el.getBoundingClientRect();
+
                     tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+
                     tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+
                     
+
                     currentTooltip = tooltip;
+
                 },
+
                 
+
                 eventMouseLeave: function() {
+
                     if (currentTooltip) {
+
                         currentTooltip.remove();
+
                         currentTooltip = null;
+
                     }
+
                 },
+
                 
+
                 // Loading indicator
+
                 loading: function(isLoading) {
+
                     if (isLoading) {
+
                         calendarEl.style.opacity = '0.6';
+
                     } else {
+
                         calendarEl.style.opacity = '1';
+
                     }
+
                 }
+
             });
+
             
+
             // Render calendar
+
             calendar.render();
+
             
+
             // Toggle AI recommendations
+
             if (aiRecommendationsToggle) {
+
                 aiRecommendationsToggle.addEventListener('change', function() {
+
                     calendar.refetchEvents();
+
                 });
+
             }
+
             
+
             // Helper functions
+
             function formatDate(date) {
+
                 if (!date) return 'N/A';
+
                 return date.toLocaleDateString('fr-FR', {
+
                     weekday: 'long',
+
                     year: 'numeric',
+
                     month: 'long',
+
                     day: 'numeric',
+
                     hour: '2-digit',
+
                     minute: '2-digit'
+
                 });
+
             }
+
             
+
             function getStatusBadgeColor(status) {
+
                 status = (status || '').toLowerCase();
+
                 if (status.includes('planifie')) return 'primary';
+
                 if (status.includes('attente')) return 'warning';
+
                 if (status.includes('termine')) return 'success';
+
                 if (status.includes('annule')) return 'danger';
+
                 return 'secondary';
+
             }
+
             
+
             function getScoreBadgeColor(score) {
+
                 if (score >= 80) return 'success';
+
                 if (score >= 60) return 'info';
+
                 if (score >= 40) return 'warning';
+
                 return 'secondary';
+
             }
+
             
+
             // Add CSS for loading state
+
             const style = document.createElement('style');
+
             style.textContent = `
+
                 #calendar-holder.loading {
+
                     position: relative;
+
                     pointer-events: none;
+
                 }
+
                 #calendar-holder.loading::after {
+
                     content: '';
+
                     position: absolute;
+
                     top: 50%;
+
                     left: 50%;
+
                     width: 40px;
+
                     height: 40px;
+
                     margin: -20px 0 0 -20px;
+
                     border: 3px solid var(--gray-200);
+
                     border-top-color: var(--success);
+
                     border-radius: 50%;
+
                     animation: spin 0.8s linear infinite;
+
                 }
+
                 @keyframes spin {
+
                     to { transform: rotate(360deg); }
+
                 }
+
             `;
+
             document.head.appendChild(style);
+
         });
+
     </script>
+
 {% endblock %}
+

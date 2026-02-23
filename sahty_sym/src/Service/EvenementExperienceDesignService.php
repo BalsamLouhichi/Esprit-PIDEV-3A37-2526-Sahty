@@ -3,11 +3,22 @@
 namespace App\Service;
 
 use App\Entity\Evenement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class EvenementExperienceDesignService
 {
+    public function __construct(
+        private readonly ?HttpClientInterface $httpClient = null
+    ) {
+    }
+
     public function buildExperiencePack(Evenement $evenement): array
     {
+        $external = $this->buildExperiencePackFromExternalApi($evenement);
+        if ($external !== null) {
+            return $external;
+        }
+
         $durationMinutes = $this->computeDurationMinutes($evenement);
         $phases = $this->extractPhasesFromDescription((string) $evenement->getDescription());
         if (count($phases) < 3) {
@@ -30,6 +41,94 @@ class EvenementExperienceDesignService
             'cards' => $phasesWithTiming,
             'highlights' => $this->buildHighlights($evenement, $durationMinutes, count($phasesWithTiming)),
         ];
+    }
+
+    private function buildExperiencePackFromExternalApi(Evenement $evenement): ?array
+    {
+        if ($this->httpClient === null) {
+            return null;
+        }
+
+        $apiUrl = trim((string) ($_ENV['EXPERIENCE_AI_API_URL'] ?? $_SERVER['EXPERIENCE_AI_API_URL'] ?? 'https://text.pollinations.ai'));
+        if ($apiUrl === '') {
+            return null;
+        }
+        $payload = [
+            'title' => (string) $evenement->getTitre(),
+            'description' => (string) $evenement->getDescription(),
+            'type' => (string) $evenement->getType(),
+            'mode' => (string) $evenement->getMode(),
+            'date_debut' => $evenement->getDateDebut()?->format(DATE_ATOM),
+            'date_fin' => $evenement->getDateFin()?->format(DATE_ATOM),
+            'lieu' => (string) $evenement->getLieu(),
+            'places_max' => $evenement->getPlacesMax(),
+            'duration_minutes' => $this->computeDurationMinutes($evenement),
+        ];
+
+        try {
+            $prompt = $this->buildFreeApiPrompt($payload);
+            $response = $this->httpClient->request('GET', rtrim($apiUrl, '/') . '/' . rawurlencode($prompt), [
+                'headers' => ['Accept' => 'application/json,text/plain'],
+                'timeout' => 10,
+            ]);
+
+            $raw = trim($response->getContent(false));
+            if ($raw === '') {
+                return null;
+            }
+
+            $pack = $this->extractPackFromFreeApiResponse($raw);
+            if ($pack === null) {
+                return null;
+            }
+
+            return $pack;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function buildFreeApiPrompt(array $payload): string
+    {
+        return 'Retourne UNIQUEMENT un objet JSON valide avec les cles: poster, cards, highlights. '
+            . 'poster doit contenir: title, subtitle, date_label, mode_label, lieu_label, theme(bg,chip). '
+            . 'cards doit etre une liste d objets {title, icon, duration, time_label, intensity}. '
+            . 'highlights doit etre une liste de chaines. '
+            . 'Aucun markdown, aucun commentaire. '
+            . 'Evenement: ' . json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function extractPackFromFreeApiResponse(string $raw): ?array
+    {
+        $json = trim($raw);
+        if (str_contains($json, '```')) {
+            $json = preg_replace('/```(?:json)?/i', '', $json) ?? $json;
+            $json = str_replace('```', '', $json);
+            $json = trim($json);
+        }
+
+        $pack = json_decode($json, true);
+        if (!is_array($pack)) {
+            if (preg_match('/\{[\s\S]*\}/', $json, $m) === 1) {
+                $pack = json_decode((string) $m[0], true);
+            }
+        }
+
+        if (!is_array($pack)) {
+            return null;
+        }
+
+        if (!isset($pack['poster'], $pack['cards'], $pack['highlights'])) {
+            return null;
+        }
+        if (!is_array($pack['poster']) || !is_array($pack['cards']) || !is_array($pack['highlights'])) {
+            return null;
+        }
+        if (count($pack['cards']) < 3 || count($pack['highlights']) < 2) {
+            return null;
+        }
+
+        return $pack;
     }
 
     private function computeDurationMinutes(Evenement $evenement): int

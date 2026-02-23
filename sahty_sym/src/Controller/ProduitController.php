@@ -3,13 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\Commande;
+use App\Entity\Parapharmacie;
 use App\Entity\Produit;
 use App\Form\CommandeType;
+use App\Payment\BtcPayPaymentService;
 use App\Repository\CommandeRepository;
 use App\Repository\ParapharmacieRepository;
 use App\Repository\ProduitRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -45,7 +48,8 @@ final class ProduitController extends AbstractController
     public function commander(
         Produit $produit,
         Request $request,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        BtcPayPaymentService $btcPayPaymentService
     ): Response
     {
         // Récupérer les parapharmacies qui ont ce produit
@@ -93,10 +97,36 @@ final class ProduitController extends AbstractController
             
             // Définir la date de modification
             $commande->setDateModification(new \DateTime());
+            $commande->setPaymentProvider(null);
+            $commande->setPaymentReference(null);
+            $commande->setPaymentUrl(null);
             
             // Persister la commande
             $entityManager->persist($commande);
             $entityManager->flush();
+
+            if ($commande->getModePaiement() === 'online_btcpay') {
+                try {
+                    $redirectPath = $this->generateUrl('app_commander_confirmation', ['id' => $commande->getId()]);
+                    $redirectUrl = $request->getSchemeAndHttpHost() . $redirectPath;
+                    $invoice = $btcPayPaymentService->createInvoice($commande, $redirectUrl);
+
+                    $commande->setPaymentProvider('btcpay');
+                    $commande->setPaymentReference($invoice['invoiceId']);
+                    $commande->setPaymentUrl($invoice['checkoutUrl']);
+                    $commande->setPaymentStatus('pending');
+                    $entityManager->flush();
+
+                    return $this->redirect($invoice['checkoutUrl']);
+                } catch (\Throwable $e) {
+                    $commande->setPaymentStatus('failed');
+                    $entityManager->flush();
+                    $this->addFlash('warning', 'Paiement en ligne indisponible. Vous pouvez reessayer depuis la confirmation.');
+                }
+            } else {
+                $commande->setPaymentStatus('not_required');
+                $entityManager->flush();
+            }
             
             // Message de succès
             $this->addFlash('success', 
@@ -130,6 +160,86 @@ final class ProduitController extends AbstractController
             'commande' => $commande,
             'produit' => $commande->getProduit()
         ]);
+    }
+
+    #[Route('/commande/{id}/payer', name: 'app_commande_payer', methods: ['POST'])]
+    public function payerCommande(
+        Commande $commande,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        BtcPayPaymentService $btcPayPaymentService
+    ): Response {
+        if (!$this->isCsrfTokenValid('payer-commande-' . $commande->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
+        }
+
+        if ($commande->getModePaiement() !== 'online_btcpay') {
+            $this->addFlash('info', 'Cette commande ne necessite pas de paiement en ligne.');
+            return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
+        }
+
+        try {
+            $redirectPath = $this->generateUrl('app_commander_confirmation', ['id' => $commande->getId()]);
+            $redirectUrl = $request->getSchemeAndHttpHost() . $redirectPath;
+            $invoice = $btcPayPaymentService->createInvoice($commande, $redirectUrl);
+
+            $commande->setPaymentProvider('btcpay');
+            $commande->setPaymentReference($invoice['invoiceId']);
+            $commande->setPaymentUrl($invoice['checkoutUrl']);
+            $commande->setPaymentStatus('pending');
+            $commande->setDateModification(new \DateTime());
+            $entityManager->flush();
+
+            return $this->redirect($invoice['checkoutUrl']);
+        } catch (\Throwable $e) {
+            $commande->setPaymentStatus('failed');
+            $commande->setDateModification(new \DateTime());
+            $entityManager->flush();
+            $this->addFlash('error', 'Echec de creation du paiement: ' . $e->getMessage());
+            return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
+        }
+    }
+
+    #[Route('/payment/btcpay/webhook', name: 'app_payment_btcpay_webhook', methods: ['POST'])]
+    public function btcPayWebhook(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        BtcPayPaymentService $btcPayPaymentService
+    ): JsonResponse {
+        if (!$btcPayPaymentService->isWebhookValid($request)) {
+            return $this->json(['ok' => false, 'message' => 'invalid signature'], 401);
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return $this->json(['ok' => false, 'message' => 'invalid payload'], 400);
+        }
+
+        $invoiceId = (string) ($payload['invoiceId'] ?? $payload['invoice']['id'] ?? '');
+        $eventType = strtoupper((string) ($payload['type'] ?? ''));
+        if ($invoiceId === '') {
+            return $this->json(['ok' => true, 'message' => 'no invoice id']);
+        }
+
+        $commande = $entityManager->getRepository(Commande::class)->findOneBy(['paymentReference' => $invoiceId]);
+        if (!$commande) {
+            return $this->json(['ok' => true, 'message' => 'commande not found']);
+        }
+
+        if (str_contains($eventType, 'SETTLED') || str_contains($eventType, 'CONFIRMED') || str_contains($eventType, 'COMPLETED')) {
+            $commande->setPaymentStatus('paid');
+            $commande->setStatut('confirmee');
+        } elseif (str_contains($eventType, 'EXPIRED') || str_contains($eventType, 'INVALID')) {
+            $commande->setPaymentStatus('failed');
+        } else {
+            $commande->setPaymentStatus('pending');
+        }
+
+        $commande->setDateModification(new \DateTime());
+        $entityManager->flush();
+
+        return $this->json(['ok' => true]);
     }
     
     /**
