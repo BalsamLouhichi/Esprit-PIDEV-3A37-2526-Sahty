@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement test | {{ evenement.titre }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 10%, #dbeafe 0%, #eff6ff 45%, #f8fafc 100%);
+        }
+        .checkout-wrap {
+            max-width: 920px;
+            margin: 40px auto;
+        }
+        .checkout-card {
+            border: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+            background: #fff;
+        }
+        .checkout-head {
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+            color: #fff;
+            padding: 22px 26px;
+        }
+        .checkout-head h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        .checkout-head p {
+            margin: 6px 0 0;
+            opacity: .92;
+        }
+        .price-pill {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+        }
+        .hint-box {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1e3a8a;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: .92rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container checkout-wrap">
+    <div class="checkout-card">
+        <div class="checkout-head d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="fas fa-credit-card me-2"></i>Paiement evenement (mode test)</h1>
+                <p>{{ evenement.titre }}</p>
+            </div>
+            <div class="price-pill">{{ amount }} TND</div>
+        </div>
+
+        <div class="p-4 p-md-5">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} mb-3">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+
+            <div class="hint-box mb-4">
+                <i class="fas fa-circle-info me-2"></i>
+                Cette page simule le checkout localement quand Stripe n'est pas configure.
+                Utilisez par exemple la carte test: <strong>4242 4242 4242 4242</strong>.
+            </div>
+
+            <form method="post" class="row g-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('checkout_simule' ~ evenement.id) }}">
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Titulaire de la carte</label>
+                    <input type="text" class="form-control form-control-lg" name="card_holder" placeholder="Nom complet" required>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Numero de carte</label>
+                    <input type="text" class="form-control form-control-lg" name="card_number" placeholder="4242 4242 4242 4242" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Mois (MM)</label>
+                    <input type="number" min="1" max="12" class="form-control form-control-lg" name="exp_month" placeholder="12" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Annee (YYYY)</label>
+                    <input type="number" min="{{ 'now'|date('Y') }}" max="2099" class="form-control form-control-lg" name="exp_year" placeholder="{{ 'now'|date('Y') + 1 }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">CVC</label>
+                    <input type="text" class="form-control form-control-lg" name="cvc" placeholder="123" required>
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-4">
+                    <a href="{{ path('evenements_client_event_view', {'id': evenement.id}) }}" class="btn btn-outline-secondary btn-lg px-4">
+                        Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-lock me-2"></i>Payer {{ amount }} TND
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

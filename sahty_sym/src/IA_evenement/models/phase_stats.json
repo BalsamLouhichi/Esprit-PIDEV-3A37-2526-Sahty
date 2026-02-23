@@ -1,0 +1,770 @@
+{
+  "by_type_mode": [
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "atelier_principal",
+      "ratio": 0.22380952380952382
+    },
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "cloture",
+      "ratio": 0.15459412214574456
+    },
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "icebreaker",
+      "ratio": 0.15402588066139467
+    },
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "ouverture",
+      "ratio": 0.17182707055214724
+    },
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "pause",
+      "ratio": 0.1192583227981458
+    },
+    {
+      "event_type": "atelier",
+      "mode": "en_ligne",
+      "phase_label": "restitution",
+      "ratio": 0.17142857142857143
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "atelier_principal",
+      "ratio": 0.22357723577235772
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "cloture",
+      "ratio": 0.15476190476190477
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "icebreaker",
+      "ratio": 0.15441698041141486
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "ouverture",
+      "ratio": 0.172
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "pause",
+      "ratio": 0.1202309101686695
+    },
+    {
+      "event_type": "atelier",
+      "mode": "hybride",
+      "phase_label": "restitution",
+      "ratio": 0.17123287671232876
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "atelier_principal",
+      "ratio": 0.22360681114551084
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "cloture",
+      "ratio": 0.1539840088227185
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "icebreaker",
+      "ratio": 0.15384615384615385
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "ouverture",
+      "ratio": 0.171325132357521
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "pause",
+      "ratio": 0.11891835016835017
+    },
+    {
+      "event_type": "atelier",
+      "mode": "presentiel",
+      "phase_label": "restitution",
+      "ratio": 0.17089216944801028
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "cloture",
+      "ratio": 0.17108883955095533
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "intervention_invite",
+      "ratio": 0.20822258357046813
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "keynote",
+      "ratio": 0.21619234075064464
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "ouverture",
+      "ratio": 0.19053910378686012
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "panel",
+      "ratio": 0.16919249904324532
+    },
+    {
+      "event_type": "conference",
+      "mode": "en_ligne",
+      "phase_label": "pause",
+      "ratio": 0.13953488372093023
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "cloture",
+      "ratio": 0.1522633744855967
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "intervention_invite",
+      "ratio": 0.18604651162790697
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "keynote",
+      "ratio": 0.20266666666666666
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "ouverture",
+      "ratio": 0.1693121693121693
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "panel",
+      "ratio": 0.16860127035247807
+    },
+    {
+      "event_type": "conference",
+      "mode": "hybride",
+      "phase_label": "pause",
+      "ratio": 0.11764705882352941
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "cloture",
+      "ratio": 0.15175530981218185
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "intervention_invite",
+      "ratio": 0.18575331772053083
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "keynote",
+      "ratio": 0.20192307692307693
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "ouverture",
+      "ratio": 0.16919759599944945
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "panel",
+      "ratio": 0.16892262666910554
+    },
+    {
+      "event_type": "conference",
+      "mode": "presentiel",
+      "phase_label": "pause",
+      "ratio": 0.1180327868852459
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "briefing",
+      "ratio": 0.17401009316770186
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "cloture",
+      "ratio": 0.15748031496062992
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "flux_depistage",
+      "ratio": 0.20988308997632202
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "orientation",
+      "ratio": 0.1728210697800706
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "ouverture",
+      "ratio": 0.17419354838709677
+    },
+    {
+      "event_type": "depistage",
+      "mode": "en_ligne",
+      "phase_label": "pause",
+      "ratio": 0.104
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "briefing",
+      "ratio": 0.18295739348370926
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "cloture",
+      "ratio": 0.17371339089216187
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "flux_depistage",
+      "ratio": 0.2102803738317757
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "orientation",
+      "ratio": 0.19047619047619047
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "ouverture",
+      "ratio": 0.19360583446404342
+    },
+    {
+      "event_type": "depistage",
+      "mode": "hybride",
+      "phase_label": "pause",
+      "ratio": 0.11334586466165414
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "briefing",
+      "ratio": 0.17427385892116182
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "cloture",
+      "ratio": 0.15733855185909978
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "flux_depistage",
+      "ratio": 0.21011204665334338
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "orientation",
+      "ratio": 0.1746031746031746
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "ouverture",
+      "ratio": 0.17465098489194875
+    },
+    {
+      "event_type": "depistage",
+      "mode": "presentiel",
+      "phase_label": "pause",
+      "ratio": 0.10424710424710425
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "cloture",
+      "ratio": 0.17216117216117216
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "etude_de_cas",
+      "ratio": 0.18580966869506424
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "introduction",
+      "ratio": 0.16834154021371386
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "module_pratique",
+      "ratio": 0.20298507462686566
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "ouverture",
+      "ratio": 0.19047619047619047
+    },
+    {
+      "event_type": "formation",
+      "mode": "en_ligne",
+      "phase_label": "pause",
+      "ratio": 0.1293220338983051
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "cloture",
+      "ratio": 0.1524547803617571
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "etude_de_cas",
+      "ratio": 0.18604651162790697
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "introduction",
+      "ratio": 0.1685864336466746
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "module_pratique",
+      "ratio": 0.2032258064516129
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "ouverture",
+      "ratio": 0.16943521594684385
+    },
+    {
+      "event_type": "formation",
+      "mode": "hybride",
+      "phase_label": "pause",
+      "ratio": 0.11817653890824623
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "cloture",
+      "ratio": 0.17120622568093385
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "etude_de_cas",
+      "ratio": 0.2088888888888889
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "introduction",
+      "ratio": 0.19077233474120633
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "module_pratique",
+      "ratio": 0.22818791946308725
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "ouverture",
+      "ratio": 0.1912751677852349
+    },
+    {
+      "event_type": "formation",
+      "mode": "presentiel",
+      "phase_label": "pause",
+      "ratio": 0.140625
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "cloture",
+      "ratio": 0.1619047619047619
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "ouverture",
+      "ratio": 0.18120805369127516
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "pause",
+      "ratio": 0.12388823297914207
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "presentation",
+      "ratio": 0.18059246954595792
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "stand_info",
+      "ratio": 0.16111111111111112
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "en_ligne",
+      "phase_label": "temoignage",
+      "ratio": 0.18059246954595792
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "cloture",
+      "ratio": 0.18433179723502305
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "ouverture",
+      "ratio": 0.20465116279069767
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "pause",
+      "ratio": 0.12666666666666668
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "presentation",
+      "ratio": 0.18141592920353983
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "stand_info",
+      "ratio": 0.16292134831460675
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "hybride",
+      "phase_label": "temoignage",
+      "ratio": 0.20313203300825206
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "cloture",
+      "ratio": 0.1724222086638194
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "ouverture",
+      "ratio": 0.1949359365466748
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "pause",
+      "ratio": 0.12698412698412698
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "presentation",
+      "ratio": 0.18181818181818182
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "stand_info",
+      "ratio": 0.16304176516942476
+    },
+    {
+      "event_type": "sensibilisation",
+      "mode": "presentiel",
+      "phase_label": "temoignage",
+      "ratio": 0.18090452261306533
+    }
+  ],
+  "by_type": [
+    {
+      "event_type": "atelier",
+      "phase_label": "atelier_principal",
+      "ratio": 0.22365645125471906
+    },
+    {
+      "event_type": "atelier",
+      "phase_label": "cloture",
+      "ratio": 0.15447154471544716
+    },
+    {
+      "event_type": "atelier",
+      "phase_label": "icebreaker",
+      "ratio": 0.15412186379928317
+    },
+    {
+      "event_type": "atelier",
+      "phase_label": "ouverture",
+      "ratio": 0.17177914110429449
+    },
+    {
+      "event_type": "atelier",
+      "phase_label": "pause",
+      "ratio": 0.11981174637027314
+    },
+    {
+      "event_type": "atelier",
+      "phase_label": "restitution",
+      "ratio": 0.17123287671232876
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "cloture",
+      "ratio": 0.1522633744855967
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "intervention_invite",
+      "ratio": 0.18614718614718614
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "keynote",
+      "ratio": 0.20221649168048136
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "ouverture",
+      "ratio": 0.16938110749185667
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "panel",
+      "ratio": 0.16901408450704225
+    },
+    {
+      "event_type": "conference",
+      "phase_label": "pause",
+      "ratio": 0.11838006230529595
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "briefing",
+      "ratio": 0.1744186046511628
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "cloture",
+      "ratio": 0.15771812080536912
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "flux_depistage",
+      "ratio": 0.20994475138121546
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "orientation",
+      "ratio": 0.174496644295302
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "ouverture",
+      "ratio": 0.1746987951807229
+    },
+    {
+      "event_type": "depistage",
+      "phase_label": "pause",
+      "ratio": 0.10443660816795144
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "cloture",
+      "ratio": 0.17120622568093385
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "etude_de_cas",
+      "ratio": 0.18638523042989547
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "introduction",
+      "ratio": 0.16946337068528633
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "module_pratique",
+      "ratio": 0.20323891948596906
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "ouverture",
+      "ratio": 0.1908831908831909
+    },
+    {
+      "event_type": "formation",
+      "phase_label": "pause",
+      "ratio": 0.14
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "cloture",
+      "ratio": 0.16357918810749
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "ouverture",
+      "ratio": 0.18181818181818182
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "pause",
+      "ratio": 0.12585604472396925
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "presentation",
+      "ratio": 0.1812903013554415
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "stand_info",
+      "ratio": 0.16264534883720932
+    },
+    {
+      "event_type": "sensibilisation",
+      "phase_label": "temoignage",
+      "ratio": 0.18137254901960784
+    }
+  ],
+  "global": [
+    {
+      "phase_label": "atelier_principal",
+      "ratio": 0.22365645125471906
+    },
+    {
+      "phase_label": "briefing",
+      "ratio": 0.1744186046511628
+    },
+    {
+      "phase_label": "cloture",
+      "ratio": 0.16285602299451268
+    },
+    {
+      "phase_label": "etude_de_cas",
+      "ratio": 0.18638523042989547
+    },
+    {
+      "phase_label": "flux_depistage",
+      "ratio": 0.20994475138121546
+    },
+    {
+      "phase_label": "icebreaker",
+      "ratio": 0.15412186379928317
+    },
+    {
+      "phase_label": "intervention_invite",
+      "ratio": 0.18614718614718614
+    },
+    {
+      "phase_label": "introduction",
+      "ratio": 0.16946337068528633
+    },
+    {
+      "phase_label": "keynote",
+      "ratio": 0.20221649168048136
+    },
+    {
+      "phase_label": "module_pratique",
+      "ratio": 0.20323891948596906
+    },
+    {
+      "phase_label": "orientation",
+      "ratio": 0.174496644295302
+    },
+    {
+      "phase_label": "ouverture",
+      "ratio": 0.18108021732182805
+    },
+    {
+      "phase_label": "panel",
+      "ratio": 0.16901408450704225
+    },
+    {
+      "phase_label": "pause",
+      "ratio": 0.12222222222222222
+    },
+    {
+      "phase_label": "presentation",
+      "ratio": 0.1812903013554415
+    },
+    {
+      "phase_label": "restitution",
+      "ratio": 0.17123287671232876
+    },
+    {
+      "phase_label": "stand_info",
+      "ratio": 0.16264534883720932
+    },
+    {
+      "phase_label": "temoignage",
+      "ratio": 0.18137254901960784
+    }
+  ]
+}

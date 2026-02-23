@@ -160,9 +160,52 @@ class SignupController extends AbstractController
                 ]);
             }
         }
-
+        
         return $this->render('signup/signup.html.twig', [
             'form' => $form->createView(),
         ]);
+    }
+
+    /**
+     * Create a ResponsableLaboratoire user (NEW from Balsam)
+     */
+    private function createResponsableLaboratoire(Request $request, EntityManagerInterface $em): ResponsableLaboratoire
+    {
+        $user = new ResponsableLaboratoire();
+        
+        $laboratoireId = (int)$request->request->get('signup[laboratoire_id]', 0);
+        if ($laboratoireId > 0) {
+            $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
+            if ($laboratoire) {
+                $user->setLaboratoire($laboratoire);
+            }
+        }
+        
+        return $user;
+    }
+
+    /**
+     * Create a ResponsableParapharmacie user (NEW from Balsam)
+     */
+    private function createResponsableParapharmacie(Request $request): ResponsableParapharmacie
+    {
+        $user = new ResponsableParapharmacie();
+        $user->setParapharmacieId((int)$request->request->get('signup[parapharmacie_id]', 0));
+        return $user;
+    }
+
+    /**
+     * Create a Patient user with patient-specific fields (keep YOUR version)
+     */
+    private function createPatient(Request $request): Patient
+    {
+        $user = new Patient();
+        
+        // Patient specific fields
+        $user->setSexe($request->request->get('signup[sexe]', ''));
+        $user->setGroupeSanguin($request->request->get('signup[groupe_sanguin]', ''));
+        $user->setContactUrgence($request->request->get('signup[contact_urgence]', ''));
+        
+        return $user;
     }
 }

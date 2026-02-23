@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation d'inscription</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f8fb;font-family:Arial,sans-serif;color:#203040;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f8fb;padding:24px 12px;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+                <tr>
+                    <td style="background:linear-gradient(135deg,#2c3e50 0%,#1abc9c 100%);padding:24px 28px;color:#ffffff;">
+                        <h1 style="margin:0;font-size:22px;line-height:1.3;">Inscription confirmee</h1>
+                        <p style="margin:8px 0 0;font-size:14px;opacity:0.92;">Votre place est reservee sur Sahty.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:26px 28px;">
+                        <p style="margin:0 0 14px;font-size:15px;">
+                            Bonjour {{ utilisateur.prenom }} {{ utilisateur.nom }},
+                        </p>
+                        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
+                            Votre inscription a bien ete enregistree pour l'evenement ci-dessous.
+                        </p>
+
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e6edf3;border-radius:10px;overflow:hidden;">
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;width:38%;color:#4f6478;">Evenement</td>
+                                <td style="padding:12px 14px;font-size:14px;font-weight:600;">{{ evenement.titre }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Date debut</td>
+                                <td style="padding:12px 14px;font-size:14px;">{{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Date fin</td>
+                                <td style="padding:12px 14px;font-size:14px;">{{ evenement.dateFin ? evenement.dateFin|date('d/m/Y H:i') : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Mode / Lieu</td>
+                                <td style="padding:12px 14px;font-size:14px;">
+                                    {{ evenement.mode|title }}
+                                    {% if evenement.lieu %} - {{ evenement.lieu }}{% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Tarif</td>
+                                <td style="padding:12px 14px;font-size:14px;">
+                                    {% if evenement.tarif and evenement.tarif > 0 %}{{ evenement.tarif }} TND{% else %}Gratuit{% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Inscription</td>
+                                <td style="padding:12px 14px;font-size:14px;">{{ inscription.dateInscription ? inscription.dateInscription|date('d/m/Y H:i') : '-' }}</td>
+                            </tr>
+                            {% if evenement.mode in ['en_ligne', 'hybride'] %}
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Plateforme</td>
+                                <td style="padding:12px 14px;font-size:14px;">{{ evenement.meetingPlatform ?: 'jitsi' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 14px;background:#f8fbff;font-size:14px;color:#4f6478;">Lien de reunion</td>
+                                <td style="padding:12px 14px;font-size:14px;">
+                                    {% if evenement.meetingLink %}
+                                        <a href="{{ evenement.meetingLink }}" style="color:#1abc9c;">{{ evenement.meetingLink }}</a>
+                                    {% else %}
+                                        Le lien sera partage apres validation finale.
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+
+                        <div style="margin-top:20px;text-align:center;">
+                            <a href="{{ eventUrl }}" style="display:inline-block;background:#1abc9c;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">
+                                Voir les details de l'evenement
+                            </a>
+                        </div>
+
+                        {% if is_simulated_mail %}
+                            <p style="margin:18px 0 0;font-size:12px;color:#6f7f8d;">
+                                Environnement test: cet envoi email est configure en mode simulation locale.
+                            </p>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#f0f5fa;padding:14px 28px;font-size:12px;color:#607385;">
+                        Sahty Platform - Confirmation automatique d'inscription evenement
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

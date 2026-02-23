@@ -13,16 +13,25 @@ app_home:
 app_login:
     path: /login
     controller: App\Controller\SecurityController::login
+    methods: [GET, POST]  # ← Gardé de votre branche
 
 app_logout:
     path: /logout
     controller: App\Controller\SecurityController::logout
+    methods: [GET]  # ← Gardé de votre branche
 
 app_signup:
     path: /signup
     controller: App\Controller\SignupController::signup
+    methods: [GET, POST]  # ← Gardé de votre branche
 
-# Redirection après login
+# Route de Balsam pour la redirection après login
 app_redirect_after_login:
     path: /redirect-after-login
     controller: App\Controller\SecurityController::redirectAfterLogin
+
+# Votre route dashboard_admin (manquante dans Balsam)
+dashboard_admin:
+    path: /admin/dashboard
+    controller: App\Controller\EvenementController::dashboard
+    methods: [GET]  # ← Gardé de votre branche

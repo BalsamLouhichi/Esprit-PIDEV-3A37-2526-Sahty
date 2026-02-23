@@ -268,4 +268,102 @@ public function findByStatutDemande(string $statutDemande, ?string $type = null,
 
     return $qb->getQuery()->getResult();
 }
+
+
+public function findUserEvents(int $userId, \DateTime $start, \DateTime $end): array
+    {
+        return $this->createQueryBuilder('e')
+            ->join('e.inscriptions', 'i')
+            ->join('i.utilisateur', 'u')
+            ->where('u.id = :userId')
+            ->andWhere('e.dateDebut BETWEEN :start AND :end')
+            ->setParameter('userId', $userId)
+            ->setParameter('start', $start->format('Y-m-d H:i:s'))
+            ->setParameter('end', $end->format('Y-m-d H:i:s'))
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findEventsByType(string $type, \DateTime $start, \DateTime $end): array
+    {
+        return $this->createQueryBuilder('e')
+            ->where('e.type = :type')
+            ->andWhere('e.dateDebut BETWEEN :start AND :end')
+            ->setParameter('type', $type)
+            ->setParameter('start', $start->format('Y-m-d H:i:s'))
+            ->setParameter('end', $end->format('Y-m-d H:i:s'))
+            ->getQuery()
+            ->getResult();
+    }
+
+public function findRecommendedEvents(array $categories, array $keywords, \DateTime $start, \DateTime $end): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->where('e.dateDebut BETWEEN :start AND :end')
+            ->setParameter('start', $start->format('Y-m-d H:i:s'))
+            ->setParameter('end', $end->format('Y-m-d H:i:s'));
+        
+        if (!empty($categories)) {
+            $qb->andWhere('e.type IN (:categories)')
+               ->setParameter('categories', $categories);
+        }
+        
+        if (!empty($keywords)) {
+            $keywordConditions = [];
+            foreach ($keywords as $i => $keyword) {
+                $keywordConditions[] = 'e.titre LIKE :keyword' . $i . ' OR e.description LIKE :keyword' . $i;
+                $qb->setParameter('keyword' . $i, '%' . $keyword . '%');
+            }
+            $qb->andWhere(implode(' OR ', $keywordConditions));
+        }
+        
+        return $qb->orderBy('e.dateDebut', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    public function findSchedulingConflicts(Evenement $evenement, ?int $excludeEventId = null): array
+    {
+        if (!$evenement->getDateDebut() || !$evenement->getDateFin()) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('e');
+        $qb->andWhere('e.dateDebut < :newEnd')
+            ->andWhere('e.dateFin > :newStart')
+            ->setParameter('newStart', $evenement->getDateDebut())
+            ->setParameter('newEnd', $evenement->getDateFin());
+
+        if ($excludeEventId !== null) {
+            $qb->andWhere('e.id != :excludeEventId')
+                ->setParameter('excludeEventId', $excludeEventId);
+        }
+
+        $visibilityStatuses = [
+            'planifie',
+            'confirme',
+            'en_cours',
+            'en_attente_approbation',
+        ];
+        $qb->andWhere('e.statut IN (:statuses)')
+            ->setParameter('statuses', $visibilityStatuses);
+
+        $location = trim((string) $evenement->getLieu());
+        $mode = $evenement->getMode();
+        $isPhysicalMode = in_array($mode, ['presentiel', 'hybride'], true);
+
+        if ($isPhysicalMode && $location !== '') {
+            $qb->andWhere('LOWER(e.lieu) = :location')
+                ->andWhere('e.mode IN (:physicalModes)');
+            $qb->setParameter('location', mb_strtolower($location))
+                ->setParameter('physicalModes', ['presentiel', 'hybride']);
+        } else {
+            return [];
+        }
+
+        $qb->orderBy('e.dateDebut', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
 }

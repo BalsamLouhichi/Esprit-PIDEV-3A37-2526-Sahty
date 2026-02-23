@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>MEDINOVA - Connexion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# Google Fonts #}
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    {# Font Awesome #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+
+    {# Bootstrap #}
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #13C5DD;
+            --primary-light: #E8F9FD;
+            --primary-dark: #0FB4C9;
+            --secondary: #354F8E;
+            --light: #EFF5F9;
+            --dark: #1D2A4D;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light) 0%, white 100%);
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+        }
+
+        .login-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .login-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 0;
+        }
+
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border: 1px solid rgba(19, 197, 221, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .login-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .login-header h1 {
+            font-family: 'Jost', sans-serif;
+            font-size: 1.8rem;
+            color: var(--dark);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(19, 197, 221, 0.15);
+        }
+
+        .input-group-text {
+            background: transparent;
+            border: 2px solid #e9ecef;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .input-group-text.border-end-0 {
+            border-right: none;
+        }
+
+        .form-control.border-start-0 {
+            border-left: none;
+        }
+
+        .form-control.border-start-0:focus {
+            border-left: none;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 1.5rem;
+        }
+
+        .forgot-password a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: var(--primary-dark);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(19, 197, 221, 0.35);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .divider-text {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .register-link a:hover {
+            color: var(--primary-dark);
+        }
+
+        .input-group-custom {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            color: var(--primary);
+            z-index: 3;
+        }
+
+        .input-group-custom .form-control {
+            padding-left: 40px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            z-index: 3;
+            font-size: 0.9rem;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+<div class="login-wrapper">
+    {% include 'partials/header.html.twig' %}
+
+    <div class="login-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-5">
+                    <div class="login-card">
+                        <div class="login-header">
+                            <div class="login-icon"><i class="fas fa-lock"></i></div>
+                            <h1>Connexion sécurisée</h1>
+                            <p>Accédez à votre espace personnel</p>
+                        </div>
+
+                        <div class="login-body">
+                            <!-- Affichage des messages flash et erreurs -->
+                            {% if error %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% if error.messageKey == 'Invalid credentials.' %}
+                                        Email ou mot de passe incorrect.
+                                    {% else %}
+                                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                                    {% endif %}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endif %}
+
+                            {% for message in app.flashes('success') %}
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+
+                            <!-- Formulaire de connexion Symfony -->
+                            <form method="post" action="{{ path('app_login') }}">
+                                {# Protection CSRF #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                                <div class="form-group">
+                                    <label for="inputEmail" class="form-label"><i class="fas fa-envelope"></i> Adresse email</label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-user input-icon"></i>
+                                        <input type="email" 
+                                               name="email" 
+                                               value="{{ last_email|default('') }}" 
+                                               required 
+                                               autofocus 
+                                               class="form-control" 
+                                               id="inputEmail" 
+                                               placeholder="exemple@medinova.com">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="inputPassword" class="form-label"><i class="fas fa-lock"></i> Mot de passe</label>
+                                    <div class="input-group-custom">
+                                        <i class="fas fa-key input-icon"></i>
+                                        <input type="password" 
+                                               name="password" 
+                                               required 
+                                               class="form-control" 
+                                               id="inputPassword" 
+                                               placeholder="Votre mot de passe">
+                                        <button type="button" class="password-toggle" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {# Lien mot de passe oublié #}
+                                <div class="forgot-password">
+                                    <a href="#">Mot de passe oublié ?</a>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" name="_remember_me" value="on" class="form-check-input" id="remember">
+                                    <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                                </div>
+
+                                <button type="submit" class="btn-login">
+                                    Se connecter <i class="fas fa-sign-in-alt"></i>
+                                </button>
+                            </form>
+
+                            <div class="register-link">
+                                Nouveau sur MEDINOVA ? <a href="{{ path('app_signup') }}">Créer un compte gratuit</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'partials/footer.html.twig' %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function () {
+                const passwordInput = document.getElementById('inputPassword');
+                const icon = this.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
+
+        // Animation d'entrée
+        const loginCard = document.querySelector('.login-card');
+        if (loginCard) {
+            loginCard.style.opacity = '0';
+            loginCard.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                loginCard.style.transition = 'all 0.5s ease';
+                loginCard.style.opacity = '1';
+                loginCard.style.transform = 'translateY(0)';
+            }, 100);
+        }
+    });
+</script>
+</body>
+</html>
