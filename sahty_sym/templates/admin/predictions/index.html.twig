@@ -1,0 +1,308 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Predictions ML{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .chart-card {
+            min-height: 320px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 240px;
+        }
+        .chart-wrapper.chart-wide {
+            height: 280px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Predictions ML (Python)</h1>
+            <div class="text-muted small">Sources: ml/predictions_churn.csv, ml/predictions_fraud.csv</div>
+        </div>
+        <div class="text-end">
+            <form method="post" action="{{ path('admin_predictions_recalculate') }}" class="mb-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('recalc_predictions') }}">
+                <button type="submit" class="btn btn-primary btn-sm">Recalculer</button>
+            </form>
+            <div class="text-muted small">Dataset: {{ meta.dataset_updated ?? '-' }}</div>
+            <div class="text-muted small">Churn: {{ meta.churn_updated ?? '-' }}</div>
+            <div class="text-muted small">Fraude: {{ meta.fraud_updated ?? '-' }}</div>
+        </div>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    {% if predictions is empty %}
+        <div class="alert alert-info">
+            Aucune prediction ML disponible. Genere d'abord les fichiers CSV avec le script Python.
+        </div>
+    {% else %}
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm chart-card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Risque churn (probabilite)</h6>
+                        <div class="chart-wrapper">
+                            <canvas id="churnRiskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm chart-card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Risque fraude (probabilite)</h6>
+                        <div class="chart-wrapper">
+                            <canvas id="fraudRiskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Top 10 churn</h6>
+                        <div class="chart-wrapper chart-wide">
+                            <canvas id="topChurnChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Top 10 fraude</h6>
+                        <div class="chart-wrapper chart-wide">
+                            <canvas id="topFraudChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nom utilisateur</th>
+                                <th>Role</th>
+                                <th>Risque churn</th>
+                                <th>Risque fraude</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in predictions %}
+                                {% set has_name = row.user_name is not empty %}
+                                {% set has_role = row.role is not empty %}
+                                {% if has_name and has_role and (row.churn_risk_score is not null or row.fraud_risk_score is not null) %}
+                                    <tr>
+                                        <td>{{ row.user_name ?? ('#' ~ row.user_id) }}</td>
+                                        <td>{{ row.role ?? '-' }}</td>
+                                        <td>
+                                            {% if row.churn_risk_score is not null %}
+                                                <strong>{{ row.churn_risk_score|number_format(2, '.', '') }}%</strong>
+                                                <span class="text-muted">({{ row.churn_risk_label }})</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if row.fraud_risk_score is not null %}
+                                                <strong>{{ row.fraud_risk_score|number_format(2, '.', '') }}%</strong>
+                                                <span class="text-muted">({{ row.fraud_risk_label }})</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% if predictions is not empty %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const predictions = {{ predictions|json_encode|raw }};
+            const riskLabels = ['faible', 'moyen', 'eleve'];
+            const riskDisplay = {
+                faible: 'Faible',
+                moyen: 'Moyen',
+                eleve: 'Eleve'
+            };
+
+            const countByLabel = (key) => {
+                const counts = { faible: 0, moyen: 0, eleve: 0 };
+                predictions.forEach((row) => {
+                    const label = row[key] || 'faible';
+                    if (counts[label] !== undefined) {
+                        counts[label] += 1;
+                    }
+                });
+                return riskLabels.map((label) => counts[label]);
+            };
+
+            const makeDoughnut = (ctx, data, colors) => {
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: riskLabels.map((label) => riskDisplay[label]),
+                        datasets: [{
+                            data,
+                            backgroundColor: colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    padding: 16
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            };
+
+            makeDoughnut(
+                document.getElementById('churnRiskChart'),
+                countByLabel('churn_risk_label'),
+                ['#10b981', '#f59e0b', '#ef4444']
+            );
+
+            makeDoughnut(
+                document.getElementById('fraudRiskChart'),
+                countByLabel('fraud_risk_label'),
+                ['#10b981', '#f59e0b', '#ef4444']
+            );
+
+            const topChurn = [...predictions]
+                .filter((row) => row.user_name && row.role)
+                .filter((row) => row.churn_probability !== null && row.churn_probability !== undefined)
+                .sort((a, b) => (b.churn_probability ?? 0) - (a.churn_probability ?? 0))
+                .slice(0, 10);
+
+            const churnCtx = document.getElementById('topChurnChart');
+            if (churnCtx && topChurn.length) {
+                new Chart(churnCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topChurn.map((row) => row.user_name || `#${row.user_id}`),
+                        datasets: [{
+                            label: 'Probabilite (%)',
+                            data: topChurn.map((row) => {
+                                if (row.churn_risk_score !== null && row.churn_risk_score !== undefined) {
+                                    return Math.round(row.churn_risk_score * 100) / 100;
+                                }
+                                return Math.round((row.churn_probability ?? 0) * 10000) / 100;
+                            }),
+                            backgroundColor: '#2563eb',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => value + '%'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const topFraud = [...predictions]
+                .filter((row) => row.user_name && row.role)
+                .filter((row) => row.fraud_probability !== null && row.fraud_probability !== undefined)
+                .sort((a, b) => (b.fraud_probability ?? 0) - (a.fraud_probability ?? 0))
+                .slice(0, 10);
+
+            const fraudCtx = document.getElementById('topFraudChart');
+            if (fraudCtx && topFraud.length) {
+                new Chart(fraudCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topFraud.map((row) => row.user_name || `#${row.user_id}`),
+                        datasets: [{
+                            label: 'Probabilite (%)',
+                            data: topFraud.map((row) => {
+                                if (row.fraud_risk_score !== null && row.fraud_risk_score !== undefined) {
+                                    return Math.round(row.fraud_risk_score * 100) / 100;
+                                }
+                                return Math.round((row.fraud_probability ?? 0) * 10000) / 100;
+                            }),
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => value + '%'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endif %}
+{% endblock %}

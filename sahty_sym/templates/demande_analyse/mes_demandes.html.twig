@@ -1,217 +1,431 @@
-<{# templates/demande_analyse/mes_demandes.html.twig #}
+{# templates/demande_analyse/mes_demandes.html.twig #}
+
 <!DOCTYPE html>
+
 <html lang="fr">
+
 <head>
+
     <meta charset="utf-8">
+
     <title>MEDINOVA - Mes Demandes d'Analyse</title>
+
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
+
+
     {# Favicon #}
+
     <link href="{{ asset('img/favicon.ico') }}" rel="icon">
 
+
+
     {# Google Web Fonts #}
+
     <link rel="preconnect" href="https://fonts.gstatic.com">
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
+
+
     {# Icons #}
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
+
+
     {# Bootstrap + Template CSS #}
+
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
 
+
+
     <style>
+
         :root {
+
             --secondary: #13c5dd;
+
             --primary-rgb: 29, 93, 155;
+
         }
+
+
 
         body {
+
             overflow-x: hidden;
+
         }
 
+
+
         #mes-demandes-page .demandes-header {
+
             background: linear-gradient(rgba(29, 42, 77, 0.9), rgba(29, 42, 77, 0.9)), url('{{ asset("img/lab-banner.jpg") }}');
+
             background-size: cover;
+
             background-position: center;
+
             padding: 100px 0 80px;
+
         }
+
         
+
         #mes-demandes-page .demande-card {
+
             background: #fff;
+
             border-radius: 15px;
+
             box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+
             transition: all 0.3s ease;
+
             border: none;
+
             overflow: hidden;
+
             margin-bottom: 25px;
+
         }
+
         
+
         #mes-demandes-page .demande-card:hover {
+
             transform: translateY(-5px);
+
             box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+
         }
+
         
+
         #mes-demandes-page .demande-header {
+
             background: linear-gradient(135deg, var(--primary), var(--secondary));
+
             color: white;
+
             padding: 20px;
+
             border-radius: 15px 15px 0 0;
+
         }
+
         
+
         #mes-demandes-page .demande-id {
+
             font-size: 0.9rem;
+
             opacity: 0.9;
+
             font-weight: 400;
+
         }
+
         
+
         #mes-demandes-page .demande-body {
+
             padding: 25px;
+
         }
+
         
+
         #mes-demandes-page .demande-info-item {
+
             display: flex;
+
             align-items: center;
+
             margin-bottom: 15px;
+
             padding-bottom: 15px;
+
             border-bottom: 1px solid rgba(0,0,0,0.05);
+
         }
+
         
+
         #mes-demandes-page .demande-info-item:last-child {
+
             border-bottom: none;
+
             margin-bottom: 0;
+
             padding-bottom: 0;
+
         }
+
         
+
         #mes-demandes-page .info-icon {
+
             width: 40px;
+
             height: 40px;
+
             background: var(--light);
+
             border-radius: 50%;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             margin-right: 15px;
+
             color: var(--primary);
+
         }
+
         
+
         #mes-demandes-page .info-content h6 {
+
             margin-bottom: 3px;
+
             color: var(--dark);
+
             font-weight: 600;
+
         }
+
         
+
         #mes-demandes-page .info-content p {
+
             margin-bottom: 0;
+
             color: #666;
+
             font-size: 0.95rem;
+
         }
+
         
+
         #mes-demandes-page .statut-badge {
+
             padding: 6px 15px;
+
             border-radius: 30px;
+
             font-weight: 600;
+
             font-size: 0.85rem;
+
             text-transform: uppercase;
+
             letter-spacing: 0.5px;
+
         }
+
         
+
         #mes-demandes-page .badge-en_attente { background: #fff3cd; color: #856404; }
+
         #mes-demandes-page .badge-envoye { background: #d4edda; color: #155724; }
+
         
+
         #mes-demandes-page .priorite-badge {
+
             padding: 5px 12px;
+
             border-radius: 20px;
+
             font-size: 0.8rem;
+
             font-weight: 600;
+
         }
+
         
+
         #mes-demandes-page .badge-normale { background: #e3f2fd; color: #1565c0; }
+
         #mes-demandes-page .badge-haute { background: #fff3e0; color: #ef6c00; }
+
         #mes-demandes-page .badge-urgent { background: #ffebee; color: #c62828; }
+
         
+
         #mes-demandes-page .demande-actions {
+
             padding: 20px;
+
             background: var(--light);
+
             border-radius: 0 0 15px 15px;
+
             border-top: 1px solid rgba(0,0,0,0.05);
+
         }
+
         
+
         #mes-demandes-page .empty-state {
+
             text-align: center;
+
             padding: 60px 20px;
+
             background: white;
+
             border-radius: 15px;
+
             box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+
         }
+
         
+
         #mes-demandes-page .empty-icon {
+
             width: 100px;
+
             height: 100px;
+
             background: var(--light);
+
             border-radius: 50%;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             margin: 0 auto 25px;
+
             color: var(--primary);
+
             font-size: 45px;
+
         }
+
         
+
         #mes-demandes-page .action-buttons {
+
             display: flex;
+
             gap: 15px;
+
             flex-wrap: wrap;
+
         }
+
         
+
         #mes-demandes-page .btn-action {
+
             padding: 10px 20px;
+
             border-radius: 10px;
+
             font-weight: 600;
+
             display: flex;
+
             align-items: center;
+
             gap: 8px;
+
             transition: all 0.3s ease;
+
         }
+
         
+
         #mes-demandes-page .btn-action:hover {
+
             transform: translateY(-2px);
+
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
         }
+
         
+
         #mes-demandes-page .btn-view { background: var(--primary); color: white; }
+
         #mes-demandes-page .btn-edit { background: #ffc107; color: #212529; }
+
         #mes-demandes-page .btn-new { background: var(--secondary); color: white; }
+
         #mes-demandes-page .btn-all { background: var(--dark); color: white; }
+
         
+
         #mes-demandes-page .test-mode-indicator {
+
             position: fixed;
+
             top: 80px;
+
             right: 20px;
+
             z-index: 1000;
+
             background: #ffc107;
+
             color: #000;
+
             padding: 6px 15px;
+
             border-radius: 20px;
+
             font-size: 0.8rem;
+
             font-weight: bold;
+
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+
         }
+
         
+
         @media (max-width: 768px) {
+
             .demandes-header {
+
                 padding: 70px 0 50px;
+
             }
+
             
+
             .action-buttons {
+
                 flex-direction: column;
+
             }
+
             
+
             .test-mode-indicator {
+
                 top: 70px;
+
                 right: 10px;
+
                 font-size: 0.7rem;
+
             }
+
         }
         
         #mes-demandes-page .table-responsive,
@@ -230,12 +444,17 @@
         
         #mes-demandes-page .demandes-main-table th {
             background: var(--primary);
+
             color: white;
+
             border: none;
             padding: 14px 12px;
             font-weight: 600;
+
             text-transform: uppercase;
+
             letter-spacing: 0.5px;
+
             font-size: 0.9rem;
             white-space: nowrap;
             vertical-align: middle;
@@ -244,7 +463,9 @@
         #mes-demandes-page .demandes-main-table td {
             padding: 12px;
             vertical-align: middle;
+
             border-color: rgba(0,0,0,0.05);
+
         }
         
         #mes-demandes-page .demandes-main-table tbody tr {
@@ -300,7 +521,9 @@
         }
         
         #mes-demandes-page .date-cell {
+
             white-space: nowrap;
+
         }
 
         #mes-demandes-page .date-main {
@@ -319,10 +542,15 @@
         #mes-demandes-page .type-cell {
             max-width: 180px;
             overflow: hidden;
+
             text-overflow: ellipsis;
+
             white-space: nowrap;
+
         }
+
         
+
         #mes-demandes-page .medecin-cell {
             max-width: 190px;
         }
@@ -357,16 +585,27 @@
             font-weight: 700;
             letter-spacing: 0.01em;
         }
+
         
+
         #mes-demandes-page .no-medecin {
+
             color: #6c757d;
+
             font-style: italic;
+
             font-size: 0.9rem;
+
         }
+
         
+
         #mes-demandes-page .medecin-info {
+
             display: flex;
+
             align-items: center;
+
             gap: 8px;
             min-width: 0;
         }
@@ -374,10 +613,15 @@
         #mes-demandes-page .medecin-text {
             min-width: 0;
         }
+
         
+
         #mes-demandes-page .medecin-icon {
+
             color: var(--primary);
+
             font-size: 0.9rem;
+
         }
 
         #mes-demandes-page .inline-actions {
@@ -412,140 +656,275 @@
         }
 
         #ai-result-modal .modal-dialog {
+
             max-width: 980px;
+
         }
+
+
 
         #ai-result-modal .modal-content {
+
             border: 0;
+
             border-radius: 20px;
+
             overflow: hidden;
+
             background: linear-gradient(180deg, #f8fbff 0%, #ffffff 38%);
+
             box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+
         }
+
+
 
         #ai-result-modal .modal-header {
+
             padding: 1.25rem 1.5rem 1rem;
+
             border-bottom: 1px solid rgba(29, 93, 155, 0.12);
+
             background:
+
                 radial-gradient(120% 180% at 100% 0%, rgba(19, 197, 221, 0.16) 0%, rgba(19, 197, 221, 0) 52%),
+
                 linear-gradient(135deg, rgba(29, 93, 155, 0.08), rgba(19, 197, 221, 0.12));
+
         }
+
+
 
         #ai-result-modal .ai-modal-kicker {
+
             margin: 0;
+
             font-size: 0.78rem;
+
             font-weight: 700;
+
             letter-spacing: 0.08em;
+
             text-transform: uppercase;
+
             color: #1d5d9b;
+
         }
+
+
 
         #ai-result-modal .modal-title {
+
             font-size: 1.85rem;
+
             line-height: 1.2;
+
             color: #1d2a4d;
+
             font-weight: 700;
+
         }
+
+
 
         #ai-result-modal .ai-modal-close {
+
             opacity: 0.7;
+
         }
+
+
 
         #ai-result-modal .ai-modal-close:hover {
+
             opacity: 1;
+
         }
+
+
 
         #ai-result-modal .ai-kpi-card {
+
             background: #ffffff;
+
             border: 1px solid rgba(29, 93, 155, 0.14);
+
             border-radius: 14px;
+
             padding: 14px 14px 12px;
+
             box-shadow: 0 6px 18px rgba(16, 31, 61, 0.05);
+
         }
+
+
 
         #ai-result-modal .ai-kpi-label {
+
             font-size: 0.78rem;
+
             font-weight: 700;
+
             letter-spacing: 0.06em;
+
             text-transform: uppercase;
+
             color: #66738a;
+
             margin-bottom: 10px;
+
         }
+
+
 
         #ai-result-modal .ai-kpi-meta {
+
             font-size: 1.05rem;
+
             font-weight: 700;
+
             color: #253451;
+
         }
+
+
 
         #ai-result-modal .ai-pill {
+
             display: inline-flex;
+
             align-items: center;
+
             border-radius: 999px;
+
             padding: 0.4rem 0.8rem;
+
             font-size: 0.88rem;
+
             font-weight: 700;
+
             letter-spacing: 0.01em;
+
             border: 1px solid transparent;
+
             max-width: 100%;
+
             word-break: break-word;
+
         }
+
+
 
         #ai-result-modal .ai-pill-neutral {
+
             background: #eef2f7;
+
             color: #4c5c74;
+
             border-color: #d5deea;
+
         }
+
+
 
         #ai-result-modal .ai-pill-success {
+
             background: #e8f8ef;
+
             color: #13653c;
+
             border-color: #bde9cf;
+
         }
+
+
 
         #ai-result-modal .ai-pill-info {
+
             background: #e8f3ff;
+
             color: #1d5d9b;
+
             border-color: #c4ddff;
+
         }
+
+
 
         #ai-result-modal .ai-pill-warning {
+
             background: #fff4e5;
+
             color: #a55d00;
+
             border-color: #ffd8a8;
+
         }
+
+
 
         #ai-result-modal .ai-pill-danger {
+
             background: #fdecec;
+
             color: #a72230;
+
             border-color: #f5c1c6;
+
         }
+
+
 
         #ai-result-modal .ai-section {
+
             background: #ffffff;
+
             border: 1px solid rgba(29, 93, 155, 0.14);
+
             border-radius: 14px;
+
             padding: 14px 16px;
+
             box-shadow: 0 6px 18px rgba(16, 31, 61, 0.05);
+
         }
+
+
 
         #ai-result-modal .ai-section-title {
+
             display: flex;
+
             align-items: center;
+
             font-size: 1rem;
+
             font-weight: 700;
+
             color: #1f2d4d;
+
             margin-bottom: 0.75rem;
+
         }
 
+
+
         #ai-result-modal .ai-summary-text {
+
             margin: 0;
+
             color: #394b6b;
+
             line-height: 1.6;
+
             background: #f6f9fd;
+
             border: 1px solid #dbe7f5;
+
             border-radius: 10px;
+
             padding: 0.95rem 1rem;
+
         }
 
         #ai-result-modal .ai-evidence-list {
@@ -645,51 +1024,97 @@
         }
 
         #ai-result-modal .ai-rec-count {
+
             font-size: 0.78rem;
+
             font-weight: 700;
+
             color: #1d5d9b;
+
             background: #e8f3ff;
+
             border: 1px solid #c4ddff;
+
             border-radius: 999px;
+
             padding: 0.2rem 0.55rem;
+
         }
+
+
 
         #ai-result-modal .ai-recommendations {
+
             list-style: none;
+
             margin: 0;
+
             padding: 0;
+
             display: grid;
+
             gap: 10px;
+
         }
+
+
 
         #ai-result-modal .ai-rec-item {
+
             display: flex;
+
             align-items: flex-start;
+
             gap: 0.55rem;
+
             padding: 0.72rem 0.85rem;
+
             border-radius: 10px;
+
             background: #f8fbff;
+
             border: 1px solid #dce9f8;
+
             color: #344865;
+
             line-height: 1.45;
+
         }
+
+
 
         #ai-result-modal .ai-rec-icon {
+
             color: #1d5d9b;
+
             margin-top: 2px;
+
             font-size: 0.95rem;
+
         }
+
+
 
         #ai-result-modal .ai-rec-item-muted {
+
             color: #6b778d;
+
             background: #f3f6fa;
+
             border-color: #e1e7f0;
+
         }
 
+
+
         #ai-result-modal .ai-disclaimer {
+
             font-size: 0.82rem;
+
             color: #66738a;
+
             margin: 0;
+
         }
 
         #ai-patient-qa-modal .modal-dialog {
@@ -773,168 +1198,322 @@
         }
 
         @media (max-width: 768px) {
+
             #ai-result-modal .modal-title {
+
                 font-size: 1.45rem;
+
             }
+
+
 
             #ai-result-modal .modal-body {
+
                 padding: 1rem !important;
+
             }
+
         }
+
     </style>
+
 </head>
 
+
+
 <body>
+
 <div id="mes-demandes-page">
 
 {# ✅ Topbar + Navbar #}
 {% include 'partials/header.html.twig' with { header_compact: false } %}
 
+
+
 {# Mode test indicator #}
+
 {% if test_mode is defined and test_mode %}
+
     <div class="test-mode-indicator">
+
         <i class="fas fa-flask me-1"></i> MODE TEST
+
     </div>
+
 {% endif %}
 
+
+
 {# ===========================
+
    Header
+
    =========================== #}
+
 <div class="container-fluid demandes-header">
+
     <div class="container">
+
         <div class="row align-items-center">
+
             <div class="col-lg-8">
+
                 <nav aria-label="breadcrumb">
+
                     <ol class="breadcrumb bg-transparent p-0 mb-3">
+
                         <li class="breadcrumb-item">
+
                             <a href="{{ path('app_home') }}" class="text-white">Accueil</a>
+
                         </li>
+
                         <li class="breadcrumb-item text-white active" aria-current="page">
+
                             Mes Demandes d'Analyse
+
                         </li>
+
                     </ol>
+
                 </nav>
 
+
+
                 <h1 class="display-3 text-white mb-4">Mes Demandes d'Analyse</h1>
+
                 
+
                 <p class="text-white fs-5 mb-4">
-                    G�rez et suivez toutes vos demandes d'analyse m�dicale en un seul endroit
+                    G�rez et suivez toutes vos demandes d'analyse m�dicale en un seul endroit
                 </p>
 
+
+
                 <div class="d-flex flex-wrap align-items-center gap-3">
+
                     <span class="text-white" id="mes-demandes-count">
+
                         <i class="fa fa-chart-line text-primary me-2"></i>
+
                         {% if demandes is not empty %}
                             {{ demandes|length }} demande(s) trouvée(s)
                         {% else %}
+
                             Aucune demande pour le moment
+
                         {% endif %}
+
                     </span>
+
                     
+
                     <span class="text-white">
+
                         <i class="fa fa-user text-primary me-2"></i>
+
                         {% if app.user %}
-                            {{ app.user.nomComplet ?? app.user.email }}
+
+                            {{ app.user.nomComplet ?app.user.email }}
+
                         {% else %}
                             Mode test (Patient par défaut)
                         {% endif %}
+
                     </span>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
+
 
 {# ===========================
+
    Content
+
    =========================== #}
+
 <div class="container-fluid py-5">
+
     <div class="container">
+
         
+
         {# Boutons d'action #}
+
         <div class="row mb-5">
+
             <div class="col-12">
+
                 <div class="d-flex flex-wrap gap-3 justify-content-center">
+
                     
+
                     
+
                     {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MEDECIN') %}
+
                         <a href="{{ path('app_demande_analyse_index') }}" class="btn btn-action btn-all">
+
                             <i class="fas fa-list"></i> Toutes les Demandes
+
                         </a>
+
                     {% endif %}
+
                     
+
                     <a href="{{ path('app_labo_index') }}" class="btn btn-outline-primary btn-action">
+
                         <i class="fas fa-hospital"></i> Voir Laboratoires
+
                     </a>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         {# Filtre par type de bilan #}
+
         <div class="row mb-4">
+
             <div class="col-lg-6 mx-auto">
+
                 <form method="get" id="mes-demandes-filter" class="d-flex gap-2 align-items-center justify-content-center">
+
                     <label class="form-label mb-0" for="type_bilan">Type de bilan</label>
+
                     <select class="form-select" id="type_bilan" name="type_bilan" style="max-width: 320px;">
+
                         <option value="">Tous</option>
+
                         {% for type in type_bilan_options %}
-                            <option value="{{ type }}" {{ type_bilan_filter == type ? 'selected' : '' }}>{{ type }}</option>
+
+                            <option value="{{ type }}" {{ type_bilan_filter == type ?'selected' : '' }}>{{ type }}</option>
+
                         {% endfor %}
+
                     </select>
+
                 </form>
+
             </div>
+
         </div>
+
+
 
         <div id="mes-demandes-results">
+
             {% include 'demande_analyse/_mes_demandes_results.html.twig' with { demandes: demandes } %}
+
         </div>
 
+
+
     </div>
+
 </div>
 
+
+
 <div class="modal fade" id="ai-result-modal" tabindex="-1" aria-labelledby="aiResultModalLabel" aria-hidden="true">
+
     <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+
         <div class="modal-content">
+
             <div class="modal-header">
+
                 <div>
+
                     <p class="ai-modal-kicker"><i class="bi bi-stars me-1"></i>Assistant IA laboratoire</p>
+
                     <h5 class="modal-title" id="aiResultModalLabel">Interpretation IA du resultat</h5>
+
                 </div>
+
                 <button type="button" class="btn-close ai-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
             </div>
+
             <div class="modal-body p-4 pt-3">
+
                 <div id="aiResultError" class="alert alert-warning d-none mb-3"></div>
 
+
+
                 <div class="row g-3 mb-4">
+
                     <div class="col-sm-6 col-xl-3">
+
                         <div class="ai-kpi-card h-100">
+
                             <div class="ai-kpi-label">Statut IA</div>
+
                             <div id="aiResultStatus" class="ai-pill ai-pill-neutral">-</div>
+
                         </div>
+
                     </div>
+
                     <div class="col-sm-6 col-xl-3">
+
                         <div class="ai-kpi-card h-100">
+
                             <div class="ai-kpi-label">Niveau de risque</div>
+
                             <div id="aiResultDanger" class="ai-pill ai-pill-neutral">-</div>
+
                         </div>
+
                     </div>
+
                     <div class="col-sm-6 col-xl-3">
+
                         <div class="ai-kpi-card h-100">
+
                             <div class="ai-kpi-label">Modele</div>
+
                             <div id="aiResultModel" class="ai-kpi-meta">-</div>
+
                         </div>
+
                     </div>
+
                     <div class="col-sm-6 col-xl-3">
+
                         <div class="ai-kpi-card h-100">
+
                             <div class="ai-kpi-label">Mise a jour</div>
+
                             <div id="aiResultUpdated" class="ai-kpi-meta">-</div>
+
                         </div>
+
                     </div>
+
                 </div>
 
+
+
                 <section class="ai-section mb-3">
+
                     <h6 class="ai-section-title"><i class="bi bi-activity me-2"></i>Resume clinique</h6>
+
                     <p id="aiResultSummary" class="ai-summary-text">-</p>
+
                 </section>
 
                 <section class="ai-section mb-3">
@@ -947,19 +1526,33 @@
                 </section>
 
                 <section class="ai-section">
+
                     <div class="d-flex justify-content-between align-items-center mb-2">
+
                         <h6 class="ai-section-title mb-0"><i class="bi bi-clipboard2-check me-2"></i>Recommandations</h6>
+
                         <span id="aiResultRecCount" class="ai-rec-count">0</span>
+
                     </div>
+
                     <ul id="aiResultRecommendations" class="ai-recommendations"></ul>
+
                 </section>
 
+
+
                 <p class="ai-disclaimer mt-3">
+
                     Ces informations sont indicatives et doivent etre validees par un professionnel de sante.
+
                 </p>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
 <div class="modal fade" id="ai-patient-qa-modal" tabindex="-1" aria-labelledby="aiPatientQaLabel" aria-hidden="true">
@@ -1011,29 +1604,53 @@
 </div>
 
 {# Footer #}
+
 {% include 'partials/footer.html.twig' %}
 
+
+
 {# Back to Top #}
+
 <a href="#!" class="btn btn-lg btn-primary btn-lg-square back-to-top">
+
     <i class="bi bi-arrow-up"></i>
+
 </a>
 
+
+
 {# JS #}
+
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+
 <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+
 <script src="{{ asset('js/main.js') }}"></script>
 
+
+
 <script>
+
 document.addEventListener('DOMContentLoaded', function() {
+
     const aiModalElement = document.getElementById('ai-result-modal');
-    const aiModal = aiModalElement ? new bootstrap.Modal(aiModalElement) : null;
+
+    const aiModal = aiModalElement ?new bootstrap.Modal(aiModalElement) : null;
+
     const aiResultError = document.getElementById('aiResultError');
+
     const aiResultStatus = document.getElementById('aiResultStatus');
+
     const aiResultDanger = document.getElementById('aiResultDanger');
+
     const aiResultModel = document.getElementById('aiResultModel');
+
     const aiResultUpdated = document.getElementById('aiResultUpdated');
+
     const aiResultSummary = document.getElementById('aiResultSummary');
     const aiResultEvidenceCount = document.getElementById('aiResultEvidenceCount');
     const aiResultEvidence = document.getElementById('aiResultEvidence');
@@ -1054,12 +1671,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let iaMetricGlossary = {};
 
     const setPillVariant = (element, variant) => {
+
         if (!element) {
+
             return;
+
         }
 
+
+
         element.className = `ai-pill ai-pill-${variant}`;
+
     };
+
+
 
     const normalizeToken = (value) => (value || '').toString().trim().toLowerCase();
     const normalizeGlossaryKey = (value) => String(value || '')
@@ -1122,84 +1747,160 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const mapStatusLabel = (status) => {
+
         const token = normalizeToken(status);
+
         if (token === 'done') return 'Terminee';
+
         if (token === 'failed') return 'Echec';
+
         if (token === 'pending') return 'En attente';
+
         if (token === 'processing') return 'En cours';
+
         if (token === 'queued') return 'File d attente';
+
         return status || '-';
+
     };
+
+
 
     const mapStatusVariant = (status) => {
+
         const token = normalizeToken(status);
+
         if (token === 'done') return 'success';
+
         if (token === 'failed') return 'danger';
+
         if (token === 'pending') return 'warning';
+
         if (token === 'processing' || token === 'queued') return 'info';
+
         return 'neutral';
+
     };
 
+
+
     const mapDangerVariant = (level, score) => {
+
         const token = normalizeToken(level);
+
         const numericScore = Number(score);
+
         const hasScore = !Number.isNaN(numericScore);
 
+
+
         if (token.includes('critical') || token.includes('critique') || (hasScore && numericScore >= 85)) {
+
             return 'danger';
+
         }
+
+
 
         if (token.includes('high') || token.includes('haut') || token.includes('eleve') || (hasScore && numericScore >= 65)) {
             return 'warning';
+
         }
+
+
 
         if (token.includes('low') || token.includes('bas') || token.includes('faible') || (hasScore && numericScore <= 35)) {
             return 'success';
+
         }
+
+
 
         if (token.includes('medium') || token.includes('modere') || token.includes('moyen') || (hasScore && numericScore > 35 && numericScore < 65)) {
             return 'info';
+
         }
+
+
 
         return 'neutral';
+
     };
 
+
+
     const renderRecommendations = (recommendations, options = {}) => {
+
         if (!aiResultRecommendations || !aiResultRecCount) {
+
             return;
+
         }
+
+
 
         const isLoading = options.loading === true;
+
         aiResultRecommendations.innerHTML = '';
 
+
+
         if (isLoading) {
+
             aiResultRecCount.textContent = '0';
+
             aiResultRecommendations.innerHTML = '<li class="ai-rec-item ai-rec-item-muted"><i class="bi bi-hourglass-split ai-rec-icon"></i><span>Chargement...</span></li>';
+
             return;
+
         }
 
-        const list = Array.isArray(recommendations) ? recommendations : [];
+
+
+        const list = Array.isArray(recommendations) ?recommendations : [];
+
         if (list.length === 0) {
+
             aiResultRecCount.textContent = '0';
+
             aiResultRecommendations.innerHTML = '<li class="ai-rec-item ai-rec-item-muted"><i class="bi bi-info-circle ai-rec-icon"></i><span>Aucune recommandation disponible.</span></li>';
+
             return;
+
         }
+
+
 
         aiResultRecCount.textContent = String(list.length);
+
         list.forEach((item) => {
+
             const li = document.createElement('li');
+
             li.className = 'ai-rec-item';
 
+
+
             const icon = document.createElement('i');
+
             icon.className = 'bi bi-check-circle-fill ai-rec-icon';
 
+
+
             const text = document.createElement('span');
+
             text.textContent = item;
 
+
+
             li.appendChild(icon);
+
             li.appendChild(text);
+
             aiResultRecommendations.appendChild(li);
+
         });
+
     };
 
     const renderEvidence = (evidenceLines, options = {}) => {
@@ -1303,47 +2004,79 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const setAiModalLoading = () => {
+
         if (!aiModal) {
+
             return;
+
         }
 
         iaMetricGlossary = {};
         aiResultError.classList.add('d-none');
+
         aiResultError.textContent = '';
+
         aiResultStatus.textContent = 'Chargement';
+
         setPillVariant(aiResultStatus, 'info');
+
         aiResultDanger.textContent = '-';
+
         setPillVariant(aiResultDanger, 'neutral');
+
         aiResultModel.textContent = '-';
+
         aiResultUpdated.textContent = '-';
+
         aiResultSummary.textContent = 'Chargement de l interpretation IA...';
         renderEvidence([], { loading: true });
         renderRecommendations([], { loading: true });
+
     };
 
+
+
     const showAiModalError = (message) => {
+
         if (!aiModal) {
+
             alert(message);
+
             return;
+
         }
 
         iaMetricGlossary = {};
         aiResultError.textContent = message;
+
         aiResultError.classList.remove('d-none');
+
         aiResultStatus.textContent = 'Indisponible';
+
         setPillVariant(aiResultStatus, 'danger');
+
         aiResultDanger.textContent = '-';
+
         setPillVariant(aiResultDanger, 'neutral');
+
         aiResultModel.textContent = '-';
+
         aiResultUpdated.textContent = '-';
+
         aiResultSummary.textContent = message;
         renderEvidence([]);
         renderRecommendations([]);
+
     };
 
+
+
     const showAiModalData = (payload) => {
+
         if (!aiModal) {
+
             return;
+
         }
 
         iaMetricGlossary = normalizeMetricGlossary(payload.metric_glossary || {});
@@ -1354,19 +2087,33 @@ document.addEventListener('DOMContentLoaded', function() {
             ? `${dangerLevelLabel} (${dangerScore}/100)`
             : dangerLevelLabel;
 
+
+
         aiResultError.classList.add('d-none');
+
         aiResultError.textContent = '';
+
         aiResultStatus.textContent = mapStatusLabel(payload.ai_status || 'done');
+
         setPillVariant(aiResultStatus, mapStatusVariant(payload.ai_status || 'done'));
+
         aiResultDanger.textContent = dangerText;
+
         setPillVariant(aiResultDanger, mapDangerVariant(dangerLevel, dangerScore));
+
         aiResultModel.textContent = payload.model || 'N/A';
+
         aiResultUpdated.textContent = payload.updated_at || '-';
+
         aiResultSummary.textContent = payload.summary || 'Aucun resume IA.';
         renderEvidence(payload.evidence_items || payload.evidence_lines || []);
 
-        const recommendations = Array.isArray(payload.recommendations) ? payload.recommendations : [];
+
+
+        const recommendations = Array.isArray(payload.recommendations) ?payload.recommendations : [];
+
         renderRecommendations(recommendations);
+
     };
 
     const resetQaState = () => {
@@ -1495,102 +2242,193 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const initDemandesHandlers = function() {
+
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+
         tooltipTriggerList.map(function (tooltipTriggerEl) {
+
             return new bootstrap.Tooltip(tooltipTriggerEl);
+
         });
 
+
+
         const deleteForms = document.querySelectorAll('form[action*="/delete"]');
+
         deleteForms.forEach(form => {
+
             form.addEventListener('submit', function(e) {
                 if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.')) {
                     e.preventDefault();
+
                 }
+
             });
+
         });
 
+
+
         const medecinCells = document.querySelectorAll('.medecin-cell');
+
         medecinCells.forEach(cell => {
+
             const medecinDiv = cell.querySelector('.medecin-info');
+
             if (medecinDiv) {
+
                 cell.addEventListener('mouseenter', function() {
+
                     this.style.cursor = 'help';
+
                 });
+
+
 
                 const medecinName = cell.querySelector('.fw-bold').textContent;
                 const specialite = cell.querySelector('.text-muted')?.textContent || 'Spécialité non spécifiée';
 
                 cell.setAttribute('title', `Médecin: ${medecinName}\nSpécialité: ${specialite}`);
                 new bootstrap.Tooltip(cell, {
+
                     placement: 'top',
+
                     trigger: 'hover'
+
                 });
+
             }
+
         });
+
+
 
         const resultButtons = document.querySelectorAll('.js-result-pdf');
+
         resultButtons.forEach(button => {
+
             button.addEventListener('click', function() {
+
                 const status = this.getAttribute('data-status');
+
                 const pdfUrl = this.getAttribute('data-pdf');
 
+
+
                 if (status === 'en_attente') {
+
                     alert('Le resultat n\'est pas encore disponible.');
+
                     return;
+
                 }
+
+
 
                 if (!pdfUrl) {
+
                     alert('Aucun resultat PDF n\'est disponible pour cette demande.');
+
                     return;
+
                 }
+
+
 
                 window.open(pdfUrl, '_blank', 'noopener');
+
             });
+
         });
 
+
+
         const aiButtons = document.querySelectorAll('.js-ai-result');
+
         aiButtons.forEach(button => {
+
             button.addEventListener('click', function() {
+
                 const status = this.getAttribute('data-status');
+
                 const aiUrl = this.getAttribute('data-ai-url');
 
+
+
                 if (status === 'en_attente') {
+
                     alert('Le resultat n\'est pas encore disponible.');
+
                     return;
+
                 }
+
+
 
                 if (!aiUrl) {
+
                     alert('Aucun lien IA disponible pour cette demande.');
+
                     return;
+
                 }
+
+
 
                 if (aiModal) {
+
                     setAiModalLoading();
+
                     aiModal.show();
+
                 }
 
+
+
                 fetch(aiUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+
                     .then(async (response) => {
+
                         let data = {};
+
                         try {
+
                             data = await response.json();
+
                         } catch (_) {
+
                             data = {};
+
                         }
+
+
 
                         if (!response.ok || data.ok === false) {
+
                             throw new Error(data.message || 'Interpretation IA indisponible pour cette demande.');
+
                         }
 
+
+
                         return data;
+
                     })
+
                     .then((data) => {
+
                         showAiModalData(data);
+
                     })
+
                     .catch((error) => {
+
                         showAiModalError(error.message || 'Erreur de chargement IA.');
+
                     });
+
             });
+
         });
 
         const qaButtons = document.querySelectorAll('.js-ai-qa');
@@ -1624,42 +2462,80 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+
+
     const filterForm = document.getElementById('mes-demandes-filter');
+
     const filterSelect = document.getElementById('type_bilan');
+
     const resultsContainer = document.getElementById('mes-demandes-results');
+
     const countContainer = document.getElementById('mes-demandes-count');
+
     let debounceTimer;
 
+
+
     const fetchResults = () => {
+
         if (!filterForm) return;
+
         const params = new URLSearchParams(new FormData(filterForm));
+
         const url = `{{ path('app_demande_analyse_mes_demandes_filter') }}?${params.toString()}`;
 
+
+
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+
             .then(response => response.json())
+
             .then(data => {
+
                 if (resultsContainer) {
+
                     resultsContainer.innerHTML = data.html;
+
                 }
+
                 if (countContainer) {
+
                     countContainer.innerHTML = data.count_text;
+
                 }
+
                 initDemandesHandlers();
+
             })
+
             .catch(() => {
+
                 if (resultsContainer) {
+
                     resultsContainer.innerHTML = '<div class="row"><div class="col-12 text-center text-muted">Erreur de chargement.</div></div>';
+
                 }
+
             });
+
     };
+
+
 
     const scheduleFetch = () => {
+
         clearTimeout(debounceTimer);
+
         debounceTimer = setTimeout(fetchResults, 250);
+
     };
 
+
+
     if (filterSelect) {
+
         filterSelect.addEventListener('change', scheduleFetch);
+
     }
 
     if (qaAskBtn) {
@@ -1694,17 +2570,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initDemandesHandlers();
+
     // Animation pour les cartes
+
     const cards = document.querySelectorAll('.demande-card');
+
     cards.forEach((card, index) => {
+
         card.style.animationDelay = `${index * 0.1}s`;
+
         card.classList.add('animate__animated', 'animate__fadeInUp');
+
     });
+
     
+
     // Mode test indicator
+
     {% if test_mode is defined and test_mode %}
+
         const testIndicator = document.querySelector('.test-mode-indicator');
+
         if (testIndicator) {
+
             testIndicator.addEventListener('click', function() {
                 alert('Mode test activé :\n\n' +
                       '• Pas besoin de connexion\n' +
@@ -1712,13 +2600,22 @@ document.addEventListener('DOMContentLoaded', function() {
                       '• Les données sont sauvegardées normalement\n' +
                       '• En production, l\'authentification sera requise');
             });
+
         }
+
     {% endif %}
+
     
+
 });
+
 </script>
 
+
+
  </div>
+
 </body>
+
 </html>
 

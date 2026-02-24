@@ -3,6 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\MedecinRepository;
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MedecinRepository::class)]
@@ -36,10 +41,17 @@ class Medecin extends Utilisateur
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $disponibilite = null;
 
+    /**
+     * @var Collection<int, DemandeAnalyse>
+     */
+    #[ORM\OneToMany(targetEntity: DemandeAnalyse::class, mappedBy: 'medecin', fetch: 'EXTRA_LAZY')]
+    private Collection $demandeAnalyses;
+
     public function __construct()
     {
         parent::__construct();
         $this->setRole(self::ROLE_SIMPLE_MEDECIN); // Utilisation de la constante
+        $this->demandeAnalyses = new ArrayCollection();
     }
 
     public function getSpecialite(): ?string
@@ -138,6 +150,33 @@ class Medecin extends Utilisateur
     public function setDisponibilite(?string $disponibilite): self
     {
         $this->disponibilite = $disponibilite;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DemandeAnalyse>
+     */
+    public function getDemandeAnalyses(): Collection
+    {
+        return $this->demandeAnalyses;
+    }
+
+    public function addDemandeAnalyse(DemandeAnalyse $demandeAnalyse): self
+    {
+        if (!$this->demandeAnalyses->contains($demandeAnalyse)) {
+            $this->demandeAnalyses->add($demandeAnalyse);
+            $demandeAnalyse->setMedecin($this);
+        }
+        return $this;
+    }
+
+    public function removeDemandeAnalyse(DemandeAnalyse $demandeAnalyse): self
+    {
+        if ($this->demandeAnalyses->removeElement($demandeAnalyse)) {
+            if ($demandeAnalyse->getMedecin() === $this) {
+                $demandeAnalyse->setMedecin(null);
+            }
+        }
         return $this;
     }
 

@@ -11,6 +11,8 @@
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
         "easycorp/easyadmin-bundle": "^4.28",
+        "league/oauth2-google": "^4.0",
+        "knpuniversity/oauth2-client-bundle": "^2.12",
         "mollie/mollie-api-php": "^3.9",
         "phpdocumentor/reflection-docblock": "5.2",
         "phpstan/phpdoc-parser": "^2.3",

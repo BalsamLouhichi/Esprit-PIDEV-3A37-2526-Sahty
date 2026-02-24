@@ -41,6 +41,12 @@ private ?\DateTimeInterface $dateFin = null;
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $lieu = null;
 
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $meetingPlatform = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $meetingLink = null;
+
     #[ORM\Column(nullable: true)]
     private ?int $placesMax = null;
 
@@ -188,6 +194,30 @@ public function setStatutDemande(?string $statutDemande): self
     public function setLieu(?string $lieu): static
     {
         $this->lieu = $lieu;
+
+        return $this;
+    }
+
+    public function getMeetingPlatform(): ?string
+    {
+        return $this->meetingPlatform;
+    }
+
+    public function setMeetingPlatform(?string $meetingPlatform): static
+    {
+        $this->meetingPlatform = $meetingPlatform;
+
+        return $this;
+    }
+
+    public function getMeetingLink(): ?string
+    {
+        return $this->meetingLink;
+    }
+
+    public function setMeetingLink(?string $meetingLink): static
+    {
+        $this->meetingLink = $meetingLink;
 
         return $this;
     }

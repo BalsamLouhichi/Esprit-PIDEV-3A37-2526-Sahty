@@ -7,6 +7,7 @@ use App\Entity\GroupeCible;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -23,24 +24,26 @@ class EvenementType extends AbstractType
         $isAdmin   = $options['is_admin'] ?? false;
         $userRole  = $options['user_role'] ?? null;
         $isDemande = $options['is_demande'] ?? false;
+        $seriesCandidates = $options['series_candidates'] ?? [];
+        $seriesEditionNumber = $options['series_edition_number'] ?? null;
 
         $builder
             ->add('titre', TextType::class, [
-                'label' => 'Titre de l\'événement',
+                'label' => 'Titre de l\'Ã©vÃ©nement',
                 'attr' => ['placeholder' => 'Ex: Webinaire sur la nutrition'],
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Description détaillée',
+                'label' => 'Description dÃ©taillÃ©e',
                 'required' => false,
                 'attr' => ['rows' => 5],
             ])
             ->add('type', ChoiceType::class, [
-                'label' => 'Type d\'événement',
+                'label' => 'Type d\'Ã©vÃ©nement',
                 'choices' => [
                     'Webinaire' => 'webinaire',
                     'Atelier' => 'atelier',
-                    'Dépistage' => 'depistage',
-                    'Conférence' => 'conference',
+                    'DÃ©pistage' => 'depistage',
+                    'ConfÃ©rence' => 'conference',
                     'Groupe de parole' => 'groupe_parole',
                     'Formation' => 'formation',
                 ],
@@ -50,12 +53,45 @@ class EvenementType extends AbstractType
                 'label' => 'Mode de participation',
                 'choices' => [
                     'En ligne' => 'en_ligne',
-                    'Présentiel' => 'presentiel',
+                    'PrÃ©sentiel' => 'presentiel',
                     'Hybride' => 'hybride',
                 ],
             ])
+            ->add('meetingPlatform', ChoiceType::class, [
+                'label' => 'Plateforme de reunion',
+                'required' => false,
+                'placeholder' => 'Selectionner...',
+                'choices' => [
+                    'Jitsi (auto)' => 'jitsi',
+                    'Lien personnalise' => 'custom',
+                ],
+            ])
+            ->add('meetingLink', TextType::class, [
+                'label' => 'Lien de reunion',
+                'required' => false,
+            ])
+            ->add('isEdition', CheckboxType::class, [
+                'label' => 'Cet evenement est une edition d une serie',
+                'required' => false,
+                'mapped' => false,
+                'data' => ($seriesEditionNumber !== null && (int) $seriesEditionNumber > 0),
+            ])
+            ->add('editionSourceEventId', ChoiceType::class, [
+                'label' => 'Evenement source',
+                'required' => false,
+                'mapped' => false,
+                'choices' => is_array($seriesCandidates) ? $seriesCandidates : [],
+                'placeholder' => 'Selectionner un evenement',
+            ])
+            ->add('editionNumero', IntegerType::class, [
+                'label' => 'Numero d edition',
+                'required' => false,
+                'mapped' => false,
+                'data' => is_numeric($seriesEditionNumber) ? (int) $seriesEditionNumber : null,
+                'attr' => ['min' => 1, 'step' => 1],
+            ])
             ->add('dateDebut', DateTimeType::class, [
-                'label' => 'Date de début',
+                'label' => 'Date de dÃ©but',
                 'widget' => 'single_text',
                 'html5' => true,
                 'required' => true,
@@ -75,7 +111,7 @@ class EvenementType extends AbstractType
             ->add('lieu', TextType::class, [
                 'label' => 'Lieu / Lien',
                 'required' => false,
-                'help' => 'Adresse physique ou lien de réunion',
+                'help' => 'Adresse physique ou lien de rÃ©union',
             ])
             ->add('placesMax', IntegerType::class, [
                 'label' => 'Nombre de places maximum',
@@ -123,21 +159,21 @@ class EvenementType extends AbstractType
         // If it IS a client request, we skip this entirely so the form doesn't touch the status.
         if (!$isDemande) {
             $statutChoices = [
-                'Planifié' => 'planifie',
+                'PlanifiÃ©' => 'planifie',
                 'En cours' => 'en_cours',
-                'Terminé' => 'termine',
-                'Annulé' => 'annule',
+                'TerminÃ©' => 'termine',
+                'AnnulÃ©' => 'annule',
             ];
 
             if ($isAdmin) {
                 $statutChoices = array_merge($statutChoices, [
                     'En attente d\'approbation' => 'en_attente_approbation',
-                    'Approuvé' => 'approuve',
+                    'ApprouvÃ©' => 'approuve',
                 ]);
             }
 
             $builder->add('statut', ChoiceType::class, [
-                'label' => 'Statut de l\'événement',
+                'label' => 'Statut de l\'Ã©vÃ©nement',
                 'choices' => $statutChoices,
                 'required' => true, 
             ]);
@@ -152,11 +188,15 @@ class EvenementType extends AbstractType
             'is_admin' => false,
             'is_demande' => false,
             'user_role' => null,
+            'series_candidates' => [],
+            'series_edition_number' => null,
         ]);
 
         $resolver->setAllowedTypes('is_edit', 'bool');
         $resolver->setAllowedTypes('is_admin', 'bool');
         $resolver->setAllowedTypes('is_demande', 'bool');
         $resolver->setAllowedTypes('user_role', ['null', 'string']);
+        $resolver->setAllowedTypes('series_candidates', 'array');
+        $resolver->setAllowedTypes('series_edition_number', ['null', 'int', 'string']);
     }
 }

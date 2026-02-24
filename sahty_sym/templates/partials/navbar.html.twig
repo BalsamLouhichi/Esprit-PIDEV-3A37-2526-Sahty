@@ -465,7 +465,7 @@
     }
 </style>
 
-<!-- Topbar MEDINOVA Premium avec +®l+®ments SAHTY ajout+®s -->
+<!-- Topbar MEDINOVA Premium avec +ï¿½l+ï¿½ments SAHTY ajout+ï¿½s -->
 <div class="medinova-topbar d-none d-lg-block">
     <div class="container">
         <div class="row align-items-center">
@@ -495,7 +495,7 @@
     </div>
 </div>
 
-<!-- Navbar MEDINOVA Premium avec tous les +®l+®ments SAHTY int+®gr+®s -->
+<!-- Navbar MEDINOVA Premium avec tous les +ï¿½l+ï¿½ments SAHTY int+ï¿½gr+ï¿½s -->
 <nav class="navbar navbar-expand-lg medinova-navbar sticky-top">
     <div class="container">
         <a href="{{ path('app_home') }}" class="navbar-brand">
@@ -542,8 +542,8 @@
                     </div>
                 </div>
 
-                {# === NAVIGATION M+ëDICALE MEDINOVA === #}
-                {# Rendez-vous selon le r+¦le #}
+                {# === NAVIGATION M+ï¿½DICALE MEDINOVA === #}
+                {# Rendez-vous selon le r+ï¿½le #}
                 {% if app.user %}
                     {% if is_granted('ROLE_PATIENT') %}
                         <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" 
@@ -571,7 +571,7 @@
                     {% endif %}
                 {% endif %}
 
-                {# Fiches M+®dicales #}
+                {# Fiches M+ï¿½dicales #}
                 {% if app.user and (is_granted('ROLE_PATIENT') or is_granted('ROLE_MEDECIN')) %}
                     <a href="{{ path('app_fiche_medicale_index')|default('#') }}" 
                        class="nav-link {% if app.request.get('_route') starts with 'app_fiche_medicale' %}active{% endif %}">
@@ -580,7 +580,7 @@
                     </a>
                 {% endif %}
 
-                {# === ESPACE UTILISATEUR FUSIONN+ë === #}
+                {# === ESPACE UTILISATEUR FUSIONN+ï¿½ === #}
                 {% if app.user %}
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
@@ -608,7 +608,7 @@
                                 <i class="fas fa-user"></i>Mon Profil
                             </a>
                             
-                            {# Liens sp+®cifiques selon r+¦le #}
+                            {# Liens sp+ï¿½cifiques selon r+ï¿½le #}
                             {% if is_granted('ROLE_PATIENT') %}
                                 <a href="{{ path('app_rdv_mes_rdv')|default('#') }}" class="dropdown-item">
                                     <i class="fas fa-calendar-alt"></i>Mes Rendez-vous
@@ -637,7 +637,7 @@
                             
                             <div class="dropdown-divider"></div>
                             
-                            {# Param+¿tres du compte #}
+                            {# Param+ï¿½tres du compte #}
                             <a href="{{ path('app_profile_edit')|default('#') }}" class="dropdown-item">
                                 <i class="fas fa-edit"></i>Modifier mon profil
                             </a>
@@ -647,14 +647,14 @@
                             
                             <div class="dropdown-divider"></div>
                             
-                            {# D+®connexion #}
+                            {# D+ï¿½connexion #}
                             <a href="{{ path('app_logout')|default('#') }}" class="dropdown-item text-danger">
-                                <i class="fas fa-sign-out-alt"></i>D+®connexion
+                                <i class="fas fa-sign-out-alt"></i>D+ï¿½connexion
                             </a>
                         </div>
                     </div>
                 {% else %}
-                    {# Utilisateur non connect+® - Boutons SAHTY style MEDINOVA #}
+                    {# Utilisateur non connect+ï¿½ - Boutons SAHTY style MEDINOVA #}
                     <div class="d-flex align-items-center ms-3">
                         <a href="{{ path('app_sign')|default('#') }}" class="nav-link btn-inscription">
                             <i class="fas fa-user-plus"></i>S'inscrire
@@ -708,6 +708,5 @@ if (window.innerWidth > 991) {
     });
 }
 
-console.log('­ƒÅÑ SAHTY - Navbar Premium charg+®e avec succ+¿s!');
+console.log('ï¿½ï¿½ï¿½ï¿½ SAHTY - Navbar Premium charg+ï¿½e avec succ+ï¿½s!');
 </script>
-

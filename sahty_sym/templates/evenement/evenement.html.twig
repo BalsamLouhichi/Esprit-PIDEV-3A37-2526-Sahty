@@ -766,7 +766,7 @@
                                                     </a>
                                                 {% endif %}
                                                 
-                                                {% if perms.can_inscribe %}
+                                                {% if perms.can_inscribe and not is_admin %}
                                                     <a href="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}" 
                                                        class="btn-icon btn-inscribe"
                                                        title="S'inscrire">

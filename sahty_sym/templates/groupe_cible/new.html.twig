@@ -85,13 +85,18 @@
                class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Retour à l'événement
             </a>
+        {% elseif referrer == 'evenements_client_demande_evenement' %}
+            <a href="{{ path('evenements_client_demande_evenement') }}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour a la demande client
+            </a>
         {% elseif referrer == 'admin_evenement_update' and event_id %}
             <a href="{{ path('admin_evenement_update', {'id': event_id}) }}"
                class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Retour à l'événement
             </a>
         {% else %}
-            <a href="{{ path('groupe_cible_index') }}"
+            <a href="{{ path('groupe_cible_index', (referrer is not empty) ? {'referrer': referrer, 'event_id': event_id} : {}) }}"
                class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Retour
             </a>
@@ -156,13 +161,18 @@
            class="btn btn-secondary me-2">
             Annuler
         </a>
+    {% elseif referrer == 'evenements_client_demande_evenement' %}
+        <a href="{{ path('evenements_client_demande_evenement') }}"
+           class="btn btn-secondary me-2">
+            Annuler
+        </a>
     {% elseif referrer == 'admin_evenement_update' and event_id %}
         <a href="{{ path('admin_evenement_update', {'id': event_id}) }}"
            class="btn btn-secondary me-2">
             Annuler
         </a>
     {% else %}
-        <a href="{{ path('groupe_cible_index') }}"
+        <a href="{{ path('groupe_cible_index', (referrer is not empty) ? {'referrer': referrer, 'event_id': event_id} : {}) }}"
            class="btn btn-secondary me-2">
             Annuler
         </a>

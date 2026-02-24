@@ -22,6 +22,9 @@ use App\Repository\MedecinRepository;
 use App\Repository\LaboratoireRepository;
 use App\Repository\TypeAnalyseRepository;
 use App\Repository\DemandeAnalyseRepository;
+use App\Repository\ParapharmacieRepository;
+use App\Repository\ProduitRepository;
+use App\Repository\CommandeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,7 +54,10 @@ class AdminController extends AbstractController
         MedecinRepository $medecinRepo,
         PatientRepository $patientRepo,
         LaboratoireRepository $laboratoireRepo,
-        DemandeAnalyseRepository $demandeRepo
+        DemandeAnalyseRepository $demandeRepo,
+        ParapharmacieRepository $parapharmacieRepo,
+        ProduitRepository $produitRepo,
+        CommandeRepository $commandeRepo
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
@@ -63,6 +69,9 @@ class AdminController extends AbstractController
         $totalResponsablePara = $this->userRepo->count(['role' => 'responsable_para']);
         $totalLaboratoires = $laboratoireRepo->count([]);
         $totalDemandesAnalyse = $demandeRepo->count([]);
+        $totalParapharmacies = $parapharmacieRepo->count([]);
+        $totalProduits = $produitRepo->count([]);
+        $totalCommandes = $commandeRepo->count([]);
         $totalInactive = $this->userRepo->count(['estActif' => false]);
         $totalActive = $totalUsers - $totalInactive;
 
@@ -80,6 +89,7 @@ class AdminController extends AbstractController
         $demandesEnAttente = $demandeRepo->count(['statut' => 'en_attente']);
         $demandesEnCours = $demandeRepo->count(['statut' => 'en_cours']);
         $demandesTerminees = $demandeRepo->count(['statut' => 'termine']);
+        $commandesEnAttente = $commandeRepo->count(['statut' => 'en_attente']);
         
         // Laboratoires récents
         $recentLaboratoires = $laboratoireRepo->findBy([], ['cree_le' => 'DESC'], 5);
@@ -151,6 +161,9 @@ class AdminController extends AbstractController
             'totalResponsablePara' => $totalResponsablePara,
             'totalLaboratoires' => $totalLaboratoires,
             'totalDemandesAnalyse' => $totalDemandesAnalyse,
+            'totalParapharmacies' => $totalParapharmacies,
+            'totalProduits' => $totalProduits,
+            'totalCommandes' => $totalCommandes,
             'totalRendezVous' => $totalRendezVous, // AJOUT
             'totalEvenements' => $totalEvenements, // AJOUT
             'totalFichesMedicales' => $totalFichesMedicales, // AJOUT
@@ -169,7 +182,7 @@ class AdminController extends AbstractController
                 'demandes_terminees' => $demandesTerminees,
                 'analyses_en_cours' => $demandesEnCours,
                 'analyses_terminees' => $demandesTerminees,
-                'commandes_en_attente' => 0, // À ajouter si nécessaire
+                'commandes_en_attente' => $commandesEnAttente,
                 'demandes_evenements' => 0, // À ajouter si nécessaire
             ],
             'charts' => [
@@ -263,7 +276,7 @@ class AdminController extends AbstractController
         ]);
     }
     
-    #[Route('/laboratoires/new', name: 'laboratoire_new')]
+    #[Route('/laboratoire/new', name: 'laboratoire_new')]
     public function laboratoireNew(Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -314,7 +327,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/laboratoires/{id}', name: 'laboratoire_view', requirements: ['id' => '\d+'])]
+    #[Route('/laboratoire/{id}', name: 'laboratoire_view', requirements: ['id' => '\d+'])]
     public function laboratoireView(int $id, LaboratoireRepository $laboratoireRepo, DemandeAnalyseRepository $demandeRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');

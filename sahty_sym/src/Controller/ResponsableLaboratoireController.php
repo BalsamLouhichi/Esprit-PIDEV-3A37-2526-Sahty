@@ -136,6 +136,7 @@ class ResponsableLaboratoireController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            $statusBeforeUpdate = (string) $demandeAnalyse->getStatut();
             $submittedToken = $request->request->get('_token');
             if (!$this->isCsrfTokenValid('resp-labo-update' . $demandeAnalyse->getId(), $submittedToken)) {
                 $this->addFlash('error', 'Token CSRF invalide.');
@@ -187,8 +188,10 @@ class ResponsableLaboratoireController extends AbstractController
 
             $entityManager->flush();
 
-            if ($shouldSendEmail) {
+            $sentNow = $statusBeforeUpdate !== 'envoye' && $demandeAnalyse->getStatut() === 'envoye';
+            if ($shouldSendEmail || $sentNow) {
                 $this->sendResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
+                $this->sendDoctorResultEmail($demandeAnalyse, $mailer, $laboratoire->getEmail());
             }
 
             $this->addFlash('success', 'Demande mise a jour avec succes.');

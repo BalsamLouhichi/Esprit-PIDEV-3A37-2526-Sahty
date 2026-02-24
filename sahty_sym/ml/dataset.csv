@@ -1,0 +1,14 @@
+user_id,user_name,role,region,device_type,account_age_days,last_activity_days,demands_30d,appointments_30d,cancellations_30d,cancel_rate_30d,abnormal_night_actions_30d,shared_phone_count,payment_failures_30d,chargebacks_30d,avg_payment_amount_30d,is_fraud,is_churn
+6,"ouerghi maram",medecin,unknown,unknown,14,14,0,0,0,0,0,0,0,0,0,0,1
+7,"jemai ilef",patient,unknown,unknown,14,14,0,0,0,0,0,8,0,0,0,1,1
+8,"neji iheb",responsable_labo,unknown,unknown,14,14,0,0,0,0,0,8,0,0,0,1,1
+14,"lattrach lamis",patient,unknown,unknown,14,14,4,2,1,0.5,0,8,0,0,0,1,0
+16,"System Admin",admin,unknown,unknown,14,14,0,0,0,0,0,0,0,0,0,0,1
+18,"nibel zitouni",responsable_para,unknown,unknown,13,13,0,0,0,0,0,8,0,0,0,1,0
+19,"ouerghi123 maram",patient,unknown,unknown,12,12,0,0,0,0,0,8,0,0,0,1,0
+20,"louhichi balsam",responsable_labo,unknown,unknown,11,11,0,0,0,0,0,8,0,0,0,1,0
+21,"louhichi balsamm",responsable_labo,unknown,unknown,8,8,0,0,0,0,0,8,0,0,0,1,0
+22,"louhichi balsam1",responsable_labo,unknown,unknown,6,6,0,0,0,0,0,8,0,0,0,1,0
+23,"ouerghi nassim",responsable_labo,unknown,unknown,6,6,0,0,0,0,0,8,0,0,0,1,0
+24,"Jemai ILEF",patient,unknown,unknown,5,5,0,0,0,0,0,0,0,0,0,0,0
+25,"Zitouni Nibel",responsable_para,unknown,unknown,5,5,0,0,0,0,0,0,0,0,0,0,0

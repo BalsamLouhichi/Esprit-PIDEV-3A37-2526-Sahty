@@ -49,12 +49,6 @@ class ResponsableLaboratoire extends Utilisateur
         return $this->laboratoire ? $this->laboratoire->getId() : null;
     }
 
-    public function setLaboratoireId(?int $laboratoireId): self
-    {
-        // Déprécié mais gardé pour compatibilité avec SignupController
-        return $this;
-    }
-
     public function getNomLaboratoire(): ?string
     {
         return $this->laboratoire ? $this->laboratoire->getNom() : null;

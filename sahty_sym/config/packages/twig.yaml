@@ -2,6 +2,8 @@ twig:
     file_name_pattern: '*.twig'
     globals:
         app_url: '%env(APP_URL)%'
+        recaptcha_site_key: '%env(default::RECAPTCHA_SITE_KEY)%'
+        recaptcha_enabled: '%env(bool:RECAPTCHA_ENABLED)%'
 
 when@test:
     twig:

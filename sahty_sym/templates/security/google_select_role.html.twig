@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sélectionner votre rôle - MEDINOVA</title>
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            padding: 20px;
+        }
+
+        .role-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 60px 40px;
+            max-width: 1000px;
+            width: 100%;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .role-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .role-header h1 {
+            font-size: 36px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .role-header p {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-info p {
+            font-size: 15px;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .user-info strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .role-card {
+            background: #fff;
+            border: 2px solid #e8eef5;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .role-card:hover {
+            border-color: #667eea;
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.25);
+        }
+
+        .role-card input[type="radio"] {
+            display: none;
+        }
+
+        .role-card input[type="radio"]:checked + .role-content {
+            color: white;
+        }
+
+        .role-card input[type="radio"]:checked ~ .checkmark {
+            display: flex;
+            animation: scaleIn 0.3s ease;
+        }
+
+        .role-card input[type="radio"]:checked {
+            margin: 0;
+        }
+
+        .role-card:has(input:checked) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .role-card:has(input:checked) .role-icon {
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .role-card:has(input:checked) .role-label {
+            color: white;
+        }
+
+        .role-card:has(input:checked) .role-description {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .checkmark {
+            display: none;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .role-content {
+            transition: color 0.3s ease;
+        }
+
+        .role-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #667eea;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .role-label {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+            color: #2c3e50;
+            transition: color 0.3s ease;
+        }
+
+        .role-description {
+            font-size: 14px;
+            color: #7f8c8d;
+            line-height: 1.6;
+            transition: color 0.3s ease;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 35px;
+            border-radius: 50px;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+        }
+
+        .btn-secondary:hover {
+            background: #d5dbdb;
+            border-color: #95a5a6;
+        }
+
+        @media (max-width: 768px) {
+            .role-container {
+                padding: 40px 25px;
+            }
+
+            .role-header h1 {
+                font-size: 28px;
+            }
+
+            .roles-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .role-card {
+                padding: 25px 15px;
+            }
+
+            .role-icon {
+                font-size: 40px;
+            }
+
+            .role-label {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .role-container {
+                padding: 30px 15px;
+                border-radius: 15px;
+            }
+
+            .role-header {
+                margin-bottom: 30px;
+            }
+
+            .role-header h1 {
+                font-size: 24px;
+            }
+
+            .role-header p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="role-container">
+        <div class="role-header">
+            <h1>Choisissez votre rôle</h1>
+            <p>Sélectionnez le rôle qui correspond à votre profil</p>
+        </div>
+
+        <div class="user-info">
+            <p>Connexion en tant que: <strong>{{ userData.firstName }} {{ userData.lastName }}</strong> ({{ userData.email }})</p>
+        </div>
+
+        <form method="POST" action="{{ path('google_confirm_role') }}" id="roleForm">
+            <div class="roles-grid">
+                {% for role in roles %}
+                <label class="role-card role-wrapper">
+                    <input type="radio" name="role" value="{{ role.value }}" required>
+
+                    <div class="checkmark">✓</div>
+
+                    <div class="role-content">
+                        <div class="role-icon"><i class="fas {{ role.icon }}"></i></div>
+                        <span class="role-label">{{ role.label }}</span>
+                        <p class="role-description">{{ role.description }}</p>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ path('app_login') }}'">
+                    <i class="fas fa-arrow-left me-2"></i>Annuler
+                </button>
+                <button type="submit" form="roleForm" class="btn btn-primary" id="submitBtn" disabled>
+                    Continuer <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Activer le bouton soumission uniquement quand un rôle est sélectionné
+        document.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('submitBtn').disabled = false;
+            });
+        });
+
+        // Prévenir la soumission du formulaire si aucun rôle n'est sélectionné
+        document.getElementById('roleForm').addEventListener('submit', function(e) {
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+            if (!selectedRole) {
+                e.preventDefault();
+                alert('Veuillez sélectionner un rôle');
+            }
+        });
+    </script>
+</body>
+</html>

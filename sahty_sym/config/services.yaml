@@ -17,7 +17,21 @@ parameters:
     app.fastapi_semantic.timeout: '%env(int:FASTAPI_SEMANTIC_TIMEOUT)%'
     app.fastapi_semantic.api_key: '%env(default::FASTAPI_SEMANTIC_API_KEY)%'
 
+    app.ia_evenement.python_default: 'python'
+    app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
 
+    event_resource_stock:
+        chaises: 150
+        tables: 30
+        micros: 4
+        projecteurs: 2
+        linens: 40
+        kits_accueil: 180
+        kits_depistage: 60
+        kits_atelier: 70
+        gants: 400
+        masques: 220
+        speaker_monitors: 1
 services:
 
     # default configuration for services in *this* file
@@ -33,6 +47,32 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\EvenementOperationalInsightsService:
+        arguments:
+            $mapboxAccessToken: '%env(string:MAPBOX_ACCESS_TOKEN)%'
+
+    App\Service\EvenementResourcePlanningService:
+        arguments:
+            $stockSnapshot: '%event_resource_stock%'
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $stripeSecretKey: '%env(string:STRIPE_SECRET_KEY)%'
+            $stripeWebhookSecret: '%env(string:STRIPE_WEBHOOK_SECRET)%'
+
+    App\Service\TwilioMessagingService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $smsFrom: '%env(string:TWILIO_SMS_FROM)%'
+            $whatsappFrom: '%env(string:TWILIO_WHATSAPP_FROM)%'
+
+    App\Service\EventRegistrationEmailService:
+        arguments:
+            $mailFrom: '%env(default::EVENT_MAIL_FROM)%'
+            $appUrl: '%env(default::APP_URL)%'
+            $mailerDsn: '%env(default::MAILER_DSN)%'
 
     App\Integration\FastApiLabAiClient:
         arguments:
@@ -64,6 +104,11 @@ services:
             $provider: '%env(default::APP_MEETING_PROVIDER)%'
             $jitsiDomain: '%env(default::APP_JITSI_DOMAIN)%'
 
+    App\Command\MonthlyReportCommand:
+        arguments:
+            $reportSender: '%env(default::REPORT_SENDER)%'
+            $reportRecipients: '%env(default::REPORT_RECIPIENTS)%'
+
     App\Service\GoogleMeetApiService:
         arguments:
             $clientId: '%env(default::GOOGLE_CLIENT_ID)%'
@@ -74,3 +119,8 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\EvenementPlanningModelService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBin: '%app.ia_evenement.python%'

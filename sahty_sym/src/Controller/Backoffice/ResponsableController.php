@@ -602,4 +602,3 @@ class ResponsableController extends AbstractController
 }
 
 
-

@@ -281,62 +281,6 @@ def _postprocess_glossary(glossary: dict[str, str]) -> dict[str, str]:
     return result
 
 
-def fallback_metric_glossary(metric_names: list[str]) -> dict[str, str]:
-    if not metric_names:
-        return {}
-
-    descriptions_by_key: dict[str, str] = {
-        _normalize_name_key("CRP"): "Marqueur inflammatoire: son augmentation suggere un processus inflammatoire en cours.",
-        _normalize_name_key("Hematies"): "Mesure la quantite de globules rouges qui transportent l oxygene dans le sang.",
-        _normalize_name_key("Hemoglobine"): "Proteine des globules rouges qui transporte l oxygene; elle aide a evaluer l anemie.",
-        _normalize_name_key("Hematocrite"): "Pourcentage du volume sanguin occupe par les globules rouges.",
-        _normalize_name_key("VGM"): "Indique la taille moyenne des globules rouges.",
-        _normalize_name_key("TCMH"): "Quantite moyenne d hemoglobine contenue dans chaque globule rouge.",
-        _normalize_name_key("CCMH"): "Concentration moyenne d hemoglobine dans les globules rouges.",
-        _normalize_name_key("Leucocytes"): "Nombre de globules blancs, utilises pour evaluer la reponse immunitaire et infectieuse.",
-        _normalize_name_key("Polynucleaires neutrophiles"): "Sous-type de globules blancs, souvent eleve en cas d infection bacterienne.",
-        _normalize_name_key("Polynucleaires eosinophiles"): "Sous-type de globules blancs, souvent lie aux allergies ou aux parasitoses.",
-        _normalize_name_key("Polynucleaires basophiles"): "Sous-type de globules blancs implique dans certaines reactions inflammatoires/allergiques.",
-        _normalize_name_key("Lymphocytes"): "Sous-type de globules blancs implique dans la defense immunitaire.",
-        _normalize_name_key("Monocytes"): "Sous-type de globules blancs participant a la reponse inflammatoire et immunitaire.",
-        _normalize_name_key("Numeration des plaquettes"): "Nombre de plaquettes, important pour l hemostase et la coagulation.",
-        _normalize_name_key("ALAT"): "Enzyme hepatique: une hausse peut refleter une atteinte des cellules du foie.",
-        _normalize_name_key("ASAT"): "Enzyme presente surtout dans le foie et le muscle; une hausse oriente vers une souffrance tissulaire.",
-        _normalize_name_key("Creatinine"): "Marqueur de la fonction renale, interprete avec l age, le sexe et le contexte clinique.",
-        _normalize_name_key("Glycemie a jeun"): "Mesure du glucose a jeun, utile pour le depistage et le suivi des troubles glycemiques.",
-        _normalize_name_key("HbA1c"): "Reflete la moyenne de la glycemie sur environ 2 a 3 mois.",
-        _normalize_name_key("Vitesse de sedimentation 1ere heure"): "Marqueur non specifique d inflammation, a interpreter avec les autres donnees.",
-    }
-
-    aliases: dict[str, str] = {
-        _normalize_name_key("alt"): _normalize_name_key("ALAT"),
-        _normalize_name_key("ast"): _normalize_name_key("ASAT"),
-        _normalize_name_key("wbc"): _normalize_name_key("Leucocytes"),
-        _normalize_name_key("hb"): _normalize_name_key("Hemoglobine"),
-        _normalize_name_key("glycemie"): _normalize_name_key("Glycemie a jeun"),
-        _normalize_name_key("plaquettes"): _normalize_name_key("Numeration des plaquettes"),
-        _normalize_name_key("plt"): _normalize_name_key("Numeration des plaquettes"),
-        _normalize_name_key("vs"): _normalize_name_key("Vitesse de sedimentation 1ere heure"),
-    }
-
-    glossary: dict[str, str] = {}
-    for raw_name in metric_names:
-        name = (raw_name or "").strip()
-        if not name:
-            continue
-
-        key = _normalize_name_key(name)
-        if not key:
-            continue
-
-        canonical_key = aliases.get(key, key)
-        description = descriptions_by_key.get(canonical_key)
-        if description:
-            glossary[name] = description
-
-    return glossary
-
-
 def interpret_structured_with_ollama(
     structured: StructuredExtraction,
     model: str | None = None,
@@ -498,9 +442,6 @@ TEST_NAMES_END
         body = response.json()
         raw_output = str(body.get("response", "")).strip()
     except requests.RequestException as exc:
-        fallback = fallback_metric_glossary(test_names)
-        if fallback:
-            return fallback
         raise OllamaServiceError(
             "Could not reach Ollama. Make sure `ollama serve` is running."
         ) from exc
@@ -513,17 +454,6 @@ TEST_NAMES_END
 
     if not glossary:
         glossary = _extract_metric_glossary_from_text(raw_output, test_names)
-
-    if glossary:
-        # Ensure missing metrics still get a deterministic local definition.
-        fallback = fallback_metric_glossary(test_names)
-        for metric_name, description in fallback.items():
-            glossary.setdefault(metric_name, description)
-        return glossary
-
-    fallback = fallback_metric_glossary(test_names)
-    if fallback:
-        return fallback
 
     if not glossary:
         raise OllamaServiceError("Model output is not valid JSON.")
