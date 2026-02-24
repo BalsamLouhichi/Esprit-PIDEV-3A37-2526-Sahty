@@ -1,0 +1,192 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{% if form.vars.data.id %}Modifier{% else %}Ajouter{% endif %} Recommandation{% endblock %}
+
+{% block content %}
+<section class="reco-form-page">
+    <div class="form-header mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-lightbulb me-2"></i>
+                {% if form.vars.data.id %}Modifier la Recommandation{% else %}Nouvelle Recommandation{% endif %}
+            </h2>
+            <p class="mb-0 text-muted">Definissez les regles de score, la severite et les contenus associes.</p>
+        </div>
+        <a href="{{ path('admin_recommandation_index') }}" class="btn btn-outline-secondary rounded-pill px-4">Retour a la liste</a>
+    </div>
+
+    <div class="card form-shell border-0">
+        <div class="card-body p-4 p-lg-5">
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="section-card mb-4">
+                <div class="section-title-row">
+                    <h5 class="mb-0"><i class="fas fa-file-lines me-2"></i>Informations Principales</h5>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        {{ form_label(form.name, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control form-control-lg', 'placeholder': 'Nom de la recommandation'}}) }}
+                        {{ form_errors(form.name) }}
+                    </div>
+                    <div class="col-lg-6">
+                        {{ form_label(form.title, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.title, {'attr': {'class': 'form-control form-control-lg', 'placeholder': 'Titre court affichable'}}) }}
+                        {{ form_errors(form.title) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card mb-4">
+                <div class="section-title-row">
+                    <h5 class="mb-0"><i class="fas fa-sliders me-2"></i>Regles de Ciblage</h5>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        {{ form_label(form.quiz, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.quiz, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                        {{ form_errors(form.quiz) }}
+                    </div>
+                    <div class="col-lg-6">
+                        {{ form_label(form.type_probleme, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.type_probleme, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                        {{ form_errors(form.type_probleme) }}
+                    </div>
+
+                    <div class="col-lg-4">
+                        {{ form_label(form.min_score, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.min_score, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.min_score) }}
+                    </div>
+                    <div class="col-lg-4">
+                        {{ form_label(form.max_score, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.max_score, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.max_score) }}
+                    </div>
+                    <div class="col-lg-4">
+                        {{ form_label(form.severity, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.severity, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.severity) }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form_label(form.target_categories, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.target_categories, {'attr': {'class': 'form-control', 'placeholder': 'stress,sommeil,alimentation'}}) }}
+                        <div class="form-text">Categories separees par virgule pour le ciblage et le fallback video.</div>
+                        {{ form_errors(form.target_categories) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card mb-4">
+                <div class="section-title-row">
+                    <h5 class="mb-0"><i class="fas fa-photo-film me-2"></i>Contenu de Recommendation</h5>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-12">
+                        {{ form_label(form.video_url, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.video_url, {'attr': {'class': 'form-control', 'placeholder': 'https://www.youtube.com/watch?v=...'}}) }}
+                        <div class="form-text">Optionnel: laissez vide pour activer la video automatique par categorie.</div>
+                        {{ form_errors(form.video_url) }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Description detaillee de la recommandation'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form_label(form.tips, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.tips, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Un conseil par ligne'}}) }}
+                        <div class="form-text">Conseils pratiques affiches sur la carte recommendation.</div>
+                        {{ form_errors(form.tips) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a href="{{ path('admin_recommandation_index') }}" class="btn btn-light border rounded-pill px-4">Annuler</a>
+                <button type="submit" class="btn btn-success rounded-pill px-4">
+                    <i class="fas fa-save me-2"></i>
+                    {% if form.vars.data.id %}Mettre a jour{% else %}Creer la recommandation{% endif %}
+                </button>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .reco-form-page {
+        animation: fadeIn 0.25s ease-out;
+    }
+
+    .form-header {
+        background: linear-gradient(120deg, #ffffff 0%, #f3fbff 100%);
+        border: 1px solid #d9edf5;
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 8px 22px rgba(29, 42, 77, 0.06);
+    }
+
+    .form-shell {
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(29, 42, 77, 0.08);
+    }
+
+    .section-card {
+        border: 1px solid #e6edf2;
+        border-radius: 14px;
+        background: #fbfdff;
+        padding: 1rem;
+    }
+
+    .section-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        border-color: #dce6ee;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #13c5dd;
+        box-shadow: 0 0 0 0.2rem rgba(19, 197, 221, 0.12);
+    }
+
+    .form-label {
+        margin-bottom: 0.4rem;
+    }
+
+    @media (max-width: 768px) {
+        .form-header,
+        .section-title-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

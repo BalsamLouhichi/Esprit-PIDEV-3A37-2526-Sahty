@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - Recommandations{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Administration - Recommandations</h1>
+            <a href="{{ path('app_recommandation_new') }}" class="btn btn-success">Nouvelle recommandation</a>
+        </div>
+
+        {% if recommandations|length == 0 %}
+            <div class="alert alert-info">Aucune recommandation pour le moment.</div>
+        {% else %}
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Type</th>
+                        <th>Score</th>
+                        <th>Quiz</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recommandation in recommandations %}
+                        <tr>
+                            <td>{{ recommandation.id }}</td>
+                            <td>{{ recommandation.name }}</td>
+                            <td>{{ recommandation.typeProbleme }}</td>
+                            <td>{{ recommandation.minScore }} — {{ recommandation.maxScore }}</td>
+                            <td>{{ recommandation.quiz ? recommandation.quiz.name : '-' }}</td>
+                            <td>
+                                <a href="{{ path('app_recommandation_show', {id: recommandation.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                                <a href="{{ path('app_recommandation_edit', {id: recommandation.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                
+                                <form method="post" action="{{ path('app_recommandation_delete', {id: recommandation.id}) }}" style="display:inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ recommandation.id) }}">
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Voulez-vous vraiment supprimer cette recommandation ?');">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

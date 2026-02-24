@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Liste Quizzes</title>
+    <!-- CSS -->
+</head>
+<body>
+    {% include 'partials/navbar.html.twig' %}
+
+    <div class="container">
+        <h1>Admin - Quizzes</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quiz in quizzes %}
+                    <tr>
+                        <td>{{ quiz.id }}</td>
+                        <td>{{ quiz.name }}</td>
+                        <td>{{ quiz.description }}</td>
+                        <td>
+                            <a href="{{ path('app_quiz_edit', {id: quiz.id}) }}">Modifier</a>
+                            <a href="{{ path('app_quiz_delete', {id: quiz.id}) }}">Supprimer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{{ path('app_quiz_new') }}">Ajouter Nouveau</a>
+    </div>
+</body>
+</html>

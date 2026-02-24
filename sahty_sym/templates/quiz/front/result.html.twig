@@ -1,0 +1,171 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Resultats - {{ quiz.name }}{% endblock %}
+
+{% block body %}
+<section class="py-5">
+    <div class="container">
+        {% set max_score = total_questions * 5 %}
+        {% set percentage = max_score > 0 ? ((score / max_score) * 100)|round : 0 %}
+        {% set level = percentage < 40 ? 'low' : (percentage < 70 ? 'medium' : 'high') %}
+
+        <div class="text-center mb-4">
+            <h1 class="fw-bold mb-2">Resultats du quiz</h1>
+            <p class="text-muted mb-0">{{ quiz.name }}</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4 p-lg-5">
+                <div class="row align-items-center g-4">
+                    <div class="col-lg-4 text-center">
+                        <div class="score-circle mx-auto {{ level }}">
+                            <strong>{{ score }}</strong>
+                            <span>/ {{ max_score }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <h4 class="mb-3">Synthese</h4>
+                        <p class="mb-2"><strong>Score:</strong> {{ score }} / {{ max_score }}</p>
+                        <p class="mb-2"><strong>Progression:</strong> {{ percentage }}%</p>
+                        <p class="mb-0">
+                            {% if level == 'low' %}
+                                Niveau faible: continuez vos bonnes habitudes.
+                            {% elseif level == 'medium' %}
+                                Niveau modere: quelques ajustements peuvent aider.
+                            {% else %}
+                                Niveau eleve: un suivi personnalise est recommande.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if recommandations|length > 0 %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h4 class="mb-0">Recommandations pour votre cas</h4>
+                    {% if detected_problems is defined and detected_problems|length > 0 %}
+                        <p class="text-muted mb-0 mt-2">
+                            Categories detectees:
+                            {% for p in detected_problems %}
+                                <span class="badge text-bg-light">{{ p }}</span>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <div class="accordion" id="recoAccordion">
+                        {% for item in recommandations %}
+                            {% set reco = item.reco is defined ? item.reco : item %}
+                            <div class="accordion-item border rounded-3 mb-2">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button {{ loop.first ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#reco{{ loop.index }}">
+                                        <span class="badge me-2 {{ reco.severity == 'high' ? 'bg-danger' : (reco.severity == 'medium' ? 'bg-warning text-dark' : 'bg-success') }}">
+                                            {{ reco.severity|upper }}
+                                        </span>
+                                        {{ reco.title ?: reco.name }}
+                                    </button>
+                                </h2>
+                                <div id="reco{{ loop.index }}" class="accordion-collapse collapse {{ loop.first ? 'show' : '' }}" data-bs-parent="#recoAccordion">
+                                    <div class="accordion-body">
+                                        {% if item.selectedVideo is defined and item.selectedVideo %}
+                                            {% set embed_parts = item.selectedVideo|split('/embed/') %}
+                                            {% set video_id = embed_parts|length > 1 ? (embed_parts[1]|split('?')|first) : null %}
+                                            <div class="ratio ratio-16x9 mb-3 reco-video-wrap">
+                                                <iframe src="{{ item.selectedVideo }}" title="Video recommandee" allowfullscreen loading="lazy"></iframe>
+                                            </div>
+                                            {% if video_id %}
+                                                <a href="{{ 'https://www.youtube.com/watch?v=' ~ video_id }}" target="_blank" rel="noopener noreferrer" class="d-inline-flex align-items-center gap-2 btn btn-sm btn-outline-primary mb-3">
+                                                    <i class="bi bi-box-arrow-up-right"></i> Ouvrir sur YouTube
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        <p class="mb-3">{{ reco.description ?: 'Aucune description.' }}</p>
+                                        {% if reco.tips %}
+                                            <ul class="mb-0">
+                                                {% for tip in reco.tips|split('\n') %}
+                                                    {% if tip|trim %}
+                                                        <li>{{ tip|trim|replace({'• ': ''}) }}</li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info rounded-4 shadow-sm border-0">
+                Aucune recommandation specifique pour ce score.
+            </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a href="{{ path('app_quiz_show', {id: quiz.id}) }}" class="btn btn-primary rounded-pill px-4">
+                Refaire ce quiz
+            </a>
+            <a href="{{ path('app_quiz_front_list') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                Retour aux quizzes
+            </a>
+            {% if attempt_id is defined and attempt_id %}
+                <a href="{{ path('app_quiz_result_pdf', {id: attempt_id}) }}" class="btn btn-outline-dark rounded-pill px-4">
+                    Exporter PDF
+                </a>
+            {% endif %}
+            <a href="{{ path('app_recommandation_front_list') }}" class="btn btn-outline-primary rounded-pill px-4">
+                Voir toutes les recommandations
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .score-circle {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .score-circle strong {
+        font-size: 2.4rem;
+        line-height: 1;
+    }
+
+    .score-circle span {
+        opacity: 0.9;
+    }
+
+    .score-circle.low {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .score-circle.medium {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .score-circle.high {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .reco-video-wrap {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+        background: #0f172a;
+    }
+
+    .reco-video-wrap iframe {
+        border: 0;
+    }
+</style>
+{% endblock %}

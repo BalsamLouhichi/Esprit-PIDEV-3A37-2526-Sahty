@@ -1206,6 +1206,22 @@
                 </ul>
             </li>
             
+            <!-- MENU QUIZ -->
+            <li>
+                <a href="{{ path('admin_quiz_index') }}" {% if app.request.attributes.get('_route') starts with 'admin_quiz' or app.request.attributes.get('_route') starts with 'app_quiz' %}class="active"{% endif %}>
+                    <i class="fas fa-question-circle"></i>
+                    <span>Quiz</span>
+                </a>
+            </li>
+
+            <!-- MENU RECOMMANDATIONS -->
+            <li>
+                <a href="{{ path('admin_recommandation_index') }}" {% if app.request.attributes.get('_route') starts with 'admin_recommandation' or app.request.attributes.get('_route') starts with 'app_recommandation' %}class="active"{% endif %}>
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Recommandations</span>
+                </a>
+            </li>
+
             <!-- MENU RENDEZ-VOUS avec badge -->
             <li>
                 <a href="{{ path('admin_all_appointments') }}" {% if app.request.attributes.get('_route') in ['admin_all_appointments', 'admin_view_appointment'] %}class="active"{% endif %}>
