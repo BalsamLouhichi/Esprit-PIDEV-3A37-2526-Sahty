@@ -232,6 +232,7 @@
 
                     const result = payload.data || {};
                     descriptionInput.value = buildDescription(result);
+                    const meta = result._meta || {};
 
                     const keywords = (result.seoKeywords || [])
                         .map((keyword) => '<span class="badge bg-light text-dark border me-1 mb-1">' + keyword + '</span>')
@@ -242,8 +243,13 @@
                         : '';
                     preview.classList.remove('d-none');
 
-                    feedback.className = 'small mt-2 text-success';
-                    feedback.textContent = 'Fiche generee. Tu peux ajuster le texte avant enregistrement.';
+                    if (meta.usedFallback) {
+                        feedback.className = 'small mt-2 text-warning';
+                        feedback.textContent = 'Description generee en mode secours (' + (meta.reason || 'fallback') + '). Verifie la configuration IA.';
+                    } else {
+                        feedback.className = 'small mt-2 text-success';
+                        feedback.textContent = 'Fiche generee par IA. Tu peux ajuster le texte avant enregistrement.';
+                    }
                 } catch (error) {
                     feedback.className = 'small mt-2 text-danger';
                     feedback.textContent = error.message || 'Erreur lors de la generation.';

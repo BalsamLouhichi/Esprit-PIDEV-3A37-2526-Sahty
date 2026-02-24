@@ -34,7 +34,7 @@ final class ProduitController extends AbstractController
     }
 
     /**
-     * Afficher les dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©tails d'un produit
+     * Afficher les details d'un produit
      */
     #[Route('/produit/{id}', name: 'app_produit_details')]
     public function details(
@@ -69,7 +69,7 @@ final class ProduitController extends AbstractController
             }
         }
         
-        // RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cupÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rer toutes les pharmacies pour afficher aussi celles qui n'ont pas le produit
+        // afficherrer toutes les pharmacies pour afficher aussi celles qui n'ont pas le produit
         $toutesParapharmacies = $parapharmacieRepository->findAll();
         
         return $this->render('produit/search_results.html.twig', [
@@ -91,10 +91,10 @@ final class ProduitController extends AbstractController
         SessionInterface $session
     ): Response
     {
-        // RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cupÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rer les parapharmacies qui ont ce produit
+        // afficherrer les parapharmacies qui ont ce produit
         $parapharmaciesCollection = $produit->getParapharmacies();
         
-        // VÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rifier si le produit est disponible dans au moins une parapharmacie
+        // afficherrifier si le produit est disponible dans au moins une parapharmacie
         if ($parapharmaciesCollection->isEmpty()) {
             $this->addFlash('error', 'Ce produit n\'est disponible dans aucune parapharmacie.');
             return $this->redirectToRoute('app_produit_details', ['id' => $produit->getId()]);

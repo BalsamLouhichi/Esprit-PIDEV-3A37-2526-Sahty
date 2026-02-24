@@ -1,4 +1,4 @@
-﻿import os
+import os
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -181,8 +181,9 @@ def api_metric_glossary(payload: MetricGlossaryRequest) -> MetricGlossaryRespons
             model=payload.model or os.getenv("OLLAMA_MODEL", "llama3:latest"),
             domain_context=domain_context_service.get_context_text(),
         )
-    except OllamaServiceError as exc:
-        raise HTTPException(status_code=503, detail=f"Ollama metric glossary unavailable: {exc}") from exc
+    except OllamaServiceError:
+        # Non-blocking fallback: keep API available even when Ollama is down.
+        return MetricGlossaryResponse(metric_glossary={})
 
     return MetricGlossaryResponse(metric_glossary=glossary)
 
@@ -224,6 +225,7 @@ async def analyze_form(
             "domain_status": domain_context_service.get_status_payload(),
         },
     )
+
 
 
 

@@ -24,6 +24,8 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
+
+
 #[Route('/responsable')]
 class ResponsableController extends AbstractController
 {
