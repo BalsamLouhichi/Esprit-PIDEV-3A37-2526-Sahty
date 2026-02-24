@@ -1,0 +1,6 @@
+product_id,nom,categorie,marque,description,est_actif
+1,Vitamine C 1000,Compléments,NutriHealth,Comprimés vitamine C pour fatigue passagère et immunité,true
+2,Spray nasal eau de mer,ORL,AquaResp,Spray pour nez bouché et congestion nasale,true
+3,Crème hydratante peaux sèches,Dermocosmétique,DermoSoft,Crème réparatrice pour peau sèche et sensible,true
+4,Gel douche apaisant,Dermocosmétique,SkinCare,Gel douche doux sans savon pour peau irritée,true
+5,Magnésium + B6,Compléments,ZenLife,Aide contre stress léger et fatigue nerveuse,true

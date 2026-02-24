@@ -33,7 +33,24 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
         $this->getEntityManager()->flush();
     }
 
+
     /**
+     * Find user by email (case-insensitive)
+     * This is used by Symfony's user provider for authentication
+     */
+    public function findOneByEmail(string $email): ?Utilisateur
+    {
+        return $this->createQueryBuilder('u')
+            ->where('LOWER(u.email) = LOWER(:email)')
+            ->setParameter('email', trim($email))
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Recherche avancée d'utilisateurs avec filtres
+     */
+   /**
      * Recherche avancée d'utilisateurs avec filtres
      */
     public function search(?string $query = null, ?string $role = null): array
@@ -72,4 +89,39 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
     {
         return $this->count(['estActif' => $estActif]);
     }
+
+    //    /**
+    //     * @return Utilisateur[] Returns an array of Utilisateur objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('u')
+    //            ->andWhere('u.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('u.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Utilisateur
+    //    {
+    //        return $this->createQueryBuilder('u')
+    //            ->andWhere('u.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+
+    /**
+     * Recherche avancée d'utilisateurs avec filtres
+     */
+    
+
+    /**
+     * Compte les utilisateurs par rôle
+     */
+    
 }

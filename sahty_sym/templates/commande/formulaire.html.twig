@@ -6,6 +6,11 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        :root {
+            --theme-primary: var(--primary);
+            --theme-primary-dark: var(--primary-dark);
+        }
+
         .commande-container {
             max-width: 1300px;
             margin: 40px auto;
@@ -20,12 +25,12 @@
             padding: 25px;
             border-radius: 12px;
             margin-bottom: 30px;
-            border-left: 4px solid #0dcaf0;
+            border-left: 4px solid var(--theme-primary);
             border: 1px solid #e2e8f0;
         }
         
         .produit-resume h4 {
-            color: #0dcaf0;
+            color: var(--theme-primary);
             margin-bottom: 10px;
             font-weight: 700;
         }
@@ -62,8 +67,8 @@
         }
         
         .form-control:focus {
-            border-color: #0dcaf0;
-            box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 3px rgba(29, 93, 155, 0.12);
         }
         
         .alert-info {
@@ -74,7 +79,7 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #0dcaf0 0%, #0bb6d9 100%);
+            background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
             border: none;
             padding: 15px 40px;
             font-weight: 600;
@@ -85,7 +90,7 @@
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(13, 202, 240, 0.3);
+            box-shadow: 0 6px 15px rgba(29, 93, 155, 0.3);
         }
         
         .btn-outline-secondary {
@@ -95,8 +100,8 @@
         }
         
         .section-title {
-            color: #0dcaf0;
-            border-bottom: 2px solid #0dcaf0;
+            color: var(--theme-primary);
+            border-bottom: 2px solid var(--theme-primary);
             padding-bottom: 10px;
             margin-bottom: 25px;
             font-weight: 700;
@@ -120,7 +125,7 @@
             padding: 15px;
             border-radius: 8px;
             margin-top: 10px;
-            border-left: 3px solid #0dcaf0;
+            border-left: 3px solid var(--theme-primary);
         }
         
         .quantite-control {
@@ -133,6 +138,45 @@
             width: 100px;
             text-align: center;
             font-weight: bold;
+        }
+
+        .pharmacy-compare-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pharmacy-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .pharmacy-table th {
+            background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 12px;
+        }
+
+        .pharmacy-table td {
+            vertical-align: middle;
+            padding: 12px;
+        }
+
+        .pharmacy-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pharmacy-price {
+            font-weight: 700;
+            color: #198754;
         }
         
         @media (max-width: 768px) {
@@ -159,14 +203,15 @@
     <div class="commande-container">
         <!-- Titre de la page -->
         <div class="text-center mb-5">
-          <h1 class="mb-3" style="color: #0dcaf0;">
+          <h1 class="mb-3" style="color: var(--theme-primary);">
     <i class="bi bi-cart-check me-2"></i>Commander {{ produit.nom }}
 </h1>
             <p class="text-muted">
                 Remplissez le formulaire ci-dessous pour passer votre commande
             </p>
         </div>
-        
+
+       
         <!-- Résumé du produit -->
         <div class="produit-resume">
             <div class="row align-items-center">
@@ -209,7 +254,7 @@
                     <strong>Informations importantes :</strong>
                     <ul class="mb-0 mt-2">
                         <li>Les champs marqués d'un * sont obligatoires</li>
-                        <li>Vous serez contacté par la parapharmacie pour finaliser votre commande</li>
+                        <li>Après validation, vous serez redirigé vers le paiement sécurisé Mollie</li>
                         <li>Le retrait se fait en pharmacie</li>
                     </ul>
                 </div>
@@ -367,8 +412,11 @@
                class="btn btn-outline-secondary btn-lg">
                 <i class="bi bi-arrow-left me-2"></i>Retour au produit
             </a>
-            
-            {{ form_widget(form.submit, {'attr': {'class': 'btn-primary btn-lg'}}) }}
+
+            <div class="d-flex gap-2">
+                
+                {{ form_widget(form.submit, {'attr': {'class': 'btn-primary btn-lg'}}) }}
+            </div>
         </div>
         
         {{ form_end(form) }}
@@ -442,31 +490,70 @@
             quantiteInput.addEventListener('input', updatePrixTotal);
             
             parapharmacieSelect.addEventListener('change', updatePharmacieDetails);
+
+            // Selection rapide d'une parapharmacie depuis le tableau
+            document.querySelectorAll('.js-select-pharmacy').forEach((btn) => {
+                btn.addEventListener('click', function () {
+                    const pharmacyId = this.dataset.pharmacyId;
+                    if (!parapharmacieSelect) {
+                        return;
+                    }
+
+                    parapharmacieSelect.value = pharmacyId;
+                    updatePharmacieDetails();
+                    parapharmacieSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            });
+
+            // Synchroniser la quantite avec les formulaires "Ajouter au panier"
+            function syncCartQuantities() {
+                const quantite = parseInt(quantiteInput.value, 10) || 1;
+                document.querySelectorAll('.js-cart-qty').forEach((input) => {
+                    input.value = quantite;
+                });
+            }
+
+            quantiteInput.addEventListener('change', syncCartQuantities);
+            quantiteInput.addEventListener('input', syncCartQuantities);
             
             // Initialisation
             updatePrixTotal();
             updatePharmacieDetails();
+            syncCartQuantities();
             
             // Validation du formulaire
             const form = document.getElementById('form-commande');
             form.addEventListener('submit', function(e) {
-                // Validation de la quantité
+                const clickedButton = e.submitter;
+                const action = clickedButton ? clickedButton.value : '';
+                const isAddToCartAction = action === 'add_to_cart';
+
+                // Validation de la quantite
                 const quantite = parseInt(quantiteInput.value);
                 if (quantite < 1 || quantite > 99) {
-                    alert('La quantité doit être comprise entre 1 et 99.');
+                    alert('La quantite doit etre comprise entre 1 et 99.');
                     quantiteInput.focus();
                     e.preventDefault();
                     return false;
                 }
-                
+
                 // Validation de la parapharmacie
                 if (!parapharmacieSelect.value) {
-                    alert('Veuillez sélectionner une parapharmacie.');
+                    alert('Veuillez selectionner une parapharmacie.');
                     parapharmacieSelect.focus();
                     e.preventDefault();
                     return false;
                 }
-                
+
+                // Action "Ajouter au panier": validation rapide uniquement
+                if (isAddToCartAction) {
+                    if (clickedButton) {
+                        clickedButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Ajout au panier...';
+                        clickedButton.disabled = true;
+                    }
+                    return true;
+                }
+
                 // Validation de l'email
                 const emailInput = document.querySelector('[name="commande[email]"]');
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -476,28 +563,29 @@
                     e.preventDefault();
                     return false;
                 }
-                
-                // Validation du téléphone
+
+                // Validation du telephone
                 const telInput = document.querySelector('[name="commande[telephone]"]');
                 const telRegex = /^[0-9\s\+\-\(\)]{10,20}$/;
                 if (!telRegex.test(telInput.value.replace(/\s/g, ''))) {
-                    alert('Veuillez entrer un numéro de téléphone valide.');
+                    alert('Veuillez entrer un numero de telephone valide.');
                     telInput.focus();
                     e.preventDefault();
                     return false;
                 }
-                
-                // Confirmation finale
-                if (!confirm('Confirmez-vous cette commande ?')) {
+
+                // Confirmation finale pour le paiement
+                if (!confirm('Confirmez-vous la creation de cette commande et le passage au paiement Mollie ?')) {
                     e.preventDefault();
                     return false;
                 }
-                
+
                 // Afficher un indicateur de chargement
-                const submitBtn = document.querySelector('[type="submit"]');
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Traitement en cours...';
-                submitBtn.disabled = true;
-                
+                if (clickedButton) {
+                    clickedButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Redirection vers Mollie...';
+                    clickedButton.disabled = true;
+                }
+
                 return true;
             });
             

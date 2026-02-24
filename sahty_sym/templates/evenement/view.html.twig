@@ -1,4 +1,4 @@
-{# templates/evenement/view.html.twig #}
+﻿{# templates/evenement/view.html.twig #}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -50,6 +50,7 @@
         .event-header h1 {
             font-size: 2.25rem;
             margin-bottom: 0.25rem;
+            color: #ffffff;
         }
 
         .back-btn {
@@ -319,6 +320,123 @@
             margin-top: 1.5rem;
         }
 
+        .series-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .series-metric {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.7rem;
+            background: #f8fafc;
+        }
+
+        .series-metric .k {
+            font-size: 0.78rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .series-metric .v {
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 0.2rem;
+        }
+
+        .edition-row {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.65rem;
+            margin-bottom: 0.5rem;
+            background: #fff;
+        }
+
+        .poster-frame {
+            border-radius: 16px;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 45%, #ede9fe 100%);
+            margin-bottom: 0.8rem;
+        }
+
+        .experience-poster {
+            border-radius: 12px;
+            color: #0f172a;
+            padding: 1rem;
+            min-height: 260px;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .poster-title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.4rem;
+        }
+
+        .poster-subtitle {
+            color: #334155;
+            margin-bottom: 0.7rem;
+        }
+
+        .poster-chip {
+            display: inline-block;
+            border: 1px solid rgba(255,255,255,0.55);
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            margin: 0 0.35rem 0.35rem 0;
+            font-size: 0.75rem;
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .poster-ribbon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.78rem;
+            padding: 0.3rem 0.75rem;
+            margin-bottom: 0.65rem;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .poster-plan-list {
+            margin: 0.75rem 0 0;
+            padding-left: 1.1rem;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+
+        .poster-plan-list li {
+            margin-bottom: 0.35rem;
+        }
+
+        .programme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.7rem;
+        }
+
+        .programme-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.65rem;
+            background: #fff;
+        }
+
+        .programme-time {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
         .status-badge {
             display: inline-block;
             width: 10px;
@@ -343,12 +461,16 @@
             .info-row .value {
                 margin-top: 0.25rem;
             }
+            .series-grid,
+            .programme-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
 
-{% include 'partials/navbar.html.twig' %}
+{% include 'partials/header.html.twig' %}
 
 <!-- Header with Breadcrumb -->
 <div class="event-header">
@@ -376,7 +498,7 @@
                         <i class="fas fa-arrow-left"></i> Retour à la liste
                     </a>
                 {% else %}
-                    <a href="{{ path('evenements_client_events') }}" class="back-btn">
+                    <a href="{{ path('evenements_client_events') }}" class="back-btn" onclick="if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) { event.preventDefault(); window.history.back(); }">
                         <i class="fas fa-arrow-left"></i> Retour aux événements
                     </a>
                 {% endif %}
@@ -550,10 +672,22 @@
                             <span class="value">{{ evenement.lieu ?: 'En ligne' }}</span>
                         </div>
                         
-                        {% if evenement.mode|lower == 'en ligne' or evenement.mode|lower == 'online' %}
+                        {% if evenement.mode in ['en_ligne', 'hybride'] %}
                         <div class="info-row">
                             <span class="label"><i class="fas fa-link"></i> MODALITÉ</span>
-                            <span class="value text-muted">Lien envoyé après inscription</span>
+                            {% if user_inscription or perms.can_edit or is_granted('ROLE_ADMIN') %}
+                                {% if evenement.meetingLink %}
+                                    <span class="value">
+                                        <a href="{{ evenement.meetingLink }}" target="_blank" rel="noopener noreferrer">
+                                            Rejoindre la réunion ({{ evenement.meetingPlatform ?: 'jitsi' }})
+                                        </a>
+                                    </span>
+                                {% else %}
+                                    <span class="value text-muted">Lien généré à l'approbation</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="value text-muted">Lien envoyé après inscription</span>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -580,12 +714,111 @@
                     </div>
                 </div>
             </div>
+
+            {% if series_insights is defined and series_insights %}
+            <div class="event-card mb-4">
+                <h5 class="section-title"><i class="fas fa-brain"></i> Insights IA de la serie</h5>
+                <div class="mb-3">
+                    <div class="text-muted small">Serie : <strong>{{ series_insights.series_nom }}</strong></div>
+                    <div class="small text-muted">{{ series_insights.synthese }}</div>
+                </div>
+
+                {% if series_insights.is_series %}
+                    <div class="series-grid">
+                        <div class="series-metric">
+                            <div class="k">Croissance</div>
+                            <div class="v">{{ series_insights.croissance.pourcentage }}%</div>
+                        </div>
+                        <div class="series-metric">
+                            <div class="k">Progression</div>
+                            <div class="v">{{ series_insights.progression_pedagogique.niveau }}</div>
+                        </div>
+                        <div class="series-metric">
+                            <div class="k">Audience</div>
+                            <div class="v">{{ series_insights.evolution_audience.niveau }}</div>
+                        </div>
+                        <div class="series-metric">
+                            <div class="k">Retention</div>
+                            <div class="v">{{ series_insights.fidelite.retention_moyenne }}%</div>
+                        </div>
+                    </div>
+
+                    {% for edition in series_insights.editions %}
+                        <div class="edition-row">
+                            <strong>Edition {{ edition.numero }}</strong> - {{ edition.titre }}
+                            <div class="small text-muted">{{ edition.date ?: 'Date non specifiee' }} - {{ edition.participants }} participants</div>
+                            <div class="small mt-1">
+                                <span class="badge bg-secondary me-1">Difficulte: {{ edition.dna.difficulte }}</span>
+                                <span class="badge bg-secondary me-1">Profondeur: {{ edition.dna.profondeur_scientifique }}</span>
+                                <span class="badge bg-secondary">Public: {{ edition.dna.public_cible }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info mb-0">Une seule edition detectee pour le moment.</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if experience_pack is defined and experience_pack %}
+            <div class="event-card mb-4">
+                <h5 class="section-title"><i class="fas fa-palette"></i> Affiche et programme IA</h5>
+                <div class="poster-frame">
+                    <div id="event-poster-printable" class="experience-poster">
+                        <div class="poster-ribbon" style="background: {{ experience_pack.poster.theme.bg }};">
+                            <i class="fas fa-star"></i>
+                            SAHTY EVENTS
+                        </div>
+                        <div class="poster-title">{{ experience_pack.poster.title }}</div>
+                        <div class="poster-subtitle">{{ experience_pack.poster.subtitle }}</div>
+                        <div class="small mb-2"><i class="fas fa-calendar-alt me-1"></i>{{ experience_pack.poster.date_label }}</div>
+                        <div class="small mb-2"><i class="fas fa-map-marker-alt me-1"></i>{{ experience_pack.poster.lieu_label }}</div>
+                        <div class="small mb-2"><i class="fas fa-globe me-1"></i>{{ experience_pack.poster.mode_label }}</div>
+                        <div>
+                            {% for chip in experience_pack.highlights %}
+                                <span class="poster-chip">{{ chip }}</span>
+                            {% endfor %}
+                        </div>
+                        {% if experience_pack.cards is defined and experience_pack.cards|length > 0 %}
+                            <div class="small fw-semibold mt-3 mb-1">Programme detaille</div>
+                            <ol class="poster-plan-list">
+                                {% for card in experience_pack.cards %}
+                                    <li>
+                                        <strong>{{ card.title }}</strong>
+                                        <span class="text-muted"> - {{ card.time_label }} ({{ card.duration }} min)</span>
+                                    </li>
+                                {% endfor %}
+                            </ol>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mb-3">
+                    <a
+                        class="btn btn-sm btn-outline-primary"
+                        href="{{ path('evenements_evenement_affiche_print', {'id': evenement.id}) }}"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <i class="fas fa-file-pdf me-1"></i>Ouvrir l affiche imprimable
+                    </a>
+                </div>
+                <div class="programme-grid">
+                    {% for card in experience_pack.cards %}
+                        <div class="programme-card">
+                            <div class="fw-semibold"><i class="fas {{ card.icon }} me-1 text-primary"></i>{{ card.title }}</div>
+                            <div class="programme-time">{{ card.time_label }}</div>
+                            <div class="small text-muted">{{ card.duration }} min</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             
             <!-- Description Card -->
             <div class="event-card">
                 <h5 class="section-title"><i class="fas fa-align-left"></i> Description</h5>
                 <div class="event-description">
-                    {{ evenement.description ?: 'Aucune description fournie pour cet événement.' }}
+                    {{ (display_description ?: 'Aucune description fournie pour cet événement.')|nl2br }}
                 </div>
             </div>
         </div>
@@ -622,7 +855,6 @@
                     {# Bouton d'inscription/désinscription - HIDDEN FOR ADMIN #}
                     {% if not is_granted('ROLE_ADMIN') %}
                         {% if user_inscription %}
-                            {# L'utilisateur est déjà inscrit #}
                             <form method="post" action="{{ path('evenements_client_desinscrire', {'id': evenement.id}) }}"
                                   onsubmit="return confirm('Êtes-vous sûr de vouloir vous désinscrire de cet événement ?');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('desinscrire' ~ evenement.id) }}">
@@ -631,13 +863,22 @@
                                 </button>
                             </form>
                         {% elseif perms.can_inscribe %}
-                            {# L'utilisateur peut s'inscrire #}
-                            <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
-                                <button type="submit" class="btn-subscribe">
-                                    <i class="fas fa-user-plus me-2"></i>S'inscrire
-                                </button>
-                            </form>
+                            {% if evenement.tarif and evenement.tarif > 0 %}
+                                <a href="{{ path('payment_event_checkout', {'id': evenement.id}) }}" class="btn-subscribe text-decoration-none d-inline-flex justify-content-center align-items-center">
+                                    <i class="fas fa-credit-card me-2"></i>Payer et s'inscrire
+                                </a>
+                            {% else %}
+                                <form method="post" action="{{ path('evenements_evenement_inscrire', {'id': evenement.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('inscrire' ~ evenement.id) }}">
+                                    <input type="hidden" name="participation_mode" value="{{ evenement.mode|default('presentiel') }}">
+                                    <input type="hidden" name="bring_guests" value="0">
+                                    <input type="hidden" name="guests_count" value="0">
+                                    <input type="hidden" name="consent_terms" value="1">
+                                    <button type="submit" class="btn-subscribe">
+                                        <i class="fas fa-user-plus me-2"></i>S'inscrire
+                                    </button>
+                                </form>
+                            {% endif %}
                         {% elseif not app.user %}
                             {# L'utilisateur n'est pas connecté #}
                             <a href="{{ path('app_login') }}" class="btn-subscribe">
@@ -778,6 +1019,7 @@
             });
         });
     });
+
 </script>
 </body>
 </html>

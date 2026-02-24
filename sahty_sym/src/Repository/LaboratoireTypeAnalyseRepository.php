@@ -16,60 +16,6 @@ class LaboratoireTypeAnalyseRepository extends ServiceEntityRepository
         parent::__construct($registry, LaboratoireTypeAnalyse::class);
     }
 
-
-    // Dans LaboratoireTypeAnalyseRepository.php
-
-/**
- * Calcule le prix moyen pour un type d'analyse
- */
-public function getPrixMoyenForType(TypeAnalyse $typeAnalyse): ?float
-{
-    $result = $this->createQueryBuilder('lta')
-        ->select('AVG(lta.prix)')
-        ->where('lta.typeAnalyse = :type')
-        ->andWhere('lta.disponible = :disponible')
-        ->setParameter('type', $typeAnalyse)
-        ->setParameter('disponible', true)
-        ->getQuery()
-        ->getSingleScalarResult();
-
-    return $result ? round($result, 2) : null;
-}
-
-/**
- * Calcule le prix minimum pour un type d'analyse
- */
-public function getPrixMinForType(TypeAnalyse $typeAnalyse): ?float
-{
-    $result = $this->createQueryBuilder('lta')
-        ->select('MIN(lta.prix)')
-        ->where('lta.typeAnalyse = :type')
-        ->andWhere('lta.disponible = :disponible')
-        ->setParameter('type', $typeAnalyse)
-        ->setParameter('disponible', true)
-        ->getQuery()
-        ->getSingleScalarResult();
-
-    return $result ? round($result, 2) : null;
-}
-
-/**
- * Calcule le prix maximum pour un type d'analyse
- */
-public function getPrixMaxForType(TypeAnalyse $typeAnalyse): ?float
-{
-    $result = $this->createQueryBuilder('lta')
-        ->select('MAX(lta.prix)')
-        ->where('lta.typeAnalyse = :type')
-        ->andWhere('lta.disponible = :disponible')
-        ->setParameter('type', $typeAnalyse)
-        ->setParameter('disponible', true)
-        ->getQuery()
-        ->getSingleScalarResult();
-
-    return $result ? round($result, 2) : null;
-}
-
 //    /**
 //     * @return LaboratoireTypeAnalyse[] Returns an array of LaboratoireTypeAnalyse objects
 //     */

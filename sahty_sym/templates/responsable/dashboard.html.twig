@@ -21,7 +21,7 @@
             left: 0;
             height: 100vh;
             width: 250px;
-            background: linear-gradient(135deg, #0dcaf0 0%, #0a9ec7 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             padding: 20px 0;
             overflow-y: auto;
@@ -95,6 +95,7 @@
 
         .card.bg-primary, .card.bg-success, .card.bg-info, .card.bg-warning {
             color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
         }
 
         /* Table */
@@ -121,6 +122,13 @@
         .btn-outline-primary {
             border-radius: 8px;
             padding: 5px 10px;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: #fff;
         }
 
         /* Responsive */

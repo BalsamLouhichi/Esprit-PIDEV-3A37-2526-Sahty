@@ -17,6 +17,9 @@
     {% for message in app.flashes('success') %}
         <div class="alert alert-success">{{ message }}</div>
     {% endfor %}
+    {% for message in app.flashes('info') %}
+        <div class="alert alert-info">{{ message }}</div>
+    {% endfor %}
     {% for message in app.flashes('warning') %}
         <div class="alert alert-warning">{{ message }}</div>
     {% endfor %}
@@ -44,6 +47,7 @@
                     </p>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -67,6 +71,12 @@
                     <small class="text-muted">Une notification mail sera envoyee au patient, et un mail detaille (resume IA + anomalies) sera envoye au medecin si present.</small>
                 </div>
 
+                {% if trigger_ai_analysis|default(false) %}
+                    <div class="alert alert-info" id="ai-analysis-box">
+                        <strong>Analyse IA:</strong> <span id="ai-analysis-status">Traitement en cours...</span>
+                    </div>
+                {% endif %}
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                     <a class="btn btn-secondary" href="{{ path('app_demande_analyse_index') }}">Retour</a>
@@ -75,4 +85,44 @@
         </div>
     </div>
 </div>
+{% if trigger_ai_analysis|default(false) %}
+<script>
+(() => {
+    const endpoint = '{{ path('app_responsable_labo_demande_analyse_ia', {id: demande.id}) }}';
+    const cleanUrl = '{{ path('app_responsable_labo_demande_edit', {id: demande.id}) }}';
+    const token = '{{ csrf_token('resp-labo-update' ~ demande.id) }}';
+    const statusNode = document.getElementById('ai-analysis-status');
+
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+
+    const body = new URLSearchParams();
+    body.set('_token', token);
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString()
+    })
+        .then(async (response) => {
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.ok) {
+                throw new Error(payload.message || 'Echec de l analyse IA.');
+            }
+            if (statusNode) {
+                statusNode.textContent = payload.message || 'Analyse IA terminee.';
+            }
+        })
+        .catch((error) => {
+            if (statusNode) {
+                statusNode.textContent = (error && error.message) ? error.message : 'Analyse IA indisponible. Rechargez la page.';
+            }
+        });
+})();
+</script>
+{% endif %}
 {% endblock %}

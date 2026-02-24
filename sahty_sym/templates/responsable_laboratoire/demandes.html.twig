@@ -859,7 +859,11 @@
         };
 
         inputs.forEach((input) => {
-            input.addEventListener('change', submitForm);
+            if (input.type === 'date') {
+                input.addEventListener('change', submitForm);
+            } else {
+                input.addEventListener('change', submitForm);
+            }
         });
     });
 </script>

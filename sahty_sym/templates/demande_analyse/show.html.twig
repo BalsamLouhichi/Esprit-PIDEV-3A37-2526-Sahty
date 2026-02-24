@@ -1,0 +1,447 @@
+{# templates/demande_analyse/show.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Sahty - Details demande</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="{{ asset('img/favicon.ico') }}" rel="icon">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <style>
+        body { background:#f2f6fd; color:#1f2d4d; }
+        .hero { margin:20px auto 14px; border-radius:16px; border:1px solid #d4e1f4; background:linear-gradient(120deg,#1d5d9b,#3e8fd6); color:#fff; padding:18px; }
+        .hero h1 { margin:0; font-weight:700; }
+        .hero p { margin:4px 0 0; opacity:.9; }
+        .btn-pdf-strong {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: 1px solid #fca5a5;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 0.42rem 0.85rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 22px rgba(127, 29, 29, 0.32);
+            animation: pdfGlow 1.7s ease-in-out infinite;
+        }
+        .btn-pdf-strong:hover,
+        .btn-pdf-strong:focus {
+            color: #fff;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border-color: #fecaca;
+            transform: translateY(-1px);
+        }
+        .btn-pdf-strong i {
+            font-size: 1.03rem;
+        }
+        @keyframes pdfGlow {
+            0%, 100% { box-shadow: 0 10px 22px rgba(127, 29, 29, 0.32); }
+            50% { box-shadow: 0 0 0 4px rgba(254, 202, 202, 0.35), 0 12px 26px rgba(127, 29, 29, 0.36); }
+        }
+        .surface { background:#fff; border:1px solid #dbe6f6; border-radius:14px; box-shadow:0 8px 26px rgba(16,37,71,.08); }
+        .section { padding:14px; margin-bottom:12px; }
+        .section h3 { font-size:1.05rem; font-weight:700; margin:0 0 10px; color:#1f3f68; }
+        .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+        .item { background:#f8fbff; border:1px solid #e2ebf8; border-radius:10px; padding:8px 10px; }
+        .label { font-size:.75rem; text-transform:uppercase; font-weight:700; color:#6f7f99; }
+        .value { font-weight:600; color:#27446b; }
+        .badge-pill { border-radius:999px; padding:4px 10px; font-weight:700; font-size:.84rem; border:1px solid transparent; display:inline-flex; align-items:center; gap:6px; }
+        .b-wait { background:#fff4df; color:#996700; border-color:#f5ddb0; }
+        .b-sent { background:#e8f8ed; color:#116038; border-color:#bee7ce; }
+        .b-normal { background:#e7f0fb; color:#1a5ea7; border-color:#c9dcf4; }
+        .b-high { background:#fff3e6; color:#b95f00; border-color:#ffd8ab; }
+        .b-urgent { background:#feecef; color:#a32034; border-color:#f6c7ce; }
+        .notes { background:#f9fbff; border:1px solid #dde8f8; border-radius:10px; padding:10px; white-space:pre-line; color:#344b70; }
+        .ai-kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+        .kpi { border:1px solid #dbe8fa; border-radius:10px; background:#f8fbff; padding:8px; }
+        .kpi-l { font-size:.72rem; text-transform:uppercase; color:#6f7f99; font-weight:700; }
+        .kpi-v { font-size:.95rem; font-weight:700; color:#23416a; }
+        .ai-summary { border:1px solid #dce9fa; border-radius:10px; background:#f7faff; padding:10px; color:#304967; }
+        .ai-evidence-title { font-size:.82rem; text-transform:uppercase; font-weight:700; letter-spacing:.04em; color:#5f7494; margin:0 0 6px; }
+        .ai-evidence-list { list-style:none; margin:0 0 8px; padding:0; display:grid; gap:6px; }
+        .ai-evidence-list li { border:1px solid #e4ecfa; border-radius:10px; background:#fbfdff; padding:7px 10px; color:#355076; font-size:.88rem; line-height:1.4; display:flex; gap:7px; align-items:flex-start; }
+        .ai-evidence-list li i { color:#3a79be; margin-top:2px; }
+        .ai-evidence-line { flex:1; }
+        .ai-evidence-badge-critical { margin-left:auto; border-radius:999px; padding:2px 8px; font-size:.72rem; font-weight:800; background:#fdecef; color:#a32034; border:1px solid #f6c7ce; letter-spacing:.02em; }
+        .metric-help { position:relative; flex:0 0 auto; }
+        .metric-help summary { list-style:none; width:18px; height:18px; border-radius:999px; background:#1d5d9b; color:#fff; font-size:12px; line-height:18px; text-align:center; cursor:pointer; user-select:none; margin-top:2px; }
+        .metric-help summary::-webkit-details-marker { display:none; }
+        .metric-help[open] summary { background:#174b7c; }
+        .metric-help summary:focus { outline:2px solid #174b7c; outline-offset:1px; }
+        .metric-help div { position:absolute; z-index:30; top:24px; right:0; width:min(300px,80vw); padding:8px 10px; border-radius:8px; border:1px solid #c9d7e6; background:#fff; box-shadow:0 6px 20px rgba(15,37,59,.18); color:#2f4a6d; font-size:.84rem; line-height:1.35; }
+        .ai-glossary-hint { margin-top:-2px; margin-bottom:8px; }
+        .ai-evidence-list li strong { font-weight:800; color:#1e3f6d; }
+        .ai-list { list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+        .ai-list li { border:1px solid #dce9fa; border-radius:10px; background:#f8fbff; padding:8px 10px; color:#344f74; }
+        .muted { color:#66738a; font-size:.88rem; }
+        .chat-toggle { position:fixed; right:20px; bottom:24px; width:58px; height:58px; border:0; border-radius:999px; background:linear-gradient(135deg,#1d5d9b,#2e7ed0); color:#fff; box-shadow:0 14px 34px rgba(24,66,114,.34); z-index:1085; }
+        .chat-panel { position:fixed; right:20px; bottom:92px; width:min(390px,calc(100vw - 24px)); background:#fff; border:1px solid #cfdef3; border-radius:14px; box-shadow:0 24px 58px rgba(18,49,84,.28); z-index:1086; opacity:0; pointer-events:none; transform:translateY(14px); transition:.2s ease; }
+        .chat-panel.open { opacity:1; pointer-events:auto; transform:translateY(0); }
+        .chat-h { padding:10px 12px; border-bottom:1px solid #d8e6f7; background:linear-gradient(135deg,#f3f8ff,#e8f3ff); border-radius:14px 14px 0 0; display:flex; justify-content:space-between; align-items:center; }
+        .chat-h h4 { margin:0; font-size:1rem; font-weight:700; color:#1f3d66; }
+        .chat-h button { border:0; background:transparent; color:#5f7698; font-size:1.2rem; line-height:1; }
+        .chat-b { padding:10px; }
+        .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+        .chip { border:1px solid #cddff7; background:#f2f8ff; color:#1e5c9a; border-radius:999px; font-size:.77rem; font-weight:600; padding:4px 9px; }
+        .log { max-height:220px; overflow:auto; display:grid; gap:7px; margin-bottom:8px; }
+        .msg { border-radius:10px; padding:8px; font-size:.9rem; line-height:1.45; white-space:pre-line; }
+        .msg.bot { background:#f4f8ff; border:1px solid #d9e6f7; color:#2f4a6d; }
+        .msg.user { background:#1d5d9b; color:#fff; justify-self:end; max-width:92%; }
+        .input-wrap { display:grid; grid-template-columns:1fr auto; gap:6px; align-items:end; }
+        .input-wrap textarea { border-radius:10px; border:1px solid #cdddf2; min-height:44px; padding:8px; }
+        .input-wrap button { border-radius:10px; border:0; background:#1d5d9b; color:#fff; font-weight:700; min-width:86px; min-height:44px; }
+        @media (max-width: 992px) { .grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+{% set has_result = demande_analyse.resultatPdf is not null %}
+{% set ia_interpretation_url = path('app_demande_analyse_ia_interpretation', {'id': demande_analyse.id}) %}
+{% set ia_qa_url = path('app_demande_analyse_ia_qa', {'id': demande_analyse.id}) %}
+
+{% include 'partials/header.html.twig' with { header_compact: false } %}
+
+<div class="container">
+    <div class="hero">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1>Demande #{{ demande_analyse.id }}</h1>
+                <p>Type: {{ demande_analyse.typeBilan ?: 'Non precise' }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-light btn-sm" href="{{ path('app_demande_analyse_mes_demandes') }}"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+                {% if has_result %}
+                    <a class="btn btn-pdf-strong" href="{{ asset(demande_analyse.resultatPdf) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill me-1"></i>Ouvrir Resultat PDF</a>
+                {% elseif demande_analyse.resultatPdf is null %}
+                    <a class="btn btn-outline-light btn-sm" href="{{ path('app_demande_analyse_edit', {'id': demande_analyse.id}) }}"><i class="bi bi-pencil-square me-1"></i>Modifier</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 pb-4">
+        <div class="col-lg-7">
+            <div class="surface section">
+                <h3><i class="bi bi-card-text me-2"></i>Description</h3>
+                <div class="grid">
+                    <div class="item"><span class="label">Statut</span><div class="value">{% if has_result %}<span class="badge-pill b-sent"><i class="bi bi-send-fill"></i>Envoye</span>{% else %}<span class="badge-pill b-wait"><i class="bi bi-clock-history"></i>En attente</span>{% endif %}</div></div>
+                    <div class="item"><span class="label">Priorite</span><div class="value">{% set p=(demande_analyse.priorite ?: 'Normale')|lower %}{% if p=='urgent' %}<span class="badge-pill b-urgent">Urgente</span>{% elseif p=='haute' or p=='high' %}<span class="badge-pill b-high">Haute</span>{% else %}<span class="badge-pill b-normal">Normale</span>{% endif %}</div></div>
+                    <div class="item"><span class="label">Date creation</span><div class="value">{{ demande_analyse.dateDemande ? demande_analyse.dateDemande|date('d/m/Y H:i') : '-' }}</div></div>
+                    <div class="item"><span class="label">Date programmee</span><div class="value">{{ demande_analyse.programmeLe ? demande_analyse.programmeLe|date('d/m/Y H:i') : 'Non precisee' }}</div></div>
+                    <div class="item"><span class="label">Laboratoire</span><div class="value">{{ demande_analyse.laboratoire ? demande_analyse.laboratoire.nom : 'Non specifie' }}</div></div>
+                    <div class="item"><span class="label">Medecin</span><div class="value">{{ demande_analyse.medecin ? ('Dr. ' ~ (demande_analyse.medecin.nomComplet ?: 'Non specifie')) : 'Non specifie' }}</div></div>
+                    <div class="item"><span class="label">Patient</span><div class="value">{{ demande_analyse.patient ? (demande_analyse.patient.nomComplet ?: demande_analyse.patient.email ?: '-') : '-' }}</div></div>
+                    <div class="item"><span class="label">Resultat</span><div class="value">{{ has_result ? 'Disponible (PDF + IA)' : 'Pas encore disponible' }}</div></div>
+                </div>
+            </div>
+
+            <div class="surface section">
+                <h3><i class="bi bi-journal-text me-2"></i>Notes</h3>
+                {% if demande_analyse.notes %}
+                    <div class="notes">{{ demande_analyse.notes }}</div>
+                {% else %}
+                    <p class="muted mb-0">Aucune note supplementaire.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="surface section">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="mb-0"><i class="bi bi-stars me-2"></i>Synthese IA</h3>
+                    <button id="openChatFromCard" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots me-1"></i>Assistant</button>
+                </div>
+                {% if has_result %}
+                    <div class="ai-kpis">
+                        <div class="kpi"><div class="kpi-l">Statut IA</div><div id="iaStatus" class="kpi-v">Chargement...</div></div>
+                        <div class="kpi"><div class="kpi-l">Risque</div><div id="iaRisk" class="kpi-v">-</div></div>
+                        <div class="kpi"><div class="kpi-l">Modele</div><div id="iaModel" class="kpi-v">-</div></div>
+                        <div class="kpi"><div class="kpi-l">Mise a jour</div><div id="iaUpdated" class="kpi-v">-</div></div>
+                    </div>
+                    <div id="iaSummary" class="ai-summary mb-2">Chargement de l interpretation IA...</div>
+                    <p class="ai-evidence-title">Valeurs hors norme</p>
+                    <p class="muted ai-glossary-hint">Mini glossaire IA: cliquez sur ? a cote d un parametre.</p>
+                    <ul id="iaEvidence" class="ai-evidence-list"></ul>
+                    <ul id="iaRecommendations" class="ai-list mb-2"></ul>
+                    <p id="iaDisclaimer" class="muted mb-0">Information d aide a la lecture. Validation clinique obligatoire.</p>
+                {% else %}
+                    <p class="muted mb-0">Resultat PDF indisponible. La partie IA sera active apres chargement du resultat.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<button id="chatToggle" class="chat-toggle" type="button" aria-label="Ouvrir assistant"><i class="bi bi-chat-dots-fill"></i></button>
+<aside id="chatPanel" class="chat-panel" aria-hidden="true">
+    <div class="chat-h">
+        <div><h4>Assistant patient</h4><small class="text-muted">Q/R sur ce resultat</small></div>
+        <button id="chatClose" type="button" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="chat-b">
+        <div class="chips">
+            <button class="chip js-chip" data-q="Que signifie ce resultat pour moi ?">Que signifie ce resultat ?</button>
+            <button class="chip js-chip" data-q="Quels points dois-je surveiller ?">Que dois-je surveiller ?</button>
+            <button class="chip js-chip" data-q="Quand dois-je reconsulter ?">Quand reconsulter ?</button>
+        </div>
+        <div id="chatLog" class="log"><div class="msg bot">Je peux vous aider a comprendre votre resultat.</div></div>
+        <div class="input-wrap">
+            <textarea id="chatInput" maxlength="500" placeholder="Posez votre question..."></textarea>
+            <button id="chatSend" type="button">Envoyer</button>
+        </div>
+    </div>
+</aside>
+
+{% include 'partials/footer.html.twig' %}
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('lib/easing/easing.min.js') }}"></script>
+<script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
+<script src="{{ asset('js/main.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hasResult = {{ has_result ? 'true' : 'false' }};
+    const iaInitialPayload = {{ ia_initial_payload is defined and ia_initial_payload ? ia_initial_payload|json_encode|raw : 'null' }};
+    const iaInterpretationUrl = '{{ ia_interpretation_url }}';
+    const iaQaUrl = '{{ ia_qa_url }}';
+    const iaStatus = document.getElementById('iaStatus');
+    const iaRisk = document.getElementById('iaRisk');
+    const iaModel = document.getElementById('iaModel');
+    const iaUpdated = document.getElementById('iaUpdated');
+    const iaSummary = document.getElementById('iaSummary');
+    const iaEvidence = document.getElementById('iaEvidence');
+    const iaRecommendations = document.getElementById('iaRecommendations');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatToggle = document.getElementById('chatToggle');
+    const chatClose = document.getElementById('chatClose');
+    const chatLog = document.getElementById('chatLog');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const openChatFromCard = document.getElementById('openChatFromCard');
+    let iaMetricGlossary = {};
+
+    const appendMsg = (role, text) => {
+        if (!chatLog) return;
+        const d = document.createElement('div');
+        d.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+        d.textContent = text;
+        chatLog.appendChild(d);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+
+    const normalizeGlossaryKey = (value) => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '');
+
+    const normalizeMetricGlossary = (payload) => {
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
+        const normalized = {};
+        Object.entries(payload).forEach(([name, description]) => {
+            if (typeof description !== 'string') return;
+            const cleanName = String(name || '').trim();
+            const cleanDescription = description.replace(/\s+/g, ' ').trim();
+            if (!cleanName || !cleanDescription) return;
+            normalized[cleanName] = cleanDescription;
+        });
+        return normalized;
+    };
+
+    const findMetricDescription = (item) => {
+        if (!iaMetricGlossary || Object.keys(iaMetricGlossary).length === 0) return '';
+        const metricName = String(item.metric_name || '').trim();
+        const line = String(item.line || '').trim();
+
+        const directCandidates = [];
+        if (metricName) directCandidates.push(metricName);
+        const inferred = (() => {
+            const m = line.match(/^([^:]{2,80})\s*:/);
+            return m ? m[1].trim() : '';
+        })();
+        if (inferred) directCandidates.push(inferred);
+
+        for (const candidate of directCandidates) {
+            if (iaMetricGlossary[candidate]) return iaMetricGlossary[candidate];
+        }
+
+        const normalizedCandidates = directCandidates
+            .map(normalizeGlossaryKey)
+            .filter((v) => v !== '');
+        const entries = Object.entries(iaMetricGlossary);
+        for (const [name, description] of entries) {
+            const key = normalizeGlossaryKey(name);
+            if (key === '') continue;
+            if (normalizedCandidates.includes(key)) return description;
+        }
+
+        const normalizedLine = normalizeGlossaryKey(line);
+        if (normalizedLine === '') return '';
+        const ordered = entries
+            .map(([name, description]) => ({ key: normalizeGlossaryKey(name), description }))
+            .filter((e) => e.key !== '')
+            .sort((a, b) => b.key.length - a.key.length);
+        for (const entry of ordered) {
+            if (normalizedLine.includes(entry.key)) return entry.description;
+        }
+
+        return '';
+    };
+
+    const renderRec = (list) => {
+        if (!iaRecommendations) return;
+        const arr = Array.isArray(list) ? list : [];
+        iaRecommendations.innerHTML = '';
+        if (arr.length === 0) {
+            iaRecommendations.innerHTML = '<li><i class="bi bi-info-circle me-2"></i>Aucune recommandation disponible.</li>';
+            return;
+        }
+        arr.forEach((line) => {
+            const li = document.createElement('li');
+            li.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + line;
+            iaRecommendations.appendChild(li);
+        });
+    };
+
+    const renderEvidence = (list) => {
+        if (!iaEvidence) return;
+        const computePriority = (item) => {
+            const level = String(item.level || '').toLowerCase();
+            if (item.is_critical || level === 'critical') return 0;
+            if (level === 'high' || level === 'eleve' || level === 'elevated') return 1;
+            if (level === 'low' || level === 'bas' || level === 'faible') return 2;
+            return 3;
+        };
+
+        const normalizeEvidenceItem = (item) => {
+            if (item && typeof item === 'object' && !Array.isArray(item)) {
+                const line = String(item.line || '').trim();
+                const level = String(item.level || '').trim().toLowerCase();
+                const isCritical = Boolean(item.is_critical) || level === 'critical' || /\bCRITIQUE\b/i.test(line);
+                const metricName = String(item.metric_name || item.name || '').trim();
+                return { line, metric_name: metricName, level, is_critical: isCritical, priority: Number(item.priority ?? computePriority({ level, is_critical: isCritical })) };
+            }
+
+            const line = String(item || '').trim();
+            const token = line.toUpperCase();
+            const isCritical = /\bCRITIQUE\b|\bCRITICAL\b/.test(token);
+            const level = isCritical ? 'critical' : (/\bELEVE\b|\bHIGH\b/.test(token) ? 'high' : (/\bBAS\b|\bLOW\b/.test(token) ? 'low' : 'unknown'));
+            const m = line.match(/^([^:]{2,80})\s*:/);
+            const metricName = m ? m[1].trim() : '';
+            return { line, metric_name: metricName, level, is_critical: isCritical, priority: computePriority({ level, is_critical: isCritical }) };
+        };
+
+        const arr = Array.isArray(list)
+            ? list.map(normalizeEvidenceItem).filter((item) => item.line !== '').sort((a, b) => a.priority - b.priority)
+            : [];
+        iaEvidence.innerHTML = '';
+        if (arr.length === 0) {
+            iaEvidence.innerHTML = '<li><i class="bi bi-quote"></i><span>Aucune valeur hors norme detaillee n est fournie.</span></li>';
+            return;
+        }
+
+        const appendEvidenceText = (target, text) => {
+            const parts = String(text || '').split(/(\bELEVE\b|\bBAS\b|\bMOYEN\b|\bCRITIQUE\b)/gi);
+            parts.forEach((part) => {
+                if (['ELEVE', 'BAS', 'MOYEN', 'CRITIQUE'].includes(part.toUpperCase())) {
+                    const strong = document.createElement('strong');
+                    strong.textContent = part;
+                    target.appendChild(strong);
+                    return;
+                }
+                target.appendChild(document.createTextNode(part));
+            });
+        };
+
+        arr.forEach((line) => {
+            const li = document.createElement('li');
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-quote';
+            const text = document.createElement('span');
+            text.className = 'ai-evidence-line';
+            appendEvidenceText(text, line.line);
+            li.appendChild(icon);
+            li.appendChild(text);
+
+            const description = findMetricDescription(line) || 'Description indisponible pour ce parametre.';
+            const help = document.createElement('details');
+            help.className = 'metric-help';
+            const summary = document.createElement('summary');
+            const labelName = String(line.metric_name || '').trim() || 'ce parametre';
+            summary.setAttribute('aria-label', 'Aide pour ' + labelName);
+            summary.textContent = '?';
+            const detail = document.createElement('div');
+            detail.textContent = description;
+            help.appendChild(summary);
+            help.appendChild(detail);
+            li.appendChild(help);
+
+            if (line.is_critical) {
+                const badge = document.createElement('span');
+                badge.className = 'ai-evidence-badge-critical';
+                badge.textContent = 'CRITIQUE';
+                li.appendChild(badge);
+            }
+            iaEvidence.appendChild(li);
+        });
+    };
+
+    const applyIaPayload = (d) => {
+        iaMetricGlossary = normalizeMetricGlossary(d.metric_glossary || {});
+        if (iaStatus) iaStatus.textContent = (d.ai_status || 'done') === 'done' ? 'Terminee' : (d.ai_status || '-');
+        if (iaRisk) iaRisk.textContent = (d.danger_level_label || d.danger_level || '-') + ((d.danger_score !== null && d.danger_score !== undefined) ? ` (${d.danger_score}/100)` : '');
+        if (iaModel) iaModel.textContent = d.model || '-';
+        if (iaUpdated) iaUpdated.textContent = d.updated_at || '-';
+        if (iaSummary) iaSummary.textContent = d.summary || 'Aucun resume IA.';
+        renderEvidence(d.evidence_items || d.evidence_lines || []);
+        renderRec(d.recommendations || []);
+    };
+
+    if (hasResult) {
+        if (iaInitialPayload && iaInitialPayload.ok !== false) {
+            applyIaPayload(iaInitialPayload);
+        } else {
+            fetch(iaInterpretationUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(async (r) => { const d = await r.json(); if (!r.ok || d.ok === false) throw new Error(d.message || 'IA indisponible'); return d; })
+                .then((d) => applyIaPayload(d))
+                .catch((e) => {
+                    iaMetricGlossary = {};
+                    if (iaStatus) iaStatus.textContent = 'Indisponible';
+                    if (iaSummary) iaSummary.textContent = e.message || 'Erreur IA';
+                    renderEvidence([]);
+                    renderRec([]);
+                });
+        }
+    }
+
+    const openChat = () => { if (!chatPanel) return; chatPanel.classList.add('open'); chatPanel.setAttribute('aria-hidden', 'false'); if (chatInput) chatInput.focus(); };
+    const closeChatPanel = () => { if (!chatPanel) return; chatPanel.classList.remove('open'); chatPanel.setAttribute('aria-hidden', 'true'); };
+    if (chatToggle) chatToggle.addEventListener('click', openChat);
+    if (openChatFromCard) openChatFromCard.addEventListener('click', openChat);
+    if (chatClose) chatClose.addEventListener('click', closeChatPanel);
+    document.querySelectorAll('.js-chip').forEach((b) => b.addEventListener('click', function() { if (!chatInput) return; chatInput.value = this.getAttribute('data-q') || ''; chatInput.focus(); }));
+
+    const ask = () => {
+        if (!chatInput) return;
+        const q = chatInput.value.trim();
+        if (q === '') return;
+        chatInput.value = '';
+        appendMsg('user', q);
+        if (!hasResult) { appendMsg('bot', 'Resultat non disponible pour le moment.'); return; }
+        if (chatSend) { chatSend.disabled = true; chatSend.textContent = '...'; }
+        fetch(iaQaUrl, { method:'POST', headers:{ 'Content-Type':'application/json', 'X-Requested-With':'XMLHttpRequest' }, body: JSON.stringify({ question: q }) })
+            .then(async (r) => { const d = await r.json(); if (!r.ok || d.ok === false) throw new Error(d.message || 'Assistant indisponible'); return d; })
+            .then((d) => { appendMsg('bot', [d.answer || '', d.safety_notice ? ('Alerte: ' + d.safety_notice) : '', d.disclaimer || ''].filter(Boolean).join('\n\n')); })
+            .catch((e) => appendMsg('bot', e.message || 'Erreur de reponse IA'))
+            .finally(() => { if (chatSend) { chatSend.disabled = false; chatSend.textContent = 'Envoyer'; } if (chatInput) chatInput.focus(); });
+    };
+
+    if (chatSend) chatSend.addEventListener('click', ask);
+    if (chatInput) chatInput.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); ask(); } });
+});
+</script>
+</body>
+</html>
+

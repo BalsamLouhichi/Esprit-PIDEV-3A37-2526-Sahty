@@ -9,10 +9,8 @@ use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
 use App\Entity\Laboratoire;
 use App\Form\SignupType;
-use App\Security\RecaptchaVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -26,16 +24,13 @@ class SignupController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
-        SluggerInterface $slugger,
-        RecaptchaVerifier $recaptchaVerifier,
-        #[Autowire('%env(float:RECAPTCHA_MIN_SCORE)%')] float $recaptchaMinScore
+        SluggerInterface $slugger
     ): Response {
-        // Si l'utilisateur est déjà connecté, rediriger vers son profil
+        // Si l'utilisateur est déjà connecté
         if ($this->getUser()) {
             return $this->redirectToRoute('app_profile');
         }
 
-        // Créer le formulaire
         $form = $this->createForm(SignupType::class);
         $form->handleRequest($request);
 
@@ -51,28 +46,12 @@ class SignupController extends AbstractController
                 ]);
             }
 
-            $recaptchaToken = $request->request->get('g-recaptcha-response');
-            $recaptchaToken = is_string($recaptchaToken) ? $recaptchaToken : null;
-            if (!$recaptchaVerifier->verifyV3($recaptchaToken, 'signup', $recaptchaMinScore, $request->getClientIp())) {
-                $details = $recaptchaVerifier->getLastError();
-                $message = 'Veuillez valider le reCAPTCHA.';
-                if (!empty($details['reason'])) {
-                    $message .= ' (' . $details['reason'] . ')';
-                }
-                if (!empty($details['errorCodes']) && is_array($details['errorCodes'])) {
-                    $message .= ' [' . implode(', ', $details['errorCodes']) . ']';
-                }
-                $this->addFlash('error', $message);
-                return $this->render('signup/signup.html.twig', [
-                    'form' => $form->createView(),
-                ]);
-            }
-
             // Création de l'utilisateur selon le rôle
             switch ($roleSelected) {
                 case 'admin':
                     $user = new Administrateur();
                     break;
+
                 case 'medecin':
                     $user = new Medecin();
                     $user->setSpecialite($request->request->get('specialite', ''));
@@ -89,24 +68,19 @@ class SignupController extends AbstractController
                     if ($documentPdfFile) {
                         $originalFilename = pathinfo($documentPdfFile->getClientOriginalName(), PATHINFO_FILENAME);
                         $safeFilename = $slugger->slug($originalFilename);
-                        $newFilename = $safeFilename . '-' . uniqid() . '.' . $documentPdfFile->guessExtension();
-                        
-                        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/documents';
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-                        
+                        $newFilename = $safeFilename.'-'.uniqid().'.'.$documentPdfFile->guessExtension();
+
+                        $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/documents';
+                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
                         $documentPdfFile->move($uploadDir, $newFilename);
-                        $user->setDocumentPdf('uploads/documents/' . $newFilename);
+                        $user->setDocumentPdf('uploads/documents/'.$newFilename);
                     }
                     break;
 
                 case 'responsable_labo':
                     $user = new ResponsableLaboratoire();
-                    
-                    // Association avec un laboratoire existant
                     $laboratoireId = (int)$request->request->get('laboratoire_id', 0);
-                    
                     if ($laboratoireId > 0) {
                         $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
                         if ($laboratoire) {
@@ -142,9 +116,8 @@ class SignupController extends AbstractController
                  ->setNom($form->get('nom')->getData())
                  ->setEmail($form->get('email')->getData())
                  ->setTelephone($form->get('telephone')->getData())
-                 ->setRole($roleSelected)
-                 ->setEstActif(true)
-                 ->setVille($form->get('ville')->getData());
+                 ->setVille($form->get('ville')->getData())
+                 ->setRole($roleSelected);
 
             if ($form->get('dateNaissance')->getData()) {
                 $user->setDateNaissance($form->get('dateNaissance')->getData());
@@ -172,7 +145,7 @@ class SignupController extends AbstractController
                 $em->persist($user);
                 $em->flush();
 
-                $this->addFlash('success', 'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.');
+                $this->addFlash('success', 'Votre compte a été créé avec succès !');
                 return $this->redirectToRoute('app_login');
 
             } catch (\Exception $e) {
@@ -187,9 +160,52 @@ class SignupController extends AbstractController
                 ]);
             }
         }
-
+        
         return $this->render('signup/signup.html.twig', [
             'form' => $form->createView(),
         ]);
+    }
+
+    /**
+     * Create a ResponsableLaboratoire user (NEW from Balsam)
+     */
+    private function createResponsableLaboratoire(Request $request, EntityManagerInterface $em): ResponsableLaboratoire
+    {
+        $user = new ResponsableLaboratoire();
+        
+        $laboratoireId = (int)$request->request->get('signup[laboratoire_id]', 0);
+        if ($laboratoireId > 0) {
+            $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
+            if ($laboratoire) {
+                $user->setLaboratoire($laboratoire);
+            }
+        }
+        
+        return $user;
+    }
+
+    /**
+     * Create a ResponsableParapharmacie user (NEW from Balsam)
+     */
+    private function createResponsableParapharmacie(Request $request): ResponsableParapharmacie
+    {
+        $user = new ResponsableParapharmacie();
+        $user->setParapharmacieId((int)$request->request->get('signup[parapharmacie_id]', 0));
+        return $user;
+    }
+
+    /**
+     * Create a Patient user with patient-specific fields (keep YOUR version)
+     */
+    private function createPatient(Request $request): Patient
+    {
+        $user = new Patient();
+        
+        // Patient specific fields
+        $user->setSexe($request->request->get('signup[sexe]', ''));
+        $user->setGroupeSanguin($request->request->get('signup[groupe_sanguin]', ''));
+        $user->setContactUrgence($request->request->get('signup[contact_urgence]', ''));
+        
+        return $user;
     }
 }

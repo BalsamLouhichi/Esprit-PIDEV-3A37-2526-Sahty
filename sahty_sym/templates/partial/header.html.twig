@@ -195,31 +195,36 @@
                         </div>
                     {% endif %}
                    
-                    <!-- MENU RESPONSABLE PARA - PARAPHARMACIE -->
-                    {% if is_granted('ROLE_RESPONSABLE_PARA') %}
+                    <!-- MENU PARAPHARMACIE -->
+                    {% if is_granted('ROLE_RESPONSABLE_PARA') or is_granted('ROLE_PATIENT') %}
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fa fa-pills me-1"></i>Parapharmacie
                             </a>
                             <div class="dropdown-menu m-0">
-                                <a href="{{ path('app_responsable_dashboard') }}" class="dropdown-item">
-                                    <i class="fa fa-tachometer-alt me-2"></i>Dashboard
-                                </a>
-                                <a href="{{ path('app_responsable_produits') }}" class="dropdown-item">
-                                    <i class="fa fa-boxes me-2"></i>Produits
-                                </a>
-                                <a href="{{ path('app_responsable_commandes') }}" class="dropdown-item">
-                                    <i class="fa fa-box me-2"></i>Commandes
-                                </a>
-                                <a href="{{ path('app_responsable_statistiques') }}" class="dropdown-item">
-                                    <i class="fa fa-chart-line me-2"></i>Statistiques
-                                </a>
-                                <a href="{{ path('app_responsable_parametres') }}" class="dropdown-item">
-                                    <i class="fa fa-cog me-2"></i>Paramètres
-                                </a>
+                                {% if is_granted('ROLE_RESPONSABLE_PARA') %}
+                                    <a href="{{ path('app_responsable_dashboard') }}" class="dropdown-item">
+                                        <i class="fa fa-tachometer-alt me-2"></i>Dashboard
+                                    </a>
+                                    <a href="{{ path('app_responsable_produits') }}" class="dropdown-item">
+                                        <i class="fa fa-boxes me-2"></i>Voir produits
+                                    </a>
+                                    <a href="{{ path('app_responsable_commandes') }}" class="dropdown-item">
+                                        <i class="fa fa-shopping-cart me-2"></i>Voir commandes
+                                    </a>
+                                {% endif %}
+                                {% if is_granted('ROLE_PATIENT') %}
+                                    <a href="{{ path('app_parapharmacie_produits') }}" class="dropdown-item">
+                                        <i class="fa fa-shopping-basket me-2"></i>Voir produits
+                                    </a>
+                                    <a href="{{ path('app_mes_commandes')|default('#') }}" class="dropdown-item">
+                                        <i class="fa fa-box me-2"></i>Voir commandes
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endif %}
+                   
                    
                     <!-- MENU PATIENT - ESPACE PATIENT (complémentaire) -->
                     {% if is_granted('ROLE_PATIENT') and not is_granted('ROLE_MEDECIN') and not is_granted('ROLE_RESPONSABLE_LABO') and not is_granted('ROLE_RESPONSABLE_PARA') %}
@@ -231,6 +236,7 @@
                                 <a href="{{ path('app_fiche_medicale_index') }}" class="dropdown-item">
                                     <i class="fa fa-file-medical me-2"></i>Mes Fiches Médicales
                                 </a>
+                                
                                 <a href="{{ path('app_profile') }}" class="dropdown-item">
                                     <i class="fa fa-user-circle me-2"></i>Mon Profil
                                 </a>

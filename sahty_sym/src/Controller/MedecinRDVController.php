@@ -8,6 +8,8 @@ use App\Entity\FicheMedicale;
 use App\Form\FicheMedicaleType;
 use App\Repository\RendezVousRepository;
 use App\Repository\FicheMedicaleRepository;
+use App\Service\AppointmentNotificationMailer;
+use App\Service\MeetingSchedulerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class MedecinRDVController extends AbstractController
 {
     /**
-     * 📅 Liste des rendez-vous du médecin avec recherche et filtrage
+     * ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¦ Liste des rendez-vous du mÃƒÆ’Ã‚Â©decin avec recherche et filtrage
      */
     #[Route('/', name: 'app_medecin_rdv_liste', methods: ['GET'])]
     public function liste(
@@ -33,11 +35,11 @@ class MedecinRDVController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer les paramètres de recherche et filtrage
+        // RÃƒÆ’Ã‚Â©cupÃƒÆ’Ã‚Â©rer les paramÃƒÆ’Ã‚Â¨tres de recherche et filtrage
         $statutFiltre = $request->query->get('statut', 'tous');
         $searchTerm = $request->query->get('search', '');
 
-        // Construction de la requête de base
+        // Construction de la requÃƒÆ’Ã‚Âªte de base
         $queryBuilder = $rdvRepository->createQueryBuilder('r')
             ->leftJoin('r.patient', 'p')
             ->where('r.medecin = :medecin')
@@ -51,7 +53,7 @@ class MedecinRDVController extends AbstractController
                 ->setParameter('statut', $statutFiltre);
         }
 
-        // ✅ Recherche textuelle (nom, prénom, raison)
+        // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Recherche textuelle (nom, prÃƒÆ’Ã‚Â©nom, raison)
         if (!empty($searchTerm)) {
             $queryBuilder->andWhere(
                 $queryBuilder->expr()->orX(
@@ -72,76 +74,101 @@ class MedecinRDVController extends AbstractController
     }
 
     /**
-     * ✅ Confirmer un rendez-vous
+     * ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Confirmer un rendez-vous
      */
     #[Route('/confirmer/{id}', name: 'app_medecin_rdv_confirmer', methods: ['POST'])]
     public function confirmer(
         int $id,
         RendezVousRepository $rdvRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MeetingSchedulerService $meetingSchedulerService,
+        AppointmentNotificationMailer $appointmentNotificationMailer
     ): Response {
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouve');
         }
 
-        // Vérifier que c'est le médecin du RDV
+        // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
         if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que le RDV est en attente
+        // VÃƒÆ’Ã‚Â©rifier que le RDV est en attente
         if ($rdv->getStatut() !== 'en attente') {
-            $this->addFlash('error', '❌ Ce rendez-vous ne peut pas être confirmé');
+            $this->addFlash('error', 'Ce rendez-vous ne peut pas etre confirme');
             return $this->redirectToRoute('app_medecin_rdv_liste');
         }
 
         // Confirmer
-        $rdv->setStatut('Confirmé');
+        $rdv->setStatut("Confirm\u{00E9}");
         $rdv->setDateValidation(new \DateTime());
-        $em->flush();
+        if ($rdv->getTypeConsultation() === 'en_ligne') {
+            try {
+                $meeting = $meetingSchedulerService->createForRendezVous($rdv);
+            } catch (\Throwable $e) {
+                $this->addFlash('error', 'Impossible de generer le lien de consultation en ligne: ' . $e->getMessage());
+                return $this->redirectToRoute('app_medecin_rdv_liste');
+            }
 
-        $this->addFlash('success', '✅ Rendez-vous confirmé avec succès');
+            $rdv->setMeetingProvider($meeting['provider']);
+            $rdv->setMeetingUrl($meeting['url']);
+            $rdv->setMeetingCreatedAt(new \DateTimeImmutable());
+        }
+        $em->flush();
+        try {
+            $appointmentNotificationMailer->sendConfirmationToPatient($rdv);
+        } catch (\Throwable) {
+            $this->addFlash('warning', 'Rendez-vous confirme, mais l email de notification au patient a echoue.');
+        }
+
+        $this->addFlash('success', 'Rendez-vous confirme avec succes');
         return $this->redirectToRoute('app_medecin_rdv_liste');
     }
 
     /**
-     * ❌ Annuler un rendez-vous
+     * ÃƒÂ¢Ã‚ÂÃ…â€™ Annuler un rendez-vous
      */
     #[Route('/annuler/{id}', name: 'app_medecin_rdv_annuler', methods: ['POST'])]
     public function annuler(
         int $id,
         RendezVousRepository $rdvRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        AppointmentNotificationMailer $appointmentNotificationMailer
     ): Response {
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouve');
         }
 
-        // Vérifier que c'est le médecin du RDV
+        // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
         if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que le RDV n'est pas déjà annulé
-        if ($rdv->getStatut() === 'Annulé') {
-            $this->addFlash('error', '❌ Ce rendez-vous est déjà annulé');
+        // VÃƒÆ’Ã‚Â©rifier que le RDV n'est pas dÃƒÆ’Ã‚Â©jÃƒÆ’Ã‚Â  annulÃƒÆ’Ã‚Â©
+        if ($rdv->getStatut() === "Annul\u{00E9}") {
+            $this->addFlash('error', 'Ce rendez-vous est deja annule');
             return $this->redirectToRoute('app_medecin_rdv_liste');
         }
 
         // Annuler
-        $rdv->setStatut('Annulé');
+        $rdv->setStatut("Annul\u{00E9}");
         $em->flush();
+        try {
+            $appointmentNotificationMailer->sendCancellationToPatient($rdv);
+        } catch (\Throwable) {
+            $this->addFlash('warning', 'Rendez-vous annule, mais l email de notification au patient a echoue.');
+        }
 
-        $this->addFlash('success', '✅ Rendez-vous annulé avec succès');
+        $this->addFlash('success', 'Rendez-vous annule avec succes');
         return $this->redirectToRoute('app_medecin_rdv_liste');
     }
 
     /**
-     * 👁️ Voir les détails d'un rendez-vous
+     * ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚ÂÃƒÂ¯Ã‚Â¸Ã‚Â Voir les dÃƒÆ’Ã‚Â©tails d'un rendez-vous
      */
     #[Route('/details/{id}', name: 'app_medecin_rdv_details', methods: ['GET'])]
     public function details(
@@ -151,10 +178,10 @@ class MedecinRDVController extends AbstractController
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouve');
         }
 
-        // Vérifier que c'est le médecin du RDV
+        // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
         if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException();
         }
@@ -165,7 +192,7 @@ class MedecinRDVController extends AbstractController
     }
 
     /**
-     * 📝 Compléter/Modifier la fiche médicale d'un patient
+     * ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â ComplÃƒÆ’Ã‚Â©ter/Modifier la fiche mÃƒÆ’Ã‚Â©dicale d'un patient
      */
     #[Route('/fiche/{rdvId}', name: 'app_medecin_fiche_medicale', methods: ['GET', 'POST'])]
     public function ficheMedicale(
@@ -178,26 +205,26 @@ class MedecinRDVController extends AbstractController
         $rdv = $rdvRepository->find($rdvId);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouve');
         }
 
-        // Vérifier que c'est le médecin du RDV
+        // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
         if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
             throw $this->createAccessDeniedException();
         }
 
-        // ✅ Vérifier que le RDV n'est pas annulé
-        if ($rdv->getStatut() === 'Annulé') {
-            $this->addFlash('error', '❌ Impossible de créer/modifier une fiche médicale pour un rendez-vous annulé');
+        // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ VÃƒÆ’Ã‚Â©rifier que le RDV n'est pas annulÃƒÆ’Ã‚Â©
+        if ($rdv->getStatut() === "Annul\u{00E9}") {
+            $this->addFlash('error', 'Impossible de creer/modifier une fiche medicale pour un rendez-vous annule');
             return $this->redirectToRoute('app_medecin_rdv_liste');
         }
 
-        // Récupérer ou créer la fiche médicale
+        // RÃƒÆ’Ã‚Â©cupÃƒÆ’Ã‚Â©rer ou crÃƒÆ’Ã‚Â©er la fiche mÃƒÆ’Ã‚Â©dicale
         $fiche = $rdv->getFicheMedicale();
         $isNew = false;
 
         if (!$fiche) {
-            // Créer une nouvelle fiche
+            // CrÃƒÆ’Ã‚Â©er une nouvelle fiche
             $fiche = new FicheMedicale();
             $fiche->setPatient($rdv->getPatient());
             $fiche->setCreeLe(new \DateTime());
@@ -205,14 +232,14 @@ class MedecinRDVController extends AbstractController
             $isNew = true;
         }
 
-        // Formulaire avec permissions médecin
+        // Formulaire avec permissions mÃƒÆ’Ã‚Â©decin
         $form = $this->createForm(FicheMedicaleType::class, $fiche, [
             'is_medecin' => true
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Calculer l'IMC si nécessaire
+            // Calculer l'IMC si nÃƒÆ’Ã‚Â©cessaire
             if ($fiche->getTaille() && $fiche->getPoids()) {
                 $imc = $fiche->getPoids() / ($fiche->getTaille() * $fiche->getTaille());
                 $fiche->setImc($imc);
@@ -224,7 +251,7 @@ class MedecinRDVController extends AbstractController
                 } elseif ($imc < 30) {
                     $fiche->setCategorieImc('Surpoids');
                 } else {
-                    $fiche->setCategorieImc('Obésité');
+                    $fiche->setCategorieImc('Obesite');
                 }
             }
 
@@ -237,7 +264,7 @@ class MedecinRDVController extends AbstractController
 
             $em->flush();
 
-            $this->addFlash('success', '✅ Fiche médicale enregistrée avec succès');
+            $this->addFlash('success', 'Fiche medicale enregistree avec succes');
             return $this->redirectToRoute('app_medecin_rdv_liste');
         }
 

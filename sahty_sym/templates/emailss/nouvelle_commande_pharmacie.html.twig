@@ -1,0 +1,87 @@
+{# templates/emails/nouvelle_commande_pharmacie.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nouvelle commande</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; }
+        .header { background: linear-gradient(135deg, #0dcaf0 0%, #0a9bbf 100%); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 30px 20px; background: white; }
+        .commande-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #0dcaf0; }
+        .article { border-bottom: 1px solid #dee2e6; padding: 15px 0; }
+        .article:last-child { border-bottom: none; }
+        .total { font-size: 1.3em; font-weight: bold; color: #28a745; text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #dee2e6; }
+        .footer { text-align: center; padding: 20px; background: #f1f3f5; color: #666; font-size: 0.9em; }
+        .btn { display: inline-block; padding: 12px 30px; background: #0dcaf0; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }
+        .btn:hover { background: #0a9bbf; }
+        .badge { background: #ffc107; color: #000; padding: 3px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 2em;">🛍️ Nouvelle commande</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9;">Commande #{{ commande.numero }}</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-grid">
+                <div>
+                    <h3 style="color: #0dcaf0; margin-top: 0;">Client</h3>
+                    <p><strong>{{ commande.nomClient }}</strong></p>
+                    <p>📧 {{ commande.email }}</p>
+                    <p>📞 {{ commande.telephone }}</p>
+                </div>
+                <div>
+                    <h3 style="color: #0dcaf0; margin-top: 0;">Livraison</h3>
+                    <p>{{ commande.adresseLivraison|nl2br }}</p>
+                    {% if commande.notes %}
+                        <p><small>📝 {{ commande.notes }}</small></p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="commande-info">
+                <h3 style="color: #0dcaf0; margin-top: 0; margin-bottom: 20px;">Articles commandés</h3>
+                
+                {% for article in articles %}
+                    <div class="article">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h4 style="margin: 0 0 5px;">{{ article.produit_nom }}</h4>
+                                <span class="badge">x{{ article.quantite }}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div>{{ article.prix|number_format(2, ',', ' ') }} €</div>
+                                <small>sous-total: {{ (article.prix * article.quantite)|number_format(2, ',', ' ') }} €</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <div class="total">
+                    Total: {{ commande.prixTotal|number_format(2, ',', ' ') }} €
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ url('app_responsable_commandes') }}" class="btn">
+                    Voir dans mon dashboard
+                </a>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; color: #666;">
+                <small>Connectez-vous à votre espace responsable pour gérer cette commande.</small>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+            <p>© {{ "now"|date("Y") }} Sahty - Tous droits réservés</p>
+        </div>
+    </div>
+</body>
+</html>

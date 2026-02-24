@@ -28,7 +28,6 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
         } else {
             $url = $this->router->generate('app_profile');
         }
-        $url = $this->router->generate('app_login_redirect');
 
         return new RedirectResponse($url);
     }

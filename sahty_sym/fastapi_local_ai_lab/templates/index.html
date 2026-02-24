@@ -1,0 +1,212 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FastAPI Local AI Lab</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="container">
+    {% macro metric_name_with_help(name, glossary) -%}
+        {% set help = glossary.get(name, "") %}
+        <div class="metric-name-wrap">
+            <span>{{ name }}</span>
+            {% if help %}
+                <details class="metric-help">
+                    <summary aria-label="Aide pour {{ name }}">?</summary>
+                    <div>{{ help }}</div>
+                </details>
+            {% endif %}
+        </div>
+    {%- endmacro %}
+    <h1>FastAPI Local AI Lab</h1>
+    <p class="subtitle">Local OCR (Tesseract/PaddleOCR) + local Ollama (Mistral/Llama)</p>
+
+    <section class="card">
+        <h2>Test Interface</h2>
+        <form action="/analyze" method="post" enctype="multipart/form-data">
+            <label for="file">Report file (PDF / PNG / JPG)</label>
+            <input id="file" name="file" type="file" required>
+
+            <div class="grid">
+                <div>
+                    <label for="ocr_engine">OCR engine</label>
+                    <select id="ocr_engine" name="ocr_engine">
+                        <option value="tesseract" {% if default_engine == "tesseract" %}selected{% endif %}>tesseract</option>
+                        <option value="paddle" {% if default_engine == "paddle" %}selected{% endif %}>paddle</option>
+                        <option value="auto" {% if default_engine == "auto" %}selected{% endif %}>auto</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="lang">OCR language</label>
+                    <input id="lang" name="lang" value="{{ default_lang }}" placeholder="fra+eng">
+                </div>
+                <div>
+                    <label for="model">Ollama model</label>
+                    <input id="model" name="model" value="{{ default_model }}" placeholder="llama3:latest">
+                </div>
+            </div>
+
+            <label class="inline">
+                <input type="checkbox" name="use_ollama" {% if default_use_ollama in ["true", "1", "on", "yes"] %}checked{% endif %}>
+                Enable Ollama enrichment (rule-based extraction remains source of truth)
+            </label>
+
+            <button type="submit">Analyze</button>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <h2>Domain Context Dataset</h2>
+        <p><strong>Loaded:</strong> {{ domain_status.loaded }} | <strong>Rows:</strong> {{ domain_status.rows }} | <strong>Tests:</strong> {{ domain_status.tests }}</p>
+        <p><strong>Path:</strong> {{ domain_status.path or "not set" }}</p>
+        <p><strong>Message:</strong> {{ domain_status.message }}</p>
+        {% if domain_status.preview %}
+            <pre>{% for line in domain_status.preview %}{{ line }}
+{% endfor %}</pre>
+        {% endif %}
+    </section>
+
+    {% if result %}
+    <section class="card">
+        <h2>Analysis Result</h2>
+        <p><strong>File:</strong> {{ result.filename }}</p>
+        <p><strong>OCR:</strong> engine={{ result.ocr.engine }}, pages={{ result.ocr.pages }}</p>
+        <p><strong>Model:</strong> {{ result.analysis.model }}</p>
+        <p><strong>Danger:</strong> {{ result.analysis.danger_level }} ({{ result.analysis.danger_score }}/100)</p>
+
+        <h3>Summary</h3>
+        <div class="block">{{ result.analysis.summary }}</div>
+
+        {% if result.llm_interpretation %}
+        <h3>LLM Interpretation</h3>
+        <div class="block">
+            <p><strong>Urgency:</strong> {{ result.llm_interpretation.urgency }}</p>
+            <p><strong>Urgency reason:</strong> {{ result.llm_interpretation.urgency_reason }}</p>
+            <p><strong>Clinician summary:</strong> {{ result.llm_interpretation.clinician_summary }}</p>
+            <p><strong>Patient summary:</strong> {{ result.llm_interpretation.patient_summary }}</p>
+            <p><strong>Confidence:</strong> {{ result.llm_interpretation.confidence }}</p>
+        </div>
+
+        {% if result.llm_interpretation.red_flags %}
+            <h4>Red Flags</h4>
+            <ul>
+                {% for flag in result.llm_interpretation.red_flags %}
+                <li>{{ flag }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% endif %}
+
+        <h3>Anomalies</h3>
+        {% if result.analysis.anomalies %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                        <th>Severity</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in result.analysis.anomalies %}
+                    <tr>
+                        <td>{{ metric_name_with_help(a.name, result.metric_glossary) }}</td>
+                        <td>{{ a.value }}</td>
+                        <td>{{ a.reference }}</td>
+                        <td>{{ a.status }}</td>
+                        <td>{{ a.severity }}</td>
+                        <td>{{ a.note }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No anomalies returned by analysis.</p>
+        {% endif %}
+
+        <h3>Recommendations</h3>
+        {% if result.analysis.recommendations %}
+            <ul>
+                {% for r in result.analysis.recommendations %}
+                <li>{{ r }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No recommendations returned.</p>
+        {% endif %}
+    </section>
+
+    {% if result.structured %}
+    <section class="card">
+        <h2>Structured Extraction (Rule-based)</h2>
+        <p><strong>Document type:</strong> {{ result.structured.document_type }}</p>
+        <p class="glossary-note">Mini glossaire IA (Ollama local): cliquez sur le bouton "?" a cote d'un parametre.</p>
+        <p><strong>Global needs review:</strong> {{ result.structured.global_needs_review }}</p>
+
+        {% if result.structured.warnings %}
+            <h3>Warnings</h3>
+            <ul>
+                {% for w in result.structured.warnings %}
+                <li>{{ w }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Value raw</th>
+                    <th>Value num</th>
+                    <th>Unit</th>
+                    <th>Reference</th>
+                    <th>Flag</th>
+                    <th>Status</th>
+                    <th>Review</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for t in result.structured.tests %}
+                <tr>
+                    <td>{{ metric_name_with_help(t.name, result.metric_glossary) }}</td>
+                    <td>{{ t.value_raw }}</td>
+                    <td>{{ t.value_num }}</td>
+                    <td>{{ t.unit }}</td>
+                    <td>{{ t.reference_text }}</td>
+                    <td>{{ t.flag }}</td>
+                    <td>{{ t.status }}</td>
+                    <td>{{ t.needs_review }}</td>
+                    <td>{{ t.confidence }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>OCR Text</h3>
+        <pre>{{ result.ocr.text }}</pre>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <section class="note">
+        <strong>Medical disclaimer:</strong> This tool is for technical testing only.
+        Human medical validation is mandatory.
+    </section>
+</main>
+</body>
+</html>
+
+
+
+

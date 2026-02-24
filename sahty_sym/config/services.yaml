@@ -4,42 +4,41 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    report.sender: '%env(REPORT_SENDER)%'
-    report.recipients: '%env(REPORT_RECIPIENTS)%'
-    fraud.thresholds:
-        max_requests_per_day: 10
-        max_appointments_per_day: 5
-        max_accounts_per_phone: 2
-        max_cancellations_30d: 5
-        max_cancel_rate_30d: 0.5
-        min_appointments_for_cancel_rate: 5
-        abnormal_hours_start: 0
-        abnormal_hours_end: 6
-        abnormal_hours_min_actions_30d: 3
-    fraud.score_weights:
-        shared_phone: 15
-        high_daily_demands: 20
-        high_daily_appointments: 15
-        high_cancel_rate: 25
-        abnormal_hours: 10
-    prediction.config:
-        since_days: 30
-        churn_no_activity_boost: 60
-        churn_days_weight: 40
-        churn_days_cap: 90
-        demand_score_per_request: 20
-        cancel_min_count: 3
+
+    app.ia_evenement.python_default: 'python'
+    app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
+
+    event_resource_stock:
+        chaises: 150
+        tables: 30
+        micros: 4
+        projecteurs: 2
+        linens: 40
+        kits_accueil: 180
+        kits_depistage: 60
+        kits_atelier: 70
+        gants: 400
+        masques: 220
+        speaker_monitors: 1
+
+
+    produits_images_directory: '%kernel.project_dir%/public/uploads/images/produits'
+
     app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
     app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
     app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
     app.fastapi_ai.model: '%env(FASTAPI_AI_MODEL)%'
     app.fastapi_ai.use_ollama: '%env(bool:FASTAPI_AI_USE_OLLAMA)%'
+    app.fastapi_ai.ollama_mode: '%env(default::FASTAPI_AI_OLLAMA_MODE)%'
     app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
     app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
-    produits_images_directory: '%kernel.project_dir%/public/uploads/produits'
+    app.fastapi_semantic.endpoint: '%env(default::FASTAPI_SEMANTIC_ENDPOINT)%'
+    app.fastapi_semantic.timeout: '%env(int:FASTAPI_SEMANTIC_TIMEOUT)%'
+    app.fastapi_semantic.api_key: '%env(default::FASTAPI_SEMANTIC_API_KEY)%'
 
 
 services:
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -54,32 +53,32 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Controller\:
-        resource: '../src/Controller/'
-        tags: ['controller.service_arguments']
-
-    App\Security\RecaptchaVerifier:
+    App\Service\EvenementOperationalInsightsService:
         arguments:
-            $secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
-            $enabled: '%env(bool:RECAPTCHA_ENABLED)%'
+            $mapboxAccessToken: '%env(string:MAPBOX_ACCESS_TOKEN)%'
 
-    App\Security\LoginFormAuthenticator:
+    App\Service\EvenementResourcePlanningService:
         arguments:
-            $recaptchaMinScore: '%env(float:RECAPTCHA_MIN_SCORE)%'
+            $stockSnapshot: '%event_resource_stock%'
 
-    App\Service\FraudDetectionService:
+    App\Service\StripeCheckoutService:
         arguments:
-            $thresholds: '%fraud.thresholds%'
-            $weights: '%fraud.score_weights%'
+            $stripeSecretKey: '%env(string:STRIPE_SECRET_KEY)%'
+            $stripeWebhookSecret: '%env(string:STRIPE_WEBHOOK_SECRET)%'
 
-    App\Service\UserPredictionService:
+    App\Service\TwilioMessagingService:
         arguments:
-            $config: '%prediction.config%'
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $smsFrom: '%env(string:TWILIO_SMS_FROM)%'
+            $whatsappFrom: '%env(string:TWILIO_WHATSAPP_FROM)%'
 
-    App\Command\MonthlyReportCommand:
+    App\Service\EventRegistrationEmailService:
         arguments:
-            $reportSender: '%report.sender%'
-            $reportRecipients: '%report.recipients%'
+            $mailFrom: '%env(default::EVENT_MAIL_FROM)%'
+            $appUrl: '%env(default::APP_URL)%'
+            $mailerDsn: '%env(default::MAILER_DSN)%'
+
     App\Integration\FastApiLabAiClient:
         arguments:
             $endpoint: '%app.fastapi_ai.endpoint%'
@@ -87,8 +86,46 @@ services:
             $lang: '%app.fastapi_ai.lang%'
             $model: '%app.fastapi_ai.model%'
             $useOllama: '%app.fastapi_ai.use_ollama%'
+            $ollamaMode: '%app.fastapi_ai.ollama_mode%'
             $timeout: '%app.fastapi_ai.timeout%'
             $apiKey: '%app.fastapi_ai.api_key%'
 
+    App\Integration\FastApiSemanticSearchClient:
+        arguments:
+            $endpoint: '%app.fastapi_semantic.endpoint%'
+            $timeout: '%app.fastapi_semantic.timeout%'
+            $apiKey: '%app.fastapi_semantic.api_key%'
+
+    App\Service\AppointmentNotificationMailer:
+        arguments:
+            $fromAddress: 'no-reply@sahty.local'
+
+    App\Service\MeetingSchedulerService:
+        arguments:
+            $provider: '%env(default::APP_MEETING_PROVIDER)%'
+
+    App\Service\MeetingLinkGenerator:
+        arguments:
+            $provider: '%env(default::APP_MEETING_PROVIDER)%'
+            $jitsiDomain: '%env(default::APP_JITSI_DOMAIN)%'
+
+    App\Command\MonthlyReportCommand:
+        arguments:
+            $reportSender: '%env(default::REPORT_SENDER)%'
+            $reportRecipients: '%env(default::REPORT_RECIPIENTS)%'
+
+    App\Service\GoogleMeetApiService:
+        arguments:
+            $clientId: '%env(default::GOOGLE_CLIENT_ID)%'
+            $clientSecret: '%env(default::GOOGLE_CLIENT_SECRET)%'
+            $refreshToken: '%env(default::GOOGLE_REFRESH_TOKEN)%'
+            $calendarId: '%env(default::GOOGLE_CALENDAR_ID)%'
+            $timezone: '%env(default::GOOGLE_MEET_TIMEZONE)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\EvenementPlanningModelService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBin: '%app.ia_evenement.python%'

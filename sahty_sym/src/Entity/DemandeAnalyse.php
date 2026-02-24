@@ -58,6 +58,9 @@ class DemandeAnalyse
     #[ORM\Column(name: 'resultat_pdf', length: 255, nullable: true)]
     private ?string $resultatPdf = null;
 
+    #[ORM\OneToOne(mappedBy: 'demandeAnalyse', targetEntity: ResultatAnalyse::class, cascade: ['persist', 'remove'])]
+    private ?ResultatAnalyse $resultatAnalyse = null;
+
     // Constructeur pour initialiser date_demande
     public function __construct()
     {
@@ -200,6 +203,22 @@ class DemandeAnalyse
     public function setResultatPdf(?string $resultatPdf): static
     {
         $this->resultatPdf = $resultatPdf;
+        return $this;
+    }
+
+    public function getResultatAnalyse(): ?ResultatAnalyse
+    {
+        return $this->resultatAnalyse;
+    }
+
+    public function setResultatAnalyse(?ResultatAnalyse $resultatAnalyse): static
+    {
+        $this->resultatAnalyse = $resultatAnalyse;
+
+        if ($resultatAnalyse !== null && $resultatAnalyse->getDemandeAnalyse() !== $this) {
+            $resultatAnalyse->setDemandeAnalyse($this);
+        }
+
         return $this;
     }
 

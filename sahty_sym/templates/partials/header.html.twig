@@ -1,4 +1,4 @@
-<!-- templates/partials/header.html.twig -->
+﻿<!-- templates/partials/header.html.twig -->
 <div class="sahty-header">
 {% set compact = header_compact|default(false) %}
 
@@ -149,8 +149,8 @@
                         </div>
                     {% endif %}
                     
-                    <!-- MENU PARAPHARMACIE - POUR RESPONSABLE PARA ET PATIENTS -->
-                    {% if (is_granted('ROLE_RESPONSABLE_PARA') or is_granted('ROLE_PATIENT')) and not compact %}
+                    <!-- MENU PARAPHARMACIE - CORRIGÉ AVEC LES BONNES ROUTES -->
+                    {% if is_granted('ROLE_RESPONSABLE_PARA') or is_granted('ROLE_PATIENT') %}
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fa fa-pills me-1"></i>Parapharmacie
@@ -164,7 +164,7 @@
                                         <i class="fa fa-boxes me-2"></i>Produits
                                     </a>
                                     <a href="{{ path('app_responsable_commandes') }}" class="dropdown-item">
-                                        <i class="fa fa-box me-2"></i>Commandes
+                                        <i class="fa fa-shopping-cart me-2"></i>Commandes
                                     </a>
                                     <a href="{{ path('app_responsable_statistiques') }}" class="dropdown-item">
                                         <i class="fa fa-chart-line me-2"></i>Statistiques
@@ -173,12 +173,12 @@
                                         <i class="fa fa-cog me-2"></i>Paramètres
                                     </a>
                                 {% endif %}
-                                {% if is_granted('ROLE_PATIENT') %}
+                                  {% if is_granted('ROLE_PATIENT') %}
                                     <a href="{{ path('app_parapharmacie_produits') }}" class="dropdown-item">
-                                        <i class="fa fa-shopping-basket me-2"></i>Nos produits
+                                        <i class="fa fa-shopping-basket me-2"></i>Voir produits
                                     </a>
                                     <a href="{{ path('app_mes_commandes')|default('#') }}" class="dropdown-item">
-                                        <i class="fa fa-box me-2"></i>Mes commandes
+                                        <i class="fa fa-box me-2"></i>Voir commandes
                                     </a>
                                     {# <a href="{{ path('app_panier')|default('#') }}" class="dropdown-item">
                                         <i class="fa fa-shopping-cart me-2"></i>Mon panier
@@ -499,5 +499,3 @@ window.addEventListener('scroll', function() {
     }
 });
 </script>
-
-</div>

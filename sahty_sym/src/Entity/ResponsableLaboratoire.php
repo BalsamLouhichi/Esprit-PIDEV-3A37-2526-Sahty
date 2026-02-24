@@ -5,13 +5,12 @@ namespace App\Entity;
 use App\Repository\ResponsableLaboratoireRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-// src/Entity/ResponsableLaboratoire.php
 #[ORM\Entity(repositoryClass: ResponsableLaboratoireRepository::class)]
 #[ORM\Table(name: 'responsable_laboratoire')]
 class ResponsableLaboratoire extends Utilisateur
 {
-    #[ORM\OneToOne(inversedBy: 'responsable', targetEntity: Laboratoire::class)]
-    #[ORM\JoinColumn(name: 'laboratoire_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\OneToOne(targetEntity: Laboratoire::class, inversedBy: 'responsable')]
+    #[ORM\JoinColumn(name: 'laboratoire_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Laboratoire $laboratoire = null;
 
     public function __construct()
@@ -27,13 +26,53 @@ class ResponsableLaboratoire extends Utilisateur
 
     public function setLaboratoire(?Laboratoire $laboratoire): self
     {
+        // Désassocier l'ancien laboratoire
+        if ($this->laboratoire !== null && $this->laboratoire->getResponsable() === $this) {
+            $this->laboratoire->setResponsable(null);
+        }
+
+        // Associer le nouveau laboratoire
         $this->laboratoire = $laboratoire;
+
+        if ($laboratoire !== null && $laboratoire->getResponsable() !== $this) {
+            $laboratoire->setResponsable($this);
+        }
+
         return $this;
     }
 
-    // Helper method to get the ID directly
+    /**
+     * Compatibilité avec l'ancien code utilisant laboratoireId
+     */
     public function getLaboratoireId(): ?int
     {
-        return $this->laboratoire?->getId();
+        return $this->laboratoire ? $this->laboratoire->getId() : null;
+    }
+
+    // COMBINED: Keep YOUR setLaboratoireId but make it update both
+    public function setLaboratoireId(?int $laboratoireId): self
+    {
+        // Déprécié mais gardé pour compatibilité avec SignupController
+        return $this;
+    }
+
+    public function getNomLaboratoire(): ?string
+    {
+        return $this->laboratoire ? $this->laboratoire->getNom() : null;
+    }
+
+    public function getAdresseLaboratoire(): ?string
+    {
+        return $this->laboratoire ? $this->laboratoire->getAdresseComplete() : null;
+    }
+
+    public function getTelephoneLaboratoire(): ?string
+    {
+        return $this->laboratoire ? $this->laboratoire->getTelephone() : null;
+    }
+
+    public function hasLaboratoire(): bool
+    {
+        return $this->laboratoire !== null;
     }
 }

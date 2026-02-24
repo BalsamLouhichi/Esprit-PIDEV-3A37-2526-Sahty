@@ -2,46 +2,304 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>SAHTY - Connexion</title>
+    <title>SAHTY - Connexion sécurisée</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- CSS -->
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        body { background:#f8f9fa; font-family:'Roboto',sans-serif; }
-        .login-container { padding: 80px 0; display:flex; justify-content:center; }
-        .login-card { background:#fff; padding:40px; border-radius:10px; width:100%; max-width:500px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-        .login-header { text-align:center; margin-bottom:30px; }
-        .login-header .login-icon { font-size:50px; color:#0d6efd; margin-bottom:15px; }
-        .login-header h1 { font-size:28px; margin-bottom:5px; }
-        .login-header p { color:#6c757d; margin-bottom:15px; }
-        .role-tags { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:15px; }
-        .role-tag { background:#e9ecef; padding:5px 10px; border-radius:20px; font-size:0.85rem; display:flex; align-items:center; gap:5px; }
-        .login-body { margin-top:20px; }
-        .form-group { margin-bottom:20px; position:relative; }
-        .form-group label { font-weight:500; }
-        .form-control { border-radius:50px; padding:10px 20px; }
-        .input-group-custom { position:relative; }
-        .input-group-custom .input-icon { position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#0d6efd; }
-        .input-group-custom input { padding-left:40px; }
-        .password-toggle { position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; color:#0d6efd; cursor:pointer; }
-        .btn-login { width:100%; padding:10px; border-radius:50px; background:#0d6efd; color:#fff; font-weight:500; display:flex; justify-content:center; align-items:center; gap:5px; border:none; }
-        .btn-login:hover { background:#0b5ed7; }
-        .register-link-container { text-align:center; margin-top:15px; }
-        .register-link { color:#0d6efd; text-decoration:none; font-weight:500; }
-        .register-link:hover { text-decoration:underline; }
+        :root {
+            --primary: #1D5D9B;
+            --primary-dark: #163A5F;
+            --secondary: #304D30;
+            --accent: #75C2F6;
+            --light: #F4F6FF;
+            --dark: #1A2332;
+        }
+
+        body { 
+            background: linear-gradient(135deg, var(--light) 0%, #ffffff 100%);
+            font-family: 'Inter', 'Roboto', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Login Container */
+        .login-container { 
+            padding: 80px 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: calc(100vh - 200px);
+        }
+
+        .login-card { 
+            background: #fff; 
+            padding: 50px; 
+            border-radius: 30px; 
+            width: 100%; 
+            max-width: 550px; 
+            box-shadow: 0 25px 60px rgba(29, 93, 155, 0.15);
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .login-card:hover {
+            box-shadow: 0 30px 70px rgba(29, 93, 155, 0.2);
+        }
+
+        .login-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+
+        .login-icon { 
+            font-size: 60px; 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px; 
+        }
+
+        .login-header h1 { 
+            font-size: 2.2rem; 
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px; 
+        }
+
+        .login-header p { 
+            color: #6c757d; 
+            margin-bottom: 20px; 
+        }
+
+        /* Role Tags - De MEDINOVA */
+        .role-tags { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            margin-top: 15px; 
+        }
+
+        .role-tag { 
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(117, 194, 246, 0.1) 100%);
+            padding: 8px 15px; 
+            border-radius: 25px; 
+            font-size: 0.9rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            color: var(--primary);
+            border: 1px solid rgba(117, 194, 246, 0.3);
+            font-weight: 500;
+        }
+
+        .role-tag i {
+            color: var(--primary);
+        }
+
+        /* Formulaire */
+        .login-body { 
+            margin-top: 20px; 
+        }
+
+        .form-group { 
+            margin-bottom: 25px; 
+            position: relative; 
+        }
+
+        .form-group label { 
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-group label i {
+            color: var(--primary);
+            margin-right: 8px;
+        }
+
+        .input-group-custom { 
+            position: relative; 
+        }
+
+        .input-group-custom .input-icon { 
+            position: absolute; 
+            left: 15px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: var(--primary);
+            z-index: 10;
+        }
+
+        .input-group-custom input { 
+            padding-left: 45px; 
+            height: 52px;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .input-group-custom input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(29, 93, 155, 0.1);
+            outline: none;
+        }
+
+        .password-toggle { 
+            position: absolute; 
+            right: 15px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: none; 
+            border: none; 
+            color: var(--primary); 
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Bouton de connexion */
+        .btn-login { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 50px; 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff; 
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            border: none; 
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: 0 8px 25px rgba(29, 93, 155, 0.3);
+        }
+
+        .btn-login:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(29, 93, 155, 0.4);
+        }
+
+        /* Lien mot de passe oublié - DEHORS DU FORMULAIRE (Balsam) */
+        .forgot-password-container { 
+            text-align: center; 
+            margin: 20px 0; 
+        }
+
+        .forgot-password-link { 
+            color: var(--primary); 
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 25px;
+            background: var(--light);
+            border-radius: 25px;
+            border: 2px solid rgba(117, 194, 246, 0.2);
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .forgot-password-link:hover { 
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(29, 93, 155, 0.2);
+            border-color: var(--primary);
+        }
+
+        .forgot-password-link i {
+            transition: transform 0.3s ease;
+        }
+
+        .forgot-password-link:hover i {
+            transform: translateX(-3px);
+        }
+
+        /* Checkbox "Se souvenir de moi" */
+        .form-check {
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(117, 194, 246, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            color: var(--dark);
+            cursor: pointer;
+        }
 
         /* Boutons de connexion sociale */
-        .social-login { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
-        .btn-google, .btn-apple {
-            display:flex; align-items:center; justify-content:center; gap:10px; padding:10px; border-radius:50px; font-weight:500; border:none; cursor:pointer; width:100%;
-            font-size:0.95rem;
+        .social-login { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            margin: 25px 0 15px; 
         }
-        .btn-google { background:#DB4437; color:#fff; }
-        .btn-google:hover { background:#c33d2f; }
-        .btn-apple { background:#000; color:#fff; }
-        .btn-apple:hover { background:#333; }
+
+        .btn-google, .btn-apple {
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            padding: 14px; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-google { 
+            background: #DB4437; 
+            color: #fff; 
+        }
+
+        .btn-google:hover { 
+            background: #c33d2f; 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(219, 68, 55, 0.3);
+        }
+
+        .btn-apple { 
+            background: #000; 
+            color: #fff; 
+        }
+
+        .btn-apple:hover { 
+            background: #333; 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
 
         /* Lien mot de passe oublié - MODIFIÉ */
         .forgot-password-container { 
@@ -81,8 +339,9 @@
             <div class="login-header">
                 <div class="login-icon"><i class="fas fa-lock"></i></div>
                 <h1>Connexion sécurisée</h1>
-                <p>Accédez à votre espace personnel</p>
+                <p>Accédez à votre espace personnel SAHTY</p>
 
+                <!-- Role Tags - De MEDINOVA -->
                 <div class="role-tags">
                     <span class="role-tag"><i class="fas fa-user-injured"></i> Patient</span>
                     <span class="role-tag"><i class="fas fa-user-md"></i> Médecin</span>
@@ -117,7 +376,9 @@
                 <form method="post" action="{{ path('app_login') }}" id="loginForm">
                     {# Protection CSRF #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-                    <input type="hidden" name="g-recaptcha-response" id="recaptcha_token_login">
+                    {% if recaptcha_enabled and recaptcha_site_key %}
+                        <input type="hidden" name="g-recaptcha-response" id="recaptchaResponse">
+                    {% endif %}
 
                     <div class="form-group">
                         <label for="inputEmail"><i class="fas fa-envelope"></i> Adresse email</label>
@@ -130,7 +391,7 @@
                                    autofocus 
                                    class="form-control" 
                                    id="inputEmail" 
-                                   placeholder="exemple@medinova.com">
+                                   placeholder="exemple@sahty.tn">
                         </div>
                     </div>
 
@@ -150,20 +411,8 @@
                         </div>
                     </div>
 
-
-                   
-                </form>
-
                     <!-- REMARQUE: Le lien "Mot de passe oublié" est maintenant EN DEHORS du formulaire -->
                 </form>
-
-                <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
-               
-
-               
-
-              
-
 
                 <!-- LIEN "MOT DE PASSE OUBLIÉ" - EN DEHORS DU FORMULAIRE -->
                 <div class="forgot-password-container">
@@ -188,13 +437,12 @@
                     <label class="form-check-label" for="remember">Se souvenir de moi</label>
                 </div>
 
-                {# Boutons de connexion sociale #}
-                
-
+                <!-- Boutons de connexion sociale (MEDINOVA) -->
                 <div class="social-login">
                     <a href="{{ path('connect_google') }}" class="btn-google">
-                        <i class="fab fa-google"></i> Connexion avec Google
+                        <i class="fab fa-google"></i> Se connecter avec Google
                     </a>
+                    <button type="button" class="btn-apple"><i class="fab fa-apple"></i> Se connecter avec Apple</button>
                 </div>
 
                 <div class="register-link-container">
@@ -207,7 +455,6 @@
         </div>
     </div>
 
-    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Afficher/Masquer le mot de passe
@@ -228,7 +475,35 @@
             });
         }
 
-        // Animation d'entrée
+        // S'assurer que le lien "mot de passe oublié" fonctionne
+        const forgotLink = document.getElementById('forgotPasswordLink');
+        if (forgotLink) {
+            forgotLink.addEventListener('click', function(e) {
+                console.log('Redirection vers la page de récupération de mot de passe');
+                // La navigation se fera normalement via l'attribut href
+            });
+        }
+
+        // Prévenir toute soumission accidentelle du formulaire par Enter
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                    e.preventDefault();
+                    document.querySelector('button[form="loginForm"]').click();
+                }
+            });
+
+            // Trim email on submit
+            loginForm.addEventListener('submit', function(e) {
+                const emailInput = document.querySelector('input[name="_username"]');
+                if (emailInput) {
+                    emailInput.value = emailInput.value.trim();
+                }
+            });
+        }
+
+        // Animation supplémentaire
         document.addEventListener('DOMContentLoaded', function() {
             const loginCard = document.querySelector('.login-card');
             loginCard.style.opacity = '0';
@@ -254,38 +529,52 @@
                 document.querySelector('button[form="loginForm"]').click();
             }
         });
-
-        // reCAPTCHA v3
-        (function() {
-            const form = document.getElementById('loginForm');
-            const tokenInput = document.getElementById('recaptcha_token_login');
-
-            if (!form || !tokenInput) {
-                return;
-            }
-
-            form.addEventListener('submit', function(e) {
-                if (tokenInput.value) {
+    </script>
+    {% if recaptcha_enabled and recaptcha_site_key %}
+        <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
+        <script>
+            (function () {
+                const loginForm = document.getElementById('loginForm');
+                const recaptchaInput = document.getElementById('recaptchaResponse');
+                if (!loginForm || !recaptchaInput || typeof grecaptcha === 'undefined') {
                     return;
                 }
 
-                e.preventDefault();
+                const siteKey = '{{ recaptcha_site_key|e('js') }}';
+                const action = 'login';
 
-                if (typeof grecaptcha === 'undefined') {
-                    alert('reCAPTCHA indisponible. Veuillez reessayer.');
-                    return;
-                }
+                const executeRecaptcha = function (callback) {
+                    grecaptcha.execute(siteKey, { action: action }).then(function (token) {
+                        recaptchaInput.value = token;
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                    }).catch(function () {
+                        recaptchaInput.value = '';
+                    });
+                };
 
-                grecaptcha.ready(function() {
-                    grecaptcha.execute('{{ recaptcha_site_key }}', { action: 'login' }).then(function(token) {
-                        tokenInput.value = token;
-                        form.submit();
-                    }).catch(function() {
-                        alert('reCAPTCHA a echoue. Veuillez reessayer.');
+                grecaptcha.ready(function () {
+                    executeRecaptcha();
+                });
+
+                loginForm.addEventListener('submit', function (event) {
+                    if (recaptchaInput.value) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    if (loginForm.dataset.recaptchaSubmitting === '1') {
+                        return;
+                    }
+
+                    loginForm.dataset.recaptchaSubmitting = '1';
+                    executeRecaptcha(function () {
+                        loginForm.submit();
                     });
                 });
-            });
-        })();
-    </script>
+            })();
+        </script>
+    {% endif %}
 </body>
 </html>

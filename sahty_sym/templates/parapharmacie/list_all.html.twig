@@ -1,14 +1,14 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}Toutes les parapharmacies et tous les produits{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* Couleurs principales - Cyan #0dcaf0 */
+        /* Couleurs harmonisees avec la navbar Medinova */
         :root {
-            --primary-color: #0dcaf0; /* Cyan au lieu du bleu Bootstrap */
-            --primary-hover: #0ba8cc;
+            --primary-color: var(--primary);
+            --primary-hover: var(--primary-dark);
             --secondary-color: #6c757d;
             --light-bg: #f8f9fa;
         }
@@ -58,7 +58,7 @@
         .search-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.1);
+            box-shadow: 0 0 0 3px rgba(29, 93, 155, 0.15);
         }
         
         .search-button {
@@ -90,6 +90,19 @@
             color: #666;
             font-size: 14px;
         }
+
+        .btn-semantic {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .btn-semantic:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: #fff;
+        }
         
         .no-results {
             text-align: center;
@@ -97,7 +110,7 @@
             color: #888;
         }
         
-        /* Styles pour les produits améliorés */
+        /* Styles pour les produits amÃ©liorÃ©s */
         .products-container {
             margin-top: 3rem;
         }
@@ -129,7 +142,7 @@
         
         .product-card.highlight {
             border-color: var(--primary-color);
-            box-shadow: 0 0 25px rgba(13, 202, 240, 0.25);
+            box-shadow: 0 0 25px rgba(29, 93, 155, 0.22);
             animation: highlightPulse 1s ease-in-out;
         }
         
@@ -156,7 +169,7 @@
             font-size: 12px;
             font-weight: bold;
             z-index: 2;
-            box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
+            box-shadow: 0 2px 8px rgba(29, 93, 155, 0.28);
         }
         
         .product-price {
@@ -263,6 +276,7 @@
             margin-top: auto;
             display: flex;
             gap: 10px;
+            align-items: stretch;
         }
         
         .btn-description {
@@ -285,30 +299,49 @@
         .btn-description:hover {
             background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);
+            box-shadow: 0 4px 12px rgba(29, 93, 155, 0.3);
         }
         
         .btn-add-to-cart {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #2ebf63 0%, #239b56 100%);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 10px 16px;
+            border-radius: 10px;
             font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 7px;
             flex: 1;
+            min-height: 40px;
+            box-shadow: 0 8px 16px rgba(35, 155, 86, 0.28);
         }
         
         .btn-add-to-cart:hover {
-            background: #218838;
+            filter: brightness(1.05);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 12px 22px rgba(35, 155, 86, 0.38);
+        }
+
+        .btn-add-to-cart:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 14px rgba(35, 155, 86, 0.28);
+        }
+
+        .btn-add-to-cart i {
+            font-size: 14px;
+        }
+
+        .btn-add-to-cart:disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+            transform: none;
+            box-shadow: 0 6px 12px rgba(35, 155, 86, 0.2);
         }
         
         .product-tags {
@@ -319,16 +352,16 @@
         }
         
         .product-tag {
-            background: rgba(13, 202, 240, 0.1);
+            background: rgba(29, 93, 155, 0.1);
             color: var(--primary-color);
             padding: 4px 10px;
             border-radius: 15px;
             font-size: 10px;
             font-weight: 600;
-            border: 1px solid rgba(13, 202, 240, 0.2);
+            border: 1px solid rgba(29, 93, 155, 0.2);
         }
         
-        /* Styles carrousel pharmacies amélioré */
+        /* Styles carrousel pharmacies amÃ©liorÃ© */
         .pharmacies-section {
             position: relative;
             overflow: hidden;
@@ -337,7 +370,7 @@
         
         .pharmacies-scroll-container {
             position: relative;
-            padding: 20px 50px; /* Augmenté pour laisser de la place aux flèches */
+            padding: 20px 50px; /* AugmentÃ© pour laisser de la place aux flÃ¨ches */
         }
         
         .pharmacies-scroll-wrapper {
@@ -381,6 +414,8 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             position: relative;
             overflow: hidden;
+            text-decoration: none;
+            color: inherit;
         }
         
         .pharmacy-item::before {
@@ -390,12 +425,12 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), #0ba8cc);
+            background: linear-gradient(90deg, var(--primary-color), var(--accent));
         }
         
         .pharmacy-item:hover {
             transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(13, 202, 240, 0.2);
+            box-shadow: 0 15px 35px rgba(29, 93, 155, 0.2);
             border-color: var(--primary-color);
         }
         
@@ -485,7 +520,7 @@
             border-color: var(--primary-color) !important;
         }
         
-        /* Mettre à jour la couleur du navbar pour qu'il utilise aussi le cyan */
+        /* Mettre Ã  jour la couleur du navbar pour qu'il utilise aussi le cyan */
         .navbar-brand .text-primary,
         .nav-link:hover,
         .nav-link.active {
@@ -598,7 +633,7 @@
             }
         }
         
-        /* Responsive pour les petits écrans */
+        /* Responsive pour les petits Ã©crans */
         @media (max-width: 576px) {
             .pharmacy-item {
                 width: 220px;
@@ -630,17 +665,88 @@
             }
         }
 
-        /* Styles pour les flèches - Toujours visibles */
+        /* Styles pour les flÃ¨ches - Toujours visibles */
         .scroll-btn {
-            display: flex !important; /* Force l'affichage des flèches */
+            display: flex !important; /* Force l'affichage des flÃ¨ches */
         }
         
-        /* Amélioration du conteneur pour que les flèches ne soient pas coupées */
+        /* AmÃ©lioration du conteneur pour que les flÃ¨ches ne soient pas coupÃ©es */
         .pharmacies-scroll-container {
-            padding: 20px 60px; /* Plus d'espace pour les flèches */
+            padding: 20px 60px; /* Plus d'espace pour les flÃ¨ches */
+        }
+    
+        .floating-cart-btn {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 24px rgba(33, 136, 56, 0.35);
+            z-index: 1200;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .floating-cart-btn:hover {
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 14px 28px rgba(33, 136, 56, 0.45);
+        }
+
+        .floating-cart-btn i {
+            font-size: 24px;
+        }
+
+        .cart-count-badge {
+            position: absolute;
+            top: -6px;
+            right: -4px;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #b8b3db;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+        }
+
+        .cart-notification {
+            position: fixed;
+            right: 20px;
+            bottom: 96px;
+            z-index: 1400;
+            background: #1d5d9b;
+            color: #fff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cart-notification.show {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 {% endblock %}
+
+
 
 {% block body %}
 
@@ -650,7 +756,7 @@
     <div class="container">
         <div class="text-center mx-auto mb-5" style="max-width: 600px;">
             <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">Parapharmacies</h5>
-            <h1 class="display-6 mt-3">Les Parapharmacies les Plus Célèbres</h1>
+            <h1 class="display-6 mt-3">Les parapharmacies les plus célèbres</h1>
             <p class="mb-4 fs-5">Découvrez les parapharmacies les plus réputées et appréciées par nos patients.</p>
         </div>
         
@@ -661,13 +767,13 @@
             
             <div class="pharmacies-scroll-wrapper" id="pharmaciesScroll">
                 {% for para in parapharmacies %}
-                <div class="pharmacy-item">
+                <a href="{{ path('app_parapharmacie_details', {'id': para.id}) }}" class="pharmacy-item" title="Voir détails {{ para.nom }}">
                     <h5>{{ para.nom }}</h5>
                     <p class="specialite">
                         {% if para.specialite is defined and para.specialite %}
                             {{ para.specialite }}
                         {% else %}
-                            Parapharmacie générale
+                           Parapharmacie générale
                         {% endif %}
                     </p>
                     <div class="location">
@@ -681,7 +787,7 @@
                         </small>
                     </div>
                     {% endif %}
-                </div>
+                </a>
                 {% endfor %}
             </div>
             
@@ -703,17 +809,22 @@
     <div class="container">
         <div class="search-container">
             <h3 class="text-center mb-4">Rechercher un Produit</h3>
+            <div class="text-center mb-3">
+                <a href="{{ path('app_recherche_produits') }}" class="btn btn-semantic">
+                    <i class="fas fa-brain me-1"></i> Aller a la recherche semantique
+                </a>
+            </div>
             <div class="search-box">
                 <input type="text" 
                        class="search-input" 
                        id="productSearch" 
-                       placeholder="Rechercher par nom, marque ou catégorie... (ex: valériane, sommeil, hydratation)">
+                       placeholder="Rechercher par nom, marque ou catégorie... ">
                 <button class="search-button" id="searchButton">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
             <div class="search-results-info" id="searchResultsInfo">
-                <span id="resultsCount">{{ produits|length }} produits trouvés</span>
+               
             </div>
         </div>
     </div>
@@ -725,8 +836,8 @@
     <div class="container">
         <div class="products-header">
             <h5 class="d-inline-block text-primary text-uppercase border-bottom border-5">Nouveautés</h5>
-            <h1 class="display-6 mt-3">Produits Recommandés</h1>
-            <p class="mb-0 fs-5">Découvrez nos meilleures offres et produits populaires</p>
+            <h1 class="display-6 mt-3">Produits recommandés</h1>
+            <p class="mb-0 fs-5">Découvrez nos meilleures offres et produits populaires.</p>
         </div>
         
         <div class="row" id="productsContainer">
@@ -743,8 +854,6 @@
                     {% elseif prod.estPopulaire is defined and prod.estPopulaire %}
                     <div class="product-badge">POPULAIRE</div>
                     {% endif %}
-                    
-                    <div class="product-price">{{ prod.prix }} €</div>
                     
                     <div class="product-image">
                         {% if prod.image is defined and prod.image %}
@@ -783,6 +892,21 @@
                                 <i class="fas fa-info-circle"></i>
                                 <span>Description</span>
                             </a>
+                            {% set firstParapharmacie = prod.parapharmacies|first %}
+                            <form method="post"
+                                  action="{{ path('app_panier_ajouter', {'id': prod.id}) }}"
+                                  class="js-add-to-cart"
+                                  data-product-name="{{ prod.nom|e('html_attr') }}"
+                                  style="flex: 1;">
+                                <input type="hidden" name="quantite" value="1">
+                                {% if firstParapharmacie %}
+                                    <input type="hidden" name="pharmacie" value="{{ firstParapharmacie.id }}">
+                                {% endif %}
+                                <button type="submit" class="btn-add-to-cart w-100" title="Ajouter au panier">
+                                    <i class="fas fa-cart-plus"></i>
+                                    <span>Ajouter</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -792,21 +916,31 @@
                 <div class="no-results">
                     <i class="fas fa-box-open fa-3x mb-3" style="color: #ccc;"></i>
                     <h4>Aucun produit disponible</h4>
-                    <p>Les produits seront bientôt ajoutés</p>
+                    <p>Les produits seront bientÃ´t ajoutÃ©s</p>
                 </div>
             </div>
             {% endfor %}
         </div>
         
-        <!-- Message aucun résultat -->
+        <!-- Message aucun rÃ©sultat -->
         <div class="no-results" id="noResultsMessage" style="display: none;">
             <i class="fas fa-search fa-3x mb-3" style="color: #ccc;"></i>
-            <h4>Aucun produit trouvé</h4>
+            <h4>Aucun produit trouvÃ©</h4>
             <p>Essayez avec d'autres termes de recherche comme "sommeil", "vitamines" ou "soin"</p>
         </div>
     </div>
 </div>
 <!-- Products Section End -->
+
+{% set cartCount = 0 %}
+{% for cartItem in app.session.get('panier', []) %}
+    {% set cartCount = cartCount + (cartItem.quantite ?? 1) %}
+{% endfor %}
+<a href="{{ path('app_panier') }}" class="floating-cart-btn" title="Voir le panier" aria-label="Voir le panier">
+    <i class="bi bi-cart-plus"></i>
+    <span class="cart-count-badge" id="cartCountBadge">{{ cartCount }}</span>
+</a>
+<div class="cart-notification" id="cartNotification"></div>
 {% endblock %}
 
 {% block javascripts %}
@@ -817,8 +951,80 @@
         $(document).ready(function(){
             // Initialiser le compteur de produits
             const totalProducts = {{ produits|length }};
-            $('#resultsCount').text(`${totalProducts} produit${totalProducts !== 1 ? 's' : ''} trouvé${totalProducts !== 1 ? 's' : ''}`);
-            
+            $('#resultsCount').text(`${totalProducts} produit${totalProducts !== 1 ? 's' : ''} trouvÃ©${totalProducts !== 1 ? 's' : ''}`);
+
+            const cartBadge = document.getElementById('cartCountBadge');
+            const cartNotification = document.getElementById('cartNotification');
+            let notificationTimeout = null;
+
+            function showCartNotification(message) {
+                if (!cartNotification) {
+                    return;
+                }
+
+                cartNotification.textContent = message;
+                cartNotification.classList.add('show');
+
+                if (notificationTimeout) {
+                    clearTimeout(notificationTimeout);
+                }
+
+                notificationTimeout = setTimeout(() => {
+                    cartNotification.classList.remove('show');
+                }, 1800);
+            }
+
+            // Ajout au panier en AJAX avec notification
+            document.querySelectorAll('.js-add-to-cart').forEach((form) => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const formData = new FormData(form);
+                    const productName = form.dataset.productName || 'Produit';
+                    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Ajout...</span>';
+                    }
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            },
+                            body: new URLSearchParams(formData)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Erreur HTTP');
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            if (cartBadge && typeof data.cartCount !== 'undefined') {
+                                cartBadge.textContent = data.cartCount;
+                            }
+                            showCartNotification(`${productName} ajoute au panier`);
+                        } else {
+                            showCartNotification('Impossible d\'ajouter au panier');
+                        }
+                    } catch (error) {
+                        showCartNotification('Erreur lors de l\'ajout au panier');
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnHtml;
+                        }
+                    }
+                });
+            });
+             
             // Animation des produits
             $('.product-item').each(function(index) {
                 $(this).css('animation-delay', (index * 0.1) + 's');
@@ -851,10 +1057,10 @@
                     }
                 });
                 
-                // Mettre à jour le compteur de résultats
-                $('#resultsCount').text(`${visibleCount} produit${visibleCount !== 1 ? 's' : ''} trouvé${visibleCount !== 1 ? 's' : ''}`);
+                // Mettre Ã  jour le compteur de rÃ©sultats
+                $('#resultsCount').text(`${visibleCount} produit${visibleCount !== 1 ? 's' : ''} trouvÃ©${visibleCount !== 1 ? 's' : ''}`);
                 
-                // Afficher/masquer le message "aucun résultat"
+                // Afficher/masquer le message "aucun rÃ©sultat"
                 if (visibleCount === 0 && searchTerm !== '') {
                     $('#noResultsMessage').show();
                 } else {
@@ -862,7 +1068,7 @@
                 }
             }
             
-            // Recherche en temps réel
+            // Recherche en temps rÃ©el
             $('#productSearch').on('input', function() {
                 searchProducts();
             });
@@ -872,7 +1078,7 @@
                 searchProducts();
             });
             
-            // Recherche avec la touche Entrée
+            // Recherche avec la touche EntrÃ©e
             $('#productSearch').keypress(function(e) {
                 if (e.which === 13) {
                     searchProducts();
@@ -891,14 +1097,14 @@
             const scrollRightBtn = document.getElementById('scrollRight');
             const scrollAmount = 300;
             
-            // Vérifier si les éléments existent
+            // VÃ©rifier si les Ã©lÃ©ments existent
             if (scrollWrapper && scrollLeftBtn && scrollRightBtn) {
                 
-                // Fonction pour vérifier et mettre à jour l'état des boutons
+                // Fonction pour vÃ©rifier et mettre Ã  jour l'Ã©tat des boutons
                 function updateScrollButtons() {
                     const maxScrollLeft = scrollWrapper.scrollWidth - scrollWrapper.clientWidth;
                     
-                    // Bouton gauche - désactivé si au début
+                    // Bouton gauche - dÃ©sactivÃ© si au dÃ©but
                     if (scrollWrapper.scrollLeft <= 5) {
                         scrollLeftBtn.disabled = true;
                         scrollLeftBtn.style.opacity = '0.5';
@@ -907,7 +1113,7 @@
                         scrollLeftBtn.style.opacity = '1';
                     }
                     
-                    // Bouton droit - désactivé si à la fin
+                    // Bouton droit - dÃ©sactivÃ© si Ã  la fin
                     if (scrollWrapper.scrollLeft >= maxScrollLeft - 5) {
                         scrollRightBtn.disabled = true;
                         scrollRightBtn.style.opacity = '0.5';
@@ -916,7 +1122,7 @@
                         scrollRightBtn.style.opacity = '1';
                     }
                     
-                    // Cacher complètement les boutons si pas assez d'éléments
+                    // Cacher complÃ¨tement les boutons si pas assez d'Ã©lÃ©ments
                     if (scrollWrapper.scrollWidth <= scrollWrapper.clientWidth) {
                         scrollLeftBtn.style.display = 'none';
                         scrollRightBtn.style.display = 'none';
@@ -944,18 +1150,18 @@
                     setTimeout(updateScrollButtons, 300);
                 });
                 
-                // Mettre à jour les boutons lors du scroll
+                // Mettre Ã  jour les boutons lors du scroll
                 scrollWrapper.addEventListener('scroll', updateScrollButtons);
                 
-                // Mettre à jour les boutons au redimensionnement de la fenêtre
+                // Mettre Ã  jour les boutons au redimensionnement de la fenÃªtre
                 window.addEventListener('resize', updateScrollButtons);
                 
-                // Initialiser l'état des boutons
+                // Initialiser l'Ã©tat des boutons
                 setTimeout(updateScrollButtons, 100);
                 
                 // Navigation au clavier
                 document.addEventListener('keydown', (e) => {
-                    // Vérifier que l'utilisateur n'est pas en train de taper dans un champ de recherche
+                    // VÃ©rifier que l'utilisateur n'est pas en train de taper dans un champ de recherche
                     if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                         if (e.key === 'ArrowLeft') {
                             e.preventDefault();
@@ -967,8 +1173,9 @@
                     }
                 });
             } else {
-                console.log('Éléments de scroll non trouvés');
+                console.log('Ã‰lÃ©ments de scroll non trouvÃ©s');
             }
         });
     </script>
 {% endblock %}
+

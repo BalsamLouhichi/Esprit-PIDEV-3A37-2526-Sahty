@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\CommandeRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 class Commande
@@ -58,25 +60,17 @@ class Commande
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateModification = null;
 
-    #[ORM\Column(length: 30, options: ['default' => 'cash_on_delivery'])]
-    private string $modePaiement = 'cash_on_delivery';
-
-    #[ORM\Column(length: 30, options: ['default' => 'not_required'])]
-    private string $paymentStatus = 'not_required';
-
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $paymentProvider = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $paymentReference = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $paymentUrl = null;
+    /**
+     * @var Collection<int, LigneCommande>
+     */
+    #[ORM\OneToMany(mappedBy: 'commande', targetEntity: LigneCommande::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $lignesCommandes;
 
     public function __construct()
     {
         $this->dateCreation = new \DateTime();
         $this->numero = $this->generateNumero();
+        $this->lignesCommandes = new ArrayCollection();
     }
 
     private function generateNumero(): string
@@ -245,58 +239,30 @@ class Commande
         return $this;
     }
 
-    public function getModePaiement(): string
+    /**
+     * @return Collection<int, LigneCommande>
+     */
+    public function getLignesCommandes(): Collection
     {
-        return $this->modePaiement;
+        return $this->lignesCommandes;
     }
 
-    public function setModePaiement(string $modePaiement): self
+    public function addLignesCommande(LigneCommande $ligneCommande): self
     {
-        $this->modePaiement = $modePaiement;
+        if (!$this->lignesCommandes->contains($ligneCommande)) {
+            $this->lignesCommandes->add($ligneCommande);
+            $ligneCommande->setCommande($this);
+        }
         return $this;
     }
 
-    public function getPaymentStatus(): string
+    public function removeLignesCommande(LigneCommande $ligneCommande): self
     {
-        return $this->paymentStatus;
-    }
-
-    public function setPaymentStatus(string $paymentStatus): self
-    {
-        $this->paymentStatus = $paymentStatus;
-        return $this;
-    }
-
-    public function getPaymentProvider(): ?string
-    {
-        return $this->paymentProvider;
-    }
-
-    public function setPaymentProvider(?string $paymentProvider): self
-    {
-        $this->paymentProvider = $paymentProvider;
-        return $this;
-    }
-
-    public function getPaymentReference(): ?string
-    {
-        return $this->paymentReference;
-    }
-
-    public function setPaymentReference(?string $paymentReference): self
-    {
-        $this->paymentReference = $paymentReference;
-        return $this;
-    }
-
-    public function getPaymentUrl(): ?string
-    {
-        return $this->paymentUrl;
-    }
-
-    public function setPaymentUrl(?string $paymentUrl): self
-    {
-        $this->paymentUrl = $paymentUrl;
+        if ($this->lignesCommandes->removeElement($ligneCommande)) {
+            if ($ligneCommande->getCommande() === $this) {
+                $ligneCommande->setCommande(null);
+            }
+        }
         return $this;
     }
 
@@ -312,6 +278,7 @@ class Commande
     {
         $statuts = [
             'en_attente' => 'En attente',
+            'en_attente_paiement' => 'En attente de paiement',
             'confirmee' => 'Confirmée',
             'en_preparation' => 'En préparation',
             'pret' => 'Prête à être récupérée',
@@ -326,6 +293,7 @@ class Commande
     {
         $couleurs = [
             'en_attente' => 'warning',
+            'en_attente_paiement' => 'warning',
             'confirmee' => 'primary',
             'en_preparation' => 'info',
             'pret' => 'success',
@@ -334,5 +302,34 @@ class Commande
         ];
 
         return $couleurs[$this->statut] ?? 'secondary';
+    }
+
+    /**
+     * Obtenir le nombre total d'articles dans la commande
+     */
+    public function getNombreTotalArticles(): int
+    {
+        $total = 0;
+        foreach ($this->lignesCommandes as $ligne) {
+            $total += $ligne->getQuantite();
+        }
+        return $total;
+    }
+
+    /**
+     * Obtenir le détail des articles pour l'affichage
+     */
+    public function getDetailsArticles(): array
+    {
+        $details = [];
+        foreach ($this->lignesCommandes as $ligne) {
+            $details[] = [
+                'produit' => $ligne->getProduit()->getNom(),
+                'quantite' => $ligne->getQuantite(),
+                'prix_unitaire' => $ligne->getPrixUnitaire(),
+                'sous_total' => $ligne->getSousTotal()
+            ];
+        }
+        return $details;
     }
 }

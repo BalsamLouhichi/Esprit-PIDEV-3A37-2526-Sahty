@@ -166,7 +166,7 @@
 <body>
 
 {# Header #}
-{% include 'partials/navbar.html.twig' %}
+{% include 'partials/header.html.twig' %}
 
 <!-- Main Content -->
 <div class="container-fluid py-5">
@@ -182,10 +182,10 @@
                 <p class="text-muted mb-0">Gérez les groupes cibles pour vos événements</p>
             </div>
             <div class="col-md-4 d-flex align-items-center justify-content-end">
-                <a href="{{ path('evenements_evenement_add') }}" class="btn btn-outline-secondary me-2">
+                <a href="{{ path((referrer is defined and referrer == 'evenements_client_demande_evenement') ? 'evenements_client_demande_evenement' : 'evenements_evenement_add') }}" class="btn btn-outline-secondary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Retour aux événements
                 </a>
-                <a href="{{ path('groupe_cible_new') }}" class="btn btn-primary">
+                <a href="{{ path('groupe_cible_new', (referrer is defined and referrer) ? {'referrer': referrer, 'event_id': (event_id is defined ? event_id : null)} : {}) }}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i> Nouveau Groupe
                 </a>
             </div>
@@ -208,7 +208,7 @@
                     </div>
                     <h4 class="text-muted mb-3">Aucun groupe cible trouvé</h4>
                     <p class="text-muted mb-4">Commencez par créer votre premier groupe cible pour vos événements.</p>
-                    <a href="{{ path('groupe_cible_new') }}" class="btn btn-primary px-4">
+                    <a href="{{ path('groupe_cible_new', (referrer is defined and referrer) ? {'referrer': referrer, 'event_id': (event_id is defined ? event_id : null)} : {}) }}" class="btn btn-primary px-4">
                         <i class="fas fa-plus me-1"></i> Créer un groupe
                     </a>
                 </div>
@@ -246,13 +246,13 @@
                                     </td>
                                 {% endif %}
                                 <td class="text-end action-buttons">
-                                    <a href="{{ path('groupe_cible_edit', {'id': groupe.id}) }}" 
+                                    <a href="{{ path('groupe_cible_edit', {'id': groupe.id, 'referrer': (referrer is defined ? referrer : ''), 'event_id': (event_id is defined ? event_id : null)}) }}" 
                                        class="btn btn-sm btn-edit" 
                                        title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <form method="post" 
-                                          action="{{ path('groupe_cible_delete', {'id': groupe.id}) }}" 
+                                          action="{{ path('groupe_cible_delete', {'id': groupe.id, 'referrer': (referrer is defined ? referrer : ''), 'event_id': (event_id is defined ? event_id : null)}) }}" 
                                           class="d-inline"
                                           onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer le groupe « {{ groupe.nom }} » ? Cette action est irréversible.');">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ groupe.id) }}">
@@ -275,7 +275,7 @@
                         <i class="fas fa-info-circle me-1"></i>
                         Les groupes cibles sont utilisés pour segmenter les participants de vos événements.
                     </small>
-                    <a href="{{ path('groupe_cible_new') }}" class="btn btn-outline-primary btn-sm">
+                    <a href="{{ path('groupe_cible_new', (referrer is defined and referrer) ? {'referrer': referrer, 'event_id': (event_id is defined ? event_id : null)} : {}) }}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-plus me-1"></i> Ajouter un groupe
                     </a>
                 </div>

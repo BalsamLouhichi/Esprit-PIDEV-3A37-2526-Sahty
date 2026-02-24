@@ -16,6 +16,7 @@ class FastApiLabAiClient
         private readonly string $lang,
         private readonly string $model,
         private readonly bool $useOllama,
+        private readonly string $ollamaMode,
         private readonly int $timeout,
         private readonly ?string $apiKey = null
     ) {
@@ -34,32 +35,103 @@ class FastApiLabAiClient
             throw new \RuntimeException('FASTAPI_AI_ENDPOINT n\'est pas configure.');
         }
 
-        try {
-            return $this->sendAnalyzeRequest(
-                $filePath,
-                $originalFilename ?: basename($filePath),
-                $this->useOllama
+        $filename = $originalFilename ?: basename($filePath);
+        $useOllamaForRequest = $this->shouldUseOllamaForRequest();
+        $primaryTimeout = $this->resolveTimeoutSeconds($useOllamaForRequest);
+
+        $payload = $this->sendAnalyzeRequest(
+            $filePath,
+            $filename,
+            $useOllamaForRequest,
+            $primaryTimeout
+        );
+
+        if ($this->useOllama && !$useOllamaForRequest) {
+            $payload['_integration_warning'] = sprintf(
+                'Ollama enrichment skipped for latency stability (FASTAPI_AI_TIMEOUT=%ds).',
+                (int) $this->timeout
             );
-        } catch (\RuntimeException $firstError) {
-            // Fallback safety: if LLM path times out, retry with use_ollama=false
-            // to keep deterministic extraction working for email pipeline.
-            if ($this->useOllama && $this->looksLikeTimeout($firstError->getMessage())) {
-                $payload = $this->sendAnalyzeRequest(
-                    $filePath,
-                    $originalFilename ?: basename($filePath),
-                    false
-                );
-                $payload['_integration_warning'] = 'LLM timeout: fallback executed with use_ollama=false.';
-                return $payload;
-            }
-            throw $firstError;
         }
+
+        return $payload;
+    }
+
+    /**
+     * @param array<int,string> $metricNames
+     * @return array<string,string>
+     */
+    public function generateMetricGlossary(array $metricNames): array
+    {
+        if (!$this->endpoint) {
+            return [];
+        }
+
+        $cleanNames = array_values(array_unique(array_filter(array_map(
+            static fn (mixed $v): string => trim((string) $v),
+            $metricNames
+        ), static fn (string $v): bool => $v !== '')));
+
+        if ($cleanNames === []) {
+            return [];
+        }
+
+        $glossaryEndpoint = $this->resolveGlossaryEndpoint();
+        try {
+            $response = $this->httpClient->request('POST', $glossaryEndpoint, [
+                'headers' => array_filter([
+                    'Content-Type' => 'application/json',
+                    $this->apiKey ? ('X-API-Key: ' . $this->apiKey) : null,
+                ]),
+                'json' => [
+                    'metric_names' => $cleanNames,
+                    'model' => $this->model !== '' ? $this->model : null,
+                ],
+                'timeout' => $this->resolveTimeoutSeconds(true),
+                'max_duration' => $this->resolveTimeoutSeconds(true),
+            ]);
+        } catch (TransportExceptionInterface) {
+            return [];
+        }
+
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+            return [];
+        }
+
+        $payload = json_decode($response->getContent(false), true);
+        if (!is_array($payload)) {
+            return [];
+        }
+
+        $rawGlossary = $payload['metric_glossary'] ?? [];
+        if (!is_array($rawGlossary)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($rawGlossary as $name => $description) {
+            if (!is_string($name) || !is_scalar($description)) {
+                continue;
+            }
+            $metric = trim($name);
+            $text = trim((string) $description);
+            if ($metric === '' || $text === '') {
+                continue;
+            }
+            $result[$metric] = $text;
+        }
+
+        return $result;
     }
 
     /**
      * @return array<string,mixed>
      */
-    private function sendAnalyzeRequest(string $filePath, string $filename, bool $useOllama): array
+    private function sendAnalyzeRequest(
+        string $filePath,
+        string $filename,
+        bool $useOllama,
+        int $effectiveTimeout
+    ): array
     {
         $dataPart = DataPart::fromPath($filePath, $filename, 'application/pdf');
         $formData = new FormDataPart([
@@ -67,6 +139,7 @@ class FastApiLabAiClient
             'lang' => $this->lang,
             'model' => $this->model,
             'use_ollama' => $useOllama ? 'true' : 'false',
+            'ollama_mode' => $this->resolveOllamaModeForRequest($useOllama),
             'file' => $dataPart,
         ]);
 
@@ -74,8 +147,6 @@ class FastApiLabAiClient
         if ($this->apiKey) {
             $headers[] = 'X-API-Key: ' . $this->apiKey;
         }
-
-        $effectiveTimeout = $this->resolveTimeoutSeconds();
 
         try {
             $response = $this->httpClient->request('POST', $this->endpoint, [
@@ -108,23 +179,67 @@ class FastApiLabAiClient
         return $payload;
     }
 
-    private function looksLikeTimeout(string $message): bool
+    private function resolveTimeoutSeconds(bool $useOllama): int
     {
-        $m = strtolower($message);
-        return str_contains($m, 'timeout')
-            || str_contains($m, 'idle timeout')
-            || str_contains($m, 'timed out');
-    }
-
-    private function resolveTimeoutSeconds(): int
-    {
-        // Hard cap to prevent blocking upload requests too long.
-        // Keep it short: if IA is slow, request fails fast and app continues.
+        // Keep a protective cap but allow OCR/LLM workflows to finish on heavier PDFs.
         $configured = (int) $this->timeout;
         if ($configured <= 0) {
-            return 12;
+            return $useOllama ? 45 : 30;
         }
 
-        return max(5, min($configured, 15));
+        $bounded = max(10, min($configured, 300));
+        if ($useOllama) {
+            // LLM mode is significantly slower in local environments.
+            return max(30, $bounded);
+        }
+
+        return max(20, $bounded);
+    }
+
+    private function shouldUseOllamaForRequest(): bool
+    {
+        if (!$this->useOllama) {
+            return false;
+        }
+
+        // The local FastAPI endpoint can take around 90s when Ollama is unreachable.
+        // If the configured timeout is shorter, disable Ollama enrichment to avoid
+        // systematic client-side timeouts and "failed" statuses in the app.
+        $configured = (int) $this->timeout;
+        if ($configured > 0 && $configured < 90) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function resolveOllamaModeForRequest(bool $useOllama): string
+    {
+        if (!$useOllama) {
+            return 'off';
+        }
+
+        $mode = strtolower(trim($this->ollamaMode));
+        if ($mode === '') {
+            return 'glossary_only';
+        }
+
+        return $mode;
+    }
+
+    private function resolveGlossaryEndpoint(): string
+    {
+        $trimmed = trim($this->endpoint);
+        if ($trimmed === '') {
+            return '/api/metric-glossary';
+        }
+
+        $parts = parse_url($trimmed);
+        $path = (string) ($parts['path'] ?? '');
+        if ($path !== '' && str_ends_with($path, '/api/analyze')) {
+            return substr($trimmed, 0, -strlen('/api/analyze')) . '/api/metric-glossary';
+        }
+
+        return rtrim($trimmed, '/') . '/api/metric-glossary';
     }
 }

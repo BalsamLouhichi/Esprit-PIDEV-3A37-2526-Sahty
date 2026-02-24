@@ -6,27 +6,20 @@ use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'app_login')]
+    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         // ✅ Si l'utilisateur est déjà connecté
         if ($this->getUser()) {
-            // 🔐 Si c'est un administrateur, rediriger vers le dashboard admin
-            if ($this->isGranted('ROLE_ADMIN')) {
-                return $this->redirectToRoute('admin_index');
-            }
-
-            // ✅ Autres utilisateurs
-            return $this->redirectToRoute('app_profile');
             return $this->redirectToRoute('app_login_redirect');
         }
 
-        // Récupérer l'erreur de login s'il y en a une
+        // Get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
         $lastUsername = $authenticationUtils->getLastUsername();
 
@@ -36,11 +29,17 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/logout', name: 'app_logout')]
+    
+
+    
+
+    #[Route('/logout', name: 'app_logout', methods: ['GET'])]
     public function logout(): void
     {
         throw new \LogicException('This method is intercepted by the firewall.');
     }
+
+    // ========== NEW ROUTES FROM BALSAM ==========
 
     #[Route('/profile', name: 'app_profile')]
     public function profile(): Response
@@ -68,7 +67,7 @@ class SecurityController extends AbstractController
                 return $this->redirectToRoute('app_labo_new');
             }
 
-            return $this->redirectToRoute('app_demande_analyse_index');
+            return $this->redirectToRoute('app_responsable_labo_demandes');
         }
 
         // MODIFICATION : Redirection pour responsable parapharmacie
@@ -86,11 +85,11 @@ class SecurityController extends AbstractController
         }
 
         if ($this->isGranted('ROLE_MEDECIN')) {
-            return $this->redirectToRoute('app_demande_analyse_index');
+            return $this->redirectToRoute('home');
         }
 
         if ($this->isGranted('ROLE_PATIENT')) {
-            return $this->redirectToRoute('app_labo_index');
+            return $this->redirectToRoute('app_profile');
         }
 
         return $this->redirectToRoute('app_profile');

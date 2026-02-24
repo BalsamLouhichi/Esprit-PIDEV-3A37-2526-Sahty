@@ -1,72 +1,73 @@
 <?php
-// src/DataFixtures/TypeAnalyseFixtures.php
 
 namespace App\DataFixtures;
 
 use App\Entity\TypeAnalyse;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class TypeAnalyseFixtures extends Fixture implements FixtureGroupInterface
+class TypeAnalyseFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
         $dataset = [
             "Zoi Life" => [
-                ["Bilan du stress oxydant", "Évaluation du stress oxydatif - radicaux libres, antioxydants."],
-                ["Bilan cardiovasculaire", "Marqueurs cardiaques, profil lipidique complet (cholestérol, triglycérides)."],
-                ["Bilan nutritionnel", "Analyse des carences, vitamines, minéraux et oligo-éléments."],
-                ["Bilan physiologique et psychologique", "Biologie médicale associée à une anamnèse psychologique."],
-                ["Bilan hématologique et immunitaire", "Numération formule sanguine, exploration immunitaire."],
-                ["Bilan vitaminique", "Dosage des vitamines (D, B12, folates, B6...)."],
+                ["Bilan du stress oxydant", "Évaluation du stress oxydatif."],
+                ["Bilan cardiovasculaire", "Marqueurs cardio + lipides."],
+                ["Bilan nutritionnel", "Carences, vitamines, minéraux."],
+                ["Bilan physiologique et psychologique", "Biologie + anamnèse."],
+                ["Bilan hématologique et immunitaire", "NFS, immunité, etc."],
+                ["Bilan vitaminique", "Vitamine D, B12, folates..."],
             ],
             "Zoi Pulse" => [
-                ["Bilan inflammatoire et électrophorèse", "Marqueurs inflammatoires (CRP, VS) + électrophorèse des protéines."],
-                ["Bilan viral et bactérien", "Sérologies, PCR, dépistages infectieux (EBV, CMV, VIH, hépatites)."],
-                ["Bilan endocrinien", "Exploration hormonale (thyroïde, surrénales, hormones sexuelles)."],
-                ["Bilan hépatique", "Transaminases (ALAT/ASAT), Gamma-GT, phosphatases alcalines, bilirubine."],
-                ["Bilan rénal et urologique", "Créatinine, urée, acide urique, clairance."],
-                ["Bilan de l'équilibre hydrominéral", "Ionogramme sanguin (Na, K, Cl, Ca, Mg, P)."],
+                ["Bilan inflammatoire et électrophorèse", "Inflammation + protéines."],
+                ["Bilan viral et bactérien", "Dépistages infectieux."],
+                ["Bilan endocrinien", "Hormones, thyroïde..."],
+                ["Bilan hépatique", "ALAT/ASAT, GGT, bilirubine..."],
+                ["Bilan rénal et urologique", "Créatinine, urée..."],
+                ["Bilan de l'équilibre hydrominéral", "Na/K/Cl, etc."],
             ],
             "Métabolique" => [
-                ["Glycémie à jeun", "Mesure du glucose sanguin après 8h de jeûne."],
-                ["HbA1c", "Hémoglobine glyquée - moyenne de la glycémie sur 3 mois."],
-                ["Insulinémie", "Dosage de l'insuline à jeun - évaluation de l'insulinorésistance."],
+                ["Glycémie à jeun", "Suivi glycémie."],
+                ["HbA1c", "Moyenne glycémie 3 mois."],
+                ["Insulinémie", "Dosage insuline."],
             ],
             "Hématologie" => [
-                ["NFS", "Hémoglobine, hématies, leucocytes, plaquettes, VGM, CCMH."],
-                ["Ferritine", "Dosage des réserves en fer."],
-                ["CRP", "Protéine C réactive - marqueur de l'inflammation."],
-                ["Bilan martial complet", "Fer sérique, transferrine, coefficient de saturation."],
-            ],
-            "Biochimie générale" => [
-                ["Ionogramme sanguin", "Sodium, Potassium, Chlore, Calcium, Magnésium."],
-                ["Bilan lipidique", "Cholestérol total, HDL, LDL, triglycérides."],
-                ["Bilan pancréatique", "Lipase, amylase - exploration pancréatique."],
+                ["NFS", "Hémoglobine, GB, plaquettes."],
+                ["Ferritine", "Réserves en fer."],
+                ["CRP", "Inflammation."],
             ],
         ];
 
+        $repo = $manager->getRepository(TypeAnalyse::class);
+
         foreach ($dataset as $categorie => $items) {
             foreach ($items as [$nom, $description]) {
+
+                // ✅ évite doublons si tu relances fixtures
+                $existing = $repo->findOneBy(['nom' => $nom, 'categorie' => $categorie]);
+                if ($existing) {
+                    continue;
+                }
+
                 $type = new TypeAnalyse();
                 $type->setNom($nom);
                 $type->setCategorie($categorie);
-                $type->setDescription($description);
-                $type->setActif(true);
-                $type->setCreeLe(new \DateTime());
-                
+
+                if (method_exists($type, 'setDescription')) {
+                    $type->setDescription($description);
+                }
+                if (method_exists($type, 'setActif')) {
+                    $type->setActif(true);
+                }
+                if (method_exists($type, 'setCreeLe')) {
+                    $type->setCreeLe(new \DateTime());
+                }
+
                 $manager->persist($type);
             }
         }
 
         $manager->flush();
-        
-        echo "✅ Types d'analyse ajoutés avec succès !\n";
-    }
-    
-    public static function getGroups(): array
-    {
-        return ['TypeAnalyseFixtures', 'type_analyse'];
     }
 }
