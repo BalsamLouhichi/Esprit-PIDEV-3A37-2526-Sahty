@@ -492,6 +492,42 @@
             font-size: 0.92rem;
         }
 
+        .recommendation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-location {
+            background: #fff;
+            color: var(--primary);
+            border: 1px solid #c9dbff;
+            border-radius: 12px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .btn-location:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .location-status {
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
         @media (max-width: 768px) {
             .page-wrapper {
                 padding: 1rem;
@@ -591,14 +627,28 @@
 
                     {% if patient_ville %}
                         <div class="recommendation-box">
-                            <h6>
-                                <i class="fas fa-map-marker-alt me-2"></i>
-                                Recommandations personnalisees
-                            </h6>
-                            <p>
-                                Ville du patient detectee: <strong>{{ patient_ville }}</strong>.
-                                Les laboratoires de la meme ville sont affiches en priorite.
-                            </p>
+                            <div class="recommendation-row">
+                                <div>
+                                    <h6>
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        Recommandations personnalisees
+                                    </h6>
+                                    <p>
+                                        {% if location_active|default(false) %}
+                                            Ville actuelle activee: <strong>{{ patient_ville }}</strong>.
+                                            Les laboratoires de cette ville sont affiches en priorite.
+                                        {% else %}
+                                            Ville du patient detectee: <strong>{{ patient_ville }}</strong>.
+                                            Les laboratoires de la meme ville sont affiches en priorite.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <button type="button" id="enableCurrentLocation" class="btn-location">
+                                    <i class="fas fa-location-arrow"></i>
+                                    Activer ma localisation
+                                </button>
+                            </div>
+                            <div id="locationStatus" class="location-status"></div>
                         </div>
                     {% endif %}
 
@@ -616,7 +666,7 @@
                                             <h3>{{ laboratoire.nom }}</h3>
                                             <div class="labo-location">
                                                 <i class="fas fa-map-marker-alt"></i>
-                                                <span>{{ laboratoire.ville }}{% if laboratoire.adresse is defined %}, {{ laboratoire.adresse }}{% endif %}</span>
+                                                <span>{{ laboratoire.ville }}</span>
                                             </div>
                                             <div class="labo-footer">
                                                 <a href="{{ path('app_labo_show', {'id': laboratoire.id}) }}" class="btn-view">
@@ -634,6 +684,7 @@
                     {# Filter Section #}
                     <div class="filter-section">
                         <form method="get" id="filterForm">
+                            <input type="hidden" id="filter_current_ville" name="current_ville" value="{{ current_ville|default('') }}">
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="filter-label" for="filter_name">
@@ -788,9 +839,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('filterForm');
             const nameInput = document.getElementById('filter_name');
             const citySelect = document.getElementById('filter_ville');
             const typeSelect = document.getElementById('filter_type_bilan');
+            const currentVilleInput = document.getElementById('filter_current_ville');
 
             let debounceTimer;
 
@@ -804,6 +857,9 @@
                 }
                 if (typeSelect && typeSelect.value.trim() !== '') {
                     params.set('type_bilan', typeSelect.value.trim());
+                }
+                if (currentVilleInput && currentVilleInput.value.trim() !== '') {
+                    params.set('current_ville', currentVilleInput.value.trim());
                 }
                 return params.toString();
             };
@@ -845,6 +901,102 @@
             }
             if (typeSelect) {
                 typeSelect.addEventListener('change', scheduleFetch);
+            }
+
+            const locationBtn = document.getElementById('enableCurrentLocation');
+            const locationStatus = document.getElementById('locationStatus');
+
+            const setLocationStatus = (message, isError = false) => {
+                if (!locationStatus) return;
+                locationStatus.textContent = message || '';
+                locationStatus.style.color = isError ? '#b42318' : 'var(--gray-600)';
+            };
+
+            const normalizeText = (value) => (value || '')
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .toLowerCase();
+
+            const applyDetectedCity = (city) => {
+                if (!city || !currentVilleInput) return false;
+                const target = normalizeText(city);
+                if (!target) return false;
+
+                // Keep geolocation only in current_ville (priority recommendations),
+                // do not force the main "ville" filter to avoid emptying the whole list.
+                currentVilleInput.value = city;
+                if (citySelect) {
+                    citySelect.value = '';
+                }
+                return true;
+            };
+
+            const detectCityFromCoordinates = async (latitude, longitude) => {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`;
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) {
+                    throw new Error('Impossible de recuperer votre ville.');
+                }
+
+                const data = await response.json();
+                const address = data && data.address ? data.address : {};
+                return address.city || address.town || address.village || address.municipality || address.county || '';
+            };
+
+            if (locationBtn) {
+                locationBtn.addEventListener('click', () => {
+                    if (!navigator.geolocation) {
+                        setLocationStatus('La geolocalisation n est pas supportee par ce navigateur.', true);
+                        return;
+                    }
+
+                    locationBtn.disabled = true;
+                    setLocationStatus('Localisation en cours...');
+
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            try {
+                                const city = await detectCityFromCoordinates(position.coords.latitude, position.coords.longitude);
+                                if (!city) {
+                                    setLocationStatus('Ville non detectee. Vous pouvez la choisir manuellement.', true);
+                                    return;
+                                }
+
+                                const applied = applyDetectedCity(city);
+                                if (!applied) {
+                                    setLocationStatus('Ville detectee mais filtre indisponible.', true);
+                                    return;
+                                }
+
+                                setLocationStatus(`Localisation activee: ${city}.`);
+                                if (filterForm) {
+                                    filterForm.submit();
+                                } else {
+                                    scheduleFetch();
+                                }
+                            } catch (error) {
+                                const raw = (error && error.message) ? String(error.message) : '';
+                                const friendly = (!raw || raw.toLowerCase() === 'failed to fetch')
+                                    ? 'Impossible de contacter le service de localisation. Reessayez dans quelques instants.'
+                                    : raw;
+                                setLocationStatus(friendly, true);
+                            } finally {
+                                locationBtn.disabled = false;
+                            }
+                        },
+                        () => {
+                            setLocationStatus('Autorisez la localisation pour activer cette fonctionnalite.', true);
+                            locationBtn.disabled = false;
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0,
+                        }
+                    );
+                });
             }
         });
     </script>
