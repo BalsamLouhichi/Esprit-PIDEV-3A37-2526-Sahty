@@ -1225,6 +1225,8 @@
                 </ul>
             </li>
             
+           
+
             <!-- MENU RENDEZ-VOUS avec badge -->
             <li>
                 <a href="{{ path('admin_all_appointments') }}" {% if app.request.attributes.get('_route') in ['admin_all_appointments', 'admin_view_appointment'] %}class="active"{% endif %}>
@@ -1558,72 +1560,300 @@
             </div>
 
 
-            <!-- Quick Actions & Info -->
-            {% set quiz_stats = quiz_stats|default({}) %}
-            {% set recommendation_stats = recommendation_stats|default({}) %}
-            <div class="content-grid mt-4">
-                <div class="chart-container animate-slide-in" style="animation-delay: 1.15s;">
-                    <h5><i class="fas fa-question-circle"></i> Quiz</h5>
-                    <div class="quick-stats">
-                        <div class="quick-stat-item">
-                            <i class="fas fa-list-check text-primary"></i>
-                            <h4>{{ quiz_stats.total|default(0) }}</h4>
-                            <small>Quiz disponibles</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-user-check text-success"></i>
-                            <h4>{{ quiz_stats.participants|default(0) }}</h4>
-                            <small>Participants</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-chart-line text-warning"></i>
-                            <h4>{{ quiz_stats.taux_reussite|default(0) }}%</h4>
-                            <small>Taux de réussite</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-clock text-info"></i>
-                            <h4>{{ quiz_stats.last_update|default('—') }}</h4>
-                            <small>Dernière MAJ</small>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-primary btn-sm">
-                            <i class="fas fa-cog me-1"></i> Gérer les quiz
-                        </a>
-                    </div>
-                </div>
+          <!-- Quick Actions & Info - Quiz et Recommandations -->
+<div class="content-grid mt-4">
+    <div class="chart-container animate-slide-in" style="animation-delay: 1.15s;">
+        <h5><i class="fas fa-question-circle"></i> Quiz</h5>
+        <div class="quick-stats">
+            <div class="quick-stat-item">
+                <i class="fas fa-list-check text-primary"></i>
+                <h4>{{ totalQuizzes|default(0) }}</h4>
+                <small>Quiz disponibles</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-user-check text-success"></i>
+                <h4>{{ quiz_participants|default(0) }}</h4>
+                <small>Participants</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-chart-line text-warning"></i>
+                <h4>{{ quiz_success_rate|default(0) }}%</h4>
+                <small>Taux de réussite</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-clock text-info"></i>
+                <h4>{{ last_quiz_update|default('—') }}</h4>
+                <small>Dernière MAJ</small>
+            </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+            <a href="{{ path('admin_quiz_index') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-cog me-1"></i> Gérer les quiz
+            </a>
+            <a href="{{ path('app_quiz_generate_ai') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-wand-magic-sparkles me-1"></i> Générer IA
+            </a>
+        </div>
+    </div>
 
-                <div class="chart-container animate-slide-in" style="animation-delay: 1.2s;">
-                    <h5><i class="fas fa-lightbulb"></i> Recommandations</h5>
-                    <div class="quick-stats">
-                        <div class="quick-stat-item">
-                            <i class="fas fa-bullseye text-primary"></i>
-                            <h4>{{ recommendation_stats.total|default(0) }}</h4>
-                            <small>Recommandations</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-thumbs-up text-success"></i>
-                            <h4>{{ recommendation_stats.approuvees|default(0) }}</h4>
-                            <small>Approuvées</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-triangle-exclamation text-warning"></i>
-                            <h4>{{ recommendation_stats.en_attente|default(0) }}</h4>
-                            <small>En attente</small>
-                        </div>
-                        <div class="quick-stat-item">
-                            <i class="fas fa-rotate text-info"></i>
-                            <h4>{{ recommendation_stats.last_update|default('—') }}</h4>
-                            <small>Dernière MAJ</small>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="btn btn-primary btn-sm">
-                            <i class="fas fa-wand-magic-sparkles me-1"></i> Gérer les recommandations
-                        </a>
-                    </div>
+    <div class="chart-container animate-slide-in" style="animation-delay: 1.2s;">
+        <h5><i class="fas fa-lightbulb"></i> Recommandations</h5>
+        <div class="quick-stats">
+            <div class="quick-stat-item">
+                <i class="fas fa-bullseye text-primary"></i>
+                <h4>{{ totalRecommandations|default(0) }}</h4>
+                <small>Recommandations</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-thumbs-up text-success"></i>
+                <h4>{{ recommandations_approuvees|default(0) }}</h4>
+                <small>Approuvées</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-triangle-exclamation text-warning"></i>
+                <h4>{{ recommandations_en_attente|default(0) }}</h4>
+                <small>En attente</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-rotate text-info"></i>
+                <h4>{{ last_recommandation_update|default('—') }}</h4>
+                <small>Dernière MAJ</small>
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="{{ path('admin_recommandation_index') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-wand-magic-sparkles me-1"></i> Gérer les recommandations
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Section Quiz Récents -->
+<div class="content-grid mt-4">
+    <div class="table-container animate-slide-in" style="animation-delay: 1.25s;">
+        <div class="table-header">
+            <h5><i class="fas fa-question-circle"></i> Quiz récents</h5>
+            <a href="{{ path('admin_quiz_index') }}" class="btn btn-primary btn-sm">
+                Voir tous <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Questions</th>
+                        <th>Recommandations</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quiz in recentQuizzes|default([]) %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar-sm" style="background: var(--primary-light); color: var(--primary);">
+                                    <i class="fas fa-question"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ quiz.name }}</div>
+                                    <small class="text-muted">{{ quiz.description|slice(0, 30) ~ (quiz.description|length > 30 ? '...' : '') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary">{{ quiz.questions|length }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info-subtle text-info">{{ quiz.recommandations|length }}</span>
+                        </td>
+                        <td>{{ quiz.createdAt|date('d/m/Y') }}</td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{{ path('app_quiz_show', {id: quiz.id}) }}" class="row-action-btn" title="Voir" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_quiz_edit', {id: quiz.id}) }}" class="row-action-btn" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="fas fa-question-circle fa-2x mb-2"></i>
+                            <p class="mb-0">Aucun quiz récent</p>
+                            <a href="{{ path('app_quiz_new') }}" class="btn btn-primary btn-sm mt-2">
+                                <i class="fas fa-plus"></i> Créer un quiz
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section Recommandations Récentes -->
+    <div class="table-container animate-slide-in" style="animation-delay: 1.3s;">
+        <div class="table-header">
+            <h5><i class="fas fa-lightbulb"></i> Recommandations récentes</h5>
+            <a href="{{ path('admin_recommandation_index') }}" class="btn btn-primary btn-sm">
+                Voir toutes <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Quiz</th>
+                        <th>Sévérité</th>
+                        <th>Score</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reco in recentRecommandations|default([]) %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar-sm" style="background: var(--warning-light); color: var(--warning);">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ reco.title ?: reco.name }}</div>
+                                    <small class="text-muted">{{ reco.description|slice(0, 30) ~ (reco.description|length > 30 ? '...' : '') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if reco.quiz %}
+                                <span class="badge bg-secondary">{{ reco.quiz.name }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge 
+                                {% if reco.severity == 'high' %}status-inactive
+                                {% elseif reco.severity == 'medium' %}status-pending
+                                {% else %}status-active{% endif %}">
+                                <i class="fas fa-{% if reco.severity == 'high' %}exclamation-triangle{% elseif reco.severity == 'medium' %}clock{% else %}check-circle{% endif %}"></i>
+                                {{ reco.severity|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ reco.minScore }} - {{ reco.maxScore }}</td>
+                        <td>{{ reco.createdAt|date('d/m/Y') }}</td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{{ path('app_recommandation_edit', {id: reco.id}) }}" class="row-action-btn" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if reco.videoUrl %}
+                                <a href="{{ reco.videoUrl }}" class="row-action-btn" title="Voir vidéo" target="_blank">
+                                    <i class="fas fa-video"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-lightbulb fa-2x mb-2"></i>
+                            <p class="mb-0">Aucune recommandation récente</p>
+                            <a href="{{ path('app_recommandation_new') }}" class="btn btn-primary btn-sm mt-2">
+                                <i class="fas fa-plus"></i> Créer une recommandation
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques supplémentaires Quiz & Recommandations -->
+<div class="content-grid mt-4">
+    <div class="chart-container animate-slide-in" style="animation-delay: 1.35s;">
+        <h5><i class="fas fa-chart-pie"></i> Distribution par sévérité</h5>
+        {% set total_severity = (recommandationsBySeverity.low|default(0) + recommandationsBySeverity.medium|default(0) + recommandationsBySeverity.high|default(0)) %}
+        {% if total_severity > 0 %}
+            <div class="progress-container mt-3">
+                <div class="progress-label">
+                    <span>Faible</span>
+                    <span>{{ recommandationsBySeverity.low|default(0) }} ({{ ((recommandationsBySeverity.low|default(0) / total_severity) * 100)|round }}%)</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ (recommandationsBySeverity.low|default(0) / total_severity * 100)|round }}%"></div>
                 </div>
             </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Moyen</span>
+                    <span>{{ recommandationsBySeverity.medium|default(0) }} ({{ ((recommandationsBySeverity.medium|default(0) / total_severity) * 100)|round }}%)</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (recommandationsBySeverity.medium|default(0) / total_severity * 100)|round }}%"></div>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Élevé</span>
+                    <span>{{ recommandationsBySeverity.high|default(0) }} ({{ ((recommandationsBySeverity.high|default(0) / total_severity) * 100)|round }}%)</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (recommandationsBySeverity.high|default(0) / total_severity * 100)|round }}%"></div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                <p class="mb-0">Aucune donnée disponible</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="chart-container animate-slide-in" style="animation-delay: 1.4s;">
+        <h5><i class="fas fa-chart-simple"></i> Statistiques rapides</h5>
+        <div class="quick-stats">
+            <div class="quick-stat-item">
+                <i class="fas fa-question-circle text-primary"></i>
+                <h4>{{ totalQuestions|default(0) }}</h4>
+                <small>Questions totales</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-link text-info"></i>
+                <h4>
+                    {% if totalQuizzes|default(0) > 0 %}
+                        {{ (totalRecommandations|default(0) / totalQuizzes)|round(1) }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </h4>
+                <small>Moy. reco/quiz</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-video text-success"></i>
+                <h4>{{ recommandations_with_video|default(0) }}</h4>
+                <small>Avec vidéo</small>
+            </div>
+            <div class="quick-stat-item">
+                <i class="fas fa-chart-line text-warning"></i>
+                <h4>{{ quiz_avg_questions|default(0) }}</h4>
+                <small>Moy. questions</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supprimer l'ancienne section Quiz et Recommandations qui était en double -->
+<!-- La section suivante a été déplacée et améliorée ci-dessus -->
 
             <!-- Quick Actions & Info -->
             <div class="content-grid mt-4">

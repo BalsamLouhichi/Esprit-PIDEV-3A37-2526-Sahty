@@ -1,0 +1,237 @@
+{# templates/admin/base_admin.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sahty - Administration{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --light: #f8fafc;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--light);
+            color: #333;
+            margin: 0;
+        }
+
+        .topbar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .content-container {
+            padding: 1.5rem 1.75rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+        }
+
+        .admin-panel-card {
+            border-radius: 14px;
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(29,42,77,0.06);
+        }
+
+        .admin-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: linear-gradient(120deg, #ffffff 0%, #f6fbfd 100%);
+        }
+
+        .admin-section-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .admin-section-subtitle {
+            margin: 0.15rem 0 0;
+            color: var(--gray-600);
+            font-size: 0.92rem;
+        }
+
+        .admin-filter-card {
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            box-shadow: 0 4px 14px rgba(29,42,77,0.05);
+        }
+
+        .admin-table-card {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            background: #fff;
+            box-shadow: 0 10px 24px rgba(29,42,77,0.07);
+        }
+
+        .admin-table-card .table {
+            margin-bottom: 0;
+        }
+
+        .admin-table-card .table thead th {
+            background: #f4f8fb;
+            color: #314155;
+            font-size: 0.81rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--gray-200);
+            font-weight: 700;
+        }
+
+        .admin-table-card .table td,
+        .admin-table-card .table th {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+        }
+
+        .admin-table-card .table tbody tr:hover {
+            background: #f8fbfd;
+        }
+
+        .admin-id-pill {
+            font-weight: 700;
+            color: var(--dark);
+            background: #edf3f7;
+            border-radius: 999px;
+            padding: 0.25rem 0.65rem;
+            display: inline-block;
+        }
+
+        .admin-empty-state {
+            border: 1px dashed #b8d5e0;
+            border-radius: 14px;
+            padding: 2rem 1rem;
+            background: #f8fcff;
+            text-align: center;
+        }
+
+        .admin-empty-state i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+    </style>
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+    <!-- Main content -->
+    <div class="main-content" id="mainContent">
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div>
+                <!-- Espace vide ou vous pouvez mettre un logo/titre -->
+                <h4 class="mb-0 text-primary"><i class="fas fa-hospital-user me-2"></i>Sahty Administration</h4>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <strong>
+                        {% if app.user and attribute(app.user, 'prenom') is defined and attribute(app.user, 'nom') is defined %}
+                            {{ app.user.prenom }} {{ app.user.nom }}
+                        {% else %}
+                            Administrateur
+                        {% endif %}
+                    </strong><br>
+                    <small class="text-muted">
+                        {% if app.user and attribute(app.user, 'role') is defined %}
+                            {{ app.user.role }}
+                        {% else %}
+                            Admin
+                        {% endif %}
+                    </small>
+                </div>
+
+                <!-- Avatar avec protection totale contre "System" ou toute chaîne -->
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:44px; height:44px; font-size:1.1rem;">
+                    {% if app.user is not empty and app.user is not same as(false) and attribute(app.user, 'prenom') is defined and app.user.prenom is not empty %}
+                        {{ app.user.prenom|first|upper }}
+                    {% elseif app.user and app.user|length > 0 %}
+                        {{ app.user|first|upper }}
+                    {% else %}
+                        A
+                    {% endif %}
+                </div>
+
+                <!-- Bouton de déconnexion directement dans la topbar -->
+                <a href="{{ path('app_logout') }}" class="btn btn-outline-danger ms-2" title="Déconnexion">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash messages -->
+        <div class="content-container">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

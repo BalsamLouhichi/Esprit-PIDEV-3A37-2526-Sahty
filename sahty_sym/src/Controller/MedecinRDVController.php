@@ -9,6 +9,7 @@ use App\Form\FicheMedicaleType;
 use App\Repository\RendezVousRepository;
 use App\Repository\FicheMedicaleRepository;
 use App\Service\AppointmentNotificationMailer;
+use App\Service\DictationTranscriptionService;
 use App\Service\MeetingSchedulerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -200,12 +201,18 @@ class MedecinRDVController extends AbstractController
         Request $request,
         RendezVousRepository $rdvRepository,
         FicheMedicaleRepository $ficheRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        DictationTranscriptionService $dictationTranscriptionService
     ): Response {
         $rdv = $rdvRepository->find($rdvId);
 
         if (!$rdv) {
             throw $this->createNotFoundException('Rendez-vous non trouve');
+        }
+
+        $dictationStatus = $dictationTranscriptionService->getConfigurationStatus();
+        if (!($dictationStatus['ok'] ?? false)) {
+            $this->addFlash('error', 'Dictée vocale indisponible: ' . (string) ($dictationStatus['error'] ?? 'Configuration invalide.'));
         }
 
         // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV

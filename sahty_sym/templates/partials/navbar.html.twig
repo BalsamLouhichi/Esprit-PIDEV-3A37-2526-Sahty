@@ -74,17 +74,30 @@
 
     /* ============ NAVBAR ============ */
     .medinova-navbar {
-        background: rgba(255, 255, 255, 0.95) !important;
-        backdrop-filter: blur(20px) saturate(180%);
-        box-shadow: 0 8px 32px rgba(29, 93, 155, 0.12);
-        padding: 15px 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 255, 0.92) 100%) !important;
+        backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: 0 10px 35px rgba(29, 93, 155, 0.12);
+        padding: 14px 0;
         transition: all 0.3s ease;
-        border-bottom: 1px solid rgba(117, 194, 246, 0.2);
+        border-bottom: 1px solid rgba(29, 93, 155, 0.18);
+        position: relative;
+    }
+
+    .medinova-navbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--primary), var(--secondary));
+        opacity: 0.7;
     }
 
     .medinova-navbar.scrolled {
         padding: 10px 0;
-        box-shadow: 0 12px 40px rgba(29, 93, 155, 0.18);
+        box-shadow: 0 14px 45px rgba(29, 93, 155, 0.2);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(245, 250, 255, 0.96) 100%) !important;
     }
 
     /* Logo */
@@ -129,10 +142,12 @@
         font-size: 0.95rem;
         padding: 10px 18px !important;
         margin: 0 5px;
-        border-radius: 12px;
-        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        border-radius: 999px;
+        transition: all 0.25s ease;
         position: relative;
         overflow: hidden;
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.6);
     }
 
     .navbar-nav .nav-link::before {
@@ -154,18 +169,21 @@
 
     .navbar-nav .nav-link:hover {
         color: var(--primary);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
+        border-color: rgba(29, 93, 155, 0.18);
+        box-shadow: 0 8px 18px rgba(29, 93, 155, 0.15);
     }
 
     .navbar-nav .nav-link.active {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white !important;
-        box-shadow: 0 6px 20px rgba(29, 93, 155, 0.3);
+        border-color: transparent;
+        box-shadow: 0 10px 22px rgba(29, 93, 155, 0.32);
     }
 
     .navbar-nav .nav-link.active:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(29, 93, 155, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(29, 93, 155, 0.38);
     }
 
     .navbar-nav .nav-link i {
@@ -215,16 +233,16 @@
     .navbar-nav .dropdown-menu {
         min-width: 280px;
         border: none;
-        border-radius: 20px;
-        padding: 15px 0;
-        margin-top: 15px;
+        border-radius: 18px;
+        padding: 12px 0;
+        margin-top: 14px;
         background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px);
-        box-shadow: 
-            0 20px 60px rgba(29, 93, 155, 0.2),
+        backdrop-filter: blur(22px);
+        box-shadow:
+            0 18px 50px rgba(29, 93, 155, 0.18),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        border: 2px solid rgba(117, 194, 246, 0.2);
-        animation: dropdownSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        border: 1px solid rgba(117, 194, 246, 0.22);
+        animation: dropdownSlideIn 0.3s ease;
     }
 
     @keyframes dropdownSlideIn {
@@ -252,15 +270,15 @@
     }
 
     .dropdown-item {
-        padding: 12px 25px;
+        padding: 10px 18px;
         font-weight: 600;
         color: var(--dark);
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         border-radius: 12px;
-        margin: 3px 10px;
+        margin: 2px 10px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
     }
 
     .dropdown-item:hover {

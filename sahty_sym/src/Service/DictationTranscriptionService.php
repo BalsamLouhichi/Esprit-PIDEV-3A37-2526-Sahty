@@ -15,6 +15,60 @@ class DictationTranscriptionService
     }
 
     /**
+     * @return array{ok: bool, error?: string}
+     */
+    public function getConfigurationStatus(): array
+    {
+        $provider = strtolower((string) ($_ENV['APP_DICTATION_PROVIDER'] ?? $_ENV['APP_AI_RESULTAT_PROVIDER'] ?? 'openai'));
+        $rawEndpoint = (string) ($_ENV['APP_DICTATION_ENDPOINT'] ?? $_ENV['APP_AI_RESULTAT_ENDPOINT'] ?? '');
+        $endpoint = $this->normalizeEndpoint($rawEndpoint);
+        $apiKey = trim((string) ($_ENV['APP_DICTATION_API_KEY'] ?? ''));
+        $fallbackApiKey = trim((string) ($_ENV['APP_AI_RESULTAT_API_KEY'] ?? ''));
+        $model = (string) ($_ENV['APP_DICTATION_MODEL'] ?? $_ENV['APP_AI_RESULTAT_MODEL'] ?? 'gpt-4o-mini-transcribe');
+
+        if ($provider === '') {
+            $provider = 'openai';
+        }
+
+        if ($provider === 'huggingface') {
+            if ($apiKey === '' && str_starts_with($fallbackApiKey, 'hf_')) {
+                $apiKey = $fallbackApiKey;
+            }
+            if ($apiKey === '') {
+                return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY manquante pour Hugging Face (attendu: hf_...)'];
+            }
+            if (!str_starts_with($apiKey, 'hf_')) {
+                return ['ok' => false, 'error' => 'Cle API Hugging Face invalide (attendu: hf_...)'];
+            }
+            $endpoint = $this->resolveHuggingFaceEndpoint('', $model);
+            if (filter_var($endpoint, FILTER_VALIDATE_URL) === false) {
+                return ['ok' => false, 'error' => 'Endpoint Hugging Face invalide: ' . $endpoint];
+            }
+            return ['ok' => true];
+        }
+
+        if ($provider !== 'openai') {
+            return ['ok' => false, 'error' => 'Provider de dictee non supporte (openai|huggingface)'];
+        }
+
+        if ($apiKey === '' && $fallbackApiKey !== '') {
+            $apiKey = $fallbackApiKey;
+        }
+        if ($apiKey === '') {
+            return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY / APP_AI_RESULTAT_API_KEY non configure'];
+        }
+
+        if ($endpoint === '') {
+            $endpoint = 'https://api.openai.com/v1/audio/transcriptions';
+        }
+        if (filter_var($endpoint, FILTER_VALIDATE_URL) === false) {
+            return ['ok' => false, 'error' => 'Endpoint de dictee invalide: ' . $endpoint];
+        }
+
+        return ['ok' => true];
+    }
+
+    /**
      * @return array{ok: bool, text?: string, error?: string}
      */
     public function transcribe(UploadedFile $audioFile, string $language = 'fr'): array

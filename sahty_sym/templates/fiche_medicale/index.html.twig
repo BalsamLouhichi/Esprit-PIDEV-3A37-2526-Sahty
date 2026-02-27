@@ -2726,263 +2726,321 @@
         console.log('Modaux harmonises avec le theme principal');
     </script>
     <script>
-        // Dictee multi-navigateur: SpeechRecognition si disponible, sinon fallback API (MediaRecorder)
-        (function () {
-            function bindFicheDictation() {
-                const buttons = document.querySelectorAll('.js-dictate-btn');
-                if (!buttons.length) return;
+                // Dictee multi-navigateur: SpeechRecognition si disponible, sinon fallback API (MediaRecorder)
+(function () {
+    function bindFicheDictation() {
+        const buttons = document.querySelectorAll('.js-dictate-btn');
+        if (!buttons.length) return;
 
-                const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const dictationApiUrl = '{{ path('api_dictation_transcribe') }}';
-                const states = new WeakMap();
-                const setVoiceState = (button, state) => {
-                    if (state === 'listening') {
-                        button.innerHTML = '<i class="fas fa-stop-circle"></i> Stop';
-                        button.setAttribute('aria-label', 'Arreter la dictee');
-                        return;
+        const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const dictationApiUrl = '{{ path('api_dictation_transcribe') }}';
+        const states = new WeakMap();
+        const canUseSpeech = !!SpeechRecognitionClass;
+        const canUseRecorder = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+        const setVoiceState = (button, state) => {
+            if (state === 'listening') {
+                button.innerHTML = '<i class="fas fa-stop-circle"></i> Stop';
+                button.setAttribute('aria-label', 'Arreter la dictee');
+                return;
+            }
+            if (state === 'processing') {
+                button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Finalisation...';
+                button.setAttribute('aria-label', 'Finalisation de la dictee');
+                return;
+            }
+            button.innerHTML = '<i class="fas fa-microphone"></i> Dicter';
+            button.setAttribute('aria-label', 'Demarrer la dictee');
+        };
+
+        const resolveTargetField = (button) => {
+            const targetId = button.getAttribute('data-target');
+            if (targetId) {
+                const target = document.getElementById(targetId);
+                if (target) return target;
+            }
+            const wrapper = button.closest('.form-group') || button.parentElement;
+            if (!wrapper) return null;
+            return wrapper.querySelector('textarea.form-control, input.form-control[type="text"], input.form-control[type="number"]');
+        };
+
+        const ensureSecureContext = () => {
+            if (window.isSecureContext === false) {
+                alert('La dictée vocale nécessite HTTPS (ou http://localhost) pour accéder au micro.');
+                return false;
+            }
+            return true;
+        };
+
+        buttons.forEach((btn) => {
+            if (btn.dataset.boundDictation === '1') return;
+            btn.dataset.boundDictation = '1';
+            setVoiceState(btn, 'idle');
+
+            const field = resolveTargetField(btn);
+            if (!field) {
+                btn.disabled = true;
+                btn.title = 'Champ de saisie introuvable';
+                return;
+            }
+            if (!canUseSpeech && !canUseRecorder) {
+                btn.style.display = 'none';
+                return;
+            }
+
+            btn.addEventListener('click', () => {
+                const currentState = states.get(btn);
+
+                if (currentState && currentState.recognition && currentState.listening) {
+                    setVoiceState(btn, 'processing');
+                    btn.disabled = true;
+                    currentState.manualStop = true;
+                    states.set(btn, currentState);
+                    currentState.recognition.stop();
+                    return;
+                }
+
+                if (currentState && currentState.recorder && currentState.listening) {
+                    setVoiceState(btn, 'processing');
+                    btn.disabled = true;
+                    currentState.manualStop = true;
+                    states.set(btn, currentState);
+                    try {
+                        currentState.recorder.stop();
+                    } catch (e) {
+                        resetButton();
+                        states.delete(btn);
                     }
-                    if (state === 'processing') {
-                        button.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Finalisation...';
-                        button.setAttribute('aria-label', 'Finalisation de la dictee');
-                        return;
+                    return;
+                }
+
+                if (!ensureSecureContext()) {
+                    return;
+                }
+
+                if (canUseSpeech) {
+                    startBrowserDictation(btn, field);
+                    return;
+                }
+                startApiDictation(btn, field);
+            });
+
+            function resetButton() {
+                setVoiceState(btn, 'idle');
+                btn.disabled = false;
+            }
+
+            function appendRecognizedText(targetField, text) {
+                if (!text) return;
+                targetField.value = targetField.value ? (targetField.value.trim() + ' ' + text) : text;
+                targetField.dispatchEvent(new Event('input'));
+            }
+
+            function startBrowserDictation(button, targetField) {
+                const recognition = new SpeechRecognitionClass();
+                recognition.lang = 'fr-FR';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                let didStart = false;
+                let fallbackTimer = null;
+                const cancelFallback = () => {
+                    if (fallbackTimer) {
+                        clearTimeout(fallbackTimer);
+                        fallbackTimer = null;
                     }
-                    button.innerHTML = '<i class="fas fa-microphone"></i> Dicter';
-                    button.setAttribute('aria-label', 'Demarrer la dictee');
                 };
 
-                buttons.forEach((btn) => {
-                    if (btn.dataset.boundDictation === '1') return;
-                    btn.dataset.boundDictation = '1';
-                    setVoiceState(btn, 'idle');
+                recognition.addEventListener('start', () => {
+                    didStart = true;
+                    cancelFallback();
+                });
 
-                    const targetId = btn.getAttribute('data-target');
-                    const field = targetId ? document.getElementById(targetId) : null;
-                    if (!field) return;
-                    const canUseSpeech = !!SpeechRecognitionClass;
-                    const canUseRecorder = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-                    if (!canUseSpeech && !canUseRecorder) {
-                        btn.style.display = 'none';
+                recognition.addEventListener('result', (event) => {
+                    let recognized = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            recognized += ' ' + (event.results[i][0]?.transcript || '');
+                        }
+                    }
+                    appendRecognizedText(targetField, recognized.trim());
+                });
+
+                recognition.addEventListener('error', (event) => {
+                    cancelFallback();
+                    const current = states.get(button);
+                    if (event.error === 'aborted' && current && current.manualStop) {
                         return;
                     }
+                    if (event.error === 'aborted') {
+                        return;
+                    }
+                    if (event.error === 'network' && window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        states.delete(button);
+                        resetButton();
+                        startApiDictation(button, targetField);
+                        return;
+                    }
+                    alert('Echec de la dictee vocale navigateur: ' + (event.error || 'inconnue'));
+                });
 
-                    btn.addEventListener('click', () => {
-                        const currentState = states.get(btn);
+                recognition.addEventListener('end', () => {
+                    cancelFallback();
+                    resetButton();
+                    states.delete(button);
+                });
 
-                        if (currentState && currentState.recognition && currentState.listening) {
-                            setVoiceState(btn, 'processing');
-                            btn.disabled = true;
-                            currentState.manualStop = true;
-                            states.set(btn, currentState);
-                            currentState.recognition.stop();
-                            return;
-                        }
-
-                        if (currentState && currentState.recorder && currentState.listening) {
-                            setVoiceState(btn, 'processing');
-                            btn.disabled = true;
-                            currentState.manualStop = true;
-                            states.set(btn, currentState);
+                try {
+                    states.set(button, { recognition, listening: true, manualStop: false });
+                    recognition.start();
+                    fallbackTimer = window.setTimeout(() => {
+                        if (!didStart) {
                             try {
-                                currentState.recorder.stop();
+                                recognition.abort();
                             } catch (e) {
-                                resetButton();
-                                states.delete(btn);
+                                // ignore
                             }
-                            return;
-                        }
-
-                        if (canUseSpeech) {
-                            startBrowserDictation(btn, field);
-                            return;
-                        }
-                        startApiDictation(btn, field);
-                    });
-
-                    function resetButton() {
-                        setVoiceState(btn, 'idle');
-                        btn.disabled = false;
-                    }
-
-                    function appendRecognizedText(targetField, text) {
-                        if (!text) return;
-                        targetField.value = targetField.value ? (targetField.value.trim() + ' ' + text) : text;
-                        targetField.dispatchEvent(new Event('input'));
-                    }
-
-                    function startBrowserDictation(button, targetField) {
-                        const recognition = new SpeechRecognitionClass();
-                        recognition.lang = 'fr-FR';
-                        recognition.continuous = false;
-                        recognition.interimResults = false;
-                        recognition.maxAlternatives = 1;
-
-                        recognition.addEventListener('result', (event) => {
-                            let recognized = '';
-                            for (let i = event.resultIndex; i < event.results.length; i++) {
-                                if (event.results[i].isFinal) {
-                                    recognized += ' ' + (event.results[i][0]?.transcript || '');
-                                }
-                            }
-                            appendRecognizedText(targetField, recognized.trim());
-                        });
-
-                        recognition.addEventListener('error', (event) => {
-                            const current = states.get(button);
-                            if (event.error === 'aborted' && current && current.manualStop) {
-                                return;
-                            }
-                            if (event.error === 'aborted') {
-                                return;
-                            }
-                            if (event.error === 'network' && window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                                states.delete(button);
-                                resetButton();
-                                startApiDictation(button, targetField);
-                                return;
-                            }
-                            alert('Echec de la dictee vocale navigateur: ' + (event.error || 'inconnue'));
-                        });
-
-                        recognition.addEventListener('end', () => {
+                            states.delete(button);
                             resetButton();
-                            states.delete(button);
-                        });
-
-                        try {
-                            states.set(button, { recognition, listening: true, manualStop: false });
-                            recognition.start();
-                            setVoiceState(button, 'listening');
-                            button.disabled = false;
-                        } catch (e) {
-                            states.delete(button);
                             if (window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                                 startApiDictation(button, targetField);
-                                return;
-                            }
-                            alert('Impossible de demarrer la dictee (micro/permissions/navigateur).');
-                            resetButton();
-                        }
-                    }
-
-                    function getSupportedMimeType() {
-                        if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
-                        const preferredTypes = [
-                            'audio/webm;codecs=opus',
-                            'audio/webm',
-                            'audio/ogg;codecs=opus',
-                            'audio/ogg',
-                            'audio/mp4',
-                        ];
-                        for (const type of preferredTypes) {
-                            if (MediaRecorder.isTypeSupported(type)) {
-                                return type;
+                            } else {
+                                alert('La dictee navigateur ne demarre pas et aucun micro n est disponible.');
                             }
                         }
-                        return '';
+                    }, 1500);
+                    setVoiceState(button, 'listening');
+                    button.disabled = false;
+                } catch (e) {
+                    states.delete(button);
+                    if (window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        startApiDictation(button, targetField);
+                        return;
                     }
+                    alert('Impossible de demarrer la dictee (micro/permissions/navigateur).');
+                    resetButton();
+                }
+            }
 
-                    function getFilenameForMimeType(mimeType) {
-                        if (mimeType.includes('ogg')) return 'dictation.ogg';
-                        if (mimeType.includes('mp4')) return 'dictation.mp4';
-                        return 'dictation.webm';
+            function getSupportedMimeType() {
+                if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+                const preferredTypes = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/ogg;codecs=opus',
+                    'audio/ogg',
+                    'audio/mp4',
+                ];
+                for (const type of preferredTypes) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        return type;
                     }
+                }
+                return '';
+            }
 
-                    async function transcribeAudioBlob(audioBlob) {
-                        const mimeType = audioBlob.type || 'audio/webm';
-                        const formData = new FormData();
-                        formData.append('audio', audioBlob, getFilenameForMimeType(mimeType));
-                        formData.append('language', 'fr');
+            function getFilenameForMimeType(mimeType) {
+                if (mimeType.includes('ogg')) return 'dictation.ogg';
+                if (mimeType.includes('mp4')) return 'dictation.mp4';
+                return 'dictation.webm';
+            }
 
-                        const response = await fetch(dictationApiUrl, {
-                            method: 'POST',
-                            body: formData,
-                            credentials: 'same-origin',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        });
+            async function transcribeAudioBlob(audioBlob) {
+                const mimeType = audioBlob.type || 'audio/webm';
+                const formData = new FormData();
+                formData.append('audio', audioBlob, getFilenameForMimeType(mimeType));
+                formData.append('language', 'fr');
 
-                        const payload = await response.json().catch(() => ({}));
-                        if (!response.ok || !payload.success) {
-                            throw new Error(payload.error || 'Erreur de transcription serveur');
-                        }
+                const response = await fetch(dictationApiUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
 
-                        const text = (payload.text || '').trim();
-                        if (!text) {
-                            throw new Error('Transcription vide');
-                        }
-                        return text;
-                    }
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error || 'Erreur de transcription serveur');
+                }
 
-                    async function startApiDictation(button, targetField) {
-                        let stream;
-                        try {
-                            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        } catch (e) {
-                            alert('Impossible d acceder au microphone (permission ou navigateur).');
-                            resetButton();
-                            return;
-                        }
+                const text = (payload.text || '').trim();
+                if (!text) {
+                    throw new Error('Transcription vide');
+                }
+                return text;
+            }
 
-                        const mimeType = getSupportedMimeType();
-                        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-                        const chunks = [];
+            async function startApiDictation(button, targetField) {
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (e) {
+                    alert('Impossible d acceder au microphone (permission ou navigateur).');
+                    resetButton();
+                    return;
+                }
 
-                        recorder.addEventListener('dataavailable', (event) => {
-                            if (event.data && event.data.size > 0) {
-                                chunks.push(event.data);
-                            }
-                        });
+                const mimeType = getSupportedMimeType();
+                const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                const chunks = [];
 
-                        recorder.addEventListener('error', () => {
-                            stream.getTracks().forEach((track) => track.stop());
-                            alert('Echec de l enregistrement audio navigateur.');
-                            resetButton();
-                            states.delete(button);
-                        });
-
-                        recorder.addEventListener('stop', async () => {
-                            stream.getTracks().forEach((track) => track.stop());
-                            try {
-                                if (!chunks.length) {
-                                    throw new Error('Aucun audio capture');
-                                }
-                                const audioBlob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
-                                const text = await transcribeAudioBlob(audioBlob);
-                                appendRecognizedText(targetField, text);
-                            } catch (e) {
-                                alert('Echec de la dictee via API: ' + (e.message || 'inconnue'));
-                            } finally {
-                                resetButton();
-                                states.delete(button);
-                            }
-                        });
-
-                        try {
-                            states.set(button, {
-                                recorder,
-                                listening: true,
-                                manualStop: false,
-                            });
-                            recorder.start();
-                            setVoiceState(button, 'listening');
-                            button.disabled = false;
-                        } catch (e) {
-                            stream.getTracks().forEach((track) => track.stop());
-                            alert('Impossible de demarrer l enregistrement audio.');
-                            resetButton();
-                            states.delete(button);
-                        }
+                recorder.addEventListener('dataavailable', (event) => {
+                    if (event.data && event.data.size > 0) {
+                        chunks.push(event.data);
                     }
                 });
-            }
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', bindFicheDictation);
-            } else {
-                bindFicheDictation();
+                recorder.addEventListener('error', () => {
+                    stream.getTracks().forEach((track) => track.stop());
+                    alert('Echec de l enregistrement audio navigateur.');
+                    resetButton();
+                    states.delete(button);
+                });
+
+                recorder.addEventListener('stop', async () => {
+                    stream.getTracks().forEach((track) => track.stop());
+                    try {
+                        if (!chunks.length) {
+                            throw new Error('Aucun audio capture');
+                        }
+                        const audioBlob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
+                        const text = await transcribeAudioBlob(audioBlob);
+                        appendRecognizedText(targetField, text);
+                    } catch (e) {
+                        alert('Echec de la dictee via API: ' + (e.message || 'inconnue'));
+                    } finally {
+                        resetButton();
+                        states.delete(button);
+                    }
+                });
+
+                try {
+                    states.set(button, {
+                        recorder,
+                        listening: true,
+                        manualStop: false,
+                    });
+                    recorder.start();
+                    setVoiceState(button, 'listening');
+                    button.disabled = false;
+                } catch (e) {
+                    stream.getTracks().forEach((track) => track.stop());
+                    alert('Impossible de demarrer l enregistrement audio.');
+                    resetButton();
+                    states.delete(button);
+                }
             }
-        })();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindFicheDictation);
+    } else {
+        bindFicheDictation();
+    }
+})();
     </script>
     <script>
         (function () {

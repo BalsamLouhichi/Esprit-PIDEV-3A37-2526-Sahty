@@ -1,0 +1,222 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Gestion des Recommandations{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-2"><i class="fas fa-lightbulb me-2"></i>Gestion des Recommandations</h1>
+            <p class="text-muted">Administrez les conseils de santé, leur sévérité et leur ciblage.</p>
+        </div>
+        <a href="{{ path('app_recommandation_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Ajouter une Recommandation
+        </a>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50 mb-2">Total Recommandations</h6>
+                    <h2 class="card-text mb-0">{{ total_recommandations|default(recommandations|length) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50 mb-2">Niveau Élevé</h6>
+                    <h2 class="card-text mb-0">
+                        {% set high_count = 0 %}
+                        {% for reco in recommandations %}
+                            {% if reco.severity == 'high' %}
+                                {% set high_count = high_count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ high_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title text-white-50 mb-2">Vidéos Manuelles</h6>
+                    <h2 class="card-text mb-0">
+                        {% set manual_video_count = 0 %}
+                        {% for reco in recommandations %}
+                            {% if reco.videoUrl %}
+                                {% set manual_video_count = manual_video_count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ manual_video_count }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Recherche</label>
+                        <input type="text" name="search" value="{{ active_search|default('') }}" class="form-control" placeholder="Nom, titre, description">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Sévérité</label>
+                        <select name="severity" class="form-select">
+                            <option value="">Toutes</option>
+                            <option value="low" {{ active_severity == 'low' ? 'selected' : '' }}>Faible</option>
+                            <option value="medium" {{ active_severity == 'medium' ? 'selected' : '' }}>Moyen</option>
+                            <option value="high" {{ active_severity == 'high' ? 'selected' : '' }}>Élevé</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Quiz</label>
+                        <select name="quiz_id" class="form-select">
+                            <option value="">Tous</option>
+                            {% for quiz in quiz_options|default([]) %}
+                                <option value="{{ quiz.id }}" {{ active_quiz_id == quiz.id ? 'selected' : '' }}>{{ quiz.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Catégorie</label>
+                        <input type="text" name="type" value="{{ active_type|default('') }}" class="form-control" placeholder="stress, sommeil...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tri</label>
+                        <select name="sort" class="form-select">
+                            <option value="recent" {{ active_sort == 'recent' ? 'selected' : '' }}>Plus récentes</option>
+                            <option value="name_asc" {{ active_sort == 'name_asc' ? 'selected' : '' }}>Titre A-Z</option>
+                            <option value="name_desc" {{ active_sort == 'name_desc' ? 'selected' : '' }}>Titre Z-A</option>
+                            <option value="score_asc" {{ active_sort == 'score_asc' ? 'selected' : '' }}>Score min +</option>
+                            <option value="score_desc" {{ active_sort == 'score_desc' ? 'selected' : '' }}>Score max -</option>
+                            <option value="severity" {{ active_sort == 'severity' ? 'selected' : '' }}>Sévérité</option>
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Appliquer</button>
+                        <a href="{{ path('admin_recommandation_index') }}" class="btn btn-outline-secondary">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des recommandations -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                {% if recommandations is empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h4 class="mb-2">Aucune recommandation disponible</h4>
+                        <p class="text-muted mb-3">Ajoutez votre première recommandation pour démarrer.</p>
+                        <a href="{{ path('app_recommandation_new') }}" class="btn btn-primary">Créer une recommandation</a>
+                    </div>
+                {% else %}
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Titre</th>
+                                <th>Quiz</th>
+                                <th>Catégorie</th>
+                                <th>Score</th>
+                                <th>Sévérité</th>
+                                <th>Vidéo</th>
+                                <th>Date</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reco in recommandations %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-light text-dark">#{{ reco.id }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ reco.title ?: reco.name }}</div>
+                                        <small class="text-muted">{{ reco.name }}</small>
+                                    </td>
+                                    <td>
+                                        {% if reco.quiz %}
+                                            <span class="badge bg-secondary">{{ reco.quiz.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if reco.typeProbleme %}
+                                            {{ reco.typeProbleme|slice(0, 28) }}{{ reco.typeProbleme|length > 28 ? '...' : '' }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ reco.minScore }} - {{ reco.maxScore }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if reco.severity == 'high' %}bg-danger
+                                            {% elseif reco.severity == 'medium' %}bg-warning text-dark
+                                            {% else %}bg-success{% endif %}">
+                                            {{ reco.severity|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if reco.videoUrl %}
+                                            <span class="badge bg-primary">Manuelle</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Auto catégorie</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ reco.createdAt ? reco.createdAt|date('d/m/Y H:i') : '-' }}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ path('app_recommandation_edit', {id: reco.id}) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            <form method="post" action="{{ path('app_recommandation_delete', {id: reco.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer cette recommandation ?')">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reco.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    {% if total_pages|default(1) > 1 %}
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item {{ current_page <= 1 ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ path('admin_recommandation_index', app.request.query.all|merge({page: current_page - 1})) }}">Précédent</a>
+                                </li>
+                                {% for p in 1..total_pages %}
+                                    <li class="page-item {{ p == current_page ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ path('admin_recommandation_index', app.request.query.all|merge({page: p})) }}">{{ p }}</a>
+                                    </li>
+                                {% endfor %}
+                                <li class="page-item {{ current_page >= total_pages ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ path('admin_recommandation_index', app.request.query.all|merge({page: current_page + 1})) }}">Suivant</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

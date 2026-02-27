@@ -1,0 +1,267 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recommandations Personnalisees{% endblock %}
+
+{% block body %}
+<section class="reco-hero py-5">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="badge reco-badge mb-3">SAHTY CARE</span>
+                <h1 class="display-5 fw-bold mb-3">Recommandations personnalisees</h1>
+                <p class="lead mb-0">Des conseils concrets, classes par categorie, avec une video adaptee a chaque besoin.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="reco-metric">
+                    <small class="text-uppercase">Disponibles</small>
+                    <div class="metric-value">{{ total_recommandations }}</div>
+                    <p class="mb-0 text-muted">recommandations professionnelles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-4 reco-surface">
+    <div class="container">
+        <form method="get" class="row g-3 filter-panel">
+            <div class="col-md-4">
+                <label class="form-label">Categorie</label>
+                <select name="type" class="form-select">
+                    <option value="">Toutes les categories</option>
+                    <option value="stress" {{ active_type == 'stress' ? 'selected' : '' }}>Stress</option>
+                    <option value="anxiete" {{ active_type == 'anxiete' ? 'selected' : '' }}>Anxiete</option>
+                    <option value="sommeil" {{ active_type == 'sommeil' ? 'selected' : '' }}>Sommeil</option>
+                    <option value="alimentation" {{ active_type == 'alimentation' ? 'selected' : '' }}>Alimentation</option>
+                    <option value="activite" {{ active_type == 'activite' ? 'selected' : '' }}>Activite physique</option>
+                    <option value="humeur" {{ active_type == 'humeur' ? 'selected' : '' }}>Humeur</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tri</label>
+                <select name="sort" class="form-select">
+                    <option value="recent" {{ active_sort == 'recent' ? 'selected' : '' }}>Plus recentes</option>
+                    <option value="severity" {{ active_sort == 'severity' ? 'selected' : '' }}>Priorite (severite)</option>
+                    <option value="score_asc" {{ active_sort == 'score_asc' ? 'selected' : '' }}>Score minimum croissant</option>
+                    <option value="score_desc" {{ active_sort == 'score_desc' ? 'selected' : '' }}>Score maximum decroissant</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" value="{{ active_search }}" class="form-control" placeholder="Titre, categorie ou mot-cle">
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">Appliquer</button>
+                <a href="{{ path('app_recommandation_front_list') }}" class="btn btn-outline-secondary">Reinitialiser</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="pb-5 reco-surface">
+    <div class="container">
+        {% if recommandations is empty %}
+            <div class="alert alert-info rounded-4 border-0 shadow-sm">
+                Aucune recommandation ne correspond a ces filtres.
+            </div>
+        {% else %}
+            <div class="row g-4">
+                {% for item in recommandations %}
+                    {% set reco = item.reco %}
+                    {% set tips_list = reco.tips ? reco.tips|split('\n') : [] %}
+                    <div class="col-lg-4 col-md-6">
+                        <article class="card reco-card h-100 border-0 shadow-sm">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="badge {{ reco.severity == 'high' ? 'bg-danger' : (reco.severity == 'medium' ? 'bg-warning text-dark' : 'bg-success') }}">
+                                        {{ reco.severity|upper }}
+                                    </span>
+                                    <small class="text-muted">{{ reco.createdAt ? reco.createdAt|date('d/m/Y') : '' }}</small>
+                                </div>
+
+                                <h3 class="h5 fw-bold mb-2">{{ reco.title ?: reco.name }}</h3>
+                                <p class="text-muted small mb-3">{{ reco.name }}</p>
+
+                                <div class="meta-row mb-3">
+                                    <span class="badge text-bg-light">Score {{ reco.minScore }}-{{ reco.maxScore }}</span>
+                                    {% if reco.typeProbleme %}
+                                        <span class="badge text-bg-light">{{ reco.typeProbleme|slice(0, 26) }}</span>
+                                    {% endif %}
+                                </div>
+
+                                {% if item.selectedVideo %}
+                                    {% set embed_parts = item.selectedVideo|split('/embed/') %}
+                                    {% set video_id = embed_parts|length > 1 ? (embed_parts[1]|split('?')|first) : null %}
+                                    {% set watch_url = video_id ? ('https://www.youtube.com/watch?v=' ~ video_id) : item.selectedVideo %}
+                                    {% set thumb_url = video_id ? ('https://img.youtube.com/vi/' ~ video_id ~ '/hqdefault.jpg') : null %}
+
+                                    <a href="{{ watch_url }}" target="_blank" rel="noopener noreferrer" class="video-preview mb-3">
+                                        {% if thumb_url %}
+                                            <img src="{{ thumb_url }}" alt="Video recommandee" loading="lazy">
+                                        {% else %}
+                                            <div class="video-fallback">Voir la video recommandee</div>
+                                        {% endif %}
+                                        <span class="video-play"><i class="bi bi-play-fill"></i></span>
+                                    </a>
+                                {% endif %}
+
+                                <p class="flex-grow-1 mb-3">{{ reco.description ? reco.description|slice(0, 170) ~ (reco.description|length > 170 ? '...' : '') : 'Conseil personnalise pour votre bien-etre.' }}</p>
+
+                                {% if tips_list|length > 0 %}
+                                    <ul class="list-unstyled small mb-3">
+                                        {% for tip in tips_list|slice(0, 3) %}
+                                            {% if tip|trim %}
+                                                <li class="mb-1"><i class="bi bi-check-circle-fill text-success me-2"></i>{{ tip|trim|replace({'• ': ''}) }}</li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+
+                                <div class="mt-auto d-grid gap-2">
+                                    <a href="{{ path('app_quiz_front_list') }}" class="btn btn-outline-primary">Faire un autre quiz</a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if total_pages > 1 %}
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item {{ current_page <= 1 ? 'disabled' : '' }}">
+                            <a class="page-link" href="{{ path('app_recommandation_front_list', app.request.query.all|merge({page: current_page - 1})) }}">Precedent</a>
+                        </li>
+                        {% for page in 1..total_pages %}
+                            <li class="page-item {{ page == current_page ? 'active' : '' }}">
+                                <a class="page-link" href="{{ path('app_recommandation_front_list', app.request.query.all|merge({page: page})) }}">{{ page }}</a>
+                            </li>
+                        {% endfor %}
+                        <li class="page-item {{ current_page >= total_pages ? 'disabled' : '' }}">
+                            <a class="page-link" href="{{ path('app_recommandation_front_list', app.request.query.all|merge({page: current_page + 1})) }}">Suivant</a>
+                        </li>
+                    </ul>
+                </nav>
+            {% endif %}
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    .reco-hero {
+        background: linear-gradient(130deg, #0f4c81 0%, #1d5d9b 52%, #2a9db4 100%);
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .reco-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 18% 20%, rgba(255,255,255,0.15), transparent 42%);
+        pointer-events: none;
+    }
+
+    .reco-hero .container {
+        position: relative;
+        z-index: 2;
+    }
+
+    .reco-surface {
+        background: linear-gradient(180deg, #f7fbff 0%, #eef6fb 100%);
+    }
+
+    .reco-badge {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.08em;
+    }
+
+    .reco-metric {
+        background: #fff;
+        color: #1d2a4d;
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 14px 36px rgba(15, 76, 129, 0.16);
+        border: 1px solid rgba(29, 93, 155, 0.1);
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .filter-panel {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 12px 28px rgba(15, 76, 129, 0.12);
+        border: 1px solid rgba(29, 93, 155, 0.08);
+    }
+
+    .reco-card {
+        border-radius: 1rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid rgba(29, 93, 155, 0.1) !important;
+    }
+
+    .reco-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 18px 30px rgba(15, 76, 129, 0.16) !important;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .video-preview {
+        position: relative;
+        display: block;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .video-preview img {
+        width: 100%;
+        display: block;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+    }
+
+    .video-play {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font-size: 1.7rem;
+        transition: transform 0.2s ease;
+    }
+
+    .video-preview:hover .video-play {
+        transform: translate(-50%, -50%) scale(1.08);
+    }
+
+    .video-fallback {
+        min-height: 180px;
+        background: #f1f3f5;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
