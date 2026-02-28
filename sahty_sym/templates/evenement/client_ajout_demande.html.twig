@@ -1825,8 +1825,22 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
 
             const response = await fetchWithTimeout(url.toString(), 12000);
+            const responseText = await response.text();
+            const isJson = (response.headers.get('content-type') || '').includes('application/json');
+            let data = {};
 
-            const data = await response.json();
+            if (isJson && responseText.trim()) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Reponse JSON invalide du serveur.');
+                }
+            }
+
+            if (!response.ok) {
+                const apiError = (data && (data.message || data.error)) ? (data.message || data.error) : responseText;
+                throw new Error(apiError || `HTTP ${response.status}`);
+            }
 
             if (data.ready === false) {
 
@@ -2295,7 +2309,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (e) {
 
-            venueResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Service de recommandation indisponible pour le moment.</div>';
+            const details = e && e.message ? String(e.message).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+            venueResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Service de recommandation indisponible pour le moment.' + (details ? (' ' + details) : '') + '</div>';
 
         }
 
