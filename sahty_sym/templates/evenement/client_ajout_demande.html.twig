@@ -2236,8 +2236,22 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
 
             const response = await fetchWithTimeout(url.toString(), 12000);
+            const responseText = await response.text();
+            const isJson = (response.headers.get('content-type') || '').includes('application/json');
+            let data = {};
 
-            const data = await response.json();
+            if (isJson && responseText.trim()) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Reponse JSON invalide du serveur.');
+                }
+            }
+
+            if (!response.ok) {
+                const apiError = (data && (data.message || data.error)) ? (data.message || data.error) : responseText;
+                throw new Error(apiError || `HTTP ${response.status}`);
+            }
 
 
 
