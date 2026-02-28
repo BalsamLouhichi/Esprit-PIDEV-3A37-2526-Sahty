@@ -36,6 +36,24 @@ def _is_transaminase_marker(name: str) -> bool:
     return any(k in token for k in ("ASAT", "AST", "ALAT", "ALT", "TRANSAMINASE"))
 
 
+def _format_rule_based_anomaly_description(anomaly: Anomaly) -> str:
+    parts: list[str] = []
+    status = (anomaly.status or "").strip().upper()
+    severity = (anomaly.severity or "").strip().upper()
+    note = (anomaly.note or "").strip()
+
+    if status:
+        parts.append(f"Statut: {status}")
+    if severity:
+        parts.append(f"Severite: {severity}")
+    if note:
+        parts.append(f"Note: {note}")
+
+    if not parts:
+        return "Description rule-based indisponible pour ce parametre."
+    return " | ".join(parts)
+
+
 def _has_urgent_criterion(structured: StructuredExtraction, score: int) -> bool:
     # Very high global score is considered urgent.
     if score >= 85:
@@ -116,3 +134,13 @@ def build_analysis_from_structured(structured: StructuredExtraction) -> Analysis
         model="rule-based-v2",
         raw_model_output="",
     )
+
+
+def build_rule_based_metric_glossary(analysis: AnalysisResult) -> dict[str, str]:
+    glossary: dict[str, str] = {}
+    for anomaly in analysis.anomalies:
+        name = (anomaly.name or "").strip()
+        if not name or name in glossary:
+            continue
+        glossary[name] = _format_rule_based_anomaly_description(anomaly)
+    return glossary

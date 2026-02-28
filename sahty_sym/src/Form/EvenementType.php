@@ -7,6 +7,7 @@ use App\Entity\GroupeCible;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -20,9 +21,16 @@ class EvenementType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $isAdmin   = $options['is_admin'] ?? false;
-        $userRole  = $options['user_role'] ?? null;
+        $isAdmin = $options['is_admin'] ?? false;
+        $userRole = $options['user_role'] ?? null;
         $isDemande = $options['is_demande'] ?? false;
+        $aiSuggestedDate = $options['ai_suggested_date'] ?? null;
+        $aiSuggestedLieu = $options['ai_suggested_lieu'] ?? null;
+        $aiSuggestedParticipants = $options['ai_suggested_participants'] ?? null;
+        $seriesCandidates = $options['series_candidates'] ?? [];
+        $seriesIsEdition = (bool) ($options['series_is_edition'] ?? false);
+        $seriesSourceEventId = $options['series_source_event_id'] ?? null;
+        $seriesEditionNumber = $options['series_edition_number'] ?? null;
 
         $builder
             ->add('titre', TextType::class, [
@@ -52,6 +60,25 @@ class EvenementType extends AbstractType
                     'En ligne' => 'en_ligne',
                     'Présentiel' => 'presentiel',
                     'Hybride' => 'hybride',
+                ],
+            ])
+            ->add('meetingPlatform', ChoiceType::class, [
+                'label' => 'Plateforme de réunion (en ligne)',
+                'required' => false,
+                'placeholder' => 'Génération automatique (Jitsi)',
+                'choices' => [
+                    'Jitsi (gratuit)' => 'jitsi',
+                    'Lien personnalisé' => 'custom',
+                ],
+                'help' => 'Pour les événements en ligne/hybrides. Le lien est généré à l\'approbation si vous choisissez Jitsi.',
+            ])
+            ->add('meetingLink', TextType::class, [
+                'label' => 'Lien personnalisé',
+                'required' => false,
+                'help' => 'Obligatoire seulement si plateforme = Lien personnalisé.',
+                'attr' => [
+                    'placeholder' => 'https://...',
+                    'maxlength' => 500,
                 ],
             ])
             ->add('dateDebut', DateTimeType::class, [
@@ -87,6 +114,30 @@ class EvenementType extends AbstractType
                 'required' => false,
                 'scale' => 2,
             ])
+            ->add('isEdition', CheckboxType::class, [
+                'label' => 'Cet evenement est une edition d\'une serie existante',
+                'mapped' => false,
+                'required' => false,
+                'data' => $seriesIsEdition,
+            ])
+            ->add('editionSourceEventId', ChoiceType::class, [
+                'label' => 'Evenement de reference',
+                'mapped' => false,
+                'required' => false,
+                'choices' => $seriesCandidates,
+                'placeholder' => 'Selectionner un evenement precedent',
+                'data' => $seriesSourceEventId !== null ? (string) $seriesSourceEventId : null,
+            ])
+            ->add('editionNumero', IntegerType::class, [
+                'label' => 'Numero de l\'edition',
+                'mapped' => false,
+                'required' => false,
+                'data' => $seriesEditionNumber,
+                'attr' => [
+                    'min' => 1,
+                    'max' => 999,
+                ],
+            ])
             ->add('groupeCibles', EntityType::class, [
                 'label' => 'Groupes cibles',
                 'class' => GroupeCible::class,
@@ -94,15 +145,14 @@ class EvenementType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
                 'required' => false,
-                'query_builder' => function (EntityRepository $er) use ($userRole, $isAdmin) {
+                'query_builder' => function (EntityRepository $er) use ($userRole, $isAdmin, $isDemande) {
                     $qb = $er->createQueryBuilder('g')
                         ->orderBy('g.nom', 'ASC');
 
-                    if ($isAdmin) {
+                    if ($isAdmin || $isDemande) {
                         return $qb;
                     }
 
-                    // Defensive check: Ensure we handle roles safely
                     if ($userRole) {
                         if ($userRole === 'ROLE_PATIENT') {
                             $qb->andWhere('g.type LIKE :type')->setParameter('type', '%patient%');
@@ -119,8 +169,6 @@ class EvenementType extends AbstractType
                 },
             ]);
 
-        // LOGIC: Only add the 'statut' field if this is NOT a client request (is_demande = false).
-        // If it IS a client request, we skip this entirely so the form doesn't touch the status.
         if (!$isDemande) {
             $statutChoices = [
                 'Planifié' => 'planifie',
@@ -139,7 +187,7 @@ class EvenementType extends AbstractType
             $builder->add('statut', ChoiceType::class, [
                 'label' => 'Statut de l\'événement',
                 'choices' => $statutChoices,
-                'required' => true, 
+                'required' => true,
             ]);
         }
     }
@@ -152,11 +200,19 @@ class EvenementType extends AbstractType
             'is_admin' => false,
             'is_demande' => false,
             'user_role' => null,
+            'series_candidates' => [],
+            'series_is_edition' => false,
+            'series_source_event_id' => null,
+            'series_edition_number' => null,
         ]);
 
         $resolver->setAllowedTypes('is_edit', 'bool');
         $resolver->setAllowedTypes('is_admin', 'bool');
         $resolver->setAllowedTypes('is_demande', 'bool');
         $resolver->setAllowedTypes('user_role', ['null', 'string']);
+        $resolver->setAllowedTypes('series_candidates', 'array');
+        $resolver->setAllowedTypes('series_is_edition', 'bool');
+        $resolver->setAllowedTypes('series_source_event_id', ['null', 'int', 'string']);
+        $resolver->setAllowedTypes('series_edition_number', ['null', 'int']);
     }
 }

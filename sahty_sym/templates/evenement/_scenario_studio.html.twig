@@ -1,0 +1,484 @@
+<div class="col-12">
+    <div class="scenario-studio">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h6 class="mb-1 fw-bold text-primary">
+                    <i class="fas fa-project-diagram me-2"></i>Studio de scenario IA
+                </h6>
+                <div class="small text-muted">Glissez les phases, ajustez la duree, puis finalisez un scenario solide pour votre demo.</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="scenario-generate-btn">
+                    <i class="fas fa-magic me-1"></i>Generer 3 plans IA
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="scenario-add-phase-btn">
+                    <i class="fas fa-plus me-1"></i>Ajouter phase
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div id="scenario-plan-options" class="mb-2" style="display:none;"></div>
+                <div id="scenario-track" class="scenario-track"></div>
+                <input type="hidden" name="scenario_timeline_json" id="scenario_timeline_json" value="">
+            </div>
+
+            <div class="col-lg-5">
+                <div class="scenario-side">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="scenario-score-ring" id="scenario-score-ring">
+                            <span id="scenario-score-value">0</span>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Score de preparation</div>
+                            <div class="small text-muted" id="scenario-score-label">En construction</div>
+                        </div>
+                    </div>
+
+                    <div class="small mb-2"><strong>Checklist intelligente</strong></div>
+                    <ul class="scenario-checklist mb-3" id="scenario-checklist"></ul>
+
+                    <div class="small mb-2"><strong>Courbe d energie</strong></div>
+                    <div class="scenario-energy" id="scenario-energy"></div>
+
+                    <div class="small mt-3 mb-2"><strong>Suggestions IA</strong></div>
+                    <ul class="scenario-suggestions mb-0" id="scenario-suggestions"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.scenario-studio {
+    border: 1px solid #dbeafe;
+    background: linear-gradient(135deg, #ffffff 0%, #f2f8ff 100%);
+    border-radius: 0.85rem;
+    padding: 1rem;
+}
+
+.scenario-track {
+    min-height: 210px;
+    border: 1px dashed #93c5fd;
+    border-radius: 0.75rem;
+    padding: 0.6rem;
+    background: #fff;
+}
+
+.scenario-card {
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    border-radius: 0.65rem;
+    background: #ffffff;
+    padding: 0.65rem;
+    margin-bottom: 0.55rem;
+    cursor: move;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.scenario-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(30, 64, 175, 0.12);
+    border-color: #bfdbfe;
+}
+
+.scenario-card.dragging {
+    opacity: 0.6;
+}
+
+.scenario-card-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.scenario-side {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #fff;
+    padding: 0.9rem;
+}
+
+.scenario-score-ring {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 5px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #1f2937;
+    background: #f8fafc;
+}
+
+.scenario-checklist,
+.scenario-suggestions {
+    padding-left: 1rem;
+    font-size: 0.84rem;
+    color: #475569;
+}
+
+.scenario-checklist li.ok {
+    color: #047857;
+}
+
+.scenario-checklist li.warn {
+    color: #b45309;
+}
+
+.scenario-energy {
+    display: flex;
+    align-items: end;
+    gap: 4px;
+    min-height: 80px;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.55rem;
+    background: #f8fafc;
+}
+
+.scenario-energy-bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, #38bdf8 0%, #1d4ed8 100%);
+    min-width: 8px;
+}
+
+.scenario-plan-option {
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1e40af;
+    border-radius: 0.55rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const track = document.getElementById('scenario-track');
+    if (!track) {
+        return;
+    }
+
+    const addPhaseBtn = document.getElementById('scenario-add-phase-btn');
+    const generateBtn = document.getElementById('scenario-generate-btn');
+    const optionsBox = document.getElementById('scenario-plan-options');
+    const hiddenJson = document.getElementById('scenario_timeline_json');
+    const checklistEl = document.getElementById('scenario-checklist');
+    const suggestionsEl = document.getElementById('scenario-suggestions');
+    const energyEl = document.getElementById('scenario-energy');
+    const scoreValueEl = document.getElementById('scenario-score-value');
+    const scoreLabelEl = document.getElementById('scenario-score-label');
+    const scoreRingEl = document.getElementById('scenario-score-ring');
+
+    const titleInput = document.getElementById('evenement_titre');
+    const modeInput = document.getElementById('evenement_mode');
+    const placesInput = document.getElementById('evenement_placesMax');
+
+    let dragSource = null;
+    let nextId = 100;
+
+    const basePlan = [
+        { id: 1, title: 'Ouverture', duration: 15, intensity: 2, type: 'intro' },
+        { id: 2, title: 'Intervention 1', duration: 35, intensity: 4, type: 'talk' },
+        { id: 3, title: 'Pause networking', duration: 15, intensity: 1, type: 'break' },
+        { id: 4, title: 'Atelier pratique', duration: 40, intensity: 4, type: 'workshop' },
+        { id: 5, title: 'Invite special', duration: 25, intensity: 3, type: 'guest' },
+        { id: 6, title: 'Cloture', duration: 10, intensity: 2, type: 'close' }
+    ];
+
+    const aiPlans = {
+        classique: [
+            { title: 'Ouverture institutionnelle', duration: 20, intensity: 2, type: 'intro' },
+            { title: 'Discours principal', duration: 35, intensity: 4, type: 'talk' },
+            { title: 'Pause cafe', duration: 15, intensity: 1, type: 'break' },
+            { title: 'Table ronde', duration: 30, intensity: 3, type: 'talk' },
+            { title: 'Questions et reponses', duration: 20, intensity: 3, type: 'qa' },
+            { title: 'Cloture', duration: 10, intensity: 2, type: 'close' }
+        ],
+        dynamique: [
+            { title: 'Ice breaker', duration: 12, intensity: 3, type: 'intro' },
+            { title: 'Intervention flash', duration: 20, intensity: 4, type: 'talk' },
+            { title: 'Atelier collaboratif', duration: 35, intensity: 5, type: 'workshop' },
+            { title: 'Pause active', duration: 10, intensity: 1, type: 'break' },
+            { title: 'Invite special', duration: 25, intensity: 4, type: 'guest' },
+            { title: 'Synthese actionnable', duration: 15, intensity: 3, type: 'close' }
+        ],
+        premium: [
+            { title: 'Accueil premium', duration: 15, intensity: 2, type: 'intro' },
+            { title: 'Keynote expert', duration: 30, intensity: 4, type: 'talk' },
+            { title: 'Case study live', duration: 25, intensity: 4, type: 'workshop' },
+            { title: 'Pause networking guidee', duration: 20, intensity: 1, type: 'break' },
+            { title: 'Panel VIP', duration: 30, intensity: 4, type: 'guest' },
+            { title: 'Closing signature', duration: 12, intensity: 2, type: 'close' }
+        ]
+    };
+
+    const typeLabel = (type) => {
+        const map = {
+            intro: 'Ouverture',
+            talk: 'Intervention',
+            workshop: 'Atelier',
+            break: 'Pause',
+            guest: 'Invite',
+            qa: 'Q&A',
+            close: 'Cloture'
+        };
+        return map[type] || 'Phase';
+    };
+
+    function buildCard(item) {
+        const card = document.createElement('div');
+        card.className = 'scenario-card';
+        card.draggable = true;
+        card.dataset.id = String(item.id);
+        card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div class="scenario-card-title">${item.title}</div>
+                <button type="button" class="btn btn-sm btn-link text-danger p-0 scenario-remove" title="Supprimer"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="row g-2 mt-1">
+                <div class="col-5">
+                    <label class="form-label small mb-1">Type</label>
+                    <select class="form-select form-select-sm scenario-type">
+                        <option value="${item.type}" selected>${typeLabel(item.type)}</option>
+                        <option value="intro">Ouverture</option>
+                        <option value="talk">Intervention</option>
+                        <option value="workshop">Atelier</option>
+                        <option value="break">Pause</option>
+                        <option value="guest">Invite</option>
+                        <option value="qa">Q&A</option>
+                        <option value="close">Cloture</option>
+                    </select>
+                </div>
+                <div class="col-4">
+                    <label class="form-label small mb-1">Duree</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" min="5" max="180" class="form-control scenario-duration" value="${item.duration}">
+                        <span class="input-group-text">min</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <label class="form-label small mb-1">Energie</label>
+                    <input type="range" min="1" max="5" value="${item.intensity}" class="form-range scenario-intensity">
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('dragstart', () => {
+            dragSource = card;
+            card.classList.add('dragging');
+        });
+        card.addEventListener('dragend', () => {
+            dragSource = null;
+            card.classList.remove('dragging');
+            updateInsights();
+        });
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!dragSource || dragSource === card) {
+                return;
+            }
+            const rect = card.getBoundingClientRect();
+            const before = e.clientY < rect.top + rect.height / 2;
+            track.insertBefore(dragSource, before ? card : card.nextSibling);
+        });
+
+        card.querySelector('.scenario-remove')?.addEventListener('click', () => {
+            card.remove();
+            updateInsights();
+        });
+        card.querySelector('.scenario-type')?.addEventListener('change', updateInsights);
+        card.querySelector('.scenario-duration')?.addEventListener('input', updateInsights);
+        card.querySelector('.scenario-intensity')?.addEventListener('input', updateInsights);
+
+        return card;
+    }
+
+    function getPhases() {
+        return Array.from(track.querySelectorAll('.scenario-card')).map((card, index) => {
+            const title = (card.querySelector('.scenario-card-title')?.textContent || `Phase ${index + 1}`).trim();
+            const type = card.querySelector('.scenario-type')?.value || 'talk';
+            const duration = parseInt(card.querySelector('.scenario-duration')?.value || '15', 10);
+            const intensity = parseInt(card.querySelector('.scenario-intensity')?.value || '3', 10);
+            return {
+                id: card.dataset.id || String(index + 1),
+                order: index + 1,
+                title,
+                type,
+                duration: Number.isFinite(duration) ? duration : 15,
+                intensity: Number.isFinite(intensity) ? intensity : 3
+            };
+        });
+    }
+
+    function renderEnergy(phases) {
+        energyEl.innerHTML = '';
+        phases.forEach((phase) => {
+            const bar = document.createElement('div');
+            bar.className = 'scenario-energy-bar';
+            const h = Math.max(18, Math.min(72, phase.intensity * 14));
+            bar.style.height = `${h}px`;
+            bar.title = `${phase.title} (${phase.intensity}/5)`;
+            energyEl.appendChild(bar);
+        });
+    }
+
+    function setScoreVisual(score) {
+        scoreValueEl.textContent = String(score);
+        if (score >= 80) {
+            scoreRingEl.style.borderColor = '#22c55e';
+            scoreLabelEl.textContent = 'Pret a valider';
+        } else if (score >= 60) {
+            scoreRingEl.style.borderColor = '#f59e0b';
+            scoreLabelEl.textContent = 'Bon, a optimiser';
+        } else {
+            scoreRingEl.style.borderColor = '#ef4444';
+            scoreLabelEl.textContent = 'Structure fragile';
+        }
+    }
+
+    function updateInsights() {
+        const phases = getPhases();
+        const totalDuration = phases.reduce((sum, p) => sum + p.duration, 0);
+        const hasOpening = phases.length > 0 && phases[0].type === 'intro';
+        const hasClosure = phases.length > 0 && phases[phases.length - 1].type === 'close';
+        const hasBreak = phases.some((p) => p.type === 'break');
+        const intenseSeries = phases.some((p, i) => i > 1 && p.intensity >= 4 && phases[i - 1].intensity >= 4 && phases[i - 2].intensity >= 4);
+        const maxSlot = phases.some((p) => p.duration > 50);
+        const places = parseInt(placesInput?.value || '0', 10);
+        const mode = (modeInput?.value || '').trim();
+
+        let score = 100;
+        if (!hasOpening) score -= 12;
+        if (!hasClosure) score -= 12;
+        if (!hasBreak && totalDuration > 90) score -= 15;
+        if (intenseSeries) score -= 10;
+        if (maxSlot) score -= 8;
+        if (phases.length < 4) score -= 10;
+        if (mode === 'hybride' && !phases.some((p) => p.title.toLowerCase().includes('q') || p.type === 'qa')) score -= 6;
+        if (Number.isFinite(places) && places > 150 && !hasBreak) score -= 8;
+        score = Math.max(0, Math.min(100, score));
+
+        const checklist = [
+            { ok: hasOpening, text: 'Commencer par une phase d ouverture' },
+            { ok: hasClosure, text: 'Terminer avec une cloture explicite' },
+            { ok: hasBreak || totalDuration <= 90, text: 'Prevoir une pause pour les formats longs' },
+            { ok: !intenseSeries, text: 'Eviter 3 phases tres denses consecutives' },
+            { ok: phases.length >= 4, text: 'Avoir une trame riche (4 phases+)' }
+        ];
+
+        const suggestions = [];
+        if (!hasBreak && totalDuration > 90) suggestions.push('Ajoutez une pause de 10-15 min apres le 2eme bloc.');
+        if (intenseSeries) suggestions.push('Inserez une phase legere pour equilibrer le rythme.');
+        if (!hasOpening) suggestions.push('Placez une ouverture claire pour cadrer les objectifs.');
+        if (!hasClosure) suggestions.push('Ajoutez une cloture avec synthese et actions.');
+        if (mode === 'hybride') suggestions.push('En mode hybride, ajoutez un segment Q&A pour aligner les participants.');
+        if (suggestions.length === 0) suggestions.push('Structure coherente: vous pouvez valider ce scenario.');
+
+        checklistEl.innerHTML = checklist.map((item) => `<li class="${item.ok ? 'ok' : 'warn'}">${item.ok ? 'OK' : '!' } ${item.text}</li>`).join('');
+        suggestionsEl.innerHTML = suggestions.map((s) => `<li>${s}</li>`).join('');
+        renderEnergy(phases);
+        setScoreVisual(score);
+
+        if (hiddenJson) {
+            hiddenJson.value = JSON.stringify({
+                title: (titleInput?.value || '').trim(),
+                mode,
+                totalDuration,
+                score,
+                phases
+            });
+        }
+    }
+
+    function loadPlan(planName) {
+        const source = aiPlans[planName];
+        if (!source) {
+            return;
+        }
+        track.innerHTML = '';
+        source.forEach((item) => {
+            const row = { ...item, id: nextId++ };
+            track.appendChild(buildCard(row));
+        });
+        updateInsights();
+    }
+
+    function applyPhases(phases) {
+        if (!Array.isArray(phases) || phases.length === 0) {
+            return;
+        }
+        track.innerHTML = '';
+        phases.forEach((item, idx) => {
+            const card = buildCard({
+                id: nextId++,
+                title: item.title || `Phase ${idx + 1}`,
+                duration: Math.max(5, parseInt(item.duration, 10) || 15),
+                intensity: Math.max(1, Math.min(5, parseInt(item.intensity, 10) || 3)),
+                type: item.type || 'talk'
+            });
+            track.appendChild(card);
+        });
+        updateInsights();
+    }
+
+    function initBase() {
+        if (track.children.length > 0) {
+            updateInsights();
+            return;
+        }
+        basePlan.forEach((item) => track.appendChild(buildCard(item)));
+        updateInsights();
+    }
+
+    addPhaseBtn?.addEventListener('click', () => {
+        const card = buildCard({
+            id: nextId++,
+            title: `Nouvelle phase ${track.children.length + 1}`,
+            duration: 15,
+            intensity: 3,
+            type: 'talk'
+        });
+        track.appendChild(card);
+        updateInsights();
+    });
+
+    generateBtn?.addEventListener('click', () => {
+        optionsBox.style.display = '';
+        optionsBox.innerHTML = `
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="scenario-plan-option" data-plan="classique">Plan Classique</button>
+                <button type="button" class="scenario-plan-option" data-plan="dynamique">Plan Dynamique</button>
+                <button type="button" class="scenario-plan-option" data-plan="premium">Plan Premium</button>
+            </div>
+        `;
+        optionsBox.querySelectorAll('[data-plan]').forEach((btn) => {
+            btn.addEventListener('click', () => loadPlan(btn.dataset.plan || 'classique'));
+        });
+    });
+
+    titleInput?.addEventListener('input', updateInsights);
+    modeInput?.addEventListener('change', updateInsights);
+    placesInput?.addEventListener('input', updateInsights);
+
+    window.addEventListener('sahty:planning-generated', function (event) {
+        const phases = event?.detail?.phases;
+        if (Array.isArray(phases) && phases.length > 0) {
+            applyPhases(phases);
+        }
+    });
+
+    window.SahtyScenarioStudio = {
+        applyPhases,
+        getPhases: getPhases
+    };
+
+    initBase();
+});
+</script>

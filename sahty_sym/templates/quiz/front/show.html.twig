@@ -37,6 +37,15 @@
         <div id="question-card" class="card border-0 shadow rounded-4">
             <div class="card-body p-4 p-lg-5 text-center">
                 <div id="question-text" class="h4 fw-bold mb-4"></div>
+                <div class="mb-3 d-flex justify-content-center gap-2 flex-wrap">
+                    <button id="reformulate-btn" type="button" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-magic me-1"></i>Reformuler la question
+                    </button>
+                    <button id="show-original-btn" type="button" class="btn btn-outline-dark btn-sm rounded-pill d-none">
+                        Afficher la question originale
+                    </button>
+                </div>
+                <div id="reformulate-feedback" class="small text-muted mb-3 d-none"></div>
                 <div id="answers-list" class="d-flex flex-wrap justify-content-center gap-3 mb-3"></div>
                 <div id="drop-zone" class="drop-zone d-none">
                     Glissez une reponse ici
@@ -119,6 +128,8 @@ const questions = {{ quiz.questions|map(q => {
 })|json_encode|raw }};
 const progressSaveUrl = "{{ path('app_quiz_progress_save', {id: quiz.id}) }}";
 const progressCsrf = "{{ csrf_token('quiz_progress_' ~ quiz.id) }}";
+const reformulateCsrf = "{{ csrf_token('quiz_reformulate_' ~ quiz.id) }}";
+const reformulateUrlTemplate = "{{ path('app_quiz_question_reformulate', {id: quiz.id, questionId: 'QUESTION_ID'}) }}";
 const initialAnswers = {{ (saved_answers|default({}))|json_encode|raw }};
 const initialIndex = {{ saved_index|default(0) }};
 let attemptId = Number(document.getElementById('attempt-id')?.value || 0);
@@ -132,6 +143,9 @@ const progressBar = document.getElementById('progress-bar');
 const timerElement = document.getElementById('timer');
 const nextBtn = document.getElementById('next-btn');
 const submitBtn = document.getElementById('submit-btn');
+const reformulateBtn = document.getElementById('reformulate-btn');
+const showOriginalBtn = document.getElementById('show-original-btn');
+const reformulateFeedback = document.getElementById('reformulate-feedback');
 
 if (!questions.length) {
     questionText.innerText = 'Aucune question disponible.';
@@ -144,6 +158,8 @@ if (!questions.length) {
     let timer = 20;
     let timerInterval;
     let saveTimer = null;
+    let isReformulatedView = false;
+    const reformulations = {};
 
     const getChoices = (type) => {
         if (type === 'likert_0_4') return [0, 1, 2, 3, 4];
@@ -159,7 +175,12 @@ if (!questions.length) {
 
     const showQuestion = (idx) => {
         const q = questions[idx];
+        isReformulatedView = false;
         questionText.innerText = q.text;
+        showOriginalBtn.classList.add('d-none');
+        reformulateFeedback.classList.add('d-none');
+        reformulateFeedback.textContent = '';
+        reformulateBtn.disabled = false;
         answersList.innerHTML = '';
         selectedPreview.classList.add('d-none');
         selectedPreview.textContent = '';
@@ -197,6 +218,20 @@ if (!questions.length) {
         nextBtn.classList.add('d-none');
         submitBtn.classList.add('d-none');
         startTimer();
+    };
+
+    const showReformulatedQuestion = (idx) => {
+        const q = questions[idx];
+        const reformulated = reformulations[q.id];
+        if (!reformulated) {
+            return;
+        }
+
+        isReformulatedView = true;
+        questionText.innerText = reformulated;
+        showOriginalBtn.classList.remove('d-none');
+        reformulateFeedback.classList.remove('d-none');
+        reformulateFeedback.textContent = 'Version reformulee pour faciliter la comprehension.';
     };
 
     const selectAnswer = (questionId, value) => {
@@ -255,7 +290,71 @@ if (!questions.length) {
         selectAnswer(questions[current].id, Number(dragged.dataset.value));
     });
 
-    toggleDragMode.addEventListener('change', () => showQuestion(current));
+    toggleDragMode.addEventListener('change', () => {
+        // Requirement: switching drag mode must clear the currently selected answer.
+        const q = questions[current];
+        if (q && Object.prototype.hasOwnProperty.call(answers, q.id)) {
+            delete answers[q.id];
+            queueSave();
+        }
+        showQuestion(current);
+    });
+
+    reformulateBtn.addEventListener('click', async () => {
+        const q = questions[current];
+        if (!q) {
+            return;
+        }
+
+        if (reformulations[q.id]) {
+            showReformulatedQuestion(current);
+            return;
+        }
+
+        reformulateBtn.disabled = true;
+        reformulateFeedback.classList.remove('d-none');
+        reformulateFeedback.textContent = 'Reformulation en cours...';
+
+        try {
+            const url = reformulateUrlTemplate.replace('QUESTION_ID', String(q.id));
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    _token: reformulateCsrf,
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data || data.ok === false || !data.reformulated) {
+                throw new Error((data && data.message) ? data.message : 'Reformulation indisponible');
+            }
+
+            reformulations[q.id] = String(data.reformulated);
+            showReformulatedQuestion(current);
+        } catch (error) {
+            reformulateFeedback.classList.remove('d-none');
+            reformulateFeedback.textContent = 'Impossible de reformuler cette question pour le moment.';
+        } finally {
+            reformulateBtn.disabled = false;
+        }
+    });
+
+    showOriginalBtn.addEventListener('click', () => {
+        const q = questions[current];
+        if (!q || !isReformulatedView) {
+            return;
+        }
+
+        isReformulatedView = false;
+        questionText.innerText = q.text;
+        showOriginalBtn.classList.add('d-none');
+        reformulateFeedback.classList.add('d-none');
+        reformulateFeedback.textContent = '';
+    });
 
     nextBtn.onclick = () => {
         if (current < questions.length - 1) {

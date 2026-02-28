@@ -8,6 +8,13 @@
         {% set max_score = total_questions * 5 %}
         {% set percentage = max_score > 0 ? ((score / max_score) * 100)|round : 0 %}
         {% set level = percentage < 40 ? 'low' : (percentage < 70 ? 'medium' : 'high') %}
+        {% set ai_reco_url = path('app_quiz_ai_recommendation', {id: quiz.id}) %}
+        {% set ai_reco_csrf = csrf_token('quiz_ai_reco_' ~ quiz.id) %}
+        {% set existing_reco_lines = [] %}
+        {% for item in recommandations %}
+            {% set reco = item.reco is defined ? item.reco : item %}
+            {% set existing_reco_lines = existing_reco_lines|merge([(reco.title ?: reco.name ?: ''), (reco.description ?: '')]) %}
+        {% endfor %}
 
         <div class="text-center mb-4">
             <h1 class="fw-bold mb-2">Resultats du quiz</h1>
@@ -104,6 +111,33 @@
             </div>
         {% endif %}
 
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h4 class="mb-0">Recommandation avec IA</h4>
+                    <p class="text-muted mb-0 mt-1">Optionnel: obtenez une version complementaire personnalisee.</p>
+                </div>
+                <button id="ai-reco-btn" type="button" class="btn btn-outline-primary rounded-pill px-4">
+                    <i class="bi bi-stars me-2"></i>Recommandation IA
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <div id="ai-reco-loading" class="text-muted d-none">
+                    <i class="bi bi-hourglass-split me-2"></i>Generation en cours...
+                </div>
+                <div id="ai-reco-error" class="alert alert-warning d-none mb-3"></div>
+                <div id="ai-reco-result" class="d-none">
+                    <p id="ai-reco-summary" class="mb-3 fw-semibold"></p>
+                    <ul id="ai-reco-list" class="mb-3"></ul>
+                    <div id="ai-reco-videos-wrap" class="mb-3 d-none">
+                        <h6 class="fw-bold mb-2">Videos YouTube suggerees</h6>
+                        <div id="ai-reco-videos" class="d-grid gap-2"></div>
+                    </div>
+                    <p id="ai-reco-disclaimer" class="small text-muted mb-0"></p>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex flex-wrap gap-2 justify-content-center">
             <a href="{{ path('app_quiz_show', {id: quiz.id}) }}" class="btn btn-primary rounded-pill px-4">
                 Refaire ce quiz
@@ -168,4 +202,98 @@
         border: 0;
     }
 </style>
+
+<script>
+(() => {
+    const aiRecoBtn = document.getElementById('ai-reco-btn');
+    const loadingEl = document.getElementById('ai-reco-loading');
+    const errorEl = document.getElementById('ai-reco-error');
+    const resultEl = document.getElementById('ai-reco-result');
+    const summaryEl = document.getElementById('ai-reco-summary');
+    const listEl = document.getElementById('ai-reco-list');
+    const videosWrapEl = document.getElementById('ai-reco-videos-wrap');
+    const videosEl = document.getElementById('ai-reco-videos');
+    const disclaimerEl = document.getElementById('ai-reco-disclaimer');
+
+    if (!aiRecoBtn) {
+        return;
+    }
+
+    const payload = {
+        _token: '{{ ai_reco_csrf }}',
+        score: {{ score }},
+        max_score: {{ max_score }},
+        attempt_id: {{ attempt_id|default(0) }},
+        detected_problems: {{ (detected_problems|default([]))|json_encode|raw }},
+        existing_recommendations: {{ existing_reco_lines|json_encode|raw }}
+    };
+
+    aiRecoBtn.addEventListener('click', async () => {
+        aiRecoBtn.disabled = true;
+        loadingEl.classList.remove('d-none');
+        errorEl.classList.add('d-none');
+        errorEl.textContent = '';
+        resultEl.classList.add('d-none');
+        videosWrapEl.classList.add('d-none');
+        videosEl.innerHTML = '';
+
+        try {
+            const response = await fetch('{{ ai_reco_url }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || !data || data.ok === false) {
+                throw new Error((data && data.message) ? data.message : 'Service IA indisponible');
+            }
+
+            summaryEl.textContent = String(data.summary || '');
+            listEl.innerHTML = '';
+            const rows = Array.isArray(data.recommendations) ? data.recommendations : [];
+            rows.forEach((line) => {
+                const li = document.createElement('li');
+                li.textContent = String(line);
+                listEl.appendChild(li);
+            });
+
+            const videos = Array.isArray(data.videos) ? data.videos : [];
+            if (videos.length > 0) {
+                videosWrapEl.classList.remove('d-none');
+                videos.forEach((video) => {
+                    const item = document.createElement('div');
+                    item.className = 'p-2 border rounded-3 bg-light';
+                    const title = document.createElement('div');
+                    title.className = 'fw-semibold';
+                    title.textContent = String(video.title || 'Video YouTube');
+                    const meta = document.createElement('div');
+                    meta.className = 'small text-muted mb-1';
+                    meta.textContent = 'Source suggeree: ' + String(video.channel_hint || 'YouTube');
+                    const link = document.createElement('a');
+                    link.href = String(video.url || '#');
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = 'btn btn-sm btn-outline-primary';
+                    link.textContent = 'Voir sur YouTube';
+                    item.appendChild(title);
+                    item.appendChild(meta);
+                    item.appendChild(link);
+                    videosEl.appendChild(item);
+                });
+            }
+            disclaimerEl.textContent = String(data.disclaimer || '');
+            resultEl.classList.remove('d-none');
+        } catch (e) {
+            errorEl.textContent = e && e.message ? e.message : 'Erreur lors de la generation IA.';
+            errorEl.classList.remove('d-none');
+        } finally {
+            loadingEl.classList.add('d-none');
+            aiRecoBtn.disabled = false;
+        }
+    });
+})();
+</script>
 {% endblock %}

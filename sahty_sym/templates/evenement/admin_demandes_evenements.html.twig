@@ -486,6 +486,7 @@
                                 <th>Demandeur</th>
                                 <th>Date proposée</th>
                                 <th>Type / Mode</th>
+                                <th>Risque logistique IA</th>
                                 <th>Groupes cibles</th>
                                 <th>Soumis le</th>
                                 <th class="text-end">Actions</th>
@@ -584,6 +585,33 @@
                                             </small>
                                         </div>
                                     </td>
+
+                                    <td>
+                                        {% set plan = resource_plans_by_demande[demande.id] ?? null %}
+                                        {% if plan %}
+                                            {% set risk = plan.risk.level ?? 'moyen' %}
+                                            {% set riskLabel = risk == 'faible' ? 'Faible' : (risk == 'moyen' ? 'Moyen' : 'Eleve') %}
+                                            {% set riskClass = risk == 'faible' ? 'badge-success' : (risk == 'moyen' ? 'badge-warning' : 'bg-danger text-white') %}
+
+                                            <span class="badge {{ riskClass }} mb-1">
+                                                <i class="fas fa-triangle-exclamation me-1"></i>{{ riskLabel }}
+                                            </span>
+                                            <div class="small text-muted mb-1">
+                                                {{ plan.risk.message|default('Analyse logistique disponible.') }}
+                                            </div>
+                                            {% if plan.actions is defined and plan.actions|length > 0 %}
+                                                <div class="small">
+                                                    <i class="fas fa-check-double text-primary me-1"></i>{{ plan.actions[0] }}
+                                                    {% if plan.actions|length > 1 %}
+                                                        <br>
+                                                        <i class="fas fa-check-double text-primary me-1"></i>{{ plan.actions[1] }}
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Non calcule</span>
+                                        {% endif %}
+                                    </td>
                                     
                                     <td>
                                         {% if demande.groupeCibles|length > 0 %}
@@ -669,7 +697,7 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-5">
+                                    <td colspan="8" class="text-center py-5">
                                         <div class="empty-state">
                                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                             <h5 class="fw-semibold mb-2">Aucune demande en attente</h5>

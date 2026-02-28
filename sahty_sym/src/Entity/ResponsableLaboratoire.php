@@ -49,6 +49,7 @@ class ResponsableLaboratoire extends Utilisateur
         return $this->laboratoire ? $this->laboratoire->getId() : null;
     }
 
+    // COMBINED: Keep YOUR setLaboratoireId but make it update both
     public function setLaboratoireId(?int $laboratoireId): self
     {
         // Déprécié mais gardé pour compatibilité avec SignupController

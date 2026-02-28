@@ -4,7 +4,26 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+
+    app.ia_evenement.python_default: 'python'
+    app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
+
+    event_resource_stock:
+        chaises: 150
+        tables: 30
+        micros: 4
+        projecteurs: 2
+        linens: 40
+        kits_accueil: 180
+        kits_depistage: 60
+        kits_atelier: 70
+        gants: 400
+        masques: 220
+        speaker_monitors: 1
+
+
     produits_images_directory: '%kernel.project_dir%/public/uploads/images/produits'
+
     app.fastapi_ai.endpoint: '%env(FASTAPI_AI_ENDPOINT)%'
     app.fastapi_ai.ocr_engine: '%env(FASTAPI_AI_OCR_ENGINE)%'
     app.fastapi_ai.lang: '%env(FASTAPI_AI_LANG)%'
@@ -33,6 +52,32 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\EvenementOperationalInsightsService:
+        arguments:
+            $mapboxAccessToken: '%env(string:MAPBOX_ACCESS_TOKEN)%'
+
+    App\Service\EvenementResourcePlanningService:
+        arguments:
+            $stockSnapshot: '%event_resource_stock%'
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $stripeSecretKey: '%env(string:STRIPE_SECRET_KEY)%'
+            $stripeWebhookSecret: '%env(string:STRIPE_WEBHOOK_SECRET)%'
+
+    App\Service\TwilioMessagingService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $smsFrom: '%env(string:TWILIO_SMS_FROM)%'
+            $whatsappFrom: '%env(string:TWILIO_WHATSAPP_FROM)%'
+
+    App\Service\EventRegistrationEmailService:
+        arguments:
+            $mailFrom: '%env(default::EVENT_MAIL_FROM)%'
+            $appUrl: '%env(default::APP_URL)%'
+            $mailerDsn: '%env(default::MAILER_DSN)%'
 
     App\Integration\FastApiLabAiClient:
         arguments:
@@ -82,3 +127,7 @@ services:
 
 
 
+    App\Service\EvenementPlanningModelService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $pythonBin: '%app.ia_evenement.python%'

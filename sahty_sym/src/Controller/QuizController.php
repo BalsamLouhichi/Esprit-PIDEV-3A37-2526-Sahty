@@ -12,6 +12,8 @@ use App\Form\QuizType;
 use App\Repository\QuizAttemptRepository;
 use App\Repository\QuizRepository;
 use App\Service\AiQuizGeneratorService;
+use App\Service\QuizAiRecommendationService;
+use App\Service\QuizQuestionReformulationService;
 use App\Service\QuizPdfReportService;
 use App\Service\RecommandationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -302,6 +304,7 @@ class QuizController extends AbstractController
 
         $detected = $this->decodeJsonList($attempt->getDetectedCategoriesJson());
         $recommandationItems = $this->buildRecommendationItems($quiz, (int) $attempt->getScore(), $detected, $recommandationService);
+        $aiRecommendation = $this->loadQuizAiRecoForAttempt((int) $attempt->getId());
 
         $maxScore = max(1, $attempt->getTotalQuestions() * 5);
         $percentage = (int) round(((int) $attempt->getScore() / $maxScore) * 100);
@@ -312,7 +315,8 @@ class QuizController extends AbstractController
             (int) $attempt->getScore(),
             $maxScore,
             $percentage,
-            $recommandationItems
+            $recommandationItems,
+            $aiRecommendation
         );
 
         $filename = sprintf('quiz-report-%d.pdf', $attempt->getId());
@@ -384,6 +388,49 @@ class QuizController extends AbstractController
             'active_search' => $search,
             'active_sort' => $sort,
             'active_min_questions' => $minQuestions,
+        ]);
+    }
+
+    #[Route('/quiz/{id}/question/{questionId}/reformulate', name: 'app_quiz_question_reformulate', methods: ['POST'])]
+    public function reformulateQuestion(
+        Request $request,
+        Quiz $quiz,
+        int $questionId,
+        QuizQuestionReformulationService $reformulationService
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['ok' => false, 'message' => 'Payload invalide'], 400);
+        }
+
+        $csrf = (string) ($payload['_token'] ?? '');
+        if (!$this->isCsrfTokenValid('quiz_reformulate_' . $quiz->getId(), $csrf)) {
+            return new JsonResponse(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
+        }
+
+        $targetQuestion = null;
+        foreach ($quiz->getQuestions() as $question) {
+            if ($question->getId() === $questionId) {
+                $targetQuestion = $question;
+                break;
+            }
+        }
+
+        if (!$targetQuestion instanceof Question) {
+            return new JsonResponse(['ok' => false, 'message' => 'Question introuvable pour ce quiz'], 404);
+        }
+
+        $questionText = trim((string) $targetQuestion->getText());
+        if ($questionText === '') {
+            return new JsonResponse(['ok' => false, 'message' => 'Texte de question vide'], 422);
+        }
+
+        $reformulated = $reformulationService->reformulateForPatient($questionText, (string) $quiz->getName());
+
+        return new JsonResponse([
+            'ok' => true,
+            'original' => $questionText,
+            'reformulated' => $reformulated,
         ]);
     }
 
@@ -468,6 +515,145 @@ class QuizController extends AbstractController
             'active_duration' => $duration,
             'active_category' => $category,
         ]);
+    }
+
+    #[Route('/quiz/{id}/ai-recommendation', name: 'app_quiz_ai_recommendation', methods: ['POST'])]
+    public function aiRecommendation(
+        Request $request,
+        Quiz $quiz,
+        QuizAiRecommendationService $aiRecommendationService,
+        QuizAttemptRepository $attemptRepository
+    ): JsonResponse {
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return new JsonResponse(['ok' => false, 'message' => 'Payload invalide'], 400);
+        }
+
+        $csrf = (string) ($payload['_token'] ?? '');
+        if (!$this->isCsrfTokenValid('quiz_ai_reco_' . $quiz->getId(), $csrf)) {
+            return new JsonResponse(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
+        }
+
+        $score = max(0, (int) ($payload['score'] ?? 0));
+        $maxScore = max(1, (int) ($payload['max_score'] ?? 1));
+        $percentage = (int) round(($score / $maxScore) * 100);
+        $detectedProblemsRaw = $payload['detected_problems'] ?? [];
+        $detectedProblems = [];
+        if (is_array($detectedProblemsRaw)) {
+            foreach ($detectedProblemsRaw as $item) {
+                if (!is_scalar($item)) {
+                    continue;
+                }
+                $text = trim((string) $item);
+                if ($text !== '') {
+                    $detectedProblems[] = $text;
+                }
+            }
+        }
+        $detectedProblems = array_values(array_unique($detectedProblems));
+
+        $existingRaw = $payload['existing_recommendations'] ?? [];
+        $existingRecommendations = [];
+        if (is_array($existingRaw)) {
+            foreach ($existingRaw as $line) {
+                if (!is_scalar($line)) {
+                    continue;
+                }
+                $text = trim((string) $line);
+                if ($text !== '') {
+                    $existingRecommendations[] = $text;
+                }
+            }
+        }
+
+        $attemptId = max(0, (int) ($payload['attempt_id'] ?? 0));
+        if ($attemptId > 0) {
+            $attempt = $attemptRepository->find($attemptId);
+            if (!$attempt instanceof QuizAttempt) {
+                return new JsonResponse(['ok' => false, 'message' => 'Tentative introuvable'], 404);
+            }
+            if ($attempt->getQuiz()?->getId() !== $quiz->getId()) {
+                return new JsonResponse(['ok' => false, 'message' => 'Tentative non associee a ce quiz'], 400);
+            }
+            $user = $this->getUser();
+            if ($user instanceof Utilisateur && $attempt->getUser() && $attempt->getUser()->getId() !== $user->getId() && !$this->isGranted('ROLE_ADMIN')) {
+                return new JsonResponse(['ok' => false, 'message' => 'Acces refuse'], 403);
+            }
+        }
+
+        $result = $aiRecommendationService->generate(
+            (string) $quiz->getName(),
+            $score,
+            $maxScore,
+            $percentage,
+            $detectedProblems,
+            $existingRecommendations
+        );
+
+        if ($attemptId > 0) {
+            $this->saveQuizAiRecoForAttempt($attemptId, $result);
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'summary' => $result['summary'],
+            'recommendations' => $result['recommendations'],
+            'videos' => $result['videos'],
+            'disclaimer' => $result['disclaimer'],
+        ]);
+    }
+
+    /**
+     * @param array<string,mixed> $aiPayload
+     */
+    private function saveQuizAiRecoForAttempt(int $attemptId, array $aiPayload): void
+    {
+        if ($attemptId <= 0) {
+            return;
+        }
+
+        $dir = $this->getParameter('kernel.project_dir') . '/var/quiz_ai_reco';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        $path = $dir . '/attempt_' . $attemptId . '.json';
+        $payload = [
+            'summary' => (string) ($aiPayload['summary'] ?? ''),
+            'recommendations' => is_array($aiPayload['recommendations'] ?? null) ? $aiPayload['recommendations'] : [],
+            'videos' => is_array($aiPayload['videos'] ?? null) ? $aiPayload['videos'] : [],
+            'disclaimer' => (string) ($aiPayload['disclaimer'] ?? ''),
+            'executed_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
+        ];
+
+        @file_put_contents($path, json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function loadQuizAiRecoForAttempt(int $attemptId): ?array
+    {
+        if ($attemptId <= 0) {
+            return null;
+        }
+
+        $path = $this->getParameter('kernel.project_dir') . '/var/quiz_ai_reco/attempt_' . $attemptId . '.json';
+        if (!is_file($path)) {
+            return null;
+        }
+
+        $raw = @file_get_contents($path);
+        if (!is_string($raw) || trim($raw) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        return $decoded;
     }
 
     private function isProblemAnswer(string $type, int $answer): bool

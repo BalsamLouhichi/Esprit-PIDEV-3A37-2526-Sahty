@@ -3,6 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\MedecinRepository;
+
+use Doctrine\DBAL\Types\Types;
+
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MedecinRepository::class)]

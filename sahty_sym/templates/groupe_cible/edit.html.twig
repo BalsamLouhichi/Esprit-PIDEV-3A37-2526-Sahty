@@ -80,7 +80,7 @@
             </div>
 
             <div class="col-md-4 d-flex align-items-center justify-content-end">
-                <a href="{{ path('groupe_cible_index') }}"
+                <a href="{{ path('groupe_cible_index', (referrer is defined and referrer) ? {'referrer': referrer, 'event_id': (event_id is defined ? event_id : null)} : {}) }}"
                    class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Retour
                 </a>
@@ -132,7 +132,7 @@
 
                 <!-- Buttons -->
                 <div class="d-flex justify-content-end mt-4">
-                    <a href="{{ path('groupe_cible_index') }}"
+                    <a href="{{ path('groupe_cible_index', (referrer is defined and referrer) ? {'referrer': referrer, 'event_id': (event_id is defined ? event_id : null)} : {}) }}"
                        class="btn btn-secondary me-2">
                         Annuler
                     </a>

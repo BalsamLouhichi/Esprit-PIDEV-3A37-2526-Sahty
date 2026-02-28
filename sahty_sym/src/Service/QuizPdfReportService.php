@@ -17,6 +17,7 @@ class QuizPdfReportService
 
     /**
      * @param array<int, array{reco: object, selectedVideo: ?string}> $recommendationItems
+     * @param array<string,mixed>|null $aiRecommendation
      */
     public function buildResultPdf(
         Quiz $quiz,
@@ -24,7 +25,8 @@ class QuizPdfReportService
         int $score,
         int $maxScore,
         int $percentage,
-        array $recommendationItems
+        array $recommendationItems,
+        ?array $aiRecommendation = null
     ): string {
         $patientName = $user ? trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? '')) : 'Patient';
         $createdAt = (new \DateTimeImmutable())->format('Y-m-d H:i');
@@ -64,6 +66,52 @@ class QuizPdfReportService
                     $lines[] = '  Video: ' . $video;
                 }
                 $lines[] = '';
+            }
+        }
+
+        // Include IA recommendation only if it was executed and persisted.
+        if (is_array($aiRecommendation) && trim((string) ($aiRecommendation['summary'] ?? '')) !== '') {
+            $lines[] = '';
+            $lines[] = 'AI Recommendation:';
+            $lines[] = trim((string) $aiRecommendation['summary']);
+
+            $aiRows = $aiRecommendation['recommendations'] ?? [];
+            if (is_array($aiRows) && $aiRows !== []) {
+                foreach ($aiRows as $row) {
+                    if (!is_scalar($row) || trim((string) $row) === '') {
+                        continue;
+                    }
+                    $lines[] = '- ' . trim((string) $row);
+                }
+            }
+
+            $videoRows = $aiRecommendation['videos'] ?? [];
+            if (is_array($videoRows) && $videoRows !== []) {
+                $lines[] = '';
+                $lines[] = 'AI Suggested YouTube Videos:';
+                foreach ($videoRows as $video) {
+                    if (!is_array($video)) {
+                        continue;
+                    }
+                    $title = trim((string) ($video['title'] ?? 'YouTube video'));
+                    $url = trim((string) ($video['url'] ?? ''));
+                    $channel = trim((string) ($video['channel_hint'] ?? ''));
+                    if ($url === '') {
+                        continue;
+                    }
+                    $line = '- ' . ($title !== '' ? $title : 'YouTube video');
+                    if ($channel !== '') {
+                        $line .= ' (' . $channel . ')';
+                    }
+                    $lines[] = $line;
+                    $lines[] = '  Link: ' . $url;
+                }
+            }
+
+            $disclaimer = trim((string) ($aiRecommendation['disclaimer'] ?? ''));
+            if ($disclaimer !== '') {
+                $lines[] = '';
+                $lines[] = 'IA Disclaimer: ' . $disclaimer;
             }
         }
 
