@@ -2,8 +2,8 @@
 
 namespace App\Tests\Service;
 
-use App\Entity\Quiz;
 use App\Entity\Question;
+use App\Entity\Quiz;
 use App\Entity\Recommandation;
 use App\Service\QuizResultService;
 use PHPUnit\Framework\TestCase;
@@ -17,200 +17,155 @@ class QuizResultServiceTest extends TestCase
         $this->service = new QuizResultService();
     }
 
-    /**
-     * Test: Calcul du scores total
-     */
     public function testCalculateTotalScore(): void
     {
-        // Arrange
-        $quiz = $this->createTestQuiz(3); // 3 questions
-        $answers = [
-            1 => 2,
-            2 => 3,
-            3 => 1,
-        ];
+        $quiz = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'stress', 'reverse' => false],
+            ['id' => 3, 'category' => 'stress', 'reverse' => false],
+        ]);
 
-        // Act
-        $result = $this->service->calculate($quiz, $answers);
+        $result = $this->service->calculate($quiz, [1 => 2, 2 => 3, 3 => 1]);
 
-        // Assert
-        $this->assertEquals(6, $result['totalScore']);
-        $this->assertIsArray($result['categoryScores']);
+        $this->assertSame(6, $result['totalScore']);
+        $this->assertSame(12, $result['maxScore']);
+        $this->assertSame(6, $result['categoryScores']['stress']);
     }
 
-    /**
-     * Test: Calcul avec questions inverses
-     */
     public function testCalculateWithReverseScoring(): void
     {
-        // Arrange
-        $quiz = new Quiz();
-        $quiz->setName('Test Quiz with Reverse');
+        $quiz = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'stress', 'reverse' => true],
+        ]);
 
-        $q1 = new Question();
-        $q1->setText('Question 1');
-        $q1->setType('likert_0_4');
-        $q1->setCategory('stress');
-        $q1->setOrderInQuiz(1);
-        $q1->setReverse(false);
-        $q1->setQuiz($quiz);
+        $result = $this->service->calculate($quiz, [1 => 2, 2 => 3]);
 
-        $q2 = new Question();
-        $q2->setText('Question 2 (Reverse)');
-        $q2->setType('likert_0_4');
-        $q2->setCategory('stress');
-        $q2->setOrderInQuiz(2);
-        $q2->setReverse(true); // Question inversée
-        $q2->setQuiz($quiz);
-
-        $quiz->addQuestion($q1);
-        $quiz->addQuestion($q2);
-
-        $answers = [1 => 2, 2 => 3]; // q2 avec 3 devient 4-3=1
-
-        // Act
-        $result = $this->service->calculate($quiz, $answers);
-
-        // Assert
-        $this->assertEquals(3, $result['totalScore']); // 2 + (4-3)
-        $this->assertArrayHasKey('stress', $result['categoryScores']);
-        $this->assertEquals(3, $result['categoryScores']['stress']);
+        $this->assertSame(3, $result['totalScore']);
+        $this->assertSame(3, $result['categoryScores']['stress']);
     }
 
-    /**
-     * Test: Recommandations filtrées par score
-     */
     public function testRecommendationFilteringByScore(): void
     {
-        // Arrange
-        $quiz = $this->createTestQuiz(2);
+        $quiz = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'stress', 'reverse' => false],
+        ]);
 
-        $reco1 = new Recommandation();
-        $reco1->setName('Reco Low Score');
-        $reco1->setTitle('For low scores');
-        $reco1->setMinScore(0);
-        $reco1->setMaxScore(5);
-        $reco1->setSeverity('low');
-        $reco1->setQuiz($quiz);
+        $low = new Recommandation();
+        $low->setName('Reco Low Score');
+        $low->setTitle('For low scores');
+        $low->setMinScore(0);
+        $low->setMaxScore(5);
+        $low->setSeverity('low');
 
-        $reco2 = new Recommandation();
-        $reco2->setName('Reco High Score');
-        $reco2->setTitle('For high scores');
-        $reco2->setMinScore(6);
-        $reco2->setMaxScore(10);
-        $reco2->setSeverity('high');
-        $reco2->setQuiz($quiz);
+        $high = new Recommandation();
+        $high->setName('Reco High Score');
+        $high->setTitle('For high scores');
+        $high->setMinScore(6);
+        $high->setMaxScore(10);
+        $high->setSeverity('high');
 
-        $quiz->addRecommandation($reco1);
-        $quiz->addRecommandation($reco2);
+        $quiz->addRecommandation($low);
+        $quiz->addRecommandation($high);
 
-        // Test score 4: should only get reco1
-        $result = $this->service->calculate($quiz, [1 => 2, 2 => 2]);
-        $this->assertCount(1, $result['recommendations']);
-        $this->assertEquals('Reco Low Score', $result['recommendations'][0]->getName());
+        $resultLow = $this->service->calculate($quiz, [1 => 2, 2 => 2]);
+        $this->assertCount(1, $resultLow['recommendations']);
+        $this->assertSame('Reco Low Score', $resultLow['recommendations'][0]->getName());
 
-        // Test score 7: should only get reco2
-        $result = $this->service->calculate($quiz, [1 => 3, 2 => 4]);
-        $this->assertCount(1, $result['recommendations']);
-        $this->assertEquals('Reco High Score', $result['recommendations'][0]->getName());
+        $resultHigh = $this->service->calculate($quiz, [1 => 3, 2 => 4]);
+        $this->assertCount(1, $resultHigh['recommendations']);
+        $this->assertSame('Reco High Score', $resultHigh['recommendations'][0]->getName());
     }
 
-    /**
-     * Test: Interprétation du score
-     */
-    public function testInterpretation(): void
+    public function testInterpretationRanges(): void
     {
-        // Test interpretation by examining result
-        $quiz = $this->createTestQuiz(1);
+        $quizLow = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+        ]);
 
-        // Low score (< 15)
-        $result = $this->service->calculate($quiz, [1 => 2]);
-        $this->assertStringContainsString('faible', strtolower($result['interpretation']));
+        $lowResult = $this->service->calculate($quizLow, [1 => 2]);
+        $this->assertStringContainsString('faible', strtolower($lowResult['interpretation']));
 
-        // High score (> 24)
-        $quiz = $this->createTestQuiz(10);
-        $answers = array_fill(1, 10, 4); // All max answers
-        $result = $this->service->calculate($quiz, $answers);
-        $this->assertStringContainsString('eleve', strtolower($result['interpretation']));
+        $quizHigh = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'stress', 'reverse' => false],
+            ['id' => 3, 'category' => 'stress', 'reverse' => false],
+            ['id' => 4, 'category' => 'stress', 'reverse' => false],
+            ['id' => 5, 'category' => 'stress', 'reverse' => false],
+            ['id' => 6, 'category' => 'stress', 'reverse' => false],
+            ['id' => 7, 'category' => 'stress', 'reverse' => false],
+        ]);
+
+        $highResult = $this->service->calculate($quizHigh, [1 => 4, 2 => 4, 3 => 4, 4 => 4, 5 => 4, 6 => 4, 7 => 4]);
+        $this->assertStringContainsString('consulter', strtolower($highResult['interpretation']));
     }
 
-    /**
-     * Test: Empty answers handling
-     */
-    public function testEmptyAnswers(): void
+    public function testCategoryScoreCalculationAndProblemThreshold(): void
     {
-        // Arrange
-        $quiz = $this->createTestQuiz(2);
-        $answers = []; // Empty answers
+        $quiz = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'stress', 'reverse' => false],
+            ['id' => 5, 'category' => 'stress', 'reverse' => false],
+            ['id' => 3, 'category' => 'anxiete', 'reverse' => false],
+            ['id' => 4, 'category' => 'anxiete', 'reverse' => false],
+        ]);
 
-        // Act
-        $result = $this->service->calculate($quiz, $answers);
+        $result = $this->service->calculate($quiz, [1 => 2, 2 => 1, 5 => 0, 3 => 3, 4 => 4]);
 
-        // Assert - Missing answers should be treated as 0
-        $this->assertGreaterThanOrEqual(0, $result['totalScore']);
-        $this->assertIsArray($result['categoryScores']);
+        $this->assertSame(3, $result['categoryScores']['stress']);
+        $this->assertSame(7, $result['categoryScores']['anxiete']);
+        $this->assertSame([], $result['problems']);
+
+        $resultHighStress = $this->service->calculate($quiz, [1 => 4, 2 => 4, 5 => 2, 3 => 0, 4 => 0]);
+        $this->assertContains('stress', $resultHighStress['problems']);
+    }
+
+    public function testEmptyAnswersAreHandledAsZero(): void
+    {
+        $quiz = $this->createQuizWithQuestions([
+            ['id' => 1, 'category' => 'stress', 'reverse' => false],
+            ['id' => 2, 'category' => 'anxiete', 'reverse' => false],
+        ]);
+
+        $result = $this->service->calculate($quiz, []);
+
+        $this->assertSame(0, $result['totalScore']);
+        $this->assertSame(0, $result['categoryScores']['stress']);
+        $this->assertSame(0, $result['categoryScores']['anxiete']);
         $this->assertIsArray($result['recommendations']);
     }
 
     /**
-     * Test: Category score calculation
+     * @param array<int, array{id:int, category:string, reverse:bool}> $questionSpecs
      */
-    public function testCategoryScoreCalculation(): void
-    {
-        // Arrange
-        $quiz = new Quiz();
-        $quiz->setName('Category Test');
-
-        // Create 4 questions: 2 stress, 2 anxiety
-        for ($i = 1; $i <= 2; $i++) {
-            $q = new Question();
-            $q->setText("Stress Question $i");
-            $q->setType('likert_0_4');
-            $q->setCategory('stress');
-            $q->setOrderInQuiz($i);
-            $q->setQuiz($quiz);
-            $quiz->addQuestion($q);
-        }
-
-        for ($i = 3; $i <= 4; $i++) {
-            $q = new Question();
-            $q->setText("Anxiety Question " . ($i - 2));
-            $q->setType('likert_0_4');
-            $q->setCategory('anxiete');
-            $q->setOrderInQuiz($i);
-            $q->setQuiz($quiz);
-            $quiz->addQuestion($q);
-        }
-
-        $answers = [1 => 2, 2 => 1, 3 => 3, 4 => 4];
-
-        // Act
-        $result = $this->service->calculate($quiz, $answers);
-
-        // Assert
-        $this->assertEquals(3, $result['categoryScores']['stress']); // 2 + 1
-        $this->assertEquals(7, $result['categoryScores']['anxiete']); // 3 + 4
-    }
-
-    /**
-     * Helper: Create a test quiz with n questions
-     */
-    private function createTestQuiz(int $questionCount): Quiz
+    private function createQuizWithQuestions(array $questionSpecs): Quiz
     {
         $quiz = new Quiz();
         $quiz->setName('Test Quiz');
 
-        for ($i = 1; $i <= $questionCount; $i++) {
+        $order = 1;
+        foreach ($questionSpecs as $spec) {
             $question = new Question();
-            $question->setText("Question $i");
+            $question->setText('Question ' . $spec['id']);
             $question->setType('likert_0_4');
-            $question->setCategory('stress');
-            $question->setOrderInQuiz($i);
-            $question->setReverse(false);
+            $question->setCategory($spec['category']);
+            $question->setOrderInQuiz($order++);
+            $question->setReverse($spec['reverse']);
             $question->setQuiz($quiz);
+
+            $this->setEntityId($question, $spec['id']);
             $quiz->addQuestion($question);
         }
 
         return $quiz;
+    }
+
+    private function setEntityId(object $entity, int $id): void
+    {
+        $reflection = new \ReflectionClass($entity);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($entity, $id);
     }
 }

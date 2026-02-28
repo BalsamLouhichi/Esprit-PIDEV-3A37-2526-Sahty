@@ -1,0 +1,7 @@
+parameters:
+    level: 8
+    paths:
+        - src/Service/QuizResultService.php
+        - src/Service/RecommandationService.php
+        - tests/Service/QuizResultServiceTest.php
+        - tests/Service/RecommandationServiceTest.php
