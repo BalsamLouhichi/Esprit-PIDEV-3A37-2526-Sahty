@@ -52,14 +52,41 @@ class TwilioMessagingService
             return $this->sendWhatsApp($phone, $message);
         }
         if ($channel === 'whatsapp') {
-            return $this->simulateDispatch('whatsapp', $phone, $message);
+            return false;
         }
 
         if ($this->isConfiguredForSms()) {
             return $this->sendSms($phone, $message);
         }
 
-        return $this->simulateDispatch('sms', $phone, $message);
+        return false;
+    }
+
+    public function sendEventDemandDecision(Utilisateur $user, Evenement $evenement, string $decision): bool
+    {
+        $phone = $this->normalizePhone($user->getTelephone());
+        if ($phone === null) {
+            return false;
+        }
+
+        $title = (string) $evenement->getTitre();
+        $start = $evenement->getDateDebut()?->format('d/m/Y H:i') ?? 'date non definie';
+        $mode = (string) $evenement->getMode();
+
+        $statusText = strtolower($decision) === 'approuve' ? 'APPROUVEE' : 'REFUSEE';
+        $message = sprintf(
+            'Sahty: votre demande d evenement "%s" a ete %s. Date: %s (%s).',
+            $title,
+            $statusText,
+            $start,
+            $mode
+        );
+
+        if ($this->isConfiguredForSms()) {
+            return $this->sendSms($phone, $message);
+        }
+
+        return false;
     }
 
     public function sendSms(string $to, string $message): bool
@@ -105,8 +132,15 @@ class TwilioMessagingService
             ]);
 
             $code = $response->getStatusCode();
-            return $code >= 200 && $code < 300;
-        } catch (\Throwable) {
+            if ($code < 200 || $code >= 300) {
+                $body = $response->getContent(false);
+                error_log(sprintf('[Sahty][TWILIO_ERROR] status=%d body=%s', $code, $body));
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[Sahty][TWILIO_EXCEPTION] ' . $e->getMessage());
             return false;
         }
     }
@@ -134,15 +168,4 @@ class TwilioMessagingService
         return $normalized;
     }
 
-    private function simulateDispatch(string $channel, string $to, string $message): bool
-    {
-        error_log(sprintf(
-            '[Sahty][SIMULATED_%s] to=%s message=%s',
-            strtoupper($channel),
-            $to,
-            $message
-        ));
-
-        return true;
-    }
 }

@@ -62,6 +62,19 @@
                     <a href="{{ path('app_home') }}" class="nav-item nav-link {{ app.current_route == 'app_home' ? 'active' : '' }}">
                         <i class="fa fa-home me-1"></i>Accueil
                     </a>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fa fa-brain me-1"></i>Quiz & Recommandations
+                        </a>
+                        <div class="dropdown-menu m-0">
+                            <a href="{{ path('app_quiz_front_list') }}" class="dropdown-item">
+                                <i class="fa fa-question-circle me-2"></i>Quiz
+                            </a>
+                            <a href="{{ path('app_recommandation_front_list') }}" class="dropdown-item">
+                                <i class="fa fa-lightbulb me-2"></i>Recommandations
+                            </a>
+                        </div>
+                    </div>
                    
                    
                     <!-- MENU ADMIN - GESTION ADMIN COMPLÈTE -->
@@ -88,6 +101,13 @@
                                 </a> #}
                                
                                 <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Gestion des quiz et recommandations</h6>
+                                <a href="{{ path('app_quiz_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-question-circle me-2"></i>Tous les quizzes
+                                </a>
+                                <a href="{{ path('app_recommandation_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-lightbulb me-2"></i>Toutes les recommandations
+                                </a>
                                 <h6 class="dropdown-header">Gestion des événements</h6>
                                 <a href="{{ path('evenements_evenement_list') }}" class="dropdown-item">
                                     <i class="fa fa-list me-2"></i>Tous les événements
@@ -490,3 +510,4 @@ window.addEventListener('scroll', function() {
     }
 });
 </script>
+

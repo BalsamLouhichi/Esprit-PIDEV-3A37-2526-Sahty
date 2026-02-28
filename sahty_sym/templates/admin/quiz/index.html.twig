@@ -1,0 +1,163 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Quiz Management | Sahty Admin{% endblock %}
+{% block page_title %}Quiz Management{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="margin: 0; font-weight: 700; color: #333;">
+            <i class="bi bi-question-circle me-2"></i> Quizzes
+        </h2>
+        <a href="{{ path('admin_quiz_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i> Create New Quiz
+        </a>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="card border-0 mb-4">
+        <div class="card-body">
+                    <!-- Formulaire de recherche avancée -->
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="search" placeholder="Search by name or description..." 
+                                   value="{{ searchTerm }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="sortBy">
+                                <option value="name" {% if sortBy == 'name' %}selected{% endif %}>Sort by Name</option>
+                                <option value="createdAt" {% if sortBy == 'createdAt' %}selected{% endif %}>Sort by Date</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="sortOrder">
+                                <option value="DESC" {% if sortOrder == 'desc' %}selected{% endif %}>Desc</option>
+                                <option value="ASC" {% if sortOrder == 'asc' %}selected{% endif %}>Asc</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search me-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quizzes Table -->
+            {% if pagination|length > 0 %}
+                <div class="card border-0">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">
+                                        <i class="bi bi-question-circle me-2"></i> Quiz Name
+                                    </th>
+                                    <th style="width: 15%;">
+                                        <i class="bi bi-chat-dots me-2"></i> Questions
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <i class="bi bi-file-earmark-text me-2"></i> Description
+                                    </th>
+                                    <th style="width: 15%;">
+                                        <i class="bi bi-gear me-2"></i> Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in pagination %}
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 600; color: #333;">{{ quiz.name }}</div>
+                                            <small class="text-muted">ID: {{ quiz.id }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary" style="font-size: 0.9rem; padding: 6px 12px;">
+                                                {{ quiz.questions|length }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ quiz.description|slice(0, 40) }}{% if quiz.description|length > 40 %}...{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 8px;">
+                                                <a href="{{ path('admin_quiz_edit', { id: quiz.id }) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form method="POST" action="{{ path('admin_quiz_delete', { id: quiz.id }) }}" 
+                                                      style="display: inline;" onsubmit="return confirm('Are you sure?');">
+                                                    <input type="hidden" name="_method" value="DELETE">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ quiz.id) }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if pagination.pageCount is defined and pagination.pageCount > 1 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination">
+                            {% if pagination.currentPageNumber is defined and pagination.currentPageNumber > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('admin_quiz_index', { page: pagination.currentPageNumber - 1, search: searchTerm, sortBy: sortBy, sortOrder: sortOrder }) }}">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for page in 1..pagination.pageCount %}
+                                <li class="page-item {% if page == pagination.currentPageNumber %}active{% endif %}">
+                                    <a class="page-link" href="{{ path('admin_quiz_index', { page: page, search: searchTerm, sortBy: sortBy, sortOrder: sortOrder }) }}">{{ page }}</a>
+                                </li>
+                            {% endfor %}
+
+                            {% if pagination.currentPageNumber is defined and pagination.currentPageNumber < pagination.pageCount %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('admin_quiz_index', { page: pagination.currentPageNumber + 1, search: searchTerm, sortBy: sortBy, sortOrder: sortOrder }) }}">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="card border-0">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc; display: block; margin-bottom: 15px;"></i>
+                        <h5 class="text-muted mb-2">No Quizzes Found</h5>
+                        <p class="text-muted mb-0">Start by creating a new quiz to get started.</p>
+                        <a href="{{ path('admin_quiz_new') }}" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle me-2"></i> Create First Quiz
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #333;
+    }
+    
+    .form-select, .form-control {
+        border-radius: 0.375rem;
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}

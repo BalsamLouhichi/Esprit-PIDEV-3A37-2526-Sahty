@@ -1,0 +1,405 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Home - Sahty | Your Health Companion{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0 80px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,144C960,149,1056,139,1152,133.3C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+        background-size: cover;
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        animation: fadeInDown 0.8s ease-out;
+    }
+
+    .hero-subtitle {
+        font-size: 1.4rem;
+        margin-bottom: 40px;
+        opacity: 0.95;
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    .btn-hero {
+        padding: 14px 40px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-hero-primary {
+        background: white;
+        color: #667eea;
+    }
+
+    .btn-hero-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .btn-hero-secondary {
+        border: 2px solid white;
+        color: white;
+        background: transparent;
+    }
+
+    .btn-hero-secondary:hover {
+        background: white;
+        color: #667eea;
+        transform: translateY(-3px);
+        text-decoration: none;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 80px 0;
+        background: #f8f9ff;
+    }
+
+    .features-title {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .features-title h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .features-title p {
+        font-size: 1.1rem;
+        color: #666;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+    }
+
+    .feature-card {
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .feature-description {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 40px;
+        text-align: center;
+    }
+
+    .stat-item h3 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .stat-item p {
+        font-size: 1rem;
+        opacity: 0.95;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        padding: 80px 0;
+        text-align: center;
+    }
+
+    .cta-section h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #333;
+        margin-bottom: 25px;
+    }
+
+    .cta-section p {
+        font-size: 1.1rem;
+        color: #666;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+
+    /* Footer */
+    .footer {
+        background: #212529;
+        color: white;
+        padding: 40px 0;
+        text-align: center;
+    }
+
+    .footer p {
+        margin: 0;
+        opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+
+        .hero-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .features-title h2 {
+            font-size: 1.8rem;
+        }
+
+        .feature-card {
+            padding: 30px;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="bi bi-heart-pulse me-2"></i> Welcome to Sahty
+            </h1>
+            <p class="hero-subtitle">
+                Your trusted health assessment companion. Take quizzes, get personalized recommendations, and take control of your wellness.
+            </p>
+            <div class="hero-buttons">
+                <a href="{{ path('quiz_list') }}" class="btn-hero btn-hero-primary">
+                    <i class="bi bi-play-circle"></i> Start a Quiz
+                </a>
+                <a href="#features" class="btn-hero btn-hero-secondary">
+                    <i class="bi bi-arrow-down"></i> Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+    <div class="container">
+        <div class="features-title">
+            <h2>Why Choose Sahty?</h2>
+            <p>Comprehensive health assessments designed for you</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h3 class="feature-title">Scientifically Backed</h3>
+                <p class="feature-description">
+                    Our quizzes are based on validated assessment tools used by healthcare professionals worldwide.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-brain"></i>
+                </div>
+                <h3 class="feature-title">Personalized Results</h3>
+                <p class="feature-description">
+                    Get tailored recommendations based on your assessment results and health profile.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lock"></i>
+                </div>
+                <h3 class="feature-title">Private & Secure</h3>
+                <p class="feature-description">
+                    Your health data is encrypted, secure, and never shared without your explicit consent.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning"></i>
+                </div>
+                <h3 class="feature-title">Quick Assessments</h3>
+                <p class="feature-description">
+                    Complete your quizzes in just a few minutes and get instant results and recommendations.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h3 class="feature-title">Track Progress</h3>
+                <p class="feature-description">
+                    Monitor your health metrics over time and observe how your wellness journey progresses.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <h3 class="feature-title">Expert Support</h3>
+                <p class="feature-description">
+                    Access to professional guidance and resources to help you improve your health outcomes.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>5</h3>
+                <p>Health Quizzes</p>
+            </div>
+            <div class="stat-item">
+                <h3>40+</h3>
+                <p>Assessment Questions</p>
+            </div>
+            <div class="stat-item">
+                <h3>15+</h3>
+                <p>Recommendations</p>
+            </div>
+            <div class="stat-item">
+                <h3>24/7</h3>
+                <p>Available Access</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2>Ready to Get Started?</h2>
+        <p>
+            Take the first step towards better health. Choose from our collection of evidence-based health assessments.
+        </p>
+        <a href="{{ path('quiz_list') }}" class="btn-hero btn-hero-primary">
+            <i class="bi bi-play-circle me-2"></i> Explore Quizzes
+        </a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 Sahty Health. All rights reserved. | Your trusted health assessment platform.</p>
+    </div>
+</footer>
+{% endblock %}

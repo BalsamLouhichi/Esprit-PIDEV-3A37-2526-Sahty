@@ -1,0 +1,330 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ quiz.name }}{% endblock %}
+
+{% block body %}
+<section class="py-5" id="quiz-app">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold text-gradient mb-2">{{ quiz.name }}</h1>
+            <p class="lead text-muted mb-0">{{ quiz.description }}</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="progress flex-grow-1" style="height: 10px; min-width: 220px;">
+                    <div id="progress-bar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="timer-box bg-light rounded-pill px-4 py-2 fw-semibold">
+                    <i class="bi bi-clock me-1"></i><span id="timer">--</span>
+                </div>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="drag-mode-toggle">
+                    <label class="form-check-label" for="drag-mode-toggle">Mode glisser-deposer (optionnel)</label>
+                </div>
+            </div>
+        </div>
+
+        {% if saved_answers is defined and saved_answers|length > 0 %}
+            <div class="alert alert-info rounded-4 shadow-sm border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>
+                    Progression detectee: {{ saved_answers|length }} reponse{{ saved_answers|length > 1 ? 's' : '' }} deja sauvegardee{{ saved_answers|length > 1 ? 's' : '' }}.
+                </span>
+                <span class="badge text-bg-light">Question {{ (saved_index|default(0)) + 1 }}</span>
+            </div>
+        {% endif %}
+
+        <div id="question-card" class="card border-0 shadow rounded-4">
+            <div class="card-body p-4 p-lg-5 text-center">
+                <div id="question-text" class="h4 fw-bold mb-4"></div>
+                <div id="answers-list" class="d-flex flex-wrap justify-content-center gap-3 mb-3"></div>
+                <div id="drop-zone" class="drop-zone d-none">
+                    Glissez une reponse ici
+                </div>
+                <div id="selected-preview" class="selected-preview d-none"></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="next-btn" class="btn btn-primary btn-lg px-5 rounded-pill d-none">
+                Question suivante <i class="bi bi-arrow-right-circle ms-2"></i>
+            </button>
+            <button id="submit-btn" class="btn btn-success btn-lg px-5 rounded-pill d-none">
+                <i class="bi bi-check-circle-fill me-2"></i>Valider mes reponses
+            </button>
+        </div>
+    </div>
+
+    <form id="quiz-form" method="POST" action="{{ path('app_quiz_submit', {'id': quiz.id}) }}" class="d-none">
+        <input type="hidden" name="attempt_id" id="attempt-id" value="{{ attempt.id|default('') }}">
+        {% for question in quiz.questions %}
+            <input type="hidden" name="answers[{{ question.id }}]" id="hidden-answer-{{ question.id }}">
+        {% endfor %}
+    </form>
+</section>
+
+<style>
+    .text-gradient {
+        background: linear-gradient(90deg, #667eea, #00c6fb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .answer-btn {
+        min-width: 190px;
+        min-height: 64px;
+        border-radius: 14px;
+        transition: all 0.18s ease;
+    }
+
+    .answer-btn.selected {
+        background: linear-gradient(90deg, #00c6fb, #667eea);
+        color: #fff;
+        border-color: transparent;
+        transform: translateY(-2px);
+    }
+
+    .answer-btn.dragging {
+        opacity: 0.5;
+    }
+
+    .drop-zone {
+        border: 2px dashed #8ecae6;
+        border-radius: 14px;
+        background: #f0f9ff;
+        color: #0369a1;
+        padding: 1rem;
+        font-weight: 600;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .drop-zone.over {
+        border-color: #0ea5e9;
+        background: #e0f2fe;
+    }
+
+    .selected-preview {
+        margin-top: 0.8rem;
+        color: #0f172a;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+const questions = {{ quiz.questions|map(q => {
+    'id': q.id,
+    'text': q.text,
+    'type': q.type
+})|json_encode|raw }};
+const progressSaveUrl = "{{ path('app_quiz_progress_save', {id: quiz.id}) }}";
+const progressCsrf = "{{ csrf_token('quiz_progress_' ~ quiz.id) }}";
+const initialAnswers = {{ (saved_answers|default({}))|json_encode|raw }};
+const initialIndex = {{ saved_index|default(0) }};
+let attemptId = Number(document.getElementById('attempt-id')?.value || 0);
+
+const toggleDragMode = document.getElementById('drag-mode-toggle');
+const questionText = document.getElementById('question-text');
+const answersList = document.getElementById('answers-list');
+const dropZone = document.getElementById('drop-zone');
+const selectedPreview = document.getElementById('selected-preview');
+const progressBar = document.getElementById('progress-bar');
+const timerElement = document.getElementById('timer');
+const nextBtn = document.getElementById('next-btn');
+const submitBtn = document.getElementById('submit-btn');
+
+if (!questions.length) {
+    questionText.innerText = 'Aucune question disponible.';
+    answersList.innerHTML = '';
+    progressBar.style.width = '0%';
+    timerElement.innerText = '--';
+} else {
+    let current = Math.min(Math.max(Number(initialIndex) || 0, 0), questions.length - 1);
+    let answers = initialAnswers && typeof initialAnswers === 'object' ? initialAnswers : {};
+    let timer = 20;
+    let timerInterval;
+    let saveTimer = null;
+
+    const getChoices = (type) => {
+        if (type === 'likert_0_4') return [0, 1, 2, 3, 4];
+        if (type === 'likert_1_5') return [1, 2, 3, 4, 5];
+        return [0, 1];
+    };
+
+    const getLabel = (type, value) => {
+        if (type === 'likert_0_4') return ['Jamais', 'Rarement', 'Parfois', 'Souvent', 'Tres souvent'][value];
+        if (type === 'likert_1_5') return ['Pas du tout', 'Un peu', 'Modere', 'Beaucoup', 'Extremement'][value - 1];
+        return value ? 'Oui' : 'Non';
+    };
+
+    const showQuestion = (idx) => {
+        const q = questions[idx];
+        questionText.innerText = q.text;
+        answersList.innerHTML = '';
+        selectedPreview.classList.add('d-none');
+        selectedPreview.textContent = '';
+
+        const dragMode = !!toggleDragMode.checked;
+        dropZone.classList.toggle('d-none', !dragMode);
+
+        getChoices(q.type).forEach((value) => {
+            const label = getLabel(q.type, value);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'answer-btn btn btn-outline-primary';
+            btn.dataset.value = String(value);
+            btn.dataset.label = label;
+            btn.draggable = dragMode;
+            btn.innerHTML = `<span class="fw-bold fs-5">${value}</span><br><span class="small">${label}</span>`;
+
+            if (!dragMode) {
+                btn.onclick = () => selectAnswer(q.id, value);
+            } else {
+                btn.addEventListener('dragstart', () => btn.classList.add('dragging'));
+                btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+            }
+
+            if (answers[q.id] !== undefined && Number(answers[q.id]) === value) {
+                btn.classList.add('selected');
+                selectedPreview.classList.remove('d-none');
+                selectedPreview.textContent = `Reponse selectionnee: ${value} - ${label}`;
+            }
+
+            answersList.appendChild(btn);
+        });
+
+        progressBar.style.width = ((idx + 1) / questions.length * 100) + '%';
+        nextBtn.classList.add('d-none');
+        submitBtn.classList.add('d-none');
+        startTimer();
+    };
+
+    const selectAnswer = (questionId, value) => {
+        answers[questionId] = value;
+        answersList.querySelectorAll('.answer-btn').forEach((b) => b.classList.remove('selected'));
+        const active = answersList.querySelector(`.answer-btn[data-value="${value}"]`);
+        if (active) {
+            active.classList.add('selected');
+            selectedPreview.classList.remove('d-none');
+            selectedPreview.textContent = `Reponse selectionnee: ${value} - ${active.dataset.label}`;
+        }
+
+        clearInterval(timerInterval);
+        queueSave();
+        setTimeout(() => {
+            if (current < questions.length - 1) {
+                nextBtn.classList.remove('d-none');
+            } else {
+                submitBtn.classList.remove('d-none');
+            }
+        }, 200);
+    };
+
+    const startTimer = () => {
+        timer = 20;
+        timerElement.innerText = timer + 's';
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timer--;
+            timerElement.innerText = timer + 's';
+            if (timer <= 0) {
+                clearInterval(timerInterval);
+                if (current < questions.length - 1) {
+                    nextBtn.classList.remove('d-none');
+                } else {
+                    submitBtn.classList.remove('d-none');
+                }
+            }
+        }, 1000);
+    };
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('over');
+        const dragged = answersList.querySelector('.answer-btn.dragging');
+        if (!dragged) return;
+        selectAnswer(questions[current].id, Number(dragged.dataset.value));
+    });
+
+    toggleDragMode.addEventListener('change', () => showQuestion(current));
+
+    nextBtn.onclick = () => {
+        if (current < questions.length - 1) {
+            current++;
+            queueSave();
+            showQuestion(current);
+        }
+    };
+
+    submitBtn.onclick = () => {
+        Object.keys(answers).forEach((questionId) => {
+            const input = document.getElementById('hidden-answer-' + questionId);
+            if (input) input.value = answers[questionId];
+        });
+        document.getElementById('quiz-form').submit();
+    };
+
+    const queueSave = () => {
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+        }
+        saveTimer = setTimeout(saveProgress, 400);
+    };
+
+    const saveProgress = async () => {
+        try {
+            const response = await fetch(progressSaveUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    _token: progressCsrf,
+                    attemptId: attemptId,
+                    currentIndex: current,
+                    answers: answers
+                })
+            });
+            if (!response.ok) {
+                return;
+            }
+            const data = await response.json();
+            if (data && data.ok && data.attemptId) {
+                attemptId = Number(data.attemptId);
+                const attemptInput = document.getElementById('attempt-id');
+                if (attemptInput) {
+                    attemptInput.value = String(attemptId);
+                }
+            }
+        } catch (error) {
+            // Silent fail: quiz continues even if autosave fails
+        }
+    };
+
+    window.addEventListener('beforeunload', () => {
+        if (navigator.sendBeacon) {
+            const payload = JSON.stringify({
+                _token: progressCsrf,
+                attemptId: attemptId,
+                currentIndex: current,
+                answers: answers
+            });
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(progressSaveUrl, blob);
+        }
+    });
+
+    showQuestion(current);
+}
+</script>
+{% endblock %}

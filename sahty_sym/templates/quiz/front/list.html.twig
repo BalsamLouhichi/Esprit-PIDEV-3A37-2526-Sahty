@@ -1,0 +1,649 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos Quizzes Bien-être - Sahty{% endblock %}
+
+{% block body %}
+{% set total = pagination is defined ? pagination.getTotalItemCount : (total_quizzes|default(quizzes|length)) %}
+{% set paginatedItems = pagination is defined ? pagination : quizzes %}
+{% set currentPage = pagination is defined ? pagination.currentPageNumber : (current_page|default(1)) %}
+{% set pageCount = pagination is defined ? pagination.pageCount : (total_pages|default(1)) %}
+
+<!-- Hero immersif amélioré avec animation -->
+<section class="quiz-hero position-relative py-5 text-center text-white overflow-hidden" style="min-height: 70vh; display: flex; align-items: center;">
+    <!-- Particules animées (optionnel) -->
+    <div id="particles-js" class="position-absolute w-100 h-100 top-0 start-0"></div>
+    
+    <!-- Overlay vague subtil -->
+    <div class="position-absolute bottom-0 start-0 w-100 opacity-50" style="height: 150px; background: url('data:image/svg+xml;utf8,<svg viewBox=\"0 0 1440 320\" xmlns=\"http://www.w3.org/2000/svg\"><path fill=\"%23ffffff\" fill-opacity=\"0.25\" d=\"M0,224L48,197.3C96,171,192,117,288,117.3C384,117,480,171,576,181.3C672,192,768,160,864,165.3C960,171,1056,213,1152,213.3C1248,213,1344,171,1392,149.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z\"></path></svg>') bottom/cover no-repeat;"></div>
+    
+    <div class="container position-relative z-2 py-5">
+        <span class="badge bg-white text-primary px-4 py-2 rounded-pill mb-4 animate__animated animate__fadeInDown">
+            <i class="bi bi-stars me-2"></i>Évaluez votre bien-être
+        </span>
+        <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInDown">
+            Découvrez nos quizzes bien-être
+        </h1>
+        <p class="lead fs-4 mb-4 opacity-90 animate__animated animate__fadeInUp animate__delay-1s">
+            Tests rapides • Résultats clairs • Conseils personnalisés
+        </p>
+        <p class="fs-5 mb-5 opacity-75 animate__animated animate__fadeInUp animate__delay-1s">
+            Prenez soin de vous en quelques minutes, en toute discrétion et sérénité
+        </p>
+
+        <!-- Statistiques en temps réel -->
+        <div class="row justify-content-center g-4 mb-5 animate__animated animate__fadeInUp animate__delay-2s">
+            <div class="col-md-4">
+                <div class="stat-card bg-white bg-opacity-10 backdrop-blur rounded-4 p-4">
+                    <i class="bi bi-people-fill fs-1 mb-3"></i>
+                    <h3 class="h2 fw-bold mb-2">15,234+</h3>
+                    <p class="mb-0">Participants</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card bg-white bg-opacity-10 backdrop-blur rounded-4 p-4">
+                    <i class="bi bi-clock-history fs-1 mb-3"></i>
+                    <h3 class="h2 fw-bold mb-2">{{ total }}</h3>
+                    <p class="mb-0">Quizzes disponibles</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card bg-white bg-opacity-10 backdrop-blur rounded-4 p-4">
+                    <i class="bi bi-star-fill fs-1 mb-3"></i>
+                    <h3 class="h2 fw-bold mb-2">4.8/5</h3>
+                    <p class="mb-0">Note moyenne</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-inline-block bg-white bg-opacity-25 backdrop-blur px-5 py-4 rounded-pill shadow-lg animate__animated animate__zoomIn animate__delay-2s">
+            <span class="fs-4 fw-bold">
+                <i class="bi bi-heart-pulse-fill me-2"></i>
+                {{ total }} quiz{{ total > 1 ? 's' : '' }} disponible{{ total > 1 ? 's' : '' }}
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- Barre de recherche et filtres avancés -->
+<div class="container mt-n5 position-relative z-3">
+    <div class="card quiz-filter-panel shadow-lg border-0 rounded-4 p-4 bg-white">
+        <form method="get" id="filterForm" class="row g-4">
+            <!-- Recherche principale -->
+            <div class="col-12">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-primary"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 form-control-lg" 
+                           placeholder="Rechercher un quiz (stress, sommeil, humeur, alimentation...)" 
+                           value="{{ app.request.query.get('search') }}">
+                    {% if app.request.query.get('search') %}
+                    <a href="{{ path('app_quiz_front_list') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Filtres avancés -->
+            <div class="col-md-4">
+                <label class="form-label fw-semibold"><i class="bi bi-funnel me-2"></i>Catégorie</label>
+                <select name="category" class="form-select form-select-lg">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories|default([]) %}
+                        <option value="{{ category.id }}" {{ app.request.query.get('category') == category.id ? 'selected' : '' }}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-sort-down me-2"></i>Trier par</label>
+                <select name="sort" class="form-select form-select-lg" onchange="this.form.submit()">
+    <option value="recent" {{ app.request.query.get('sort') == 'recent' ? 'selected' : '' }}>Plus récents</option>
+    <option value="name_asc" {{ app.request.query.get('sort') == 'name_asc' ? 'selected' : '' }}>Nom (A → Z)</option>
+    <option value="name_desc" {{ app.request.query.get('sort') == 'name_desc' ? 'selected' : '' }}>Nom (Z → A)</option>
+    <option value="questions_asc" {{ app.request.query.get('sort') == 'questions_asc' ? 'selected' : '' }}>Moins de questions</option>
+    <option value="questions_desc" {{ app.request.query.get('sort') == 'questions_desc' ? 'selected' : '' }}>Plus de questions</option>
+    <option value="popular" {{ app.request.query.get('sort') == 'popular' ? 'selected' : '' }}>Populaires</option>
+</select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-clock me-2"></i>Durée estimée</label>
+                <select name="duration" class="form-select form-select-lg">
+                    <option value="">Toutes les durées</option>
+                    <option value="quick" {{ app.request.query.get('duration') == 'quick' ? 'selected' : '' }}>Express (< 3 min)</option>
+                    <option value="medium" {{ app.request.query.get('duration') == 'medium' ? 'selected' : '' }}>Moyen (3-5 min)</option>
+                    <option value="long" {{ app.request.query.get('duration') == 'long' ? 'selected' : '' }}>Approfondi (> 5 min)</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill">
+                    <i class="bi bi-funnel me-2"></i> Appliquer
+                </button>
+            </div>
+
+            <!-- Tags populaires -->
+            <div class="col-12 mt-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="text-muted me-2"><i class="bi bi-tags me-1"></i>Populaire :</span>
+                    <a href="?search=stress" class="badge bg-light text-dark text-decoration-none px-3 py-2 rounded-pill hover-bg-primary">😟 Stress</a>
+                    <a href="?search=sommeil" class="badge bg-light text-dark text-decoration-none px-3 py-2 rounded-pill hover-bg-primary">😴 Sommeil</a>
+                    <a href="?search=alimentation" class="badge bg-light text-dark text-decoration-none px-3 py-2 rounded-pill hover-bg-primary">🥗 Alimentation</a>
+                    <a href="?search=humeur" class="badge bg-light text-dark text-decoration-none px-3 py-2 rounded-pill hover-bg-primary">😊 Humeur</a>
+                    <a href="?search=anxiété" class="badge bg-light text-dark text-decoration-none px-3 py-2 rounded-pill hover-bg-primary">😰 Anxiété</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Section des quizzes populaires (si pas de recherche) -->
+{% if not app.request.query.get('search') and not app.request.query.get('category') %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="h3 fw-bold mb-0">
+                <i class="bi bi-fire text-danger me-2"></i>Quizzes populaires
+            </h2>
+            <a href="#" class="text-decoration-none">Voir tout <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            {% for i in 1..4 %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="popular-badge position-absolute top-0 start-0 bg-danger text-white px-3 py-2 rounded-top-start-4 rounded-bottom-end-4">
+                            <i class="bi bi-star-fill me-1"></i>Top
+                        </div>
+                        <i class="bi bi-emoji-smile fs-1 text-primary mb-3"></i>
+                        <h5 class="fw-bold">Quiz stress</h5>
+                        <p class="small text-muted">3 min • 245 avis</p>
+                        <div class="rating mb-2">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <i class="bi bi-star-half text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Liste des quizzes -->
+<section class="py-5 quiz-surface">
+    <div class="container">
+        <!-- En-tête avec résultats -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h2 class="h3 fw-bold mb-1">
+                    {% if app.request.query.get('search') %}
+                        Résultats pour "{{ app.request.query.get('search') }}"
+                    {% else %}
+                        Tous les quizzes
+                    {% endif %}
+                </h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+                    {{ total }} quiz trouvé{{ total > 1 ? 's' : '' }}
+                </p>
+            </div>
+            <!-- Vue toggle -->
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="gridView">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="listView">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grille des quizzes -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 g-xl-5" id="quizGrid">
+            {% for quiz in paginatedItems %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-xl rounded-4 overflow-hidden glass-card transition-all hover-lift" 
+                         data-category="{{ quiz.category.id|default('') }}"
+                         data-questions="{{ quiz.questions|length }}"
+                         data-date="{{ quiz.createdAt ? quiz.createdAt.timestamp : 0 }}">
+                        
+                        <!-- Badge catégorie -->
+                        <div class="position-absolute top-0 end-0 m-3 z-2">
+                            <span class="badge bg-primary bg-opacity-90 text-white px-3 py-2 rounded-pill">
+                                <i class="bi bi-tag me-1"></i>{{ quiz.category.name|default('Général') }}
+                            </span>
+                        </div>
+
+                        <!-- En-tête coloré -->
+                        <div class="card-header bg-gradient text-white py-4 text-center position-relative" 
+                             style="background: linear-gradient(135deg, {{ quiz.color1|default('#4fc3f7') }}, {{ quiz.color2|default('#00acc1') }});">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-30" 
+                                 style="background: repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 10px, transparent 10px, transparent 20px);">
+                            </div>
+                            <i class="bi bi-{{ quiz.icon|default('heart-pulse') }} fs-1 mb-2 d-block"></i>
+                            <h5 class="mb-0 fw-bold position-relative z-2">{{ quiz.name }}</h5>
+                        </div>
+
+                        <div class="card-body p-4 d-flex flex-column">
+                            <!-- Description -->
+                            <p class="text-muted mb-4 flex-grow-1">
+                                {{ quiz.description|default('Découvrez votre niveau de bien-être en quelques minutes')|slice(0, 100) ~ (quiz.description|length > 100 ? '...' : '') }}
+                            </p>
+
+                            <!-- Métadonnées -->
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                                    <i class="bi bi-question-circle me-1"></i>
+                                    {{ quiz.questions|length }} question{{ quiz.questions|length > 1 ? 's' : '' }}
+                                </span>
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ (quiz.questions|length * 0.5)|round }} min
+                                </span>
+                                <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2">
+                                    <i class="bi bi-people me-1"></i>
+                                    {{ quiz.participations|default(0) }} fois
+                                </span>
+                            </div>
+
+                            <!-- Statistiques -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted">Taux de complétion</span>
+                                    <span class="small fw-bold">{{ quiz.completionRate|default(85) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         style="width: {{ quiz.completionRate|default(85) }}%" 
+                                         aria-valuenow="{{ quiz.completionRate|default(85) }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Note moyenne -->
+                            {% if quiz.avgRating|default(false) %}
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rating me-2">
+                                        {% for i in 1..5 %}
+                                            <i class="bi bi-star{{ i <= quiz.avgRating ? '-fill' : (i - 0.5 <= quiz.avgRating ? '-half' : '') }} text-warning small"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="small text-muted">({{ quiz.reviews|default(0) }} avis)</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Bouton d'action -->
+                            <a href="{{ path('app_quiz_show', {id: quiz.id}) }}"
+                               class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-lg mt-auto ripple-btn d-flex align-items-center justify-content-center">
+                                <i class="bi bi-play-circle-fill me-2"></i>
+                                Commencer le quiz
+                            </a>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="card-footer bg-transparent border-0 text-center small text-muted py-3">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            Créé le {{ quiz.createdAt ? quiz.createdAt|date('d/m/Y') : 'Inconnu' }}
+                            {% if quiz.updatedAt and quiz.updatedAt > quiz.createdAt %}
+                                • Mis à jour
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Aucun résultat -->
+                <div class="col-12">
+                    <div class="bg-white p-5 rounded-4 shadow-lg text-center border border-light">
+                        <div class="mb-4">
+                            <i class="bi bi-emoji-frown fs-1 text-primary"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Aucun quiz trouvé</h4>
+                        <p class="text-muted fs-5 mb-4">
+                            Aucun quiz ne correspond à vos critères de recherche.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{{ path('app_quiz_front_list') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow">
+                                <i class="bi bi-arrow-repeat me-2"></i> Réinitialiser les filtres
+                            </a>
+                            <a href="{{ path('app_home') }}" class="btn btn-outline-primary btn-lg px-5 py-3 rounded-pill">
+                                <i class="bi bi-house me-2"></i> Accueil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Vue liste (cachée par défaut) -->
+        <div class="d-none" id="quizList">
+            {% for quiz in paginatedItems %}
+            <div class="card mb-3 border-0 shadow-sm rounded-4 hover-lift">
+                <div class="row g-0">
+                    <div class="col-md-2 bg-gradient text-white d-flex align-items-center justify-content-center rounded-start-4" 
+                         style="background: linear-gradient(135deg, {{ quiz.color1|default('#4fc3f7') }}, {{ quiz.color2|default('#00acc1') }});">
+                        <i class="bi bi-{{ quiz.icon|default('heart-pulse') }} fs-1"></i>
+                    </div>
+                    <div class="col-md-10">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title fw-bold mb-2">{{ quiz.name }}</h5>
+                                    <p class="card-text text-muted">{{ quiz.description|default('')|slice(0, 150) }}</p>
+                                </div>
+                                <span class="badge bg-primary px-3 py-2">{{ quiz.category.name|default('Général') }}</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 mt-3">
+                                <span class="small"><i class="bi bi-question-circle me-1"></i>{{ quiz.questions|length }} questions</span>
+                                <span class="small"><i class="bi bi-clock me-1"></i>{{ (quiz.questions|length * 0.5)|round }} min</span>
+                                <span class="small"><i class="bi bi-people me-1"></i>{{ quiz.participations|default(0) }} participants</span>
+                            </div>
+                            <a href="{{ path('app_quiz_show', {id: quiz.id}) }}" class="btn btn-primary mt-3 rounded-pill">
+                                Commencer <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination améliorée -->
+        <div class="d-flex justify-content-between align-items-center mt-5">
+            <div class="text-muted small">
+                Page {{ currentPage }} sur {{ pageCount }}
+            </div>
+            <div>
+                <nav aria-label="Pages">
+                        <ul class="pagination mb-0">
+                            {% for p in 1..pageCount %}
+                                <li class="page-item {{ p == currentPage ? 'active' : '' }}">
+                                    <a class="page-link" href="{{ path('app_quiz_front_list', app.request.query.all|merge({page: p})) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </nav>
+            </div>
+            <div class="text-muted small">
+                {{ total }} résultats
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section statistiques globales -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">
+            <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+            Impact de nos quizzes
+        </h2>
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="stat-card p-4 rounded-4 bg-light">
+                    <div class="display-4 fw-bold text-primary mb-2">15k+</div>
+                    <p class="text-muted mb-0">Quiz complétés</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card p-4 rounded-4 bg-light">
+                    <div class="display-4 fw-bold text-primary mb-2">85%</div>
+                    <p class="text-muted mb-0">Taux de satisfaction</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card p-4 rounded-4 bg-light">
+                    <div class="display-4 fw-bold text-primary mb-2">4.8/5</div>
+                    <p class="text-muted mb-0">Note moyenne</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card p-4 rounded-4 bg-light">
+                    <div class="display-4 fw-bold text-primary mb-2">12</div>
+                    <p class="text-muted mb-0">Catégories</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter / Engagement -->
+<section class="py-5 bg-gradient-sahty text-white">
+    <div class="container text-center">
+        <h3 class="fw-bold mb-4">Restez informé de nos nouveaux quizzes</h3>
+        <p class="mb-4 opacity-90">Recevez des conseils bien-être et les nouveaux quizzes directement dans votre boîte mail.</p>
+        <form class="row g-3 justify-content-center">
+            <div class="col-md-5">
+                <input type="email" class="form-control form-control-lg bg-white bg-opacity-25 border-0 text-white" 
+                       placeholder="Votre adresse email" style="backdrop-filter: blur(5px);">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-light btn-lg w-100 fw-bold rounded-pill">
+                    S'inscrire
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+{% include 'partials/footer.html.twig' %}
+
+<!-- Styles améliorés -->
+<style>
+    .quiz-hero {
+        background: linear-gradient(130deg, #0f4c81 0%, #1d5d9b 52%, #2a9db4 100%);
+    }
+    .quiz-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 45%);
+        pointer-events: none;
+    }
+    .quiz-surface {
+        background: linear-gradient(180deg, #f7fbff 0%, #eef6fb 100%);
+    }
+    .quiz-filter-panel {
+        box-shadow: 0 18px 42px rgba(15, 76, 129, 0.12) !important;
+        border: 1px solid rgba(29, 93, 155, 0.08);
+    }
+    .bg-gradient {
+        background: linear-gradient(135deg, #1d5d9b 0%, #2a9db4 100%) !important;
+    }
+    .bg-gradient-sahty {
+        background: linear-gradient(135deg, #1d5d9b 0%, #2a9db4 100%);
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(29, 93, 155, 0.12);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    .glass-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 30px 60px rgba(29, 93, 155, 0.2) !important;
+    }
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(15, 76, 129, 0.16) !important;
+    }
+    .hover-bg-primary:hover {
+        background-color: var(--bs-primary) !important;
+        color: white !important;
+    }
+    .stat-card {
+        transition: transform 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .backdrop-blur {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .popular-badge {
+        border-radius: 1rem 0 1rem 0;
+    }
+    .rounded-top-start-4 {
+        border-top-left-radius: 1rem !important;
+    }
+    .rounded-bottom-end-4 {
+        border-bottom-right-radius: 1rem !important;
+    }
+    .ripple-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .ripple-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s ease, height 0.6s ease;
+    }
+    .ripple-btn:active::after {
+        width: 300px;
+        height: 300px;
+    }
+    .animate__animated {
+        animation-duration: 1s;
+    }
+    /* Rating stars */
+    .rating {
+        display: inline-flex;
+        gap: 2px;
+    }
+    @media (max-width: 991.98px) {
+        .quiz-hero {
+            min-height: auto !important;
+        }
+    }
+</style>
+
+<!-- Scripts améliorés -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle vue grille/liste
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const quizGrid = document.getElementById('quizGrid');
+    const quizList = document.getElementById('quizList');
+
+    if (gridView && listView) {
+        gridView.addEventListener('click', function() {
+            gridView.classList.add('active');
+            listView.classList.remove('active');
+            quizGrid.classList.remove('d-none');
+            quizList.classList.add('d-none');
+        });
+
+        listView.addEventListener('click', function() {
+            listView.classList.add('active');
+            gridView.classList.remove('active');
+            quizGrid.classList.add('d-none');
+            quizList.classList.remove('d-none');
+        });
+    }
+
+    // Animation smooth scroll pour les ancres
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // Auto-submit du formulaire quand on change les filtres
+    const filterForm = document.getElementById('filterForm');
+    const filterInputs = filterForm.querySelectorAll('select');
+    filterInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            filterForm.submit();
+        });
+    });
+});
+
+// Animation des statistiques (compteur)
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const target = parseInt(stat.getAttribute('data-target'));
+        const increment = target / 50;
+        let current = 0;
+        
+        const updateStat = () => {
+            if (current < target) {
+                current += increment;
+                stat.textContent = Math.ceil(current) + '+';
+                requestAnimationFrame(updateStat);
+            } else {
+                stat.textContent = target + '+';
+            }
+        };
+        updateStat();
+    });
+}
+
+// Observer pour lancer l'animation quand les stats sont visibles
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateStats();
+            observer.unobserve(entry.target);
+        }
+    });
+});
+
+const statsSection = document.querySelector('.stats-section');
+if (statsSection) {
+    observer.observe(statsSection);
+}
+</script>
+
+<!-- Particules optionnelles (pour le hero) -->
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+particlesJS('particles-js', {
+    particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: '#ffffff' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.5, random: true },
+        size: { value: 3, random: true },
+        line_linked: { enable: true, distance: 150, color: '#ffffff', opacity: 0.4, width: 1 },
+        move: { enable: true, speed: 2, direction: 'none', random: true, straight: false, out_mode: 'out' }
+    },
+    interactivity: {
+        detect_on: 'canvas',
+        events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+        modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+    },
+    retina_detect: true
+});
+</script>
+{% endblock %}

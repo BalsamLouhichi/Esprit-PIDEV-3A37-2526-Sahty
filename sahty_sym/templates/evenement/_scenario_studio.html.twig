@@ -395,6 +395,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 phases
             });
         }
+
+        window.dispatchEvent(new CustomEvent('sahty:scenario-updated', {
+            detail: {
+                title: (titleInput?.value || '').trim(),
+                mode,
+                totalDuration,
+                score,
+                phases
+            }
+        }));
     }
 
     function loadPlan(planName) {

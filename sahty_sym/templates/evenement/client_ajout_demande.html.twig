@@ -2478,6 +2478,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let lieuValidationTimer = null;
     let lieuValidationSeq = 0;
     let lastPlanningPhases = [];
+    let syncingPlanningToStudio = false;
 
     function setLieuFeedback(message, state) {
         if (!lieuFeedbackEl) return;
@@ -2631,6 +2632,53 @@ document.addEventListener('DOMContentLoaded', function () {
         }));
     }
 
+    function slugPhaseLabel(value) {
+        return String(value || '')
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'phase';
+    }
+
+    function toPlanningPayloadFromScenarioPhases(phases) {
+        return (phases || []).map((p, i) => ({
+            ordre: i + 1,
+            phase_label: slugPhaseLabel(p.title),
+            duree_min: parseInt(p.duration, 10) || 15
+        }));
+    }
+
+    function renderPlanningFromScenarioPhases(phases, sourceLabel) {
+        if (!planningBody || !Array.isArray(phases) || phases.length === 0) {
+            return;
+        }
+        const totalMin = phases.reduce((acc, p) => acc + (parseInt(p.duration, 10) || 0), 0);
+        const cards = phases.map((p, index) => {
+            const duration = parseInt(p.duration, 10) || 0;
+            const step = index + 1;
+            return '<div class="planning-step">'
+                + '<div class="planning-step-index">Etape ' + step + '</div>'
+                + '<div class="planning-step-title">' + String(p.title || ('Phase ' + step)) + '</div>'
+                + '<div class="planning-step-meta"><span>Duree</span><strong>' + duration + ' min</strong></div>'
+                + '</div>';
+        }).join('');
+
+        planningBody.innerHTML = ''
+            + '<div class="planning-showcase">'
+            + '  <div class="planning-headline">'
+            + '    <h6><i class="fas fa-check-circle me-1"></i>Planning ' + sourceLabel + '</h6>'
+            + '    <div class="d-flex gap-2">'
+            + '      <span class="planning-kpi"><i class="fas fa-layer-group"></i>' + phases.length + ' phases</span>'
+            + '      <span class="planning-kpi"><i class="fas fa-clock"></i>' + totalMin + ' min</span>'
+            + '    </div>'
+            + '  </div>'
+            + '  <div class="planning-timeline">' + cards + '</div>'
+            + '  <div class="planning-note">'
+            + '    <i class="fas fa-link me-1"></i>Ce planning est synchronise avec le studio scenario ci-dessous.'
+            + '  </div>'
+            + '</div>';
+    }
+
     function showPlanningActions() {
         planningActions.classList.remove('d-none');
     }
@@ -2654,7 +2702,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         if (window.SahtyScenarioStudio && typeof window.SahtyScenarioStudio.applyPhases === 'function') {
+            syncingPlanningToStudio = true;
             window.SahtyScenarioStudio.applyPhases(toScenarioPhases(lastPlanningPhases));
+            setTimeout(function () { syncingPlanningToStudio = false; }, 0);
             document.getElementById('scenario-track').scrollIntoView({ behavior: 'smooth', block: 'center' });
             if (accepted) {
                 setPlanningStatus('Planning accepte et charge dans le studio.', 'ok');
@@ -2750,16 +2800,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (planningAcceptBtn) {
         planningAcceptBtn.addEventListener('click', function () {
-            applyPlanningToStudio(true);
             if (planningDecisionInput) planningDecisionInput.value = 'accepted';
+            applyPlanningToStudio(true);
             setPlanningStatus('Planning approuve. Il sera utilise comme base officielle.', 'ok');
         });
     }
 
     if (planningCustomizeBtn) {
         planningCustomizeBtn.addEventListener('click', function () {
-            applyPlanningToStudio(false);
             if (planningDecisionInput) planningDecisionInput.value = 'customized';
+            applyPlanningToStudio(false);
             setPlanningStatus('Planning en mode personnalisation.', 'ok');
         });
     }
@@ -2774,6 +2824,36 @@ document.addEventListener('DOMContentLoaded', function () {
             setPlanningStatus('Planning refuse.', 'warn');
         });
     }
+
+    window.addEventListener('sahty:scenario-updated', function (event) {
+        const scenarioPhases = event?.detail?.phases;
+        if (!Array.isArray(scenarioPhases) || scenarioPhases.length === 0) {
+            return;
+        }
+
+        if (!planningDecisionInput) {
+            return;
+        }
+
+        const decision = (planningDecisionInput.value || '').trim();
+        if (decision !== 'accepted' && decision !== 'customized') {
+            return;
+        }
+
+        // Only real manual edits should switch accepted -> customized.
+        if (!syncingPlanningToStudio && decision === 'accepted') {
+            planningDecisionInput.value = 'customized';
+        }
+
+        const payload = toPlanningPayloadFromScenarioPhases(scenarioPhases);
+        if (planningPayloadInput) {
+            planningPayloadInput.value = JSON.stringify(payload);
+        }
+
+        renderPlanningFromScenarioPhases(scenarioPhases, 'personnalise');
+        showPlanningActions();
+        setPlanningStatus('Les changements du studio sont appliques au planning valide.', 'ok');
+    });
 
     if (venueBtn && venueResults) {
         venueBtn.addEventListener('click', async function (ev) {

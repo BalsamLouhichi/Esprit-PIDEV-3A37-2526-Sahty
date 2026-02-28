@@ -42,7 +42,7 @@ class EvenementOperationalInsightsService
             $insights['location_valid'] = false;
             $insights['location_message'] = 'Le lieu saisi n\'a pas pu etre verifie automatiquement. Merci de verifier l\'adresse (ville, rue, etablissement).';
 
-            // For manual input, add an external AI hint to guide correction.
+            
             if (($context['venue_source'] ?? null) === 'manual') {
                 $aiHint = $this->buildExternalAiLocationHint($lieu);
                 if ($aiHint !== null) {

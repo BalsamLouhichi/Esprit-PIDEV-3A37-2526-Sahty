@@ -1,0 +1,73 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Generer un Quiz par IA{% endblock %}
+
+{% block content %}
+<section class="quiz-ai-page">
+    <div class="ai-header mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-wand-magic-sparkles me-2"></i>Generer un quiz par IA</h2>
+            <p class="text-muted mb-0">Choisissez uniquement une categorie. Le systeme cree automatiquement le quiz et ses questions.</p>
+        </div>
+        <a href="{{ path('admin_quiz_index') }}" class="btn btn-outline-secondary rounded-pill px-4">Retour</a>
+    </div>
+
+    <div class="card border-0 ai-card">
+        <div class="card-body p-4 p-lg-5">
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="mb-4">
+                {{ form_label(form.category, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                {{ form_widget(form.category, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                {{ form_errors(form.category) }}
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ path('admin_quiz_index') }}" class="btn btn-light border rounded-pill px-4">Annuler</a>
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-bolt me-2"></i>Generer et enregistrer
+                </button>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .quiz-ai-page {
+        animation: fadeIn 0.25s ease-out;
+    }
+
+    .ai-header {
+        background: linear-gradient(120deg, #ffffff 0%, #f3fbff 100%);
+        border: 1px solid #d9edf5;
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 8px 22px rgba(29, 42, 77, 0.06);
+    }
+
+    .ai-card {
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(29, 42, 77, 0.08);
+    }
+
+    @media (max-width: 768px) {
+        .ai-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
