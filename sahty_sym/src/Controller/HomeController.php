@@ -31,10 +31,10 @@ class HomeController extends AbstractController
     }
 
 
-    #[Route('/forgot', name: 'app_forgot_password')]
+    #[Route('/forgot', name: 'app_forgot_password_legacy')]
     public function forgot(): Response
     {
-        return $this->render('forgot_password.html.twig');
+        return $this->redirectToRoute('app_forgot_password');
     }
 
     #[Route('/admin_dashboard', name: 'admin_dashboard')]

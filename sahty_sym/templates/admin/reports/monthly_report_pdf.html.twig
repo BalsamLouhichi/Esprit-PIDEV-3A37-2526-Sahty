@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>{{ report.title }}</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, Arial, sans-serif;
+            font-size: 12px;
+            color: #1f2937;
+            margin: 24px;
+        }
+        h1, h2 {
+            margin: 0 0 8px 0;
+        }
+        h1 { font-size: 20px; }
+        h2 { font-size: 14px; margin-top: 18px; }
+        .muted { color: #6b7280; }
+        .section {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        th {
+            background: #f3f4f6;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .grid {
+            display: table;
+            width: 100%;
+        }
+        .grid-row {
+            display: table-row;
+        }
+        .grid-cell {
+            display: table-cell;
+            padding: 6px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ report.title }}</h1>
+    <div class="muted">
+        Periode: {{ report.period.start|date('d/m/Y') }} - {{ report.period.end|date('d/m/Y') }}
+        | Genere le {{ report.generated_at|date('d/m/Y H:i') }}
+    </div>
+
+    <div class="section">
+        <h2>Utilisateurs</h2>
+        <div class="grid">
+            <div class="grid-row">
+                <div class="grid-cell">Total: <strong>{{ report.snapshot.users.total }}</strong></div>
+                <div class="grid-cell">Nouveaux: <strong>{{ report.snapshot.users.new }}</strong></div>
+                <div class="grid-cell">Actifs: <strong>{{ report.snapshot.users.active }}</strong></div>
+                <div class="grid-cell">Inactifs: <strong>{{ report.snapshot.users.inactive }}</strong></div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Nombre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role, count in report.snapshot.users.by_role %}
+                    <tr>
+                        <td>{{ role|replace({'_':' '})|title }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Demandes d'analyse</h2>
+        <div class="grid">
+            <div class="grid-row">
+                <div class="grid-cell">Total: <strong>{{ report.snapshot.demandes_analyses.total }}</strong></div>
+                <div class="grid-cell">Periode: <strong>{{ report.snapshot.demandes_analyses.period }}</strong></div>
+                <div class="grid-cell">Avec PDF: <strong>{{ report.snapshot.demandes_analyses.with_pdf }}</strong></div>
+                <div class="grid-cell">Taux PDF: <strong>{{ report.snapshot.demandes_analyses.pdf_ratio }}%</strong></div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Statut</th>
+                    <th>Nombre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status, count in report.snapshot.demandes_analyses.by_status %}
+                    <tr>
+                        <td>{{ status }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Priorite</th>
+                    <th>Nombre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for priority, count in report.snapshot.demandes_analyses.by_priority %}
+                    <tr>
+                        <td>{{ priority }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Rendez-vous</h2>
+        <div class="grid">
+            <div class="grid-row">
+                <div class="grid-cell">Total: <strong>{{ report.snapshot.rendez_vous.total }}</strong></div>
+                <div class="grid-cell">Periode: <strong>{{ report.snapshot.rendez_vous.period }}</strong></div>
+                <div class="grid-cell">Taux annulation: <strong>{{ report.snapshot.rendez_vous.cancel_rate_period }}%</strong></div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Statut</th>
+                    <th>Nombre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status, count in report.snapshot.rendez_vous.by_status %}
+                    <tr>
+                        <td>{{ status }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Laboratoires</h2>
+        <div class="grid">
+            <div class="grid-row">
+                <div class="grid-cell">Total: <strong>{{ report.snapshot.laboratoires.total }}</strong></div>
+                <div class="grid-cell">Disponibles: <strong>{{ report.snapshot.laboratoires.available }}</strong></div>
+                <div class="grid-cell">Indisponibles: <strong>{{ report.snapshot.laboratoires.unavailable }}</strong></div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Laboratoire</th>
+                    <th>Demandes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report.snapshot.laboratoires.top_by_demands %}
+                    <tr>
+                        <td>{{ row.nom }}</td>
+                        <td>{{ row.total }}</td>
+                    </tr>
+                {% endfor %}
+                {% if report.snapshot.laboratoires.top_by_demands is empty %}
+                    <tr>
+                        <td colspan="2">Aucune donnees disponibles.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Fiches medicales</h2>
+        <div class="grid">
+            <div class="grid-row">
+                <div class="grid-cell">Total: <strong>{{ report.snapshot.fiches_medicales.total }}</strong></div>
+                <div class="grid-cell">Periode: <strong>{{ report.snapshot.fiches_medicales.period }}</strong></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

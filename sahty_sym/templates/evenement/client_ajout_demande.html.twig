@@ -2802,7 +2802,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
-                const data = await res.json();
+                const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                let data = null;
+
+                if (contentType.includes('application/json')) {
+                    data = await res.json();
+                } else {
+                    const rawText = await res.text();
+                    const trimmed = (rawText || '').trim();
+                    throw new Error(trimmed !== '' ? trimmed.substring(0, 220) : 'Reponse serveur non JSON.');
+                }
+
+                if (!res.ok) {
+                    const serverMessage = (data && data.message) ? String(data.message) : 'Erreur de service de recommandation.';
+                    throw new Error(serverMessage);
+                }
+
                 if (!data || !data.success || !Array.isArray(data.lieux) || data.lieux.length === 0) {
                     venueResults.innerHTML = '<div class="alert alert-info py-2 mb-0">' + ((data && data.message) ? data.message : 'Aucun lieu trouve.') + '</div>';
                     return;
@@ -2836,7 +2851,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 });
             } catch (e) {
-                venueResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Service de recommandation indisponible pour le moment.</div>';
+                const details = (e && e.message) ? String(e.message) : '';
+                venueResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Service de recommandation indisponible pour le moment.' + (details ? (' ' + details) : '') + '</div>';
             }
         }, true);
     }

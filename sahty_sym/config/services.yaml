@@ -113,6 +113,11 @@ services:
             $provider: '%env(default::APP_MEETING_PROVIDER)%'
             $jitsiDomain: '%env(default::APP_JITSI_DOMAIN)%'
 
+    App\Command\MonthlyReportCommand:
+        arguments:
+            $reportSender: '%env(default::REPORT_SENDER)%'
+            $reportRecipients: '%env(default::REPORT_RECIPIENTS)%'
+
     App\Service\GoogleMeetApiService:
         arguments:
             $clientId: '%env(default::GOOGLE_CLIENT_ID)%'

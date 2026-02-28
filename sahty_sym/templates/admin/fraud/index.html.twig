@@ -1,0 +1,342 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Signaux Fraude{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .chart-card {
+            min-height: 320px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 240px;
+        }
+        .chart-wrapper.chart-wide {
+            height: 280px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Signaux Fraude / Abus</h1>
+    </div>
+
+    {% if scores is defined and scores is not empty %}
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card shadow-sm chart-card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Sévérité des signaux</h6>
+                        <div class="chart-wrapper">
+                            <canvas id="signalSeverityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm chart-card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Types de signaux</h6>
+                        <div class="chart-wrapper">
+                            <canvas id="signalTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm chart-card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Distribution des scores</h6>
+                        <div class="chart-wrapper">
+                            <canvas id="scoreDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Top 10 des risques</h6>
+                        <div class="chart-wrapper chart-wide">
+                            <canvas id="topRisksChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if scores is defined and scores is not empty %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <strong>Scores de risque (Top)</strong>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Role</th>
+                                <th>Score</th>
+                                <th>Indicateurs</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for risk in scores|slice(0, 20) %}
+                                <tr>
+                                    <td>{{ risk.user_id }}</td>
+                                    <td>{{ risk.role|default('unknown') }}</td>
+                                    <td><strong>{{ risk.score }}</strong></td>
+                                    <td>{{ risk.flags_label|join(', ') }}</td>
+                                    <td>{{ risk.summary }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if signals is empty %}
+        <div class="alert alert-success">
+            Aucun signal detecte avec les seuils par defaut.
+        </div>
+    {% else %}
+        {% for signal in signals %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ signal.title }}</strong>
+                        <div class="text-muted small">{{ signal.summary }}</div>
+                    </div>
+                    <span class="badge {% if signal.severity == 'high' %}bg-danger{% elseif signal.severity == 'medium' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                        {{ signal.severity|upper }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if signal.items is not empty %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        {% for key, value in signal.items[0] %}
+                                            <th class="text-uppercase text-muted small">{{ key|replace({'_':' '}) }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in signal.items %}
+                                        <tr>
+                                            {% for value in item %}
+                                                <td>{{ value }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-muted">Aucune ligne detectee.</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% if (scores is defined and scores is not empty) or (signals is defined and signals is not empty) %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const signals = {{ signals|default([])|json_encode|raw }};
+            const scores = {{ scores|default([])|json_encode|raw }};
+
+            const severityCounts = { low: 0, medium: 0, high: 0 };
+            const typeCounts = {};
+
+            signals.forEach((signal) => {
+                const severity = signal.severity || 'low';
+                if (severityCounts[severity] !== undefined) {
+                    severityCounts[severity] += 1;
+                }
+                const type = signal.type || 'unknown';
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+
+            const scoreBuckets = {
+                '0-19': 0,
+                '20-39': 0,
+                '40-59': 0,
+                '60-79': 0,
+                '80-100': 0
+            };
+
+            scores.forEach((row) => {
+                const score = Number(row.score) || 0;
+                if (score < 20) scoreBuckets['0-19'] += 1;
+                else if (score < 40) scoreBuckets['20-39'] += 1;
+                else if (score < 60) scoreBuckets['40-59'] += 1;
+                else if (score < 80) scoreBuckets['60-79'] += 1;
+                else scoreBuckets['80-100'] += 1;
+            });
+
+            const topRisks = [...scores]
+                .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0))
+                .slice(0, 10);
+
+            const severityCtx = document.getElementById('signalSeverityChart');
+            if (severityCtx) {
+                new Chart(severityCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Faible', 'Moyen', 'Eleve'],
+                        datasets: [{
+                            data: [severityCounts.low, severityCounts.medium, severityCounts.high],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    boxWidth: 8,
+                                    padding: 16
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            }
+
+            const typeCtx = document.getElementById('signalTypeChart');
+            if (typeCtx) {
+                new Chart(typeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(typeCounts),
+                        datasets: [{
+                            label: 'Signaux',
+                            data: Object.values(typeCounts),
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const topRisksCtx = document.getElementById('topRisksChart');
+            if (topRisksCtx) {
+                new Chart(topRisksCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topRisks.map((row) => `#${row.user_id}`),
+                        datasets: [{
+                            label: 'Score',
+                            data: topRisks.map((row) => Number(row.score) || 0),
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const scoreCtx = document.getElementById('scoreDistributionChart');
+            if (scoreCtx) {
+                new Chart(scoreCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(scoreBuckets),
+                        datasets: [{
+                            label: 'Utilisateurs',
+                            data: Object.values(scoreBuckets),
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endif %}
+{% endblock %}

@@ -51,6 +51,10 @@ security:
         - { path: ^/signup$, roles: PUBLIC_ACCESS }
         - { path: ^/$, roles: PUBLIC_ACCESS }
         - { path: ^/forgot, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/connect/google, roles: PUBLIC_ACCESS }
+        - { path: ^/google/(select-role|confirm-role)$, roles: PUBLIC_ACCESS }
+        - { path: ^/oauth/authenticate$, roles: PUBLIC_ACCESS }
         - { path: ^/payments/stripe/webhook$, roles: PUBLIC_ACCESS }
 
         - { path: ^/admin, roles: ROLE_ADMIN }

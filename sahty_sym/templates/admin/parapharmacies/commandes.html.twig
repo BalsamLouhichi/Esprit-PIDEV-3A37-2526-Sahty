@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commandes parapharmacie - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Commandes des parapharmacies</h4>
+        <a href="{{ path('admin_parapharmacies') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Parapharmacie</th>
+                            <th>Client</th>
+                            <th>Statut</th>
+                            <th class="text-end">Total</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commande in commandes %}
+                            <tr>
+                                <td>{{ commande.numero }}</td>
+                                <td>{{ commande.parapharmacie ? commande.parapharmacie.nom : '-' }}</td>
+                                <td>{{ commande.nomClient }}</td>
+                                <td>{{ commande.getStatutLibelle() }}</td>
+                                <td class="text-end">{{ commande.prixTotal ? commande.prixTotal|number_format(2, '.', ' ') ~ ' DT' : '-' }}</td>
+                                <td>{{ commande.dateCreation ? commande.dateCreation|date('d/m/Y') : '-' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Aucune commande.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
