@@ -95,10 +95,10 @@ php .\bin\console cache:clear
 
 ### A finaliser
 
-- Installation locale de PHPStan (si non installe)
-- Execution de l'analyse PHPStan + captures
-- Execution DoctrineDoctor + captures avant/apres
-- Integration GitHub finale d'equipe
+- Installation locale de PHPStan (bloquee sur ce poste par erreur SSL Composer)
+- Execution de l'analyse PHPStan + captures (a lancer apres correction SSL)
+- Execution DoctrineDoctor + captures avant/apres (a lancer apres correction SSL)
+- Integration GitHub finale d'equipe: OK (push effectue sur `origin/iheb`, commit `d39bd45`)
 
 ## Script rapide (PowerShell)
 
