@@ -27,3 +27,7 @@
 /ml/.venv/
 **/__pycache__/
 *.pyc
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###
