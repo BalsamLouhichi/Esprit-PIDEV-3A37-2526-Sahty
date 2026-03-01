@@ -300,16 +300,21 @@ class Laboratoire
 
     public function setResponsable(?ResponsableLaboratoire $responsable): static
     {
-        // Gestion de la relation bidirectionnelle
-        if ($responsable === null && $this->responsable !== null) {
-            $this->responsable->setLaboratoire(null);
+        if ($this->responsable === $responsable) {
+            return $this;
+        }
+
+        $previousResponsable = $this->responsable;
+        $this->responsable = $responsable;
+
+        if ($previousResponsable !== null && $previousResponsable->getLaboratoire() === $this) {
+            $previousResponsable->setLaboratoire(null);
         }
 
         if ($responsable !== null && $responsable->getLaboratoire() !== $this) {
             $responsable->setLaboratoire($this);
         }
 
-        $this->responsable = $responsable;
         return $this;
     }
 

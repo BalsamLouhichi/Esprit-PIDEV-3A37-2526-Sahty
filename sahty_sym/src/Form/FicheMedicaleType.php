@@ -16,42 +16,63 @@ class FicheMedicaleType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $isMedecin = $options['is_medecin'];
+        $isPatientInput = !$isMedecin;
 
         $builder
             // ============ SECTION PATIENT (Médecin peut tout modifier) ============
             ->add('antecedents', TextareaType::class, [
                 'label' => '📋 Antécédents médicaux',
-                'required' => false,
+                'required' => $isPatientInput,
                 'attr' => [
                     'rows' => 4,
                     'placeholder' => 'Décrivez les antécédents médicaux...',
                     'class' => 'form-control'
                 ],
-                'constraints' => [
+                'constraints' => array_filter([
+                    $isPatientInput ? new Assert\NotBlank([
+                        'message' => 'Les antécédents sont obligatoires.',
+                        'normalizer' => 'trim',
+                    ]) : null,
+                    $isPatientInput ? new Assert\Length([
+                        'min' => 5,
+                        'minMessage' => 'Les antécédents doivent contenir au moins {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]) : null,
                     new Assert\Length([
                         'max' => 2000,
-                        'maxMessage' => 'Les antécédents ne peuvent pas dépasser {{ limit }} caractères.'
-                    ])
-                ]
+                        'maxMessage' => 'Les antécédents ne peuvent pas dépasser {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]),
+                ])
             ])
             ->add('allergies', TextareaType::class, [
                 'label' => '⚠️ Allergies',
-                'required' => false,
+                'required' => $isPatientInput,
                 'attr' => [
                     'rows' => 4,
                     'placeholder' => 'Listez les allergies connues...',
                     'class' => 'form-control'
                 ],
-                'constraints' => [
+                'constraints' => array_filter([
+                    $isPatientInput ? new Assert\NotBlank([
+                        'message' => 'Les allergies sont obligatoires (saisir "Aucune" si nécessaire).',
+                        'normalizer' => 'trim',
+                    ]) : null,
+                    $isPatientInput ? new Assert\Length([
+                        'min' => 2,
+                        'minMessage' => 'Les allergies doivent contenir au moins {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]) : null,
                     new Assert\Length([
                         'max' => 1000,
-                        'maxMessage' => 'Les allergies ne peuvent pas dépasser {{ limit }} caractères.'
-                    ])
-                ]
+                        'maxMessage' => 'Les allergies ne peuvent pas dépasser {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]),
+                ])
             ])
             ->add('taille', NumberType::class, [
                 'label' => '📏 Taille (en mètres)',
-                'required' => false,
+                'required' => $isPatientInput,
                 'attr' => [
                     'step' => '0.01',
                     'min' => '0.50',
@@ -59,45 +80,61 @@ class FicheMedicaleType extends AbstractType
                     'placeholder' => 'Ex: 1.75',
                     'class' => 'form-control'
                 ],
-                'constraints' => [
+                'constraints' => array_filter([
+                    $isPatientInput ? new Assert\NotBlank([
+                        'message' => 'La taille est obligatoire.',
+                    ]) : null,
                     new Assert\Range([
                         'min' => 0.50,
                         'max' => 2.50,
                         'notInRangeMessage' => 'La taille doit être entre {{ min }}m et {{ max }}m.'
-                    ])
-                ]
+                    ]),
+                ])
             ])
             ->add('poids', NumberType::class, [
                 'label' => '⚖️ Poids (en kg)',
-                'required' => false,
+                'required' => $isPatientInput,
                 'attr' => [
                     'min' => '1',
                     'max' => '300',
                     'placeholder' => 'Ex: 70',
                     'class' => 'form-control'
                 ],
-                'constraints' => [
+                'constraints' => array_filter([
+                    $isPatientInput ? new Assert\NotBlank([
+                        'message' => 'Le poids est obligatoire.',
+                    ]) : null,
                     new Assert\Range([
                         'min' => 1,
                         'max' => 300,
                         'notInRangeMessage' => 'Le poids doit être entre {{ min }}kg et {{ max }}kg.'
-                    ])
-                ]
+                    ]),
+                ])
             ])
             ->add('traitement_en_cours', TextareaType::class, [
                 'label' => '💊 Traitements en cours',
-                'required' => false,
+                'required' => $isPatientInput,
                 'attr' => [
                     'rows' => 3,
                     'placeholder' => 'Médicaments actuels...',
                     'class' => 'form-control'
                 ],
-                'constraints' => [
+                'constraints' => array_filter([
+                    $isPatientInput ? new Assert\NotBlank([
+                        'message' => 'Le traitement en cours est obligatoire (saisir "Aucun" si nécessaire).',
+                        'normalizer' => 'trim',
+                    ]) : null,
+                    $isPatientInput ? new Assert\Length([
+                        'min' => 2,
+                        'minMessage' => 'Le traitement en cours doit contenir au moins {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]) : null,
                     new Assert\Length([
                         'max' => 1500,
-                        'maxMessage' => 'Les traitements ne peuvent pas dépasser {{ limit }} caractères.'
-                    ])
-                ]
+                        'maxMessage' => 'Les traitements ne peuvent pas dépasser {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]),
+                ])
             ])
             
             // ============ SECTION MÉDECIN ============

@@ -3,10 +3,6 @@ import math
 import sys
 from pathlib import Path
 
-import joblib
-import pandas as pd
-
-
 def error(message: str, code: int = 1):
     payload = {"ok": False, "message": message}
     print(json.dumps(payload, ensure_ascii=False))
@@ -24,8 +20,29 @@ def load_json_arg() -> dict:
 
 def load_phase_stats(path: Path) -> dict:
     if not path.exists():
-        error("Fichier phase_stats.json introuvable. Lancez d'abord train_model.py")
+        return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def try_predict_with_model(model_path: Path, row: dict) -> tuple[str | None, float | None, str | None]:
+    try:
+        import joblib
+        import pandas as pd
+    except Exception as exc:
+        return None, None, f"Import error: {exc}"
+
+    try:
+        model = joblib.load(model_path)
+        x = pd.DataFrame([row])
+        pred_sequence = model.predict(x)[0]
+        proba = None
+        if hasattr(model, "predict_proba"):
+            p = model.predict_proba(x)
+            if not isinstance(p, list):
+                proba = float(p.max())
+        return str(pred_sequence), proba, None
+    except Exception as exc:
+        return None, None, f"Model error: {exc}"
 
 
 def find_ratio(phase: str, event_type: str, mode: str, phase_stats: dict) -> float:
@@ -70,8 +87,7 @@ def main():
     model_path = base_dir / "models" / "planning_model.joblib"
     phase_stats_path = base_dir / "models" / "phase_stats.json"
 
-    if not model_path.exists():
-        error("Modèle introuvable. Lancez d'abord: python train_model.py")
+    model_error = None
 
     event_type = str(payload.get("event_type", "formation") or "formation")
     mode = str(payload.get("mode", "presentiel") or "presentiel")
@@ -84,31 +100,24 @@ def main():
         duration_total = 180
     duration_total = max(60, min(duration_total, 720))
 
-    model = joblib.load(model_path)
     phase_stats = load_phase_stats(phase_stats_path)
 
-    x = pd.DataFrame(
-        [
-            {
-                "event_type": event_type,
-                "mode": mode,
-                "audience": audience,
-                "level": level,
-                "duration_total_min": duration_total,
-            }
-        ]
-    )
+    input_row = {
+        "event_type": event_type,
+        "mode": mode,
+        "audience": audience,
+        "level": level,
+        "duration_total_min": duration_total,
+    }
 
-    pred_sequence = model.predict(x)[0]
+    pred_sequence = None
     proba = None
-    if hasattr(model, "predict_proba"):
-        p = model.predict_proba(x)
-        if isinstance(p, list):
-            proba = None
-        else:
-            proba = float(p.max())
+    if model_path.exists():
+        pred_sequence, proba, model_error = try_predict_with_model(model_path, input_row)
+    else:
+        model_error = "Modele introuvable. Lancez d'abord: python train_model.py"
 
-    phases = [s for s in str(pred_sequence).split(">") if s]
+    phases = [s for s in str(pred_sequence).split(">") if s] if pred_sequence else []
     if len(phases) < 3:
         phases = ["ouverture", "intervention", "pause", "atelier", "cloture"]
 
@@ -116,13 +125,7 @@ def main():
 
     result = {
         "ok": True,
-        "input": {
-            "event_type": event_type,
-            "mode": mode,
-            "audience": audience,
-            "level": level,
-            "duration_total_min": duration_total,
-        },
+        "input": input_row,
         "confidence": None if proba is None else round(proba, 3),
         "sequence": phases,
         "phases": [
@@ -134,6 +137,9 @@ def main():
             for i, phase in enumerate(phases)
         ],
     }
+
+    if model_error:
+        result["warning"] = model_error
 
     print(json.dumps(result, ensure_ascii=False))
 

@@ -158,8 +158,16 @@ class DemandeAnalyseController extends AbstractController
     }
 
     #[Route('/{id}/ia-interpretation', name: 'app_demande_analyse_ia_interpretation', methods: ['GET'])]
-    public function iaInterpretation(DemandeAnalyse $demandeAnalyse): JsonResponse
+    public function iaInterpretation(?DemandeAnalyse $demandeAnalyse): JsonResponse
     {
+        if ($demandeAnalyse === null) {
+            return $this->json([
+                'ok' => false,
+                'available' => false,
+                'message' => 'Demande d analyse introuvable.',
+            ], 404);
+        }
+
         if (!$this->isTestMode()) {
             $this->checkAccess($demandeAnalyse);
         }
@@ -296,9 +304,16 @@ class DemandeAnalyseController extends AbstractController
     #[Route('/{id}/ia-qa', name: 'app_demande_analyse_ia_qa', methods: ['POST'])]
     public function iaQa(
         Request $request,
-        DemandeAnalyse $demandeAnalyse,
+        ?DemandeAnalyse $demandeAnalyse,
         PatientResultQaService $patientResultQaService
     ): JsonResponse {
+        if ($demandeAnalyse === null) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Demande d analyse introuvable.',
+            ], 404);
+        }
+
         if (!$this->isTestMode()) {
             $this->checkAccess($demandeAnalyse);
         }
@@ -1350,8 +1365,13 @@ class DemandeAnalyseController extends AbstractController
      * Afficher les détails d'une demande d'analyse
      */
     #[Route('/{id}', name: 'app_demande_analyse_show', methods: ['GET'])]
-    public function show(DemandeAnalyse $demandeAnalyse): Response
+    public function show(?DemandeAnalyse $demandeAnalyse): Response
     {
+        if ($demandeAnalyse === null) {
+            $this->addFlash('warning', 'Demande d analyse introuvable.');
+            return $this->redirectToRoute('app_demande_analyse_mes_demandes');
+        }
+
         // En mode test, on autorise l'accès sans vérification stricte
         if (!$this->isTestMode()) {
             $this->checkAccess($demandeAnalyse);
@@ -1426,10 +1446,14 @@ class DemandeAnalyseController extends AbstractController
     #[Route('/{id}/edit', name: 'app_demande_analyse_edit', methods: ['GET', 'POST'])]
     public function edit(
         Request $request, 
-        DemandeAnalyse $demandeAnalyse, 
+        ?DemandeAnalyse $demandeAnalyse, 
         EntityManagerInterface $entityManager
     ): Response
     {
+        if ($demandeAnalyse === null) {
+            $this->addFlash('warning', 'Demande d analyse introuvable.');
+            return $this->redirectToRoute('app_demande_analyse_mes_demandes');
+        }
         // En mode test, on autorise l'accès sans vérification stricte
         if (!$this->isTestMode()) {
             $this->checkAccess($demandeAnalyse);
@@ -1484,10 +1508,14 @@ class DemandeAnalyseController extends AbstractController
     #[Route('/{id}/delete', name: 'app_demande_analyse_delete', methods: ['POST'])]
     public function delete(
         Request $request, 
-        DemandeAnalyse $demandeAnalyse, 
+        ?DemandeAnalyse $demandeAnalyse, 
         EntityManagerInterface $entityManager
     ): Response
     {
+        if ($demandeAnalyse === null) {
+            $this->addFlash('warning', 'Demande d analyse introuvable.');
+            return $this->redirectToRoute('app_demande_analyse_mes_demandes');
+        }
         // En mode test, on autorise l'accès sans vérification stricte
         if (!$this->isTestMode()) {
             $this->checkAccess($demandeAnalyse);
@@ -1532,12 +1560,17 @@ class DemandeAnalyseController extends AbstractController
      */
     #[Route('/{id}/changer-statut/{statut}', name: 'app_demande_analyse_changer_statut', methods: ['POST'])]
     public function changerStatut(
-        Request $request,
-        DemandeAnalyse $demandeAnalyse,
+        Request $request, 
+        ?DemandeAnalyse $demandeAnalyse, 
         string $statut,
         EntityManagerInterface $entityManager
     ): Response
     {
+        if ($demandeAnalyse === null) {
+            $this->addFlash('warning', 'Demande d analyse introuvable.');
+            return $this->redirectToRoute('app_demande_analyse_mes_demandes');
+        }
+
         // En mode test, on autorise tout le monde
         if (!$this->isTestMode()) {
             // Seuls les médecins et administrateurs peuvent changer le statut
@@ -1706,5 +1739,8 @@ class DemandeAnalyseController extends AbstractController
     }
 
 }
+
+
+
 
 

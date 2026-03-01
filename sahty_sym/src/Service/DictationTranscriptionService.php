@@ -15,44 +15,40 @@ class DictationTranscriptionService
     }
 
     /**
+     * @return array{ok: bool, provider?: string, endpoint?: string, model?: string, error?: string}
+     */
+    public function getConfigurationStatus(): array
+    {
+        $config = $this->resolveConfiguration();
+        if (!($config['ok'] ?? false)) {
+            return [
+                'ok' => false,
+                'error' => (string) ($config['error'] ?? 'Configuration invalide.'),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'provider' => (string) ($config['provider'] ?? ''),
+            'endpoint' => (string) ($config['endpoint'] ?? ''),
+            'model' => (string) ($config['model'] ?? ''),
+        ];
+    }
+
+    /**
      * @return array{ok: bool, text?: string, error?: string}
      */
     public function transcribe(UploadedFile $audioFile, string $language = 'fr'): array
     {
-        $provider = strtolower((string) ($_ENV['APP_DICTATION_PROVIDER'] ?? $_ENV['APP_AI_RESULTAT_PROVIDER'] ?? 'openai'));
-        $rawEndpoint = (string) ($_ENV['APP_DICTATION_ENDPOINT'] ?? $_ENV['APP_AI_RESULTAT_ENDPOINT'] ?? 'https://api.openai.com/v1/audio/transcriptions');
-        $endpoint = $this->normalizeEndpoint($rawEndpoint);
-        if ($endpoint === '' && $provider === 'huggingface') {
-            $endpoint = 'https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3-turbo';
+        $config = $this->resolveConfiguration();
+        if (!($config['ok'] ?? false)) {
+            return ['ok' => false, 'error' => (string) ($config['error'] ?? 'Configuration invalide')];
         }
-        if ($endpoint === '' && $provider === 'openai') {
-            $endpoint = 'https://api.openai.com/v1/audio/transcriptions';
-        }
-        $apiKey = trim((string) ($_ENV['APP_DICTATION_API_KEY'] ?? ''));
-        $fallbackApiKey = trim((string) ($_ENV['APP_AI_RESULTAT_API_KEY'] ?? ''));
-        if ($apiKey === '' && $provider === 'openai') {
-            $apiKey = $fallbackApiKey;
-        }
-        if ($apiKey === '' && $provider === 'huggingface' && str_starts_with($fallbackApiKey, 'hf_')) {
-            $apiKey = $fallbackApiKey;
-        }
-        $model = (string) ($_ENV['APP_DICTATION_MODEL'] ?? $_ENV['APP_AI_RESULTAT_MODEL'] ?? 'gpt-4o-mini-transcribe');
 
-        if ($endpoint === '') {
-            return ['ok' => false, 'error' => 'APP_DICTATION_ENDPOINT / APP_AI_RESULTAT_ENDPOINT non configure'];
-        }
-        if (filter_var($endpoint, FILTER_VALIDATE_URL) === false) {
-            return ['ok' => false, 'error' => 'Endpoint de dictee invalide: ' . $endpoint];
-        }
-        if ($apiKey === '') {
-            if ($provider === 'huggingface') {
-                return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY (hf_...) non configure pour Hugging Face'];
-            }
-            return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY / APP_AI_RESULTAT_API_KEY non configure'];
-        }
-        if ($provider === 'huggingface' && !str_starts_with($apiKey, 'hf_')) {
-            return ['ok' => false, 'error' => 'Cle API Hugging Face invalide (attendu: hf_...)'];
-        }
+        $provider = (string) $config['provider'];
+        $endpoint = (string) $config['endpoint'];
+        $apiKey = (string) $config['api_key'];
+        $model = (string) $config['model'];
         $safeFilename = $audioFile->getClientOriginalName() ?: 'dictation.webm';
         $detectedMimeType = strtolower((string) ($audioFile->getMimeType() ?: $audioFile->getClientMimeType() ?: 'audio/webm'));
         $ext = strtolower((string) ($audioFile->guessExtension() ?: pathinfo($safeFilename, PATHINFO_EXTENSION)));
@@ -227,5 +223,57 @@ class DictationTranscriptionService
         }
 
         return 'https://router.huggingface.co/hf-inference/models/' . $encodedModelPath;
+    }
+
+    /**
+     * @return array{ok: bool, provider?: string, endpoint?: string, api_key?: string, model?: string, error?: string}
+     */
+    private function resolveConfiguration(): array
+    {
+        $provider = strtolower((string) ($_ENV['APP_DICTATION_PROVIDER'] ?? $_ENV['APP_AI_RESULTAT_PROVIDER'] ?? 'openai'));
+        $rawEndpoint = (string) ($_ENV['APP_DICTATION_ENDPOINT'] ?? $_ENV['APP_AI_RESULTAT_ENDPOINT'] ?? 'https://api.openai.com/v1/audio/transcriptions');
+        $endpoint = $this->normalizeEndpoint($rawEndpoint);
+        if ($endpoint === '' && $provider === 'huggingface') {
+            $endpoint = 'https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3-turbo';
+        }
+        if ($endpoint === '' && $provider === 'openai') {
+            $endpoint = 'https://api.openai.com/v1/audio/transcriptions';
+        }
+        $apiKey = trim((string) ($_ENV['APP_DICTATION_API_KEY'] ?? ''));
+        $fallbackApiKey = trim((string) ($_ENV['APP_AI_RESULTAT_API_KEY'] ?? ''));
+        if ($apiKey === '' && $provider === 'openai') {
+            $apiKey = $fallbackApiKey;
+        }
+        if ($apiKey === '' && $provider === 'huggingface' && str_starts_with($fallbackApiKey, 'hf_')) {
+            $apiKey = $fallbackApiKey;
+        }
+        $model = (string) ($_ENV['APP_DICTATION_MODEL'] ?? $_ENV['APP_AI_RESULTAT_MODEL'] ?? 'gpt-4o-mini-transcribe');
+
+        if ($endpoint === '') {
+            return ['ok' => false, 'error' => 'APP_DICTATION_ENDPOINT / APP_AI_RESULTAT_ENDPOINT non configure'];
+        }
+        if (filter_var($endpoint, FILTER_VALIDATE_URL) === false) {
+            return ['ok' => false, 'error' => 'Endpoint de dictee invalide: ' . $endpoint];
+        }
+        if ($apiKey === '') {
+            if ($provider === 'huggingface') {
+                return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY (hf_...) non configure pour Hugging Face'];
+            }
+            return ['ok' => false, 'error' => 'APP_DICTATION_API_KEY / APP_AI_RESULTAT_API_KEY non configure'];
+        }
+        if ($provider === 'huggingface' && !str_starts_with($apiKey, 'hf_')) {
+            return ['ok' => false, 'error' => 'Cle API Hugging Face invalide (attendu: hf_...)'];
+        }
+        if ($provider !== 'openai' && $provider !== 'huggingface') {
+            return ['ok' => false, 'error' => 'Provider de dictee non supporte (openai|huggingface)'];
+        }
+
+        return [
+            'ok' => true,
+            'provider' => $provider,
+            'endpoint' => $endpoint,
+            'api_key' => $apiKey,
+            'model' => $model,
+        ];
     }
 }

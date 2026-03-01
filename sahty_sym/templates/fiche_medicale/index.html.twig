@@ -2015,6 +2015,7 @@
             
             <div class="modal-body">
                 {{ form_start(form) }}
+                {{ form_errors(form) }}
                 <div class="fiche-translate-bar">
                     <div class="fiche-translate-title">
                         <i class="fas fa-language"></i>
@@ -2067,6 +2068,7 @@
                             {{ form_widget(form.antecedents, {
                                 'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Décrivez vos antécédents médicaux...'}
                             }) }}
+                            {{ form_errors(form.antecedents) }}
                         </div>
 
                         <div class="form-group">
@@ -2079,6 +2081,7 @@
                             {{ form_widget(form.allergies, {
                                 'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Listez vos allergies...'}
                             }) }}
+                            {{ form_errors(form.allergies) }}
                         </div>
 
                         <div class="form-group">
@@ -2088,6 +2091,7 @@
                             {{ form_widget(form.taille, {
                                 'attr': {'class': 'form-control', 'placeholder': 'Ex: 1.75', 'step': '0.01'}
                             }) }}
+                            {{ form_errors(form.taille) }}
                         </div>
 
                         <div class="form-group">
@@ -2097,6 +2101,7 @@
                             {{ form_widget(form.poids, {
                                 'attr': {'class': 'form-control', 'placeholder': 'Ex: 70'}
                             }) }}
+                            {{ form_errors(form.poids) }}
                         </div>
 
                         <div class="form-group">
@@ -2109,6 +2114,7 @@
                             {{ form_widget(form.traitement_en_cours, {
                                 'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Traitements actuels...'}
                             }) }}
+                            {{ form_errors(form.traitement_en_cours) }}
                         </div>
                     </div>
 
