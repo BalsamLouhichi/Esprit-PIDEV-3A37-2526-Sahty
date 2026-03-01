@@ -77,70 +77,18 @@ class EvenementVenueRecommendationService
             return $b['score'] <=> $a['score'];
         });
 
-        $usedNominatimFallback = false;
-        if (count($normalized) === 0) {
-            $nominatimResults = $this->fetchNominatimFallbackPlaces($city, $eventType);
-            foreach ($nominatimResults as $place) {
-                $displayName = trim((string) ($place['display_name'] ?? ''));
-                if ($displayName === '') {
-                    continue;
-                }
-
-                $lat = $place['lat'] ?? null;
-                $lon = $place['lon'] ?? null;
-                if (!is_numeric($lat) || !is_numeric($lon)) {
-                    continue;
-                }
-
-                $segments = array_map('trim', explode(',', $displayName));
-                $nom = (string) ($segments[0] ?? $displayName);
-                $categorie = (string) ($place['type'] ?? $place['class'] ?? 'lieu');
-                $adresse = $displayName;
-                $contacts = [
-                    'telephone' => '',
-                    'email' => '',
-                    'site' => '',
-                ];
-
-                $normalized[] = [
-                    'nom' => $nom,
-                    'categorie' => $categorie,
-                    'adresse' => $adresse,
-                    'distance_km' => round($this->distanceKm((float) $geo['lat'], (float) $geo['lon'], (float) $lat, (float) $lon), 2),
-                    'score' => 55,
-                    'raison' => sprintf('Suggestion geocodage par mots-cles (%s) dans %s.', $eventType, $city),
-                    'contacts' => $contacts,
-                    'indice_evenements_similaires' => 'Fallback Nominatim active: lieu potentiellement exploitable.',
-                ];
-            }
-
-            if (count($normalized) > 0) {
-                $usedNominatimFallback = true;
-                usort($normalized, static function (array $a, array $b): int {
-                    if ($a['score'] === $b['score']) {
-                        return $a['distance_km'] <=> $b['distance_km'];
-                    }
-
-                    return $b['score'] <=> $a['score'];
-                });
-            }
-        }
-
         return [
             'success' => true,
             'message' => count($normalized) > 0
-                ? ($usedNominatimFallback
-                    ? 'Lieux recommandes generes avec succes (fallback geocodage active).'
-                    : ($usedFallback
+                ? ($usedFallback
                     ? 'Lieux recommandes generes avec succes (mode elargi active).'
-                    : 'Lieux recommandes generes avec succes.'))
+                    : 'Lieux recommandes generes avec succes.')
                 : ($usedFallback
                     ? 'Aucun lieu pertinent trouve, meme apres elargissement de la recherche.'
                     : 'Aucun lieu pertinent trouve dans cette zone.'),
             'ville' => (string) ($geo['display_name'] ?? $city),
             'lieux' => array_slice($normalized, 0, 10),
             'fallback_used' => $usedFallback,
-            'nominatim_fallback_used' => $usedNominatimFallback,
         ];
     }
 
@@ -410,67 +358,5 @@ class EvenementVenueRecommendationService
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
-    }
-
-    private function fetchNominatimFallbackPlaces(string $city, string $eventType): array
-    {
-        $queries = $this->buildNominatimFallbackQueries($city, $eventType);
-        $results = [];
-
-        foreach ($queries as $query) {
-            try {
-                $response = $this->httpClient->request('GET', self::NOMINATIM_URL, [
-                    'query' => [
-                        'q' => $query,
-                        'format' => 'jsonv2',
-                        'limit' => 8,
-                        'addressdetails' => 1,
-                    ],
-                    'headers' => [
-                        'User-Agent' => 'SahtyEventModule/1.0',
-                    ],
-                    'timeout' => 8,
-                ]);
-
-                $payload = $response->toArray(false);
-                if (!is_array($payload)) {
-                    continue;
-                }
-
-                foreach ($payload as $item) {
-                    if (!is_array($item)) {
-                        continue;
-                    }
-                    $key = (string) ($item['osm_type'] ?? '') . ':' . (string) ($item['osm_id'] ?? '');
-                    if ($key === ':' || isset($results[$key])) {
-                        continue;
-                    }
-                    $results[$key] = $item;
-                }
-            } catch (\Throwable) {
-                continue;
-            }
-        }
-
-        return array_values($results);
-    }
-
-    private function buildNominatimFallbackQueries(string $city, string $eventType): array
-    {
-        $type = mb_strtolower(trim($eventType));
-        $keywords = match ($type) {
-            'atelier' => ['centre communautaire', 'espace formation', 'salle atelier'],
-            'depistage' => ['clinique', 'centre sante', 'hopital'],
-            'conference', 'formation' => ['centre conference', 'hotel conference', 'universite'],
-            'webinaire' => ['coworking', 'espace evenement', 'hotel business'],
-            default => ['centre conference', 'centre communautaire', 'hotel'],
-        };
-
-        $queries = [];
-        foreach ($keywords as $keyword) {
-            $queries[] = trim($keyword . ' ' . $city);
-        }
-
-        return array_values(array_unique($queries));
     }
 }

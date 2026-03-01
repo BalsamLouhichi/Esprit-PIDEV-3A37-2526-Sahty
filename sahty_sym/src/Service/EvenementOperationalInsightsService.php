@@ -67,7 +67,7 @@ class EvenementOperationalInsightsService
     private function buildExternalAiLocationHint(string $lieu): ?string
     {
         try {
-            $prompt = 'Analyse cette adresse/lien de lieu et réponds uniquement en JSON '
+            $prompt = 'Analyse cette adresse/lien de lieu et rÃ©ponds uniquement en JSON '
                 . '{"valid":true|false,"suggestion":"..."} : ' . $lieu;
 
             $response = $this->httpClient->request('GET', self::FREE_AI_URL . '/' . rawurlencode($prompt), [
