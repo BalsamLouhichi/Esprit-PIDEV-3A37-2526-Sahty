@@ -466,9 +466,7 @@ class EvenementController extends AbstractController
 
 
 
-            if ($evenement->getDateDebut() && $evenement->getDateFin()) {
-                $this->appendSchedulingConflictErrors($evenement, $errors, null);
-            }
+            $this->appendSchedulingConflictErrors($evenement, $errors, null);
 
             $this->appendOperationalValidationErrors($evenement, $errors);
 
@@ -557,6 +555,7 @@ class EvenementController extends AbstractController
         $user = $this->getUser();
 
         $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $editTemplate = $isAdmin ? 'evenement/edit.html.twig' : 'evenement/client_modif_demande.html.twig';
 
         
 
@@ -595,6 +594,7 @@ class EvenementController extends AbstractController
             'user_role' => ($user->getRoles()[0] ?? 'ROLE_USER'),
 
             'is_admin' => $isAdmin,
+            'is_demande' => !$isAdmin,
 
             'is_edit' => true,
 
@@ -615,6 +615,7 @@ class EvenementController extends AbstractController
             $errors = [];
 
             $this->applySurfaceEditionSelection($form, $evenement);
+            $this->attachPlanningDecisionMetadata($evenement, $request);
 
             
 
@@ -750,9 +751,7 @@ class EvenementController extends AbstractController
 
 
 
-            if ($evenement->getDateDebut() && $evenement->getDateFin()) {
-                $this->appendSchedulingConflictErrors($evenement, $errors, $evenement->getId());
-            }
+            $this->appendSchedulingConflictErrors($evenement, $errors, $evenement->getId());
 
             $this->appendOperationalValidationErrors($evenement, $errors);
 
@@ -768,7 +767,7 @@ class EvenementController extends AbstractController
 
                 }
 
-                return $this->render('evenement/edit.html.twig', [
+                return $this->render($editTemplate, [
 
                     'evenement' => $evenement,
 
@@ -820,7 +819,7 @@ class EvenementController extends AbstractController
 
 
 
-        return $this->render('evenement/edit.html.twig', [
+        return $this->render($editTemplate, [
 
             'evenement' => $evenement,
 
@@ -3379,9 +3378,7 @@ class EvenementController extends AbstractController
 
 
 
-        if ($evenement->getDateDebut() && $evenement->getDateFin()) {
-            $this->appendSchedulingConflictErrors($evenement, $errors, $evenement->getId());
-        }
+        $this->appendSchedulingConflictErrors($evenement, $errors, $evenement->getId());
 
         $this->appendOperationalValidationErrors($evenement, $errors, $venueSource);
 
