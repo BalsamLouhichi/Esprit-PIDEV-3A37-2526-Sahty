@@ -17,16 +17,16 @@ class TypeAnalyse
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $description = null;
+    private string $description = '';
 
     #[ORM\Column]
-    private ?bool $actif = null;
+    private bool $actif = true;
 
-    #[ORM\Column]
-    private ?\DateTime $cree_le = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $cree_le;
 
     /**
      * @var Collection<int, LaboratoireTypeAnalyse>
@@ -40,14 +40,21 @@ class TypeAnalyse
     public function __construct()
     {
         $this->laboratoireTypeAnalyses = new ArrayCollection();
+        $this->cree_le = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getNom(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -59,7 +66,7 @@ class TypeAnalyse
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -71,7 +78,7 @@ class TypeAnalyse
         return $this;
     }
 
-    public function isActif(): ?bool
+    public function isActif(): bool
     {
         return $this->actif;
     }
@@ -83,14 +90,14 @@ class TypeAnalyse
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->cree_le;
     }
 
-    public function setCreeLe(\DateTime $cree_le): static
+    public function setCreeLe(\DateTimeInterface $cree_le): static
     {
-        $this->cree_le = $cree_le;
+        $this->cree_le = \DateTimeImmutable::createFromInterface($cree_le);
 
         return $this;
     }
@@ -116,10 +123,7 @@ class TypeAnalyse
     public function removeLaboratoireTypeAnalysis(LaboratoireTypeAnalyse $laboratoireTypeAnalysis): static
     {
         if ($this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis)) {
-            // set the owning side to null (unless already changed)
-            if ($laboratoireTypeAnalysis->getTypeAnalyse() === $this) {
-                $laboratoireTypeAnalysis->setTypeAnalyse(null);
-            }
+            // The join entity is owned elsewhere; avoid setting a non-nullable association to null here.
         }
 
         return $this;

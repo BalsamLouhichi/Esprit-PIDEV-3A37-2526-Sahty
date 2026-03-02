@@ -15,22 +15,22 @@ class RendezVous
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateRdv = null;
+    private \DateTime $dateRdv;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
-    private ?\DateTime $heureRdv = null;
+    private \DateTime $heureRdv;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $raison = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $statut = null;
+    private string $statut = 'en_attente';
 
-    #[ORM\Column]
-    private ?\DateTime $creeLe = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $creeLe;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTime $dateValidation = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $dateValidation = null;
 
     #[ORM\Column(length: 20)]
     private string $typeConsultation = 'cabinet';
@@ -41,8 +41,8 @@ class RendezVous
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $meetingProvider = null;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $meetingCreatedAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $meetingCreatedAt;
 
     #[ORM\ManyToOne]
     private ?Patient $patient = null;
@@ -51,25 +51,34 @@ class RendezVous
     #[ORM\JoinColumn(nullable: false)]
     private ?Medecin $medecin = null;
     
-    // ✅ Fiche médicale maintenant facultative
+    // âœ… Fiche mÃ©dicale maintenant facultative
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?FicheMedicale $ficheMedicale = null;
 
     /**
-     * Constructeur - Initialise automatiquement la date de création
+     * Constructeur - Initialise automatiquement la date de crÃ©ation
      */
     public function __construct()
     {
-        $this->creeLe = new \DateTime();
+        $this->dateRdv = new \DateTime();
+        $this->heureRdv = new \DateTime();
+        $this->creeLe = new \DateTimeImmutable();
+        $this->meetingCreatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getDateRdv(): ?\DateTime
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getDateRdv(): \DateTime
     {
         return $this->dateRdv;
     }
@@ -81,7 +90,7 @@ class RendezVous
         return $this;
     }
 
-    public function getHeureRdv(): ?\DateTime
+    public function getHeureRdv(): \DateTime
     {
         return $this->heureRdv;
     }
@@ -105,7 +114,7 @@ class RendezVous
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -117,26 +126,26 @@ class RendezVous
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->creeLe;
     }
 
-    public function setCreeLe(\DateTime $creeLe): static
+    public function setCreeLe(\DateTimeInterface $creeLe): static
     {
-        $this->creeLe = $creeLe;
+        $this->creeLe = self::toImmutable($creeLe);
 
         return $this;
     }
 
-    public function getDateValidation(): ?\DateTime
+    public function getDateValidation(): ?\DateTimeImmutable
     {
         return $this->dateValidation;
     }
 
-    public function setDateValidation(?\DateTime $dateValidation): static
+    public function setDateValidation(?\DateTimeInterface $dateValidation): static
     {
-        $this->dateValidation = $dateValidation;
+        $this->dateValidation = $dateValidation !== null ? self::toImmutable($dateValidation) : null;
 
         return $this;
     }
@@ -177,14 +186,14 @@ class RendezVous
         return $this;
     }
 
-    public function getMeetingCreatedAt(): ?\DateTimeImmutable
+    public function getMeetingCreatedAt(): \DateTimeImmutable
     {
         return $this->meetingCreatedAt;
     }
 
-    public function setMeetingCreatedAt(?\DateTimeImmutable $meetingCreatedAt): static
+    public function setMeetingCreatedAt(\DateTimeInterface $meetingCreatedAt): static
     {
-        $this->meetingCreatedAt = $meetingCreatedAt;
+        $this->meetingCreatedAt = self::toImmutable($meetingCreatedAt);
 
         return $this;
     }
@@ -223,5 +232,10 @@ class RendezVous
         $this->ficheMedicale = $ficheMedicale;
 
         return $this;
+    }
+
+    private static function toImmutable(\DateTimeInterface $value): \DateTimeImmutable
+    {
+        return $value instanceof \DateTimeImmutable ? $value : \DateTimeImmutable::createFromInterface($value);
     }
 }

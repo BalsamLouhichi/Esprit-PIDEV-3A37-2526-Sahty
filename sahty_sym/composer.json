@@ -99,8 +99,10 @@
         }
     },
     "require-dev": {
+        "ahmed-bhs/doctrine-doctor": "^1.0",
         "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "*",
+        "phpunit/phpunit": "*",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",
         "symfony/debug-bundle": "6.4.*",

@@ -16,18 +16,18 @@ class DemandeAnalyse
 
     #[ORM\ManyToOne(targetEntity: Patient::class, inversedBy: 'demandeAnalyses')]
     #[ORM\JoinColumn(name: 'patient_id', nullable: false)]
-    private ?Patient $patient = null; // Changé de patient_id à patient
+    private ?Patient $patient = null; // ChangÃƒÂ© de patient_id ÃƒÂ  patient
 
     #[ORM\ManyToOne(targetEntity: Medecin::class, inversedBy: 'demandeAnalyses')]
-    #[ORM\JoinColumn(name: 'medecin_id', nullable: true)] // ← Changer à true
+    #[ORM\JoinColumn(name: 'medecin_id', nullable: true)] // Ã¢â€ Â Changer ÃƒÂ  true
     private ?Medecin $medecin = null;
 
     #[ORM\ManyToOne(targetEntity: Laboratoire::class, inversedBy: 'demandeAnalyses')]
     #[ORM\JoinColumn(name: 'laboratoire_id', nullable: false)]
-    private ?Laboratoire $laboratoire = null; // Changé de laboratoire_id à laboratoire
+    private ?Laboratoire $laboratoire = null; // ChangÃƒÂ© de laboratoire_id ÃƒÂ  laboratoire
 
     #[ORM\Column(length: 255)]
-    private ?string $type_bilan = null;
+    private string $type_bilan = '';
 
     // Valeur par defaut basee sur la presence du PDF resultat
     #[ORM\Column(length: 50)]
@@ -47,11 +47,12 @@ class DemandeAnalyse
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $notes = null;
 
-    // Priorité de la demande
+    // PrioritÃƒÂ© de la demande
     #[ORM\Column(length: 20)]
-    private string $priorite = 'Normale'; // Ajout de la priorité
+    private string $priorite = 'Normale'; // Ajout de la prioritÃƒÂ©
 
-    // Liste des analyses demandées (peut être JSON ou relation OneToMany)
+    // Liste des analyses demandÃƒÂ©es (peut ÃƒÂªtre JSON ou relation OneToMany)
+    /** @var list<string>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $analyses = [];
 
@@ -72,6 +73,12 @@ class DemandeAnalyse
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getPatient(): ?Patient
@@ -107,7 +114,7 @@ class DemandeAnalyse
         return $this;
     }
 
-    public function getTypeBilan(): ?string
+    public function getTypeBilan(): string
     {
         return $this->type_bilan;
     }
@@ -184,11 +191,13 @@ class DemandeAnalyse
         return $this;
     }
 
+    /** @return list<string>|null */
     public function getAnalyses(): ?array
     {
         return $this->analyses;
     }
 
+    /** @param list<string>|null $analyses */
     public function setAnalyses(?array $analyses): static
     {
         $this->analyses = $analyses;
@@ -222,27 +231,30 @@ class DemandeAnalyse
         return $this;
     }
 
-    // Méthodes pratiques
+    // MÃƒÂ©thodes pratiques
     public function addAnalyse(string $analyse): static
     {
-        if (!in_array($analyse, $this->analyses)) {
-            $this->analyses[] = $analyse;
+        $analyses = $this->analyses ?? [];
+        if (!in_array($analyse, $analyses, true)) {
+            $analyses[] = $analyse;
+            $this->analyses = $analyses;
         }
         return $this;
     }
 
     public function removeAnalyse(string $analyse): static
     {
-        if (($key = array_search($analyse, $this->analyses)) !== false) {
-            unset($this->analyses[$key]);
-            $this->analyses = array_values($this->analyses); // Réindexer
+        $analyses = $this->analyses ?? [];
+        if (($key = array_search($analyse, $analyses, true)) !== false) {
+            unset($analyses[$key]);
+            $this->analyses = array_values($analyses); // RÃƒÂ©indexer
         }
         return $this;
     }
 
     public function getNbAnalyses(): int
     {
-        return count($this->analyses);
+        return count($this->analyses ?? []);
     }
 
     // Pour faciliter l'affichage dans le template
@@ -251,3 +263,4 @@ class DemandeAnalyse
         return sprintf('Demande #%d - %s', $this->id, $this->type_bilan);
     }
 }
+

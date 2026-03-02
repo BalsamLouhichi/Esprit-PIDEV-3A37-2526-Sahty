@@ -144,6 +144,10 @@ class PasswordResetController extends AbstractController
 
             // Mettre à jour le mot de passe
             $utilisateur = $passwordResetToken->getUtilisateur();
+            if (!$utilisateur instanceof Utilisateur) {
+                $this->addFlash('error', 'Utilisateur introuvable pour ce lien.');
+                return $this->redirectToRoute('app_forgot_password');
+            }
             $hashedPassword = $this->passwordHasher->hashPassword($utilisateur, $newPassword);
             $utilisateur->setPassword($hashedPassword);
 
@@ -178,9 +182,17 @@ class PasswordResetController extends AbstractController
                 'utilisateur_id' => $utilisateur->getId(),
             ]);
 
+            $toEmail = $utilisateur->getEmail();
+            if (!is_string($toEmail) || $toEmail === '') {
+                $this->logger->warning('Email utilisateur manquant pour la reinitialisation.', [
+                    'utilisateur_id' => $utilisateur->getId(),
+                ]);
+                return;
+            }
+
             $email = (new Email())
                 ->from('maramouerghi1234@gmail.com')
-                ->to($utilisateur->getEmail())
+                ->to($toEmail)
                 ->subject('MEDINOVA - Réinitialisation de votre mot de passe')
                 ->html($this->renderView('emails/reset_password.html.twig', [
                     'utilisateur' => $utilisateur,

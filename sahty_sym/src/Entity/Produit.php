@@ -19,13 +19,13 @@ class Produit
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $prix = null;
+    #[ORM\Column(type: 'float')]
+    private float $prix = 0.0;
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $stock = null;
@@ -40,7 +40,7 @@ class Produit
     private ?int $promotion = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
-    private ?bool $estActif = true;
+    private bool $estActif = true;
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $poids = null;
@@ -54,6 +54,9 @@ class Produit
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
 
+    /**
+     * @var Collection<int, Parapharmacie>
+     */
     #[ORM\ManyToMany(targetEntity: Parapharmacie::class, inversedBy: 'produits')]
     private Collection $parapharmacies;
 
@@ -73,10 +76,16 @@ class Produit
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getNom(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -98,7 +107,7 @@ class Produit
         return $this;
     }
 
-    public function getPrix(): ?float
+    public function getPrix(): float
     {
         return $this->prix;
     }
@@ -153,7 +162,7 @@ class Produit
         return $this;
     }
 
-    public function isEstActif(): ?bool
+    public function isEstActif(): bool
     {
         return $this->estActif;
     }

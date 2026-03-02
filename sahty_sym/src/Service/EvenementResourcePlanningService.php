@@ -4,11 +4,17 @@ namespace App\Service;
 
 class EvenementResourcePlanningService
 {
+    /**
+     * @param array<string, int|float|string> $stockSnapshot
+     */
     public function __construct(
         private readonly array $stockSnapshot = []
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildPlan(string $type, string $mode, ?int $placesMax): array
     {
         $participants = max(1, (int) ($placesMax ?? 30));
@@ -67,6 +73,9 @@ class EvenementResourcePlanningService
         ];
     }
 
+    /**
+     * @return array<string, int>
+     */
     private function estimateRequirements(string $type, string $mode, int $participants): array
     {
         $type = mb_strtolower(trim($type));

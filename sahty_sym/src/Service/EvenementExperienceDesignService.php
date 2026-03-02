@@ -12,6 +12,9 @@ class EvenementExperienceDesignService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function buildExperiencePack(Evenement $evenement): array
     {
         $external = $this->buildExperiencePackFromExternalApi($evenement);
@@ -43,6 +46,9 @@ class EvenementExperienceDesignService
         ], $evenement);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function buildExperiencePackFromExternalApi(Evenement $evenement): ?array
     {
         if ($this->httpClient === null) {
@@ -88,6 +94,9 @@ class EvenementExperienceDesignService
         }
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function buildFreeApiPrompt(array $payload): string
     {
         return 'Retourne UNIQUEMENT un objet JSON valide avec les cles: poster, cards, highlights. '
@@ -98,6 +107,9 @@ class EvenementExperienceDesignService
             . 'Evenement: ' . json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function extractPackFromFreeApiResponse(string $raw): ?array
     {
         $json = trim($raw);
@@ -144,6 +156,9 @@ class EvenementExperienceDesignService
         return max(45, min(600, $minutes));
     }
 
+    /**
+     * @return array<int, array{title: string, icon: string, intensity: int, duration_hint: int|null}>
+     */
     private function extractPhasesFromDescription(string $description): array
     {
         $description = trim($description);
@@ -188,6 +203,9 @@ class EvenementExperienceDesignService
         return $phases;
     }
 
+    /**
+     * @return array<int, array{title: string, icon: string, intensity: int}>
+     */
     private function defaultPhasesByType(string $type): array
     {
         $type = mb_strtolower(trim($type));
@@ -217,6 +235,10 @@ class EvenementExperienceDesignService
         };
     }
 
+    /**
+     * @param array<int, array{title: string, icon?: string, intensity?: int, duration_hint?: int|null}> $phases
+     * @return array<int, array{title: string, icon: string, duration: int, time_label: string, intensity: int}>
+     */
     private function allocateTiming(array $phases, int $totalMinutes, ?\DateTimeInterface $start): array
     {
         $hasExplicitDurations = count(array_filter($phases, static function (array $phase): bool {
@@ -256,6 +278,9 @@ class EvenementExperienceDesignService
         return $result;
     }
 
+    /**
+     * @return array{bg: string, chip: string}
+     */
     private function themeForEvent(Evenement $evenement): array
     {
         $key = mb_strtolower((string) $evenement->getType());
@@ -279,6 +304,9 @@ class EvenementExperienceDesignService
         return sprintf('Programme officiel | %s | %d min', $modeText, $durationMinutes);
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function buildHighlights(Evenement $evenement, int $durationMinutes, int $phases): array
     {
         $parts = [];
@@ -309,6 +337,10 @@ class EvenementExperienceDesignService
         return 3;
     }
 
+    /**
+     * @param array<string, mixed> $pack
+     * @return array<string, mixed>
+     */
     private function normalizePack(array $pack, Evenement $evenement): array
     {
         $duration = $this->computeDurationMinutes($evenement);
@@ -371,7 +403,7 @@ class EvenementExperienceDesignService
         if (count($normalizedHighlights) === 0) {
             $normalizedHighlights = $this->buildHighlights($evenement, $duration, count($normalizedCards));
         }
-        $normalizedHighlights = array_values(array_slice($normalizedHighlights, 0, 6));
+        $normalizedHighlights = array_slice($normalizedHighlights, 0, 6);
 
         $posterTheme = is_array($poster['theme'] ?? null) ? $poster['theme'] : [];
         $posterThemeBg = trim($this->toSafeText($posterTheme['bg'] ?? $theme['bg']));

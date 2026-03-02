@@ -14,6 +14,10 @@ class EvenementVenueRecommendationService
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
     public function recommend(string $city, string $eventType, ?int $capacity = null, array $context = []): array
     {
         $city = trim($city);
@@ -92,6 +96,9 @@ class EvenementVenueRecommendationService
         ];
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function geocodeCity(string $city): ?array
     {
         try {
@@ -109,7 +116,7 @@ class EvenementVenueRecommendationService
             ]);
 
             $results = $response->toArray(false);
-            if (!is_array($results) || count($results) === 0) {
+            if (count($results) === 0) {
                 return null;
             }
 
@@ -124,6 +131,9 @@ class EvenementVenueRecommendationService
         }
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     private function fetchNearbyPlaces(float $lat, float $lon, string $eventType, bool $broadSearch = false): array
     {
         $radius = $broadSearch ? 12000 : 7000;
@@ -153,6 +163,9 @@ class EvenementVenueRecommendationService
         }
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function mapTypeToAmenities(string $eventType): array
     {
         $type = mb_strtolower(trim($eventType));
@@ -166,6 +179,9 @@ class EvenementVenueRecommendationService
         };
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function mapFallbackAmenities(string $eventType): array
     {
         $base = $this->mapTypeToAmenities($eventType);
@@ -184,6 +200,10 @@ class EvenementVenueRecommendationService
         return array_values(array_unique(array_merge($base, $fallback)));
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function scorePlace(array $tags, string $eventType, ?int $capacity, array $context): int
     {
         $score = 50;
@@ -261,6 +281,9 @@ class EvenementVenueRecommendationService
         return max(1, min(100, $score));
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     */
     private function detectCategory(array $tags): string
     {
         $amenity = (string) ($tags['amenity'] ?? '');
@@ -276,6 +299,9 @@ class EvenementVenueRecommendationService
         return 'lieu';
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     */
     private function buildAddress(array $tags): string
     {
         $parts = [];
@@ -293,6 +319,10 @@ class EvenementVenueRecommendationService
         return count($parts) > 0 ? implode(', ', $parts) : 'Adresse non disponible';
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @return array{telephone: string, email: string, site: string}
+     */
     private function extractContacts(array $tags): array
     {
         return [
@@ -302,6 +332,10 @@ class EvenementVenueRecommendationService
         ];
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function buildReason(array $tags, string $eventType, ?int $capacity, array $context): string
     {
         $reasons = [];
@@ -330,6 +364,10 @@ class EvenementVenueRecommendationService
         return implode(' | ', $reasons);
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function buildSimilarityHint(array $tags, string $eventType, array $context): string
     {
         $name = mb_strtolower((string) ($tags['name'] ?? ''));

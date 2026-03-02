@@ -5,38 +5,40 @@ namespace App\Entity;
 
 use App\Repository\ResponsableParapharmacieRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: ResponsableParapharmacieRepository::class)]
 #[ORM\Table(name: 'responsable_parapharmacie')]
 class ResponsableParapharmacie extends Utilisateur
 {
     /**
-     * Relation avec l'entité Parapharmacie
-     * Un responsable peut gérer une seule parapharmacie
+     * Relation avec l'entitÃ© Parapharmacie
+     * Un responsable peut gÃ©rer une seule parapharmacie
      */
     #[ORM\ManyToOne(targetEntity: Parapharmacie::class, inversedBy: 'responsables')]
     #[ORM\JoinColumn(name: 'parapharmacie_id', referencedColumnName: 'id', nullable: true)]
     private ?Parapharmacie $parapharmacie = null;
 
     /**
-     * Flag pour détecter la première connexion
+     * Flag pour dÃ©tecter la premiÃ¨re connexion
      * Permet de rediriger vers la page de configuration initiale
      */
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $premiereConnexion = true;
 
     /**
-     * Date de dernière connexion
-     * Pour le suivi des activités
+     * Date de derniÃ¨re connexion
+     * Pour le suivi des activitÃ©s
      */
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $derniereConnexion = null;
 
     /**
-     * Token pour l'invitation à rejoindre une parapharmacie
-     * Utilisé lors du processus d'invitation
+     * Token pour l'invitation Ã  rejoindre une parapharmacie
+     * UtilisÃ© lors du processus d'invitation
      */
     #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    #[Ignore]
     private ?string $invitationToken = null;
 
     /**
@@ -143,6 +145,7 @@ class ResponsableParapharmacie extends Utilisateur
     /**
      * Get the invitation token
      */
+    #[Ignore]
     public function getInvitationToken(): ?string
     {
         return $this->invitationToken;
@@ -151,7 +154,7 @@ class ResponsableParapharmacie extends Utilisateur
     /**
      * Set the invitation token
      */
-    public function setInvitationToken(?string $invitationToken): self
+    public function setInvitationToken(#[\SensitiveParameter] ?string $invitationToken): self
     {
         $this->invitationToken = $invitationToken;
         return $this;
@@ -268,7 +271,7 @@ class ResponsableParapharmacie extends Utilisateur
      */
     public function __toString(): string
     {
-        return $this->getNomComplet() . ' (' . ($this->parapharmacie?->getNom() ?? 'Parapharmacie non configurée') . ')';
+        return $this->getNomComplet() . ' (' . ($this->parapharmacie?->getNom() ?? 'Parapharmacie non configurÃ©e') . ')';
     }
 
     /**

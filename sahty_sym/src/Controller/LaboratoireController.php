@@ -136,7 +136,7 @@ class LaboratoireController extends AbstractController
         
         // Optionnel: trier par nom complet
         usort($medecins, function($a, $b) {
-            return strcmp($a->getNomComplet() ?? '', $b->getNomComplet() ?? '');
+            return strcmp((string) $a->getNomComplet(), (string) $b->getNomComplet());
         });
 
         // Grouper les analyses par catégorie
@@ -206,7 +206,7 @@ class LaboratoireController extends AbstractController
     #[Route('/{id}/delete', name: 'app_labo_delete', methods: ['POST'])]
     public function delete(Laboratoire $laboratoire, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete_labo_' . $laboratoire->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete_labo_' . $laboratoire->getId(), $request->request->getString('_token'))) {
             $em->remove($laboratoire);
             $em->flush();
             $this->addFlash('success', 'Laboratoire supprimé ✅');

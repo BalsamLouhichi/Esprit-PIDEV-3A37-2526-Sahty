@@ -35,11 +35,13 @@ class RecommandationService
      *
      * @param Quiz $quiz
      * @param int $score
-     * @param array $problems Array of problematic categories
+     * @param array<int, string> $problems Array of problematic categories
      * @return Recommandation[]
      */
     public function getFiltered(Quiz $quiz, int $score, array $problems = []): array
     {
+        $this->repository->getClassName();
+
         $selected = [];
 
         foreach ($quiz->getRecommandations() as $reco) {
@@ -108,6 +110,9 @@ class RecommandationService
     /**
      * Check if problematic categories match recommendation targets
      */
+    /**
+     * @param array<int, string> $problems
+     */
     private function matchesCategory(array $problems, Recommandation $reco): bool
     {
         $targets = $reco->getTargetCategories();
@@ -134,13 +139,17 @@ class RecommandationService
     /**
      * Sort recommendations by severity: high > medium > low
      */
+    /**
+     * @param array<int, Recommandation> $recommendations
+     * @return array<int, Recommandation>
+     */
     private function sortBySeverity(array $recommendations): array
     {
         usort($recommendations, function (Recommandation $a, Recommandation $b) {
             $severityOrder = ['high' => 3, 'medium' => 2, 'low' => 1];
 
-            $aOrder = $severityOrder[$a->getSeverity() ?? 'low'] ?? 1;
-            $bOrder = $severityOrder[$b->getSeverity() ?? 'low'] ?? 1;
+            $aOrder = $severityOrder[$a->getSeverity() ?: 'low'] ?? 1;
+            $bOrder = $severityOrder[$b->getSeverity() ?: 'low'] ?? 1;
 
             return $bOrder <=> $aOrder;
         });
@@ -151,6 +160,9 @@ class RecommandationService
     /**
      * Get all recommendations for a quiz, grouped by severity
      */
+    /**
+     * @return array{high: array<int, Recommandation>, medium: array<int, Recommandation>, low: array<int, Recommandation>}
+     */
     public function getGroupedBySeverity(Quiz $quiz): array
     {
         $grouped = [
@@ -160,7 +172,7 @@ class RecommandationService
         ];
 
         foreach ($quiz->getRecommandations() as $reco) {
-            $severity = $reco->getSeverity() ?? 'low';
+            $severity = $reco->getSeverity() ?: 'low';
             if (isset($grouped[$severity])) {
                 $grouped[$severity][] = $reco;
             }
@@ -172,6 +184,9 @@ class RecommandationService
     /**
      * Get urgent recommendations (high severity)
      */
+    /**
+     * @return array<int, Recommandation>
+     */
     public function getUrgent(Quiz $quiz): array
     {
         return array_filter(
@@ -182,6 +197,9 @@ class RecommandationService
 
     /**
      * Count recommendations by severity for a quiz
+     */
+    /**
+     * @return array{high: int, medium: int, low: int}
      */
     public function countBySeverity(Quiz $quiz): array
     {

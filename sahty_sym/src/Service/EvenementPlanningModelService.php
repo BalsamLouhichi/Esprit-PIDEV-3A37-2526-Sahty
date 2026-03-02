@@ -143,16 +143,16 @@ class EvenementPlanningModelService
         $candidates = [$this->pythonBin];
 
         if (stripos(PHP_OS_FAMILY, 'Windows') === 0) {
-            $localAppData = $_SERVER['LOCALAPPDATA'] ?? getenv('LOCALAPPDATA') ?: null;
-            $userProfile = $_SERVER['USERPROFILE'] ?? getenv('USERPROFILE') ?: null;
+            $localAppData = (string) ($_SERVER['LOCALAPPDATA'] ?? (getenv('LOCALAPPDATA') ?: ''));
+            $userProfile = (string) ($_SERVER['USERPROFILE'] ?? (getenv('USERPROFILE') ?: ''));
 
-            if (is_string($localAppData) && $localAppData !== '') {
+            if ($localAppData !== '') {
                 $candidates[] = $localAppData . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python313' . DIRECTORY_SEPARATOR . 'python.exe';
                 $candidates[] = $localAppData . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python312' . DIRECTORY_SEPARATOR . 'python.exe';
                 $candidates[] = $localAppData . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python311' . DIRECTORY_SEPARATOR . 'python.exe';
             }
 
-            if (is_string($userProfile) && $userProfile !== '') {
+            if ($userProfile !== '') {
                 $candidates[] = $userProfile . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Local' . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python313' . DIRECTORY_SEPARATOR . 'python.exe';
                 $candidates[] = $userProfile . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Local' . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python312' . DIRECTORY_SEPARATOR . 'python.exe';
                 $candidates[] = $userProfile . DIRECTORY_SEPARATOR . 'AppData' . DIRECTORY_SEPARATOR . 'Local' . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'Python' . DIRECTORY_SEPARATOR . 'Python311' . DIRECTORY_SEPARATOR . 'python.exe';
@@ -164,7 +164,7 @@ class EvenementPlanningModelService
         }
 
         foreach (array_unique($candidates) as $candidate) {
-            if (!is_string($candidate) || trim($candidate) === '') {
+            if (trim($candidate) === '') {
                 continue;
             }
 

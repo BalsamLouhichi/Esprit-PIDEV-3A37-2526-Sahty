@@ -151,7 +151,7 @@ class GoogleController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $selectedRole = $request->request->get('role');
+        $selectedRole = $request->request->getString('role');
 
         // Valider le rôle sélectionné
         $validRoles = [
@@ -161,7 +161,7 @@ class GoogleController extends AbstractController
             Utilisateur::ROLE_SIMPLE_RESPONSABLE_PARA,
         ];
 
-        if (!in_array($selectedRole, $validRoles)) {
+        if (!in_array($selectedRole, $validRoles, true)) {
             $this->addFlash('error', 'Rôle invalide');
             return $this->redirectToRoute('app_login');
         }
@@ -198,35 +198,7 @@ class GoogleController extends AbstractController
             $this->addFlash('error', 'Erreur lors de la création: ' . $e->getMessage());
             return $this->redirectToRoute('google_select_role');
         }
-    }
-
-    /**
-     * Authentifier l'utilisateur et le rediriger au bon profil
-     */
-    private function authenticateAndRedirect(Utilisateur $utilisateur, Request $request): Response
-    {
-        // Créer le token correctement pour Symfony 5.4+
-        $token = new UsernamePasswordToken(
-            $utilisateur,
-            'main',
-            $utilisateur->getRoles()
-        );
-        
-        // Stocker le token
-        $this->tokenStorage->setToken($token);
-        
-        // Dispatcher l'événement qui sauvegarde la session
-        $event = new InteractiveLoginEvent($request, $token);
-        $this->eventDispatcher->dispatch($event);
-        
-        // Nettoyer les données temporaires
-        $request->getSession()->remove('google_user_data');
-        
-        $this->addFlash('success', 'Connecté!');
-        
-        // Redirection vers le profil
-        return $this->redirectToRoute('app_profile');
-    }
+    }
 
     /**
      * Endpoint d'authentification intermédiaire après création d'utilisateur OAuth

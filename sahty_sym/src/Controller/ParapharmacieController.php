@@ -32,9 +32,6 @@ final class ParapharmacieController extends AbstractController
         $seenNames = [];
         $uniqueProduits = [];
         foreach ($produits as $produit) {
-            if (!$produit instanceof Produit) {
-                continue;
-            }
             $name = mb_strtolower(trim((string) $produit->getNom()), 'UTF-8');
             if ($name === '' || isset($seenNames[$name])) {
                 continue;
@@ -71,7 +68,10 @@ final class ParapharmacieController extends AbstractController
         // Offres multi-parapharmacies: meme nom de produit, IDs potentiellement differents
         $pharmacieOffers = [];
         $seenParapharmacies = [];
-        $sameNameProducts = $produitRepository->findByNormalizedName($produit->getNom());
+        $produitNom = $produit->getNom();
+        $sameNameProducts = is_string($produitNom) && $produitNom !== ''
+            ? $produitRepository->findByNormalizedName($produitNom)
+            : [$produit];
 
         foreach ($sameNameProducts as $sameProduct) {
             foreach ($sameProduct->getParapharmacies() as $pharmacie) {

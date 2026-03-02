@@ -4,9 +4,11 @@ namespace App\Controller;
 
 use App\Entity\InscriptionEvenement;
 use App\Entity\Evenement;
+use App\Entity\Utilisateur;
 use App\Form\InscriptionEvenementType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -62,8 +64,9 @@ final class InscriptionEvenementController extends AbstractController
         $inscriptionEvenement->setPresent(false);
         
         // Si l'utilisateur est connecté, l'associer
-        if ($this->getUser()) {
-            $inscriptionEvenement->setUtilisateur($this->getUser());
+        $user = $this->getUser();
+        if ($user instanceof Utilisateur) {
+            $inscriptionEvenement->setUtilisateur($user);
         }
         
         $form = $this->createForm(InscriptionEvenementType::class, $inscriptionEvenement, [
@@ -78,9 +81,7 @@ final class InscriptionEvenementController extends AbstractController
                 $entityManager->flush();
                 
                 // Générer une référence
-                $reference = 'INS-' . date('Y') . '-' . str_pad($inscriptionEvenement->getId(), 5, '0', STR_PAD_LEFT);
-                $inscriptionEvenement->setReference($reference);
-                $entityManager->flush();
+                $entityManager->flush(); // keep persisted state; entity has no setReference() currently
                 
                 $this->addFlash('success', 'Inscription enregistrée avec succès !');
                 
@@ -132,7 +133,7 @@ final class InscriptionEvenementController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response
     {
-        if ($this->isCsrfTokenValid('annuler'.$inscriptionEvenement->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('annuler'.$inscriptionEvenement->getId(), $request->request->getString('_token'))) {
             $inscriptionEvenement->setStatut('annule');
             $inscriptionEvenement->setModifieLe(new \DateTime());
             $entityManager->flush();
@@ -184,7 +185,7 @@ final class InscriptionEvenementController extends AbstractController
 
     // API pour calculer le prix selon le type d'utilisateur
     #[Route('/api/calculer-prix', name: 'app_api_calculer_prix', methods: ['POST'])]
-    public function calculerPrix(Request $request): JsonResponse
+    public function calculerPrix(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         
@@ -192,12 +193,12 @@ final class InscriptionEvenementController extends AbstractController
         $evenementId = $data['evenementId'] ?? null;
         
         // Récupérer le tarif de base de l'événement
-        $tarifBase = 25; // Par défaut
+        $tarifBase = 25.0; // Par défaut
         
         if ($evenementId) {
-            $evenement = $this->getDoctrine()->getRepository(Evenement::class)->find($evenementId);
+            $evenement = $entityManager->getRepository(Evenement::class)->find($evenementId);
             if ($evenement && $evenement->getTarif()) {
-                $tarifBase = $evenement->getTarif();
+                $tarifBase = (float) $evenement->getTarif();
             }
         }
         
@@ -210,7 +211,7 @@ final class InscriptionEvenementController extends AbstractController
             'visiteur' => 10,  // -10€
         ];
         
-        $reduction = $reductions[$userType] ?? 0;
+        $reduction = (float) ($reductions[$userType] ?? 0);
         $prixFinal = max(0, $tarifBase - $reduction);
         
         return $this->json([

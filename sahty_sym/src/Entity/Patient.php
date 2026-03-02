@@ -25,7 +25,7 @@ class Patient extends Utilisateur
     /**
      * @var Collection<int, FicheMedicale>
      */
-    #[ORM\OneToMany(targetEntity: FicheMedicale::class, mappedBy: 'patient', fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: FicheMedicale::class, mappedBy: 'patient', fetch: 'EXTRA_LAZY', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $ficheMedicales;
 
     /**
@@ -102,9 +102,7 @@ class Patient extends Utilisateur
     public function removeFicheMedicale(FicheMedicale $ficheMedicale): static
     {
         if ($this->ficheMedicales->removeElement($ficheMedicale)) {
-            if ($ficheMedicale->getPatient() === $this) {
-                $ficheMedicale->setPatient(null);
-            }
+            // orphanRemoval=true handles entity deletion when detached from collection
         }
         return $this;
     }
@@ -164,7 +162,7 @@ class Patient extends Utilisateur
     }
 
     /**
-     * Calcul de l'âge du patient
+     * Calcul de l'Ã¢ge du patient
      */
     public function getAge(): ?int
     {

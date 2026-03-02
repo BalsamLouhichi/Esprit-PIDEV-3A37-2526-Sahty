@@ -96,10 +96,10 @@ class AdminController extends AbstractController
 
         // ========== STATISTIQUES QUIZ ==========
         $totalQuizzes = $quizRepo->count([]);
-        $totalQuestions = $quizRepo->createQueryBuilder('q')
+        $totalQuestions = (int) ($quizRepo->createQueryBuilder('q')
             ->select('SUM(SIZE(q.questions))')
             ->getQuery()
-            ->getSingleScalarResult() ?? 0;
+            ->getSingleScalarResult() ?? 0);
         
         // Participants aux quiz
         $quizParticipants = $attemptRepo->createQueryBuilder('a')
@@ -108,24 +108,28 @@ class AdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult() ?? 0;
         
-        // Taux de réussite moyen
+        // Taux de rÃ©ussite moyen
+        /** @var list<QuizAttempt> $completedAttempts */
         $completedAttempts = $attemptRepo->findBy(['status' => 'completed']);
         $totalScore = 0;
         $totalMaxScore = 0;
         foreach ($completedAttempts as $attempt) {
             $totalScore += $attempt->getScore() ?? 0;
-            $totalMaxScore += ($attempt->getTotalQuestions() ?? 0) * 5;
+            $totalMaxScore += $attempt->getTotalQuestions() * 5;
         }
         $quizSuccessRate = $totalMaxScore > 0 ? round(($totalScore / $totalMaxScore) * 100) : 0;
         
-        // Quiz récents
+        // Quiz rÃ©cents
+        /** @var list<Quiz> $recentQuizzes */
         $recentQuizzes = $quizRepo->findBy([], ['createdAt' => 'DESC'], 5);
         
-        // Dernière mise à jour quiz
+        // DerniÃ¨re mise Ã  jour quiz
+        /** @var Quiz|null $lastQuiz */
         $lastQuiz = $quizRepo->findOneBy([], ['updatedAt' => 'DESC']);
-        $lastQuizUpdate = $lastQuiz && $lastQuiz->getUpdatedAt() ? 
-            $lastQuiz->getUpdatedAt()->format('d/m/Y') : 
-            ($lastQuiz ? $lastQuiz->getCreatedAt()->format('d/m/Y') : '—');
+        $lastQuizCreatedAt = $lastQuiz?->getCreatedAt();
+        $lastQuizUpdate = $lastQuiz && $lastQuiz->getUpdatedAt() ?
+            $lastQuiz->getUpdatedAt()->format('d/m/Y') :
+            ($lastQuizCreatedAt ? $lastQuizCreatedAt->format('d/m/Y') : 'â€”');
         
         // Moyenne questions par quiz
         $quizAvgQuestions = $totalQuizzes > 0 ? round($totalQuestions / $totalQuizzes, 1) : 0;
@@ -145,16 +149,19 @@ class AdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult() ?? 0;
         
-        // Recommandations récentes
+        // Recommandations rÃ©centes
+        /** @var list<Recommandation> $recentRecommandations */
         $recentRecommandations = $recoRepo->findBy([], ['createdAt' => 'DESC'], 5);
         
-        // Dernière mise à jour recommandation
+        // DerniÃ¨re mise Ã  jour recommandation
+        /** @var Recommandation|null $lastReco */
         $lastReco = $recoRepo->findOneBy([], ['createdAt' => 'DESC']);
-        $lastRecoUpdate = $lastReco ? $lastReco->getCreatedAt()->format('d/m/Y') : '—';
+        $lastRecoCreatedAt = $lastReco?->getCreatedAt();
+        $lastRecoUpdate = $lastRecoCreatedAt ? $lastRecoCreatedAt->format('d/m/Y') : 'â€”';
         
-        // Recommandations approuvées (low + medium)
+        // Recommandations approuvÃ©es (low + medium)
         $recommandationsApprouvees = $recommandationsBySeverity['low'] + $recommandationsBySeverity['medium'];
-        $recommandationsEnAttente = 0; // À implémenter si système d'approbation
+        $recommandationsEnAttente = 0; // Ã€ implÃ©menter si systÃ¨me d'approbation
 
         // Statistiques des demandes d'analyse
         $demandesEnAttente = $demandeRepo->count(['statut' => 'en_attente']);
@@ -162,10 +169,10 @@ class AdminController extends AbstractController
         $demandesTerminees = $demandeRepo->count(['statut' => 'termine']);
         $commandesEnAttente = $commandeRepo->count(['statut' => 'en_attente']);
         
-        // Laboratoires récents
+        // Laboratoires rÃ©cents
         $recentLaboratoires = $laboratoireRepo->findBy([], ['cree_le' => 'DESC'], 5);
         
-        // Demandes d'analyse récentes
+        // Demandes d'analyse rÃ©centes
         $recentDemandes = $demandeRepo->findBy([], ['date_demande' => 'DESC'], 5);
 
         // Pourcentages de distribution
@@ -174,13 +181,13 @@ class AdminController extends AbstractController
         $staffPercent = $totalUsers > 0 ? round((($totalResponsableLabo + $totalResponsablePara) / $totalUsers) * 100) : 0;
         $adminPercent = max(0, 100 - ($doctorsPercent + $patientsPercent + $staffPercent));
 
-        // Utilisateurs récents
+        // Utilisateurs rÃ©cents
         $recentUsers = $this->userRepo->findBy([], ['creeLe' => 'DESC'], 5);
 
-        // Rendez-vous récents
+        // Rendez-vous rÃ©cents
         $recentAppointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC'], 10);
 
-        // Fiches médicales récentes
+        // Fiches mÃ©dicales rÃ©centes
         $recentMedicalRecords = $ficheRepo->findBy([], ['creeLe' => 'DESC'], 10);
 
         // Comptages pour chaque utilisateur
@@ -196,27 +203,27 @@ class AdminController extends AbstractController
             }
         }
 
-        // Données pour les graphiques
-        $months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
-                   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        // DonnÃ©es pour les graphiques
+        $months = ['Janvier', 'FÃ©vrier', 'Mars', 'Avril', 'Mai', 'Juin', 
+                   'Juillet', 'AoÃ»t', 'Septembre', 'Octobre', 'Novembre', 'DÃ©cembre'];
         
-        // Données réelles
+        // DonnÃ©es rÃ©elles
         $appointmentsData = $this->getMonthlyAppointmentsData($rdvRepo);
         $topMedecins = $this->getTopMedecins($rdvRepo, $medecinRepo);
         $topPatients = $this->getTopPatients($rdvRepo, $patientRepo);
         
-        // Données IMC
+        // DonnÃ©es IMC
         $imcStats = $this->getImcStatistics($ficheRepo);
         
         // Statistiques des rendez-vous par statut
         $statusStats = [
-            'Confirmé' => $rdvRepo->count(['statut' => 'Confirmé']),
+            'ConfirmÃ©' => $rdvRepo->count(['statut' => 'ConfirmÃ©']),
             'En attente' => $rdvRepo->count(['statut' => 'En attente']),
-            'Annulé' => $rdvRepo->count(['statut' => 'Annulé']),
-            'Terminé' => $rdvRepo->count(['statut' => 'Terminé']),
+            'AnnulÃ©' => $rdvRepo->count(['statut' => 'AnnulÃ©']),
+            'TerminÃ©' => $rdvRepo->count(['statut' => 'TerminÃ©']),
         ];
 
-        // Statistiques des fiches médicales
+        // Statistiques des fiches mÃ©dicales
         $ficheStatusStats = [
             'Actif' => $ficheRepo->count(['statut' => 'actif']),
             'Inactif' => $ficheRepo->count(['statut' => 'inactif']),
@@ -319,14 +326,14 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Paramètres de filtrage et tri
+        // ParamÃ¨tres de filtrage et tri
         $search = $request->query->get('search');
         $sort = $request->query->get('sort', 'recent');
         $minQuestions = $request->query->getInt('min_questions', 0);
         $page = $request->query->getInt('page', 1);
         $limit = 10;
         
-        // Construction de la requête
+        // Construction de la requÃªte
         $qb = $quizRepo->createQueryBuilder('q')
             ->leftJoin('q.questions', 'quest')
             ->groupBy('q.id');
@@ -374,10 +381,10 @@ class AdminController extends AbstractController
                       ->getResult();
         
         // Statistiques pour la sidebar
-        $totalQuestions = $quizRepo->createQueryBuilder('q')
+        $totalQuestions = (int) ($quizRepo->createQueryBuilder('q')
             ->select('SUM(SIZE(q.questions))')
             ->getQuery()
-            ->getSingleScalarResult() ?? 0;
+            ->getSingleScalarResult() ?? 0);
         
         $totalRecommandations = $this->em->createQueryBuilder()
             ->select('COUNT(r.id)')
@@ -403,6 +410,7 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
+        /** @var list<Quiz> $quizzes */
         $quizzes = $quizRepo->findAll();
         $totalAttempts = $attemptRepo->count([]);
         
@@ -438,7 +446,8 @@ class AdminController extends AbstractController
         $totalCompleted = 0;
         $categoryCounts = [];
         
-        // Récupérer les tentatives par mois
+        // RÃ©cupÃ©rer les tentatives par mois
+        /** @var list<array{month:int|string, year:int|string, count:int|string}> $attemptsByMonth */
         $attemptsByMonth = $attemptRepo->createQueryBuilder('a')
             ->select('MONTH(a.completedAt) as month, YEAR(a.completedAt) as year, COUNT(a.id) as count')
             ->where('a.completedAt IS NOT NULL')
@@ -450,7 +459,11 @@ class AdminController extends AbstractController
             ->getResult();
         
         foreach ($attemptsByMonth as $item) {
-            $monthName = date('F', mktime(0, 0, 0, $item['month'], 1));
+            $timestamp = mktime(0, 0, 0, (int) $item['month'], 1);
+            if ($timestamp === false) {
+                continue;
+            }
+            $monthName = date('F', $timestamp);
             $stats['attempts_by_month'][] = [
                 'month' => $monthName . ' ' . $item['year'],
                 'count' => $item['count']
@@ -482,6 +495,7 @@ class AdminController extends AbstractController
                 }
                 
                 if ($completedAttempts > 0) {
+                    /** @var list<QuizAttempt> $attempts */
                     $attempts = $attemptRepo->findBy(['quiz' => $quiz, 'status' => 'completed']);
                     $quizTotalScore = 0;
                     foreach ($attempts as $attempt) {
@@ -512,7 +526,7 @@ class AdminController extends AbstractController
             }
             
             foreach ($quiz->getQuestions() as $question) {
-                $category = $question->getCategory() ?? 'non catégorisé';
+                $category = $question->getCategory() ?? 'non catÃ©gorisÃ©';
                 if (!isset($categoryCounts[$category])) {
                     $categoryCounts[$category] = 0;
                 }
@@ -532,8 +546,8 @@ class AdminController extends AbstractController
             $totalQuestions = 0;
             $totalAnswered = 0;
             foreach ($completedAttempts as $attempt) {
-                $totalQuestions += $attempt->getTotalQuestions() ?? 0;
-                $totalAnswered += $attempt->getAnsweredCount() ?? 0;
+                $totalQuestions += $attempt->getTotalQuestions();
+                $totalAnswered += $attempt->getAnsweredCount();
             }
             $stats['avg_completion_rate'] = $totalQuestions > 0 ? round(($totalAnswered / $totalQuestions) * 100, 1) : 0;
         }
@@ -541,8 +555,10 @@ class AdminController extends AbstractController
         arsort($categoryCounts);
         $stats['category_distribution'] = array_slice($categoryCounts, 0, 10);
         
-        usort($stats['success_rate_by_quiz'], fn($a, $b) => $b['rate'] <=> $a['rate']);
-        $stats['success_rate_by_quiz'] = array_slice($stats['success_rate_by_quiz'], 0, 5);
+        /** @var list<array{name:string,rate:float|int,attempts:int}> $successRateByQuiz */
+        $successRateByQuiz = $stats['success_rate_by_quiz'];
+        usort($successRateByQuiz, fn($a, $b) => $b['rate'] <=> $a['rate']);
+        $stats['success_rate_by_quiz'] = array_slice($successRateByQuiz, 0, 5);
         
         $stats['recent_quizzes'] = $quizRepo->findBy([], ['createdAt' => 'DESC'], 5);
         
@@ -616,7 +632,7 @@ class AdminController extends AbstractController
         
         $attempt = $attemptRepo->find($id);
         if (!$attempt) {
-            throw $this->createNotFoundException('Tentative non trouvée');
+            throw $this->createNotFoundException('Tentative non trouvÃ©e');
         }
         
         $answers = json_decode($attempt->getAnswersJson() ?? '{}', true);
@@ -649,7 +665,7 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Paramètres de filtrage et tri
+        // ParamÃ¨tres de filtrage et tri
         $search = $request->query->get('search');
         $severity = $request->query->get('severity');
         $quizId = $request->query->getInt('quiz_id', 0);
@@ -658,7 +674,7 @@ class AdminController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = 10;
         
-        // Construction de la requête
+        // Construction de la requÃªte
         $qb = $recoRepo->createQueryBuilder('r')
             ->leftJoin('r.quiz', 'q')
             ->addSelect('q');
@@ -669,7 +685,7 @@ class AdminController extends AbstractController
                ->setParameter('search', '%' . $search . '%');
         }
         
-        // Filtre par sévérité
+        // Filtre par sÃ©vÃ©ritÃ©
         if ($severity) {
             $qb->andWhere('r.severity = :severity')
                ->setParameter('severity', $severity);
@@ -681,7 +697,7 @@ class AdminController extends AbstractController
                ->setParameter('quizId', $quizId);
         }
         
-        // Filtre par type de problème
+        // Filtre par type de problÃ¨me
         if ($type) {
             $qb->andWhere('r.type_probleme LIKE :type')
                ->setParameter('type', '%' . $type . '%');
@@ -717,7 +733,7 @@ class AdminController extends AbstractController
                               ->getQuery()
                               ->getResult();
         
-        // Récupérer tous les quizzes pour le filtre
+        // RÃ©cupÃ©rer tous les quizzes pour le filtre
         $quizOptions = $quizRepo->findBy([], ['name' => 'ASC']);
         
         // Statistiques pour la sidebar
@@ -754,7 +770,9 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
+        /** @var list<Recommandation> $recommandations */
         $recommandations = $recoRepo->findAll();
+        /** @var list<Quiz> $quizzes */
         $quizzes = $quizRepo->findAll();
         
         $stats = [
@@ -785,6 +803,7 @@ class AdminController extends AbstractController
         ];
         
         $typeCounts = [];
+        /** @var array<int, array{id:int, name:string, count:int, questions_count:int}> $quizCounts */
         $quizCounts = [];
         
         foreach ($recommandations as $reco) {
@@ -843,8 +862,9 @@ class AdminController extends AbstractController
                 : 0;
         }
         
-        usort($quizCounts, fn($a, $b) => $b['count'] <=> $a['count']);
-        $stats['top_quizzes'] = array_slice($quizCounts, 0, 5);
+        $quizCountsList = array_values($quizCounts);
+        usort($quizCountsList, fn($a, $b) => $b['count'] <=> $a['count']);
+        $stats['top_quizzes'] = array_slice($quizCountsList, 0, 5);
         
         arsort($typeCounts);
         $stats['most_common_types'] = array_slice($typeCounts, 0, 5);
@@ -880,9 +900,10 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
+        /** @var list<Recommandation> $recommandations */
         $recommandations = $recoRepo->findAll();
         
-        $csv = "ID,Titre,Nom,Quiz,Sévérité,Score Min,Score Max,Type Problème,Catégories Cibles,URL Vidéo,Date Création\n";
+        $csv = "ID,Titre,Nom,Quiz,SÃ©vÃ©ritÃ©,Score Min,Score Max,Type ProblÃ¨me,CatÃ©gories Cibles,URL VidÃ©o,Date CrÃ©ation\n";
         
         foreach ($recommandations as $reco) {
             $quizName = $reco->getQuiz() ? $reco->getQuiz()->getName() : 'N/A';
@@ -914,6 +935,7 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
+        /** @var list<Quiz> $quizzes */
         $quizzes = $quizRepo->findAll();
         $coverage = [];
         
@@ -1025,7 +1047,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_laboratoire_new');
@@ -1034,16 +1056,20 @@ class AdminController extends AbstractController
             $data = $request->request;
             
             $laboratoire = new Laboratoire();
-            $laboratoire->setNom($data->get('nom'));
-            $laboratoire->setVille($data->get('ville'));
-            $laboratoire->setAdresse($data->get('adresse'));
-            $laboratoire->setTelephone($data->get('telephone'));
-            $laboratoire->setEmail($data->get('email'));
-            $laboratoire->setDescription($data->get('description'));
-            $laboratoire->setNumeroAgrement($data->get('numeroAgrement'));
-            $laboratoire->setLatitude($data->get('latitude') ? (float)$data->get('latitude') : null);
-            $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
-            $laboratoire->setDisponible($data->get('disponible') ? true : false);
+            $laboratoire->setNom($data->getString('nom'));
+            $laboratoire->setVille($data->getString('ville'));
+            $laboratoire->setAdresse($data->getString('adresse'));
+            $laboratoire->setTelephone($data->getString('telephone'));
+            $laboratoire->setEmail($this->toNullableString($data->getString('email')));
+            $laboratoire->setDescription($this->toNullableString($data->getString('description')));
+            $laboratoire->setNumeroAgrement($this->toNullableString($data->getString('numeroAgrement')));
+            if (($latitude = $this->toNullableString($data->getString('latitude'))) !== null) {
+                $laboratoire->setLatitude((float) $latitude);
+            }
+            if (($longitude = $this->toNullableString($data->getString('longitude'))) !== null) {
+                $laboratoire->setLongitude((float) $longitude);
+            }
+            $laboratoire->setDisponible($request->request->has('disponible'));
             
             $responsableId = $data->get('responsable_id');
             if ($responsableId) {
@@ -1056,7 +1082,7 @@ class AdminController extends AbstractController
             $this->em->persist($laboratoire);
             $this->em->flush();
 
-            $this->addFlash('success', 'Laboratoire créé avec succès.');
+            $this->addFlash('success', 'Laboratoire crÃ©Ã© avec succÃ¨s.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $laboratoire->getId()]);
         }
 
@@ -1074,8 +1100,8 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $laboratoire = $laboratoireRepo->find($id);
-        if (!$laboratoire) {
-            throw $this->createNotFoundException('Laboratoire non trouvé');
+        if (!$laboratoire instanceof Laboratoire) {
+            throw $this->createNotFoundException('Laboratoire non trouvÃ©');
         }
 
         $demandes = $demandeRepo->findBy(['laboratoire' => $laboratoire], ['date_demande' => 'DESC'], 10);
@@ -1092,12 +1118,12 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $laboratoire = $laboratoireRepo->find($id);
-        if (!$laboratoire) {
-            throw $this->createNotFoundException('Laboratoire non trouvé');
+        if (!$laboratoire instanceof Laboratoire) {
+            throw $this->createNotFoundException('Laboratoire non trouvÃ©');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_laboratoire_edit', ['id' => $id]);
@@ -1105,16 +1131,20 @@ class AdminController extends AbstractController
 
             $data = $request->request;
             
-            $laboratoire->setNom($data->get('nom'));
-            $laboratoire->setVille($data->get('ville'));
-            $laboratoire->setAdresse($data->get('adresse'));
-            $laboratoire->setTelephone($data->get('telephone'));
-            $laboratoire->setEmail($data->get('email'));
-            $laboratoire->setDescription($data->get('description'));
-            $laboratoire->setNumeroAgrement($data->get('numeroAgrement'));
-            $laboratoire->setLatitude($data->get('latitude') ? (float)$data->get('latitude') : null);
-            $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
-            $laboratoire->setDisponible($data->get('disponible') ? true : false);
+            $laboratoire->setNom($data->getString('nom'));
+            $laboratoire->setVille($data->getString('ville'));
+            $laboratoire->setAdresse($data->getString('adresse'));
+            $laboratoire->setTelephone($data->getString('telephone'));
+            $laboratoire->setEmail($this->toNullableString($data->getString('email')));
+            $laboratoire->setDescription($this->toNullableString($data->getString('description')));
+            $laboratoire->setNumeroAgrement($this->toNullableString($data->getString('numeroAgrement')));
+            if (($latitude = $this->toNullableString($data->getString('latitude'))) !== null) {
+                $laboratoire->setLatitude((float) $latitude);
+            }
+            if (($longitude = $this->toNullableString($data->getString('longitude'))) !== null) {
+                $laboratoire->setLongitude((float) $longitude);
+            }
+            $laboratoire->setDisponible($request->request->has('disponible'));
             
             $responsableId = $data->get('responsable_id');
             if ($responsableId) {
@@ -1128,7 +1158,7 @@ class AdminController extends AbstractController
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Laboratoire mis à jour avec succès.');
+            $this->addFlash('success', 'Laboratoire mis Ã  jour avec succÃ¨s.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
@@ -1146,26 +1176,26 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $laboratoire = $laboratoireRepo->find($id);
-        if (!$laboratoire) {
-            $this->addFlash('danger', 'Laboratoire non trouvé.');
+        if (!$laboratoire instanceof Laboratoire) {
+            $this->addFlash('danger', 'Laboratoire non trouvÃ©.');
             return $this->redirectToRoute('admin_laboratoires');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('delete-laboratoire' . $laboratoire->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
         if ($laboratoire->getDemandeAnalyses()->count() > 0) {
-            $this->addFlash('danger', 'Impossible de supprimer ce laboratoire car il a des demandes d\'analyse associées.');
+            $this->addFlash('danger', 'Impossible de supprimer ce laboratoire car il a des demandes d\'analyse associÃ©es.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
         $this->em->remove($laboratoire);
         $this->em->flush();
 
-        $this->addFlash('success', 'Laboratoire supprimé avec succès.');
+        $this->addFlash('success', 'Laboratoire supprimÃ© avec succÃ¨s.');
         return $this->redirectToRoute('admin_laboratoires');
     }
 
@@ -1175,12 +1205,12 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $laboratoire = $laboratoireRepo->find($id);
-        if (!$laboratoire) {
-            $this->addFlash('danger', 'Laboratoire non trouvé.');
+        if (!$laboratoire instanceof Laboratoire) {
+            $this->addFlash('danger', 'Laboratoire non trouvÃ©.');
             return $this->redirectToRoute('admin_laboratoires');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('toggle-laboratoire' . $laboratoire->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
@@ -1190,7 +1220,7 @@ class AdminController extends AbstractController
         $this->em->flush();
 
         $status = $laboratoire->isDisponible() ? 'disponible' : 'indisponible';
-        $this->addFlash('success', "Laboratoire marqué comme $status.");
+        $this->addFlash('success', "Laboratoire marquÃ© comme $status.");
         return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
     }
 
@@ -1199,6 +1229,7 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
+        /** @var list<Laboratoire> $laboratoires */
         $laboratoires = $laboratoireRepo->findAll();
         
         $stats = [
@@ -1276,7 +1307,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_type_analyse_new');
@@ -1285,15 +1316,15 @@ class AdminController extends AbstractController
             $data = $request->request;
             
             $type = new TypeAnalyse();
-            $type->setNom($data->get('nom'));
-            $type->setDescription($data->get('description'));
-            $type->setActif($data->get('actif') ? true : false);
-            $type->setCategorie($data->get('categorie'));
+            $type->setNom($data->getString('nom'));
+            $type->setDescription($data->getString('description'));
+            $type->setActif($request->request->has('actif'));
+            $type->setCategorie($this->toNullableString($data->getString('categorie')));
 
             $this->em->persist($type);
             $this->em->flush();
 
-            $this->addFlash('success', 'Type d\'analyse créé avec succès.');
+            $this->addFlash('success', 'Type d\'analyse crÃ©Ã© avec succÃ¨s.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
@@ -1308,12 +1339,12 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $type = $typeRepo->find($id);
-        if (!$type) {
-            throw $this->createNotFoundException('Type d\'analyse non trouvé');
+        if (!$type instanceof TypeAnalyse) {
+            throw $this->createNotFoundException('Type d\'analyse non trouvÃ©');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_type_analyse_edit', ['id' => $id]);
@@ -1321,14 +1352,14 @@ class AdminController extends AbstractController
 
             $data = $request->request;
             
-            $type->setNom($data->get('nom'));
-            $type->setDescription($data->get('description'));
-            $type->setActif($data->get('actif') ? true : false);
-            $type->setCategorie($data->get('categorie'));
+            $type->setNom($data->getString('nom'));
+            $type->setDescription($data->getString('description'));
+            $type->setActif($request->request->has('actif'));
+            $type->setCategorie($this->toNullableString($data->getString('categorie')));
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Type d\'analyse mis à jour avec succès.');
+            $this->addFlash('success', 'Type d\'analyse mis Ã  jour avec succÃ¨s.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
@@ -1343,26 +1374,26 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
         $type = $typeRepo->find($id);
-        if (!$type) {
-            $this->addFlash('danger', 'Type d\'analyse non trouvé.');
+        if (!$type instanceof TypeAnalyse) {
+            $this->addFlash('danger', 'Type d\'analyse non trouvÃ©.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('delete-type-analyse' . $type->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
         if ($type->getLaboratoireTypeAnalyses()->count() > 0) {
-            $this->addFlash('danger', 'Ce type d\'analyse est utilisé par des laboratoires et ne peut pas être supprimé.');
+            $this->addFlash('danger', 'Ce type d\'analyse est utilisÃ© par des laboratoires et ne peut pas Ãªtre supprimÃ©.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
         $this->em->remove($type);
         $this->em->flush();
 
-        $this->addFlash('success', 'Type d\'analyse supprimé avec succès.');
+        $this->addFlash('success', 'Type d\'analyse supprimÃ© avec succÃ¨s.');
         return $this->redirectToRoute('admin_type_analyse_list');
     }
     
@@ -1400,7 +1431,7 @@ class AdminController extends AbstractController
                 $stats['inactifs']++;
             }
             
-            $categorie = $type->getCategorie() ?: 'Sans catégorie';
+            $categorie = $type->getCategorie() ?: 'Sans catÃ©gorie';
             if (!isset($categoriesCount[$categorie])) {
                 $categoriesCount[$categorie] = 0;
             }
@@ -1481,7 +1512,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_demande_analyse_new');
@@ -1491,42 +1522,47 @@ class AdminController extends AbstractController
             
             $demande = new DemandeAnalyse();
             
-            $patientId = $data->get('patient_id');
-            if ($patientId) {
+            $patientId = $data->getInt('patient_id');
+            if ($patientId > 0) {
                 $patient = $patientRepo->find($patientId);
-                $demande->setPatient($patient);
+                if ($patient instanceof Patient) {
+                    $demande->setPatient($patient);
+                }
             }
             
-            $laboratoireId = $data->get('laboratoire_id');
-            if ($laboratoireId) {
+            $laboratoireId = $data->getInt('laboratoire_id');
+            if ($laboratoireId > 0) {
                 $laboratoire = $laboratoireRepo->find($laboratoireId);
-                $demande->setLaboratoire($laboratoire);
+                if ($laboratoire instanceof Laboratoire) {
+                    $demande->setLaboratoire($laboratoire);
+                }
             }
             
-            $demande->setTypeBilan($data->get('type_bilan'));
-            $demande->setStatut($data->get('statut') ?? 'en_attente');
-            $demande->setPriorite($data->get('priorite') ?? 'Normale');
-            $demande->setNotes($data->get('notes'));
+            $demande->setTypeBilan($data->getString('type_bilan'));
+            $demande->setStatut($data->getString('statut') !== '' ? $data->getString('statut') : 'en_attente');
+            $demande->setPriorite($data->getString('priorite') !== '' ? $data->getString('priorite') : 'Normale');
+            $demande->setNotes($this->toNullableString($data->getString('notes')));
             
-            $analyses = $data->get('analyses', []);
+            $analysesRaw = $request->request->all('analyses');
+            /** @var list<string> $analyses */
+            $analyses = array_values(array_map('strval', array_filter($analysesRaw, static fn (mixed $v): bool => is_scalar($v) && trim((string) $v) !== '')));
             $demande->setAnalyses($analyses);
             
-            if ($data->get('programme_le')) {
+            if (($programmeLe = $this->toNullableString($data->getString('programme_le'))) !== null) {
                 try {
-                    $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
+                    $demande->setProgrammeLe(new \DateTime($programmeLe));
                 } catch (\Exception $e) {}
             }
             
-            if ($data->get('envoye_le')) {
+            if (($envoyeLe = $this->toNullableString($data->getString('envoye_le'))) !== null) {
                 try {
-                    $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
+                    $demande->setEnvoyeLe(new \DateTime($envoyeLe));
                 } catch (\Exception $e) {}
             }
 
-            /** @var UploadedFile $pdfFile */
             $pdfFile = $request->files->get('resultat_pdf');
             if ($pdfFile instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                $uploadsDir = $this->getProjectDir() . '/public/uploads/resultats';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 }
@@ -1538,7 +1574,7 @@ class AdminController extends AbstractController
             $this->em->persist($demande);
             $this->em->flush();
 
-            $this->addFlash('success', 'Demande d\'analyse créée avec succès.');
+            $this->addFlash('success', 'Demande d\'analyse crÃ©Ã©e avec succÃ¨s.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $demande->getId()]);
         }
 
@@ -1559,7 +1595,7 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+            throw $this->createNotFoundException('Demande d\'analyse non trouvÃ©e');
         }
 
         return $this->render('admin/demande_analyse/view.html.twig', [
@@ -1574,11 +1610,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+            throw $this->createNotFoundException('Demande d\'analyse non trouvÃ©e');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_demande_analyse_edit', ['id' => $id]);
@@ -1586,46 +1622,51 @@ class AdminController extends AbstractController
 
             $data = $request->request;
             
-            $patientId = $data->get('patient_id');
-            if ($patientId) {
+            $patientId = $data->getInt('patient_id');
+            if ($patientId > 0) {
                 $patient = $patientRepo->find($patientId);
-                $demande->setPatient($patient);
+                if ($patient instanceof Patient) {
+                    $demande->setPatient($patient);
+                }
             }
             
-            $laboratoireId = $data->get('laboratoire_id');
-            if ($laboratoireId) {
+            $laboratoireId = $data->getInt('laboratoire_id');
+            if ($laboratoireId > 0) {
                 $laboratoire = $laboratoireRepo->find($laboratoireId);
-                $demande->setLaboratoire($laboratoire);
+                if ($laboratoire instanceof Laboratoire) {
+                    $demande->setLaboratoire($laboratoire);
+                }
             }
             
-            $demande->setTypeBilan($data->get('type_bilan'));
-            $demande->setStatut($data->get('statut'));
-            $demande->setPriorite($data->get('priorite'));
-            $demande->setNotes($data->get('notes'));
+            $demande->setTypeBilan($data->getString('type_bilan'));
+            $demande->setStatut($data->getString('statut'));
+            $demande->setPriorite($data->getString('priorite'));
+            $demande->setNotes($this->toNullableString($data->getString('notes')));
             
-            $analyses = $data->get('analyses', []);
+            $analysesRaw = $request->request->all('analyses');
+            /** @var list<string> $analyses */
+            $analyses = array_values(array_map('strval', array_filter($analysesRaw, static fn (mixed $v): bool => is_scalar($v) && trim((string) $v) !== '')));
             $demande->setAnalyses($analyses);
             
-            if ($data->get('programme_le')) {
+            if (($programmeLe = $this->toNullableString($data->getString('programme_le'))) !== null) {
                 try {
-                    $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
+                    $demande->setProgrammeLe(new \DateTime($programmeLe));
                 } catch (\Exception $e) {}
             } else {
                 $demande->setProgrammeLe(null);
             }
             
-            if ($data->get('envoye_le')) {
+            if (($envoyeLe = $this->toNullableString($data->getString('envoye_le'))) !== null) {
                 try {
-                    $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
+                    $demande->setEnvoyeLe(new \DateTime($envoyeLe));
                 } catch (\Exception $e) {}
             } else {
                 $demande->setEnvoyeLe(null);
             }
 
-            /** @var UploadedFile $pdfFile */
             $pdfFile = $request->files->get('resultat_pdf');
             if ($pdfFile instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                $uploadsDir = $this->getProjectDir() . '/public/uploads/resultats';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 }
@@ -1636,7 +1677,7 @@ class AdminController extends AbstractController
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Demande d\'analyse mise à jour avec succès.');
+            $this->addFlash('success', 'Demande d\'analyse mise Ã  jour avec succÃ¨s.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
         }
 
@@ -1657,11 +1698,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('delete-demande-analyse' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -1670,7 +1711,7 @@ class AdminController extends AbstractController
         $this->em->remove($demande);
         $this->em->flush();
 
-        $this->addFlash('success', 'Demande d\'analyse supprimée avec succès.');
+        $this->addFlash('success', 'Demande d\'analyse supprimÃ©e avec succÃ¨s.');
         return $this->redirectToRoute('admin_demande_analyse_list');
     }
 
@@ -1681,17 +1722,21 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('update-demande-statut' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
         }
 
-        $newStatut = $request->request->get('statut');
+        $newStatut = $request->request->getString('statut');
+        if ($newStatut === '') {
+            $this->addFlash('danger', 'Statut invalide.');
+            return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
+        }
         $demande->setStatut($newStatut);
         
         if ($newStatut === 'en_cours') {
@@ -1702,7 +1747,7 @@ class AdminController extends AbstractController
 
         $this->em->flush();
 
-        $this->addFlash('success', 'Statut de la demande mis à jour avec succès.');
+        $this->addFlash('success', 'Statut de la demande mis Ã  jour avec succÃ¨s.');
         return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
     }
 
@@ -1713,20 +1758,19 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('upload-resultat' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
         }
 
-        /** @var UploadedFile $pdfFile */
         $pdfFile = $request->files->get('resultat_pdf');
         if ($pdfFile instanceof UploadedFile) {
-            $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+            $uploadsDir = $this->getProjectDir() . '/public/uploads/resultats';
             if (!is_dir($uploadsDir)) {
                 @mkdir($uploadsDir, 0777, true);
             }
@@ -1744,9 +1788,9 @@ class AdminController extends AbstractController
             
             $this->em->flush();
             
-            $this->addFlash('success', 'Résultat uploadé avec succès.');
+            $this->addFlash('success', 'RÃ©sultat uploadÃ© avec succÃ¨s.');
         } else {
-            $this->addFlash('danger', 'Veuillez sélectionner un fichier PDF.');
+            $this->addFlash('danger', 'Veuillez sÃ©lectionner un fichier PDF.');
         }
 
         return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -1791,7 +1835,7 @@ class AdminController extends AbstractController
                     break;
                 case 'termine':
                     $stats['termine']++;
-                    if ($demande->getDateDemande() && $demande->getEnvoyeLe()) {
+                    if ($demande->getEnvoyeLe()) {
                         $delai = $demande->getDateDemande()->diff($demande->getEnvoyeLe())->days;
                         $totalDelai += $delai;
                         $nbTermines++;
@@ -1882,7 +1926,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // ==================== STATISTIQUES DES FICHES MÉDICALES ====================
+    // ==================== STATISTIQUES DES FICHES MÃ‰DICALES ====================
 
     #[Route('/statistiques/fiches-medicales', name: 'medical_records_stats')]
     public function medicalRecordsStats(Request $request, FicheMedicaleRepository $ficheRepo, PatientRepository $patientRepo): Response
@@ -2034,9 +2078,12 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $period = $request->query->get('period', 'month');
-        $startDate = $request->query->get('start_date');
-        $endDate = $request->query->get('end_date');
+        $period = $request->query->getString('period');
+        if ($period === '') {
+            $period = 'month';
+        }
+        $startDate = $this->toNullableString($request->query->getString('start_date'));
+        $endDate = $this->toNullableString($request->query->getString('end_date'));
 
         $dateRanges = $this->getDateRangeForPeriod($period, $startDate, $endDate);
         
@@ -2059,10 +2106,10 @@ class AdminController extends AbstractController
             'total' => count($appointments),
             'total_global' => $rdvRepo->count([]),
             
-            'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+            'confirmes' => $this->countByStatus($appointments, 'ConfirmÃ©'),
             'en_attente' => $this->countByStatus($appointments, 'En attente'),
-            'annules' => $this->countByStatus($appointments, 'Annulé'),
-            'termines' => $this->countByStatus($appointments, 'Terminé'),
+            'annules' => $this->countByStatus($appointments, 'AnnulÃ©'),
+            'termines' => $this->countByStatus($appointments, 'TerminÃ©'),
             
             'aujourdhui' => count($todayAppointments),
             'restants_aujourdhui' => $this->countRemainingToday($todayAppointments),
@@ -2118,14 +2165,20 @@ class AdminController extends AbstractController
         $stats['creneaux_horaires'] = $creneaux;
         $stats['max_creneau'] = !empty($hourlyDist) ? max($hourlyDist) : 1;
 
-        if ($stats['total'] > 0) {
-            $stats['pourcentage_confirmes'] = round($stats['confirmes'] / $stats['total'] * 100, 1);
-            $stats['pourcentage_attente'] = round($stats['en_attente'] / $stats['total'] * 100, 1);
-            $stats['pourcentage_termines'] = round($stats['termines'] / $stats['total'] * 100, 1);
-            $stats['taux_annulation'] = round($stats['annules'] / $stats['total'] * 100, 1);
+        $totalStats = (int) ($stats['total'] ?? 0);
+        if ($totalStats > 0) {
+            $confirmes = (int) ($stats['confirmes'] ?? 0);
+            $enAttente = (int) ($stats['en_attente'] ?? 0);
+            $termines = (int) ($stats['termines'] ?? 0);
+            $annules = (int) ($stats['annules'] ?? 0);
+
+            $stats['pourcentage_confirmes'] = round($confirmes / $totalStats * 100, 1);
+            $stats['pourcentage_attente'] = round($enAttente / $totalStats * 100, 1);
+            $stats['pourcentage_termines'] = round($termines / $totalStats * 100, 1);
+            $stats['taux_annulation'] = round($annules / $totalStats * 100, 1);
         }
 
-        $stats['taux_absence'] = 100 - $stats['taux_presence'];
+        $stats['taux_absence'] = 100 - (float) ($stats['taux_presence'] ?? 0);
 
         return $this->render('admin/statistics/appointments_stats.html.twig', [
             'stats' => $stats,
@@ -2140,9 +2193,12 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $period = $request->query->get('period', 'month');
-        $startDate = $request->query->get('start_date');
-        $endDate = $request->query->get('end_date');
+        $period = $request->query->getString('period');
+        if ($period === '') {
+            $period = 'month';
+        }
+        $startDate = $this->toNullableString($request->query->getString('start_date'));
+        $endDate = $this->toNullableString($request->query->getString('end_date'));
 
         $dateRanges = $this->getDateRangeForPeriod($period, $startDate, $endDate);
         
@@ -2151,10 +2207,10 @@ class AdminController extends AbstractController
         return $this->json([
             'total' => count($appointments),
             'by_status' => [
-                'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+                'confirmes' => $this->countByStatus($appointments, 'ConfirmÃ©'),
                 'en_attente' => $this->countByStatus($appointments, 'En attente'),
-                'annules' => $this->countByStatus($appointments, 'Annulé'),
-                'termines' => $this->countByStatus($appointments, 'Terminé'),
+                'annules' => $this->countByStatus($appointments, 'AnnulÃ©'),
+                'termines' => $this->countByStatus($appointments, 'TerminÃ©'),
             ],
             'evolution' => [
                 'labels' => $this->generateEvolutionLabels($dateRanges),
@@ -2172,7 +2228,7 @@ class AdminController extends AbstractController
         
         $user = $this->userRepo->find($id);
         if (!$user) {
-            throw $this->createNotFoundException('Utilisateur non trouvé');
+            throw $this->createNotFoundException('Utilisateur non trouvÃ©');
         }
 
         if ($user instanceof Patient) {
@@ -2208,30 +2264,30 @@ class AdminController extends AbstractController
         
         $appointment = $rdvRepo->find($id);
         if (!$appointment) {
-            $this->addFlash('error', 'Rendez-vous non trouvé');
+            $this->addFlash('error', 'Rendez-vous non trouvÃ©');
             return $this->redirectToRoute('admin_all_appointments');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('update-appointment-status' . $appointment->getId(), $token)) {
             $this->addFlash('error', 'Jeton CSRF invalide');
             return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
         }
 
-        $newStatus = $request->request->get('status');
+        $newStatus = $request->request->getString('status');
         $appointment->setStatut($newStatus);
         
-        if ($newStatus === 'confirmé') {
+        if ($newStatus === 'confirmÃ©') {
             $appointment->setDateValidation(new \DateTime());
         }
 
         $this->em->flush();
 
-        $this->addFlash('success', 'Statut du rendez-vous mis à jour avec succès');
+        $this->addFlash('success', 'Statut du rendez-vous mis Ã  jour avec succÃ¨s');
         return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
     }
 
-    // ==================== ROUTES POUR LES FICHES MÉDICALES ====================
+    // ==================== ROUTES POUR LES FICHES MÃ‰DICALES ====================
 
     #[Route('/medical-records/all', name: 'all_medical_records')]
     public function allMedicalRecords(FicheMedicaleRepository $ficheRepo): Response
@@ -2252,7 +2308,7 @@ class AdminController extends AbstractController
         
         $record = $ficheRepo->find($id);
         if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
+            throw $this->createNotFoundException('Fiche mÃ©dicale non trouvÃ©e');
         }
 
         if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
@@ -2271,11 +2327,11 @@ class AdminController extends AbstractController
         
         $record = $ficheRepo->find($id);
         if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
+            throw $this->createNotFoundException('Fiche mÃ©dicale non trouvÃ©e');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('edit-medical-record' . $record->getId(), $token)) {
                 $this->addFlash('error', 'Jeton CSRF invalide');
                 return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
@@ -2283,20 +2339,20 @@ class AdminController extends AbstractController
 
             $data = $request->request;
             
-            $record->setTaille($data->get('taille'));
-            $record->setPoids($data->get('poids'));
-            $record->setAntecedents($data->get('antecedents'));
-            $record->setAllergies($data->get('allergies'));
-            $record->setTraitementEnCours($data->get('traitement_en_cours'));
-            $record->setDiagnostic($data->get('diagnostic'));
-            $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-            $record->setObservations($data->get('observations'));
+            $record->setTaille($this->toNullableString($data->getString('taille')));
+            $record->setPoids($this->toNullableString($data->getString('poids')));
+            $record->setAntecedents($this->toNullableString($data->getString('antecedents')));
+            $record->setAllergies($this->toNullableString($data->getString('allergies')));
+            $record->setTraitementEnCours($this->toNullableString($data->getString('traitement_en_cours')));
+            $record->setDiagnostic($this->toNullableString($data->getString('diagnostic')));
+            $record->setTraitementPrescrit($this->toNullableString($data->getString('traitement_prescrit')));
+            $record->setObservations($this->toNullableString($data->getString('observations')));
             
             $record->calculerImc();
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Fiche médicale mise à jour avec succès');
+            $this->addFlash('success', 'Fiche mÃ©dicale mise Ã  jour avec succÃ¨s');
             return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
         }
 
@@ -2312,11 +2368,11 @@ class AdminController extends AbstractController
         
         $patient = $this->userRepo->find($patientId);
         if (!$patient || !$patient instanceof Patient) {
-            $this->addFlash('error', 'Patient non trouvé');
+            $this->addFlash('error', 'Patient non trouvÃ©');
             return $this->redirectToRoute('admin_index');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('add-medical-record' . $patient->getId(), $token)) {
             $this->addFlash('error', 'Jeton CSRF invalide');
             return $this->redirectToRoute('admin_index');
@@ -2326,14 +2382,14 @@ class AdminController extends AbstractController
         
         $record = new FicheMedicale();
         $record->setPatient($patient);
-        $record->setTaille($data->get('taille'));
-        $record->setPoids($data->get('poids'));
-        $record->setAntecedents($data->get('antecedents'));
-        $record->setAllergies($data->get('allergies'));
-        $record->setTraitementEnCours($data->get('traitement_en_cours'));
-        $record->setDiagnostic($data->get('diagnostic'));
-        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-        $record->setObservations($data->get('observations'));
+        $record->setTaille($this->toNullableString($data->getString('taille')));
+        $record->setPoids($this->toNullableString($data->getString('poids')));
+        $record->setAntecedents($this->toNullableString($data->getString('antecedents')));
+        $record->setAllergies($this->toNullableString($data->getString('allergies')));
+        $record->setTraitementEnCours($this->toNullableString($data->getString('traitement_en_cours')));
+        $record->setDiagnostic($this->toNullableString($data->getString('diagnostic')));
+        $record->setTraitementPrescrit($this->toNullableString($data->getString('traitement_prescrit')));
+        $record->setObservations($this->toNullableString($data->getString('observations')));
         $record->setStatut('actif');
         
         $record->calculerImc();
@@ -2341,7 +2397,7 @@ class AdminController extends AbstractController
         $this->em->persist($record);
         $this->em->flush();
 
-        $this->addFlash('success', 'Fiche médicale ajoutée avec succès');
+        $this->addFlash('success', 'Fiche mÃ©dicale ajoutÃ©e avec succÃ¨s');
         return $this->redirectToRoute('admin_patient_medical_records', ['id' => $patientId]);
     }
 
@@ -2355,18 +2411,18 @@ class AdminController extends AbstractController
         
         $appointment = $rdvRepo->find($appointmentId);
         if (!$appointment) {
-            $this->addFlash('error', 'Rendez-vous non trouvé');
+            $this->addFlash('error', 'Rendez-vous non trouvÃ©');
             return $this->redirectToRoute('admin_all_appointments');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('add-medical-record-appointment' . $appointment->getId(), $token)) {
             $this->addFlash('error', 'Jeton CSRF invalide');
             return $this->redirectToRoute('admin_view_appointment', ['id' => $appointmentId]);
         }
 
         if ($appointment->getFicheMedicale()) {
-            $this->addFlash('warning', 'Ce rendez-vous a déjà une fiche médicale');
+            $this->addFlash('warning', 'Ce rendez-vous a dÃ©jÃ  une fiche mÃ©dicale');
             return $this->redirectToRoute('admin_view_medical_record', ['id' => $appointment->getFicheMedicale()->getId()]);
         }
 
@@ -2375,11 +2431,11 @@ class AdminController extends AbstractController
         $record = new FicheMedicale();
         $record->setPatient($appointment->getPatient());
         $record->setRendezVous($appointment);
-        $record->setTaille($data->get('taille'));
-        $record->setPoids($data->get('poids'));
-        $record->setDiagnostic($data->get('diagnostic'));
-        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-        $record->setObservations($data->get('observations'));
+        $record->setTaille($this->toNullableString($data->getString('taille')));
+        $record->setPoids($this->toNullableString($data->getString('poids')));
+        $record->setDiagnostic($this->toNullableString($data->getString('diagnostic')));
+        $record->setTraitementPrescrit($this->toNullableString($data->getString('traitement_prescrit')));
+        $record->setObservations($this->toNullableString($data->getString('observations')));
         $record->setStatut('actif');
         
         $record->calculerImc();
@@ -2389,7 +2445,7 @@ class AdminController extends AbstractController
         $this->em->persist($record);
         $this->em->flush();
 
-        $this->addFlash('success', 'Fiche médicale créée et liée au rendez-vous avec succès');
+        $this->addFlash('success', 'Fiche mÃ©dicale crÃ©Ã©e et liÃ©e au rendez-vous avec succÃ¨s');
         return $this->redirectToRoute('admin_view_medical_record', ['id' => $record->getId()]);
     }
 
@@ -2400,7 +2456,7 @@ class AdminController extends AbstractController
         
         $record = $ficheRepo->find($id);
         if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
+            throw $this->createNotFoundException('Fiche mÃ©dicale non trouvÃ©e');
         }
 
         if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
@@ -2421,7 +2477,7 @@ class AdminController extends AbstractController
         
         $patient = $this->userRepo->find($id);
         if (!$patient || !$patient instanceof Patient) {
-            throw $this->createNotFoundException('Patient non trouvé');
+            throw $this->createNotFoundException('Patient non trouvÃ©');
         }
 
         $records = $ficheRepo->findBy(['patient' => $patient], ['creeLe' => 'DESC']);
@@ -2451,8 +2507,8 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $role = $request->query->get('role');
-        $search = $request->query->get('search');
+        $role = $this->toNullableString($request->query->getString('role'));
+        $search = $this->toNullableString($request->query->getString('search'));
         
         if ($search || $role) {
             $utilisateurs = $this->userRepo->search($search, $role);
@@ -2472,8 +2528,8 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        $role = $request->query->get('role');
-        $search = $request->query->get('search');
+        $role = $this->toNullableString($request->query->getString('role'));
+        $search = $this->toNullableString($request->query->getString('search'));
         
         if ($search || $role) {
             $utilisateurs = $this->userRepo->search($search, $role);
@@ -2496,7 +2552,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('user_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_user_new');
@@ -2504,7 +2560,7 @@ class AdminController extends AbstractController
 
             $data = $request->request;
 
-            $role = $data->get('role');
+            $role = $data->getString('role');
             switch ($role) {
                 case 'medecin':
                     $user = new Medecin();
@@ -2522,55 +2578,59 @@ class AdminController extends AbstractController
                     $user = new Utilisateur();
             }
 
-            $user->setNom($data->get('nom'));
-            $user->setPrenom($data->get('prenom'));
-            $user->setEmail($data->get('email'));
-            $user->setRole($role ?: $user->getRole());
+            $user->setNom($data->getString('nom'));
+            $user->setPrenom($data->getString('prenom'));
+            $user->setEmail($data->getString('email'));
+            if ($role !== '') {
+                $user->setRole($role);
+            } elseif ($user->getRole() !== null) {
+                $user->setRole($user->getRole());
+            }
 
-            if ($tel = $data->get('telephone')) {
+            if (($tel = $this->toNullableString($data->getString('telephone'))) !== null) {
                 $user->setTelephone($tel);
             }
-            if ($dn = $data->get('dateNaissance')) {
+            if (($dn = $this->toNullableString($data->getString('dateNaissance'))) !== null) {
                 try {
                     $user->setDateNaissance(new \DateTime($dn));
                 } catch (\Exception $e) {
                 }
             }
-            $user->setEstActif($data->get('estActif') ? true : false);
+            $user->setEstActif($request->request->has('estActif'));
 
-            $plain = $data->get('password');
-            if ($plain) {
+            $plain = $data->getString('password');
+            if ($plain !== '') {
                 $hashed = $passwordHasher->hashPassword($user, $plain);
                 $user->setPassword($hashed);
             }
 
-            /** @var UploadedFile $photo */
             $photo = $request->files->get('photoUpload');
             if ($photo instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                $uploadsDir = $this->getProjectDir() . '/public/uploads/profiles';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 }
                 $filename = uniqid('profile_') . '.' . $photo->guessExtension();
                 $photo->move($uploadsDir, $filename);
                 $user->setPhotoProfil('/uploads/profiles/' . $filename);
-            } elseif ($data->get('photoProfil')) {
-                $user->setPhotoProfil($data->get('photoProfil'));
+            } elseif (($photoProfil = $this->toNullableString($data->getString('photoProfil'))) !== null) {
+                $user->setPhotoProfil($photoProfil);
             }
 
             if ($user instanceof Medecin) {
-                $user->setSpecialite($data->get('specialite'));
-                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
-                $user->setGrade($data->get('grade'));
-                $user->setAdresseCabinet($data->get('adresseCabinet'));
-                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
-                $user->setNomEtablissement($data->get('nomEtablissement'));
-                $user->setNumeroUrgence($data->get('numeroUrgence'));
-                $user->setDisponibilite($data->get('disponibilite'));
+                $user->setSpecialite($this->toNullableString($data->getString('specialite')));
+                $exp = $this->toNullableString($data->getString('anneeExperience'));
+                $user->setAnneeExperience($exp !== null ? (int) $exp : null);
+                $user->setGrade($this->toNullableString($data->getString('grade')));
+                $user->setAdresseCabinet($this->toNullableString($data->getString('adresseCabinet')));
+                $user->setTelephoneCabinet($this->toNullableString($data->getString('telephoneCabinet')));
+                $user->setNomEtablissement($this->toNullableString($data->getString('nomEtablissement')));
+                $user->setNumeroUrgence($this->toNullableString($data->getString('numeroUrgence')));
+                $user->setDisponibilite($this->toNullableString($data->getString('disponibilite')));
 
                 $doc = $request->files->get('documentPdf');
                 if ($doc instanceof UploadedFile) {
-                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    $uploadsDir = $this->getProjectDir() . '/public/uploads/docs';
                     if (!is_dir($uploadsDir)) {
                         @mkdir($uploadsDir, 0777, true);
                     } 
@@ -2581,9 +2641,9 @@ class AdminController extends AbstractController
             }
 
             if ($user instanceof Patient) {
-                $user->setGroupeSanguin($data->get('groupeSanguin'));
-                $user->setContactUrgence($data->get('contactUrgence'));
-                $user->setSexe($data->get('sexe'));
+                $user->setGroupeSanguin($this->toNullableString($data->getString('groupeSanguin')));
+                $user->setContactUrgence($this->toNullableString($data->getString('contactUrgence')));
+                $user->setSexe($this->toNullableString($data->getString('sexe')));
             }
 
             if ($user instanceof ResponsableLaboratoire) {
@@ -2601,7 +2661,7 @@ class AdminController extends AbstractController
             $this->em->persist($user);
             $this->em->flush();
 
-            $this->addFlash('success', 'Utilisateur créé.');
+            $this->addFlash('success', 'Utilisateur crÃ©Ã©.');
             return $this->redirectToRoute('admin_users');
         }
 
@@ -2624,25 +2684,25 @@ class AdminController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = $request->request->getString('_token');
             if (!$this->isCsrfTokenValid('user_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_user_edit', ['id' => $id]);
             }
 
             $data = $request->request;
-            $user->setNom($data->get('nom'));
-            $user->setPrenom($data->get('prenom'));
-            $user->setEmail($data->get('email'));
-            $user->setRole($data->get('role'));
+            $user->setNom($data->getString('nom'));
+            $user->setPrenom($data->getString('prenom'));
+            $user->setEmail($data->getString('email'));
+            $user->setRole($data->getString('role'));
 
-            if ($tel = $data->get('telephone')) {
+            if (($tel = $this->toNullableString($data->getString('telephone'))) !== null) {
                 $user->setTelephone($tel);
             } else {
                 $user->setTelephone(null);
             }
 
-            if ($dn = $data->get('dateNaissance')) {
+            if (($dn = $this->toNullableString($data->getString('dateNaissance'))) !== null) {
                 try {
                     $user->setDateNaissance(new \DateTime($dn));
                 } catch (\Exception $e) {
@@ -2651,40 +2711,40 @@ class AdminController extends AbstractController
                 $user->setDateNaissance(null);
             }
 
-            $user->setEstActif($data->get('estActif') ? true : false);
+            $user->setEstActif($request->request->has('estActif'));
 
-            $plain = $data->get('password');
-            if ($plain) {
+            $plain = $data->getString('password');
+            if ($plain !== '') {
                 $user->setPassword($passwordHasher->hashPassword($user, $plain));
             }
 
-            /** @var UploadedFile $photo */
             $photo = $request->files->get('photoUpload');
             if ($photo instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                $uploadsDir = $this->getProjectDir() . '/public/uploads/profiles';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 } 
                 $filename = uniqid('profile_') . '.' . $photo->guessExtension();
                 $photo->move($uploadsDir, $filename);
                 $user->setPhotoProfil('/uploads/profiles/' . $filename);
-            } elseif ($data->get('photoProfil')) {
-                $user->setPhotoProfil($data->get('photoProfil'));
+            } elseif (($photoProfil = $this->toNullableString($data->getString('photoProfil'))) !== null) {
+                $user->setPhotoProfil($photoProfil);
             }
 
             if ($user instanceof Medecin) {
-                $user->setSpecialite($data->get('specialite'));
-                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
-                $user->setGrade($data->get('grade'));
-                $user->setAdresseCabinet($data->get('adresseCabinet'));
-                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
-                $user->setNomEtablissement($data->get('nomEtablissement'));
-                $user->setNumeroUrgence($data->get('numeroUrgence'));
-                $user->setDisponibilite($data->get('disponibilite'));
+                $user->setSpecialite($this->toNullableString($data->getString('specialite')));
+                $exp = $this->toNullableString($data->getString('anneeExperience'));
+                $user->setAnneeExperience($exp !== null ? (int) $exp : null);
+                $user->setGrade($this->toNullableString($data->getString('grade')));
+                $user->setAdresseCabinet($this->toNullableString($data->getString('adresseCabinet')));
+                $user->setTelephoneCabinet($this->toNullableString($data->getString('telephoneCabinet')));
+                $user->setNomEtablissement($this->toNullableString($data->getString('nomEtablissement')));
+                $user->setNumeroUrgence($this->toNullableString($data->getString('numeroUrgence')));
+                $user->setDisponibilite($this->toNullableString($data->getString('disponibilite')));
 
                 $doc = $request->files->get('documentPdf');
                 if ($doc instanceof UploadedFile) {
-                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    $uploadsDir = $this->getProjectDir() . '/public/uploads/docs';
                     if (!is_dir($uploadsDir)) {
                         @mkdir($uploadsDir, 0777, true);
                     } 
@@ -2695,9 +2755,9 @@ class AdminController extends AbstractController
             }
 
             if ($user instanceof Patient) {
-                $user->setGroupeSanguin($data->get('groupeSanguin'));
-                $user->setContactUrgence($data->get('contactUrgence'));
-                $user->setSexe($data->get('sexe'));
+                $user->setGroupeSanguin($this->toNullableString($data->getString('groupeSanguin')));
+                $user->setContactUrgence($this->toNullableString($data->getString('contactUrgence')));
+                $user->setSexe($this->toNullableString($data->getString('sexe')));
             }
 
             if ($user instanceof ResponsableLaboratoire) {
@@ -2715,7 +2775,7 @@ class AdminController extends AbstractController
             }
 
             $this->em->flush();
-            $this->addFlash('success', 'Utilisateur mis à jour.');
+            $this->addFlash('success', 'Utilisateur mis Ã  jour.');
             return $this->redirectToRoute('admin_users');
         }
 
@@ -2743,7 +2803,7 @@ class AdminController extends AbstractController
             return $this->redirectToRoute('admin_users');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('delete-user' . $user->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_users');
@@ -2752,7 +2812,7 @@ class AdminController extends AbstractController
         $this->em->remove($user);
         $this->em->flush();
 
-        $this->addFlash('success', 'Utilisateur supprimé.');
+        $this->addFlash('success', 'Utilisateur supprimÃ©.');
         return $this->redirectToRoute('admin_users');
     }
 
@@ -2768,11 +2828,11 @@ class AdminController extends AbstractController
         }
 
         if ($user === $this->getUser()) {
-            $this->addFlash('danger', 'Vous ne pouvez pas désactiver votre propre compte.');
+            $this->addFlash('danger', 'Vous ne pouvez pas dÃ©sactiver votre propre compte.');
             return $this->redirectToRoute('admin_users');
         }
 
-        $token = $request->request->get('_token');
+        $token = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('toggle-user' . $user->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_users');
@@ -2781,12 +2841,12 @@ class AdminController extends AbstractController
         $user->setEstActif(!$user->isEstActif());
         $this->em->flush();
 
-        $status = $user->isEstActif() ? 'activé' : 'désactivé';
+        $status = $user->isEstActif() ? 'activÃ©' : 'dÃ©sactivÃ©';
         $this->addFlash('success', "Utilisateur $status.");
         return $this->redirectToRoute('admin_users');
     }
 
-    // ==================== MÉTHODES UTILITAIRES ====================
+    // ==================== MÃ‰THODES UTILITAIRES ====================
 
     private function isProblemAnswer(string $type, int $answer): bool
     {
@@ -2798,6 +2858,9 @@ class AdminController extends AbstractController
         };
     }
 
+    /**
+     * @return array{start: \DateTime|null, end: \DateTime|null}
+     */
     private function getDateRangeForPeriod(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
         $now = new \DateTime();
@@ -2820,8 +2883,9 @@ class AdminController extends AbstractController
                 break;
 
             case 'year':
-                $result['start'] = (new \DateTime())->setDate($now->format('Y'), 1, 1)->setTime(0, 0, 0);
-                $result['end'] = (new \DateTime())->setDate($now->format('Y'), 12, 31)->setTime(23, 59, 59);
+                $year = (int) $now->format('Y');
+                $result['start'] = (new \DateTime())->setDate($year, 1, 1)->setTime(0, 0, 0);
+                $result['end'] = (new \DateTime())->setDate($year, 12, 31)->setTime(23, 59, 59);
                 break;
 
             case 'custom':
@@ -2861,6 +2925,9 @@ class AdminController extends AbstractController
         return (new \DateTime())->modify('last day of this month')->setTime(23, 59, 59);
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function countByStatus(array $appointments, string $status): int
     {
         $count = 0;
@@ -2872,6 +2939,9 @@ class AdminController extends AbstractController
         return $count;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function countRemainingToday(array $appointments): int
     {
         $now = new \DateTime();
@@ -2893,12 +2963,15 @@ class AdminController extends AbstractController
             case 'today': return 'Aujourd\'hui';
             case 'week': return 'Cette semaine';
             case 'month': return 'Ce mois';
-            case 'year': return 'Cette année';
-            case 'custom': return 'Période personnalisée';
-            default: return 'Cette période';
+            case 'year': return 'Cette annÃ©e';
+            case 'custom': return 'PÃ©riode personnalisÃ©e';
+            default: return 'Cette pÃ©riode';
         }
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function calculatePresenceRate(array $appointments): int
     {
         $total = 0;
@@ -2906,10 +2979,10 @@ class AdminController extends AbstractController
 
         foreach ($appointments as $appointment) {
             $statut = $appointment->getStatut();
-            if ($statut === 'Confirmé' || $statut === 'Terminé') {
+            if ($statut === 'ConfirmÃ©' || $statut === 'TerminÃ©') {
                 $present++;
                 $total++;
-            } elseif ($statut === 'Annulé') {
+            } elseif ($statut === 'AnnulÃ©') {
                 $total++;
             }
         }
@@ -2917,6 +2990,9 @@ class AdminController extends AbstractController
         return $total > 0 ? (int)round($present / $total * 100) : 0;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function calculateAverageDelay(array $appointments): float
     {
         $totalDelay = 0;
@@ -2936,6 +3012,9 @@ class AdminController extends AbstractController
         return $count > 0 ? round($totalDelay / $count, 1) : 0;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function calculateMinDelay(array $appointments): int
     {
         $min = PHP_INT_MAX;
@@ -2943,12 +3022,18 @@ class AdminController extends AbstractController
             $dateCreation = $appointment->getCreeLe();
             $dateRdv = $appointment->getDateRdv();
             if ($dateCreation && $dateRdv && $dateRdv > $dateCreation) {
-                $min = min($min, $dateCreation->diff($dateRdv)->days);
+                $days = $dateCreation->diff($dateRdv)->days;
+                if (is_int($days)) {
+                    $min = min($min, $days);
+                }
             }
         }
         return $min != PHP_INT_MAX ? $min : 0;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function calculateMaxDelay(array $appointments): int
     {
         $max = 0;
@@ -2962,14 +3047,21 @@ class AdminController extends AbstractController
         return $max;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     */
     private function calculateOccupationRate(array $appointments): int
     {
         if (empty($appointments)) return 0;
         $totalMinutes = count($appointments) * 30;
         $capaciteMax = 480 * 30;
-        return $capaciteMax > 0 ? min(100, round(($totalMinutes / $capaciteMax) * 100)) : 0;
+        return (int) min(100, round(($totalMinutes / $capaciteMax) * 100));
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     * @param array{start: \DateTime|null, end: \DateTime|null} $dateRanges
+     */
     private function calculateDailyAverage(array $appointments, array $dateRanges): int
     {
         $start = $dateRanges['start'];
@@ -2990,9 +3082,12 @@ class AdminController extends AbstractController
         $daysPassed = (int)$now->format('j');
         $daysInMonth = (int)$now->format('t');
 
-        return $daysPassed > 0 ? (int)round($count / $daysPassed * $daysInMonth) : $count;
+        return (int) round($count / $daysPassed * $daysInMonth);
     }
 
+    /**
+     * @return list<int>
+     */
     private function getMonthlyAppointmentsData(RendezVousRepository $rdvRepo): array
     {
         $data = array_fill(0, 12, 0);
@@ -3008,6 +3103,9 @@ class AdminController extends AbstractController
         return $data;
     }
 
+    /**
+     * @return list<array{name:string,count:int}>
+     */
     private function getTopMedecins(RendezVousRepository $rdvRepo, MedecinRepository $medecinRepo): array
     {
         $result = [];
@@ -3023,6 +3121,10 @@ class AdminController extends AbstractController
         return array_slice($result, 0, 5);
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     * @return list<array{id:int|null,nom:string|null,prenom:string|null,specialite:string,count:int}>
+     */
     private function getTopMedecinsSimple(array $appointments): array
     {
         $counts = [];
@@ -3034,17 +3136,21 @@ class AdminController extends AbstractController
                         'id' => $medecin->getId(),
                         'nom' => $medecin->getNom(),
                         'prenom' => $medecin->getPrenom(),
-                        'specialite' => $medecin->getSpecialite() ?? 'Généraliste',
+                        'specialite' => $medecin->getSpecialite() ?? 'GÃ©nÃ©raliste',
                         'count' => 0
                     ];
                 }
                 $counts[$id]['count']++;
             }
         }
-        usort($counts, fn($a, $b) => $b['count'] <=> $a['count']);
-        return array_slice($counts, 0, 5);
+        $countsList = array_values($counts);
+        usort($countsList, fn($a, $b) => $b['count'] <=> $a['count']);
+        return array_slice($countsList, 0, 5);
     }
 
+    /**
+     * @return list<array{name:string,count:int}>
+     */
     private function getTopPatients(RendezVousRepository $rdvRepo, PatientRepository $patientRepo): array
     {
         $result = [];
@@ -3060,20 +3166,26 @@ class AdminController extends AbstractController
         return array_slice($result, 0, 5);
     }
 
+    /**
+     * @return array<string,int>
+     */
     private function getImcStatistics(FicheMedicaleRepository $ficheRepo): array
     {
-        $stats = ['Maigreur' => 0, 'Normal' => 0, 'Surpoids' => 0, 'Obésité' => 0];
+        $stats = ['Maigreur' => 0, 'Normal' => 0, 'Surpoids' => 0, 'ObÃ©sitÃ©' => 0];
         foreach ($ficheRepo->findAll() as $fiche) {
             if ($imc = $fiche->getImc()) {
                 if ($imc < 18.5) $stats['Maigreur']++;
                 elseif ($imc < 25) $stats['Normal']++;
                 elseif ($imc < 30) $stats['Surpoids']++;
-                else $stats['Obésité']++;
+                else $stats['ObÃ©sitÃ©']++;
             }
         }
         return $stats;
     }
 
+    /**
+     * @return array{mon:int,tue:int,wed:int,thu:int,fri:int,sat:int,sun:int}
+     */
     private function getWeeklyAppointmentsData(RendezVousRepository $rdvRepo): array
     {
         $days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -3082,12 +3194,19 @@ class AdminController extends AbstractController
         
         foreach ($rdvRepo->findByDateRange($this->getWeekStart(), $this->getWeekEnd()) as $appointment) {
             if ($dateRdv = $appointment->getDateRdv()) {
-                $data[$dayMap[$dateRdv->format('D')] ?? '']++;
+                $dayKey = $dayMap[$dateRdv->format('D')] ?? null;
+                if ($dayKey !== null) {
+                    $data[$dayKey]++;
+                }
             }
         }
         return $data;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     * @return array<string,int>
+     */
     private function getHourlyDistribution(array $appointments): array
     {
         $distribution = [];
@@ -3102,6 +3221,10 @@ class AdminController extends AbstractController
         return $distribution;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     * @return array<string,int>
+     */
     private function getDailyDistribution(array $appointments): array
     {
         $jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -3115,6 +3238,10 @@ class AdminController extends AbstractController
         return $distribution;
     }
 
+    /**
+     * @param array{start: \DateTime|null, end: \DateTime|null} $dateRanges
+     * @return list<string>
+     */
     private function generateEvolutionLabels(array $dateRanges): array
     {
         $labels = [];
@@ -3148,6 +3275,11 @@ class AdminController extends AbstractController
         return $labels;
     }
 
+    /**
+     * @param array<RendezVous> $appointments
+     * @param array{start: \DateTime|null, end: \DateTime|null} $dateRanges
+     * @return list<int>
+     */
     private function generateEvolutionData(array $appointments, array $dateRanges): array
     {
         $start = $dateRanges['start'];
@@ -3169,11 +3301,11 @@ class AdminController extends AbstractController
                 }
             }
         } elseif ($days <= 120) {
-            $weeks = ceil($days / 7);
+            $weeks = (int) ceil($days / 7);
             $data = array_fill(0, $weeks, 0);
             foreach ($appointments as $appointment) {
                 if ($dateRdv = $appointment->getDateRdv()) {
-                    $index = floor($start->diff($dateRdv)->days / 7);
+                    $index = (int) floor($start->diff($dateRdv)->days / 7);
                     if (isset($data[$index])) $data[$index]++;
                 }
             }
@@ -3186,6 +3318,23 @@ class AdminController extends AbstractController
             }
         }
 
-        return array_values($data);
+        return $data;
+    }
+
+    private function toNullableString(string $value): ?string
+    {
+        $value = trim($value);
+        return $value === '' ? null : $value;
+    }
+
+    private function getProjectDir(): string
+    {
+        $projectDir = $this->getParameter('kernel.project_dir');
+        if (!is_string($projectDir)) {
+            throw new \RuntimeException('Invalid kernel.project_dir parameter.');
+        }
+
+        return $projectDir;
     }
 }
+

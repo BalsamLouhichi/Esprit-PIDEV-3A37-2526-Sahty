@@ -51,7 +51,10 @@ final class ProduitController extends AbstractController
         // Offres multi-parapharmacies: meme nom de produit, IDs potentiellement differents
         $pharmacieOffers = [];
         $seenParapharmacies = [];
-        $sameNameProducts = $produitRepository->findByNormalizedName($produit->getNom());
+        $produitNom = $produit->getNom();
+        $sameNameProducts = is_string($produitNom) && $produitNom !== ''
+            ? $produitRepository->findByNormalizedName($produitNom)
+            : [$produit];
 
         foreach ($sameNameProducts as $sameProduct) {
             foreach ($sameProduct->getParapharmacies() as $pharmacie) {
@@ -111,7 +114,7 @@ final class ProduitController extends AbstractController
         $commande = new Commande();
         $commande->setProduit($produit);
         $commande->setQuantite($quantite);
-        $commande->setPrixUnitaire($produit->getPrix());
+        $commande->setPrixUnitaire(number_format((float) ($produit->getPrix() ?? 0), 2, '.', ''));
         $commande->calculerPrixTotal();
         
         // Si une pharmacie est spÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cifiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e, la prÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©-sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©lectionner
@@ -221,7 +224,13 @@ final class ProduitController extends AbstractController
                 return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
             }
 
-            return $this->redirect($payment->getCheckoutUrl(), 303);
+            $checkoutUrl = $payment->getCheckoutUrl();
+            if (!is_string($checkoutUrl) || $checkoutUrl === '') {
+                $this->addFlash('error', 'URL de paiement Mollie invalide.');
+                return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
+            }
+
+            return $this->redirect($checkoutUrl, 303);
         }
 
         
@@ -245,7 +254,7 @@ final class ProduitController extends AbstractController
     {
         $paymentId = $request->query->get('payment_id');
 
-        if ($paymentId && !empty($this->mollieApiKey) && preg_match('/^tr_/', (string) $paymentId) === 1) {
+        if (is_string($paymentId) && $paymentId !== '' && !empty($this->mollieApiKey) && preg_match('/^tr_/', $paymentId) === 1) {
             $mollie = new MollieApiClient();
             $mollie->setApiKey($this->mollieApiKey);
 
@@ -281,8 +290,8 @@ final class ProduitController extends AbstractController
         EntityManagerInterface $entityManager,
         CommandeRepository $commandeRepository
     ): Response {
-        $paymentId = $request->request->get('id');
-        if (!$paymentId || empty($this->mollieApiKey)) {
+        $paymentId = $request->request->getString('id');
+        if ($paymentId === '' || empty($this->mollieApiKey)) {
             return new Response('', Response::HTTP_OK);
         }
 
@@ -370,7 +379,7 @@ final class ProduitController extends AbstractController
         }
         
         // VÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rifier le token CSRF pour la sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©curitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©
-        $submittedToken = $request->request->get('_token');
+        $submittedToken = $request->request->getString('_token');
         if (!$this->isCsrfTokenValid('annuler-commande', $submittedToken)) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_mes_commandes');
@@ -638,6 +647,9 @@ final class ProduitController extends AbstractController
         ];
     }
 
+    /**
+     * @param array<string> $stopWords
+     */
     private function isSemanticKeywordUseful(string $word, array $stopWords): bool
     {
         $word = $this->normalizeSearchText($word);
@@ -766,7 +778,7 @@ final class ProduitController extends AbstractController
         // RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cupÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rer les statistiques
         $stats = $commandeRepository->getStats();
         $commandesRecent = $commandeRepository->findRecentOrders(10);
-        $produitsPopulaires = $produitRepository->findMostPopular(10);
+        $produitsPopulaires = $produitRepository->findBy([], ['stock' => 'DESC'], 10);
         
         return $this->render('admin/statistiques.html.twig', [
             'stats' => $stats,

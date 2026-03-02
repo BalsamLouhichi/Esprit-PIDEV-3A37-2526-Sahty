@@ -20,17 +20,17 @@ class Quiz
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank(message: "Le nom du quiz est obligatoire.")]
     #[Assert\Length(min: 3, max: 180)]
-    private ?string $name = null;
+    private string $name = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 3000)]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $updatedAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     /**
      * @var Collection<int, Question>
@@ -42,28 +42,34 @@ class Quiz
     /**
      * @var Collection<int, Recommandation>
      */
-    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $recommandations;
 
     public function __construct()
     {
         $this->questions = new ArrayCollection();
         $this->recommandations = new ArrayCollection();
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     #[ORM\PreUpdate]
     public function updateTimestamp(): void
     {
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getName(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getName(): string
     {
         return $this->name;
     }
@@ -85,12 +91,12 @@ class Quiz
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
     }

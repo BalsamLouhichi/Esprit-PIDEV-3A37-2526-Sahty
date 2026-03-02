@@ -30,7 +30,7 @@ class FicheMedicale
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
     private ?string $poids = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
     private ?float $imc = null;
 
     #[ORM\Column(length: 50, nullable: true)]
@@ -45,7 +45,7 @@ class FicheMedicale
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
 
-    // ✅ CORRECTION : Utiliser camelCase avec mapping vers snake_case en BDD
+    // âœ… CORRECTION : Utiliser camelCase avec mapping vers snake_case en BDD
     #[ORM\Column(name: 'cree_le', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $creeLe = null;
 
@@ -55,8 +55,8 @@ class FicheMedicale
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $statut = null;
 
-    #[ORM\ManyToOne(inversedBy: 'fichesMedicales')]
-    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\ManyToOne(inversedBy: 'ficheMedicales')]
+    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Patient $patient = null;
 
     #[ORM\OneToOne(inversedBy: 'ficheMedicale')]
@@ -67,7 +67,13 @@ class FicheMedicale
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getAntecedents(): ?string
@@ -180,7 +186,7 @@ class FicheMedicale
         return $this;
     }
 
-    // ✅ CORRECTION : Getters/Setters en camelCase
+    // âœ… CORRECTION : Getters/Setters en camelCase
     public function getCreeLe(): ?\DateTimeInterface
     {
         return $this->creeLe;
@@ -255,10 +261,10 @@ class FicheMedicale
         $this->modifieLe = new \DateTime();
     }
 
-    // ==================== MÉTHODES UTILITAIRES ====================
+    // ==================== MÃ‰THODES UTILITAIRES ====================
 
     /**
-     * Calcule automatiquement l'IMC et sa catégorie
+     * Calcule automatiquement l'IMC et sa catÃ©gorie
      */
     public function calculerImc(): void
     {
@@ -269,7 +275,7 @@ class FicheMedicale
             $imc = $poidsEnKg / ($tailleEnMetres * $tailleEnMetres);
             $this->imc = round($imc, 2);
 
-            // Déterminer la catégorie
+            // DÃ©terminer la catÃ©gorie
             if ($imc < 18.5) {
                 $this->categorieImc = 'Maigreur';
             } elseif ($imc < 25) {
@@ -277,7 +283,7 @@ class FicheMedicale
             } elseif ($imc < 30) {
                 $this->categorieImc = 'Surpoids';
             } else {
-                $this->categorieImc = 'Obésité';
+                $this->categorieImc = 'ObÃ©sitÃ©';
             }
         } else {
             $this->imc = null;
@@ -286,7 +292,7 @@ class FicheMedicale
     }
 
     /**
-     * Retourne l'âge du patient si disponible
+     * Retourne l'Ã¢ge du patient si disponible
      */
     public function getAgePatient(): ?int
     {
@@ -299,7 +305,7 @@ class FicheMedicale
     }
 
     /**
-     * Vérifie si la fiche est récente (moins de 30 jours)
+     * VÃ©rifie si la fiche est rÃ©cente (moins de 30 jours)
      */
     public function isRecente(): bool
     {
@@ -313,7 +319,7 @@ class FicheMedicale
     }
 
     /**
-     * Retourne un résumé de la fiche
+     * Retourne un rÃ©sumÃ© de la fiche
      */
     public function getResume(): string
     {
@@ -323,7 +329,7 @@ class FicheMedicale
         return sprintf('Fiche de %s - %s', $patient, $date);
     }
 
-    // Méthode toString pour affichage
+    // MÃ©thode toString pour affichage
     public function __toString(): string
     {
         return $this->getResume();

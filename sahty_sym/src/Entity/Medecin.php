@@ -145,7 +145,7 @@ class Medecin extends Utilisateur
     }
 
     /**
-     * Méthode pour obtenir le nom complet avec spécialité
+     * MÃ©thode pour obtenir le nom complet avec spÃ©cialitÃ©
      */
     public function getNomCompletAvecSpecialite(): string
     {

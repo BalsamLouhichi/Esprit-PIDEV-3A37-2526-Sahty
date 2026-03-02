@@ -43,25 +43,31 @@ class QuizAttempt
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $detectedCategoriesJson = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updatedAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $updatedAt;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $completedAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $completedAt = null;
 
     public function __construct()
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->createdAt = $now;
         $this->updatedAt = $now;
     }
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getQuiz(): ?Quiz
@@ -163,30 +169,30 @@ class QuizAttempt
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = \DateTimeImmutable::createFromInterface($updatedAt);
         return $this;
     }
 
-    public function getCompletedAt(): ?\DateTimeInterface
+    public function getCompletedAt(): ?\DateTimeImmutable
     {
         return $this->completedAt;
     }
 
     public function setCompletedAt(?\DateTimeInterface $completedAt): static
     {
-        $this->completedAt = $completedAt;
+        $this->completedAt = $completedAt !== null ? \DateTimeImmutable::createFromInterface($completedAt) : null;
         return $this;
     }
 }

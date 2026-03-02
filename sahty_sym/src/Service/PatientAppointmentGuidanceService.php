@@ -25,7 +25,8 @@ class PatientAppointmentGuidanceService
      *     reasons: array<int, string>,
      *     actions: array<int, string>
      *   },
-     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string}
+     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string},
+     *   input_status: string
      * }
      */
     public function generate(RendezVous $rendezVous): array
@@ -70,10 +71,10 @@ class PatientAppointmentGuidanceService
         if ($aiResult !== null) {
             return [
                 'disclaimer' => 'Guidance preventive uniquement en attendant le medecin. Ce contenu ne remplace pas un diagnostic medical ni une prescription.',
-                'temporary_advice' => $this->normalizeStringList($aiResult['temporary_advice'] ?? []),
-                'safety_alerts' => $this->normalizeStringList($aiResult['safety_alerts'] ?? []),
-                'general_recommendations' => $this->normalizeStringList($aiResult['general_recommendations'] ?? []),
-                'emergency' => $this->normalizeEmergency($aiResult['emergency'] ?? []),
+                'temporary_advice' => $this->normalizeStringList($aiResult['temporary_advice']),
+                'safety_alerts' => $this->normalizeStringList($aiResult['safety_alerts']),
+                'general_recommendations' => $this->normalizeStringList($aiResult['general_recommendations']),
+                'emergency' => $this->normalizeEmergency($aiResult['emergency']),
                 'sources' => [
                     'motif' => $motif,
                     'antecedents' => $antecedents,
@@ -172,6 +173,17 @@ class PatientAppointmentGuidanceService
         return !$this->containsAny($motifNormalized, $acuteTerms);
     }
 
+    /**
+     * @return array{
+     *   disclaimer: string,
+     *   temporary_advice: array<int, string>,
+     *   safety_alerts: array<int, string>,
+     *   general_recommendations: array<int, string>,
+     *   emergency: array{detected: bool, level: string, reasons: array<int, string>, actions: array<int, string>},
+     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string},
+     *   input_status: string
+     * }
+     */
     private function buildFollowUpGuidance(
         string $motif,
         string $antecedents,
@@ -211,6 +223,15 @@ class PatientAppointmentGuidanceService
 
     /**
      * Guidance deterministe orientee par motif (plus stable que la generation libre).
+     * @return array{
+     *   disclaimer: string,
+     *   temporary_advice: array<int, string>,
+     *   safety_alerts: array<int, string>,
+     *   general_recommendations: array<int, string>,
+     *   emergency: array{detected: bool, level: string, reasons: array<int, string>, actions: array<int, string>},
+     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string},
+     *   input_status: string
+     * }|null
      */
     private function buildMotifSpecificGuidance(
         string $motifNormalized,
@@ -300,6 +321,17 @@ class PatientAppointmentGuidanceService
         return null;
     }
 
+    /**
+     * @return array{
+     *   disclaimer: string,
+     *   temporary_advice: array<int, string>,
+     *   safety_alerts: array<int, string>,
+     *   general_recommendations: array<int, string>,
+     *   emergency: array{detected: bool, level: string, reasons: array<int, string>, actions: array<int, string>},
+     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string},
+     *   input_status: string
+     * }
+     */
     private function buildInsufficientInputGuidance(
         string $motif,
         string $antecedents,
@@ -338,8 +370,9 @@ class PatientAppointmentGuidanceService
 
     private function resolveRelevantFiche(RendezVous $rendezVous): ?FicheMedicale
     {
-        if ($rendezVous->getFicheMedicale() instanceof FicheMedicale) {
-            return $rendezVous->getFicheMedicale();
+        $linkedFiche = $rendezVous->getFicheMedicale();
+        if ($linkedFiche !== null) {
+            return $linkedFiche;
         }
 
         $patient = $rendezVous->getPatient();
@@ -349,9 +382,6 @@ class PatientAppointmentGuidanceService
 
         $latest = null;
         foreach ($patient->getFicheMedicales() as $fiche) {
-            if (!$fiche instanceof FicheMedicale) {
-                continue;
-            }
             if ($latest === null) {
                 $latest = $fiche;
                 continue;
@@ -620,7 +650,7 @@ class PatientAppointmentGuidanceService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 return null;
             }
 

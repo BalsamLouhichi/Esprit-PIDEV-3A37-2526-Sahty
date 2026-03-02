@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Quiz;
+use App\Entity\Recommandation;
 use App\Entity\Utilisateur;
 
 class QuizPdfReportService
@@ -16,7 +17,7 @@ class QuizPdfReportService
     private const MAX_LINE_LENGTH = 92;
 
     /**
-     * @param array<int, array{reco: object, selectedVideo: ?string}> $recommendationItems
+     * @param array<int, array{reco: Recommandation, selectedVideo: ?string}> $recommendationItems
      * @param array<string,mixed>|null $aiRecommendation
      */
     public function buildResultPdf(
@@ -46,10 +47,7 @@ class QuizPdfReportService
             $lines[] = '- No specific recommendation for this score.';
         } else {
             foreach ($recommendationItems as $item) {
-                $reco = $item['reco'] ?? null;
-                if (!$reco || !method_exists($reco, 'getTitle')) {
-                    continue;
-                }
+                $reco = $item['reco'];
 
                 $title = (string) ($reco->getTitle() ?: $reco->getName());
                 $severity = $this->normalizeSeverityLabel((string) $reco->getSeverity());

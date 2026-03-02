@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class RendezVousType extends AbstractType
 {
@@ -44,10 +45,23 @@ class RendezVousType extends AbstractType
 
             ->add('raison', TextareaType::class, [
                 'label' => 'Motif de la consultation',
-                'required' => true,
+                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
                     'rows' => 4,
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Le motif du rendez-vous ne doit pas être vide.',
+                        'normalizer' => 'trim',
+                    ]),
+                    new Assert\Length([
+                        'min' => 5,
+                        'minMessage' => 'Le motif doit contenir au moins {{ limit }} caractères.',
+                        'max' => 1000,
+                        'maxMessage' => 'Le motif ne peut pas dépasser {{ limit }} caractères.',
+                        'normalizer' => 'trim',
+                    ]),
                 ],
             ])
 

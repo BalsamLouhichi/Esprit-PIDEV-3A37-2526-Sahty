@@ -16,17 +16,20 @@ class Parapharmacie
     private ?int $id = null;
 
     #[ORM\Column(length: 150)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(length: 255)]
-    private ?string $adresse = null;
+    private string $adresse = '';
 
     #[ORM\Column(length: 30)]
-    private ?string $telephone = null;
+    private string $telephone = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
+    /**
+     * @var Collection<int, Produit>
+     */
     #[ORM\ManyToMany(targetEntity: Produit::class, mappedBy: 'parapharmacies')]
     private Collection $produits;
 
@@ -39,10 +42,16 @@ class Parapharmacie
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getNom(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -53,7 +62,7 @@ class Parapharmacie
         return $this;
     }
 
-    public function getAdresse(): ?string
+    public function getAdresse(): string
     {
         return $this->adresse;
     }
@@ -64,7 +73,7 @@ class Parapharmacie
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getTelephone(): string
     {
         return $this->telephone;
     }
@@ -87,7 +96,7 @@ class Parapharmacie
     }
 
     /**
-     * @return Collection|Produit[]
+     * @return Collection<int, Produit>
      */
     public function getProduits(): Collection
     {

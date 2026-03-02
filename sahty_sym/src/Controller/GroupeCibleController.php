@@ -126,7 +126,7 @@ final class GroupeCibleController extends AbstractController
     }
 
     /**
-     * @return array{0:string,1:array}
+     * @return array{0:string,1:array<string,mixed>}
      */
     private function resolveBackRoute(string $referrer, mixed $eventId, bool $toIndex = false): array
     {

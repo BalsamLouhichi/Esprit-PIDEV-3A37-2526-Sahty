@@ -15,7 +15,7 @@ class ResultatAnalyse
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'resultatAnalyse', targetEntity: DemandeAnalyse::class)]
@@ -28,6 +28,7 @@ class ResultatAnalyse
     #[ORM\Column(name: 'ai_status', length: 20)]
     private string $aiStatus = self::AI_STATUS_PENDING;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $anomalies = null;
 
@@ -43,6 +44,7 @@ class ResultatAnalyse
     #[ORM\Column(name: 'modele_version', length: 100, nullable: true)]
     private ?string $modeleVersion = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(name: 'ai_raw_response', type: 'json', nullable: true)]
     private ?array $aiRawResponse = null;
 
@@ -62,7 +64,13 @@ class ResultatAnalyse
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getDemandeAnalyse(): ?DemandeAnalyse
@@ -102,11 +110,13 @@ class ResultatAnalyse
         return $this;
     }
 
+    /** @return array<string, mixed>|null */
     public function getAnomalies(): ?array
     {
         return $this->anomalies;
     }
 
+    /** @param array<string, mixed>|null $anomalies */
     public function setAnomalies(?array $anomalies): self
     {
         $this->anomalies = $anomalies;
@@ -157,11 +167,13 @@ class ResultatAnalyse
         return $this;
     }
 
+    /** @return array<string, mixed>|null */
     public function getAiRawResponse(): ?array
     {
         return $this->aiRawResponse;
     }
 
+    /** @param array<string, mixed>|null $aiRawResponse */
     public function setAiRawResponse(?array $aiRawResponse): self
     {
         $this->aiRawResponse = $aiRawResponse;

@@ -35,7 +35,7 @@ class PaymentController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if ($request->isMethod('POST') && !$this->isCsrfTokenValid('checkout' . $evenement->getId(), $request->request->get('_token'))) {
+        if ($request->isMethod('POST') && !$this->isCsrfTokenValid('checkout' . $evenement->getId(), $request->request->getString('_token'))) {
             $this->addFlash('danger', 'Requete invalide. Merci de reessayer.');
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
@@ -57,8 +57,8 @@ class PaymentController extends AbstractController
         }
 
         $eligibility = $this->canUserSubscribe($user, $evenement, $em);
-        if (($eligibility['can_subscribe'] ?? false) !== true) {
-            $this->addFlash('warning', (string) ($eligibility['message'] ?? 'Inscription indisponible.'));
+        if ($eligibility['can_subscribe'] !== true) {
+            $this->addFlash('warning', $eligibility['message']);
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
 
@@ -121,22 +121,22 @@ class PaymentController extends AbstractController
         }
 
         $eligibility = $this->canUserSubscribe($user, $evenement, $em);
-        if (($eligibility['can_subscribe'] ?? false) !== true) {
-            $this->addFlash('warning', (string) ($eligibility['message'] ?? 'Inscription indisponible.'));
+        if ($eligibility['can_subscribe'] !== true) {
+            $this->addFlash('warning', $eligibility['message']);
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
 
         if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('checkout_simule' . $evenement->getId(), (string) $request->request->get('_token'))) {
+            if (!$this->isCsrfTokenValid('checkout_simule' . $evenement->getId(), $request->request->getString('_token'))) {
                 $this->addFlash('danger', 'Requete de paiement invalide.');
                 return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
             }
 
-            $cardNumber = preg_replace('/\D+/', '', (string) $request->request->get('card_number', ''));
+            $cardNumber = (string) preg_replace('/\D+/', '', $request->request->getString('card_number'));
             $cardHolder = trim((string) $request->request->get('card_holder', ''));
             $expMonth = (int) $request->request->get('exp_month', 0);
             $expYear = (int) $request->request->get('exp_year', 0);
-            $cvc = preg_replace('/\D+/', '', (string) $request->request->get('cvc', ''));
+            $cvc = (string) preg_replace('/\D+/', '', $request->request->getString('cvc'));
 
             if (strlen($cardNumber) < 12 || strlen($cardNumber) > 19 || $cardHolder === '' || $expMonth < 1 || $expMonth > 12 || $expYear < (int) date('Y') || strlen($cvc) < 3) {
                 $this->addFlash('danger', 'Informations de carte invalides (mode test).');
@@ -239,6 +239,9 @@ class PaymentController extends AbstractController
         return $inscription;
     }
 
+    /**
+     * @return array{can_subscribe: bool, message: string}
+     */
     private function canUserSubscribe(Utilisateur $user, Evenement $evenement, EntityManagerInterface $em): array
     {
         if (!in_array($evenement->getStatut(), ['planifie', 'approuve'], true)) {

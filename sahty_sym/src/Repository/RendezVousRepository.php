@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Patient;
 use App\Entity\RendezVous;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -36,6 +37,55 @@ class RendezVousRepository extends ServiceEntityRepository
             ->orderBy('r.dateRdv', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return RendezVous[]
+     */
+    public function findByPatientPaginated(Patient $patient, int $limit, int $offset): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->orderBy('r.dateRdv', 'DESC')
+            ->addOrderBy('r.heureRdv', 'DESC')
+            ->setFirstResult(max(0, $offset))
+            ->setMaxResults(max(1, $limit))
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByPatientEntity(Patient $patient): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function countStatusesByPatient(Patient $patient): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.statut AS statut, COUNT(r.id) AS cnt')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->groupBy('r.statut')
+            ->getQuery()
+            ->getArrayResult();
+
+        $statusCounts = [];
+        foreach ($rows as $row) {
+            $status = (string) ($row['statut'] ?? '');
+            $count = (int) ($row['cnt'] ?? 0);
+            $statusCounts[$status] = $count;
+        }
+
+        return $statusCounts;
     }
 
     /**

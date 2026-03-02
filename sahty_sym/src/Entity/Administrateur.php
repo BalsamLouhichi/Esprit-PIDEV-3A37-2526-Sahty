@@ -15,6 +15,6 @@ class Administrateur extends Utilisateur
         $this->setRole(self::ROLE_SIMPLE_ADMIN);
     }
 
-    // Vous pouvez ajouter des propriétés spécifiques à l'administrateur si nécessaire
-    // Par exemple : niveau d'accès, département, etc.
+    // Vous pouvez ajouter des propriÃ©tÃ©s spÃ©cifiques Ã  l'administrateur si nÃ©cessaire
+    // Par exemple : niveau d'accÃ¨s, dÃ©partement, etc.
 }

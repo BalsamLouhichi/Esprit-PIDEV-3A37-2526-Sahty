@@ -20,18 +20,18 @@ class DictationTranscriptionService
     public function getConfigurationStatus(): array
     {
         $config = $this->resolveConfiguration();
-        if (!($config['ok'] ?? false)) {
+        if ($config['ok'] === false) {
             return [
                 'ok' => false,
-                'error' => (string) ($config['error'] ?? 'Configuration invalide.'),
+                'error' => $config['error'],
             ];
         }
 
         return [
             'ok' => true,
-            'provider' => (string) ($config['provider'] ?? ''),
-            'endpoint' => (string) ($config['endpoint'] ?? ''),
-            'model' => (string) ($config['model'] ?? ''),
+            'provider' => $config['provider'],
+            'endpoint' => $config['endpoint'],
+            'model' => $config['model'],
         ];
     }
 
@@ -41,14 +41,14 @@ class DictationTranscriptionService
     public function transcribe(UploadedFile $audioFile, string $language = 'fr'): array
     {
         $config = $this->resolveConfiguration();
-        if (!($config['ok'] ?? false)) {
-            return ['ok' => false, 'error' => (string) ($config['error'] ?? 'Configuration invalide')];
+        if ($config['ok'] === false) {
+            return ['ok' => false, 'error' => $config['error']];
         }
 
-        $provider = (string) $config['provider'];
-        $endpoint = (string) $config['endpoint'];
-        $apiKey = (string) $config['api_key'];
-        $model = (string) $config['model'];
+        $provider = $config['provider'];
+        $endpoint = $config['endpoint'];
+        $apiKey = $config['api_key'];
+        $model = $config['model'];
         $safeFilename = $audioFile->getClientOriginalName() ?: 'dictation.webm';
         $detectedMimeType = strtolower((string) ($audioFile->getMimeType() ?: $audioFile->getClientMimeType() ?: 'audio/webm'));
         $ext = strtolower((string) ($audioFile->guessExtension() ?: pathinfo($safeFilename, PATHINFO_EXTENSION)));
@@ -98,9 +98,7 @@ class DictationTranscriptionService
                 $statusCode = $response->getStatusCode();
                 $data = $response->toArray(false);
                 $providerError = '';
-                if (is_array($data)) {
-                    $providerError = trim((string) (($data['error']['message'] ?? $data['message'] ?? '')));
-                }
+                $providerError = trim((string) (($data['error']['message'] ?? $data['message'] ?? '')));
 
                 if (($statusCode === 429 || $statusCode >= 500) && $attempt < $attempts) {
                     $headers = $response->getHeaders(false);
@@ -118,10 +116,6 @@ class DictationTranscriptionService
 
                     return ['ok' => false, 'error' => 'Erreur API de transcription' . ($providerError !== '' ? ': ' . $providerError : '')];
                 }
-                if (!is_array($data)) {
-                    return ['ok' => false, 'error' => 'Reponse de transcription invalide'];
-                }
-
                 $text = trim((string) ($data['text'] ?? ''));
                 if ($text === '') {
                     return ['ok' => false, 'error' => 'Transcription vide'];
@@ -226,7 +220,7 @@ class DictationTranscriptionService
     }
 
     /**
-     * @return array{ok: bool, provider?: string, endpoint?: string, api_key?: string, model?: string, error?: string}
+     * @return array{ok: false, error: string}|array{ok: true, provider: string, endpoint: string, api_key: string, model: string}
      */
     private function resolveConfiguration(): array
     {

@@ -24,8 +24,31 @@ class RDVController extends AbstractController
 {
     private const SESSION_KEY_PATIENT_LOCATION = 'patient_location_latest';
 
+    private function getAuthenticatedPatient(): ?Patient
+    {
+        $user = $this->getUser();
+
+        return $user instanceof Patient ? $user : null;
+    }
+
+    private function combineDateAndTime(
+        \DateTimeInterface $date,
+        \DateTimeInterface $time
+    ): \DateTimeImmutable {
+        return (new \DateTimeImmutable())
+            ->setDate(
+                (int) $date->format('Y'),
+                (int) $date->format('m'),
+                (int) $date->format('d')
+            )
+            ->setTime(
+                (int) $time->format('H'),
+                (int) $time->format('i')
+            );
+    }
+
     /**
-     * 📋 Page de prise de rendez-vous (GET/POST)
+     * ðŸ“‹ Page de prise de rendez-vous (GET/POST)
      */
     #[Route('/rdv/prendre', name: 'app_rdv_prendre', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_PATIENT')]
@@ -34,9 +57,9 @@ class RDVController extends AbstractController
         EntityManagerInterface $em,
         MedecinRepository $medecinRepository
     ): Response {
-        $patient = $this->getUser();
+        $patient = $this->getAuthenticatedPatient();
         if (!$patient instanceof Patient) {
-            $this->addFlash('error', '❌ Seuls les patients peuvent prendre rendez-vous');
+            $this->addFlash('error', 'âŒ Seuls les patients peuvent prendre rendez-vous');
             return $this->redirectToRoute('home');
         }
 
@@ -48,28 +71,19 @@ class RDVController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             if (!$rdv->getMedecin()) {
-                $this->addFlash('error', '❌ Veuillez sélectionner un médecin');
+                $this->addFlash('error', 'âŒ Veuillez sÃ©lectionner un mÃ©decin');
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
             if (!$rdv->getDateRdv() || !$rdv->getHeureRdv()) {
-                $this->addFlash('error', '❌ Veuillez sélectionner une date et une heure');
+                $this->addFlash('error', 'âŒ Veuillez sÃ©lectionner une date et une heure');
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
-            $rdvDateTime = new \DateTime();
-            $rdvDateTime->setDate(
-                $rdv->getDateRdv()->format('Y'),
-                $rdv->getDateRdv()->format('m'),
-                $rdv->getDateRdv()->format('d')
-            );
-            $rdvDateTime->setTime(
-                $rdv->getHeureRdv()->format('H'),
-                $rdv->getHeureRdv()->format('i')
-            );
+            $rdvDateTime = $this->combineDateAndTime($rdv->getDateRdv(), $rdv->getHeureRdv());
 
-            if ($rdvDateTime < new \DateTime()) {
-                $this->addFlash('error', '❌ La date et l\'heure doivent être dans le futur');
+            if ($rdvDateTime < new \DateTimeImmutable()) {
+                $this->addFlash('error', 'âŒ La date et l\'heure doivent Ãªtre dans le futur');
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
@@ -81,7 +95,7 @@ class RDVController extends AbstractController
             ]);
 
             if (!empty($conflictingRdv)) {
-                $this->addFlash('error', '⚠️ Ce créneau horaire est déjà réservé. Veuillez choisir un autre créneau');
+                $this->addFlash('error', 'âš ï¸ Ce crÃ©neau horaire est dÃ©jÃ  rÃ©servÃ©. Veuillez choisir un autre crÃ©neau');
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
@@ -91,7 +105,7 @@ class RDVController extends AbstractController
             $em->persist($rdv);
             $em->flush();
 
-            $this->addFlash('success', '✅ Rendez-vous confirmé avec succès!');
+            $this->addFlash('success', 'âœ… Rendez-vous confirmÃ© avec succÃ¨s!');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
@@ -108,7 +122,7 @@ class RDVController extends AbstractController
     }
 
     /**
-     * ✏️ Modifier un rendez-vous existant
+     * âœï¸ Modifier un rendez-vous existant
      */
     #[Route('/rdv/modifier/{id}', name: 'app_rdv_modifier', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_PATIENT')]
@@ -122,70 +136,58 @@ class RDVController extends AbstractController
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouvÃ©');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        $patient = $this->getAuthenticatedPatient();
+        if (!$patient || ($rdv->getPatient()?->getId() ?? 0) !== $patient->getId()) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce rendez-vous');
         }
 
-        if ($rdv->getStatut() === 'Annulé') {
-            $this->addFlash('error', '❌ Impossible de modifier un rendez-vous annulé');
+        if ($rdv->getStatut() === 'AnnulÃ©') {
+            $this->addFlash('error', 'âŒ Impossible de modifier un rendez-vous annulÃ©');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        $rdvDateTime = new \DateTime();
-        $rdvDateTime->setDate(
-            $rdv->getDateRdv()->format('Y'),
-            $rdv->getDateRdv()->format('m'),
-            $rdv->getDateRdv()->format('d')
-        );
-        $rdvDateTime->setTime(
-            $rdv->getHeureRdv()->format('H'),
-            $rdv->getHeureRdv()->format('i')
-        );
+        if (!$rdv->getDateRdv() || !$rdv->getHeureRdv()) {
+            $this->addFlash('error', 'âŒ Date/heure du rendez-vous invalide');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
 
-        if ($rdvDateTime < new \DateTime()) {
-            $this->addFlash('error', '❌ Impossible de modifier un rendez-vous passé');
+        $rdvDateTime = $this->combineDateAndTime($rdv->getDateRdv(), $rdv->getHeureRdv());
+
+        if ($rdvDateTime < new \DateTimeImmutable()) {
+            $this->addFlash('error', 'âŒ Impossible de modifier un rendez-vous passÃ©');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
         $oldMedecin = $rdv->getMedecin();
         $oldDate = $rdv->getDateRdv();
         $oldHeure = $rdv->getHeureRdv();
+        if (!$oldMedecin) {
+            $this->addFlash('error', 'Ã¢ÂÅ’ MÃƒÂ©decin invalide');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
 
         $form = $this->createForm(RendezVousType::class, $rdv);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             if (!$rdv->getMedecin()) {
-                $this->addFlash('error', '❌ Veuillez sélectionner un médecin');
+                $this->addFlash('error', 'âŒ Veuillez sÃ©lectionner un mÃ©decin');
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
             }
 
-            if (!$rdv->getDateRdv() || !$rdv->getHeureRdv()) {
-                $this->addFlash('error', '❌ Veuillez sélectionner une date et une heure');
-                return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
-            }
 
-            $newRdvDateTime = new \DateTime();
-            $newRdvDateTime->setDate(
-                $rdv->getDateRdv()->format('Y'),
-                $rdv->getDateRdv()->format('m'),
-                $rdv->getDateRdv()->format('d')
-            );
-            $newRdvDateTime->setTime(
-                $rdv->getHeureRdv()->format('H'),
-                $rdv->getHeureRdv()->format('i')
-            );
+            $newRdvDateTime = $this->combineDateAndTime($rdv->getDateRdv(), $rdv->getHeureRdv());
 
-            if ($newRdvDateTime < new \DateTime()) {
-                $this->addFlash('error', '❌ La date et l\'heure doivent être dans le futur');
+            if ($newRdvDateTime < new \DateTimeImmutable()) {
+                $this->addFlash('error', 'âŒ La date et l\'heure doivent Ãªtre dans le futur');
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
             }
 
             $creneauChanged = (
-                $rdv->getMedecin()->getId() !== $oldMedecin->getId() ||
+                 $rdv->getMedecin()->getId() !== $oldMedecin->getId() ||
                 $rdv->getDateRdv()->format('Y-m-d') !== $oldDate->format('Y-m-d') ||
                 $rdv->getHeureRdv()->format('H:i') !== $oldHeure->format('H:i')
             );
@@ -206,14 +208,14 @@ class RDVController extends AbstractController
                     ->getResult();
 
                 if (!empty($conflictingRdv)) {
-                    $this->addFlash('error', '⚠️ Ce créneau horaire est déjà réservé. Veuillez choisir un autre créneau');
+                    $this->addFlash('error', 'âš ï¸ Ce crÃ©neau horaire est dÃ©jÃ  rÃ©servÃ©. Veuillez choisir un autre crÃ©neau');
                     return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
                 }
             }
 
             $em->flush();
 
-            $this->addFlash('success', '✅ Rendez-vous modifié avec succès!');
+            $this->addFlash('success', 'âœ… Rendez-vous modifiÃ© avec succÃ¨s!');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
@@ -224,6 +226,9 @@ class RDVController extends AbstractController
         ]);
     }
 
+    /**
+     * @return array<string, int|string|null>
+     */
     private function buildMedecinPayload(Medecin $medecin): array
     {
         return [
@@ -239,7 +244,7 @@ class RDVController extends AbstractController
     }
 
     /**
-     * 📅 Liste des rendez-vous du patient
+     * ðŸ“… Liste des rendez-vous du patient
      */
     #[Route('/rdv/mes-rdv', name: 'app_rdv_mes_rdv')]
     #[IsGranted('ROLE_PATIENT')]
@@ -254,12 +259,7 @@ class RDVController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $allRdvs = $rdvRepository->findBy(
-            ['patient' => $patient],
-            ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']
-        );
-
-        $totalItems = count($allRdvs);
+        $totalItems = $rdvRepository->countByPatientEntity($patient);
         $perPage = 6;
         $totalPages = max(1, (int) ceil($totalItems / $perPage));
         $currentPage = max(1, (int) $request->query->get('page', 1));
@@ -268,19 +268,32 @@ class RDVController extends AbstractController
         }
 
         $offset = ($currentPage - 1) * $perPage;
-        $rdvs = array_slice($allRdvs, $offset, $perPage);
+        $rdvs = $rdvRepository->findByPatientPaginated($patient, $perPage, $offset);
+
+        $statusCounts = $rdvRepository->countStatusesByPatient($patient);
+        $attente = 0;
+        $confirme = 0;
+        $annule = 0;
+        foreach ($statusCounts as $status => $count) {
+            $normalized = strtolower(str_replace('é', 'e', (string) $status));
+            if ($normalized === 'en attente') {
+                $attente += $count;
+                continue;
+            }
+            if (str_starts_with($normalized, 'confirm')) {
+                $confirme += $count;
+                continue;
+            }
+            if (str_starts_with($normalized, 'annul')) {
+                $annule += $count;
+            }
+        }
 
         $stats = [
             'total' => $totalItems,
-            'attente' => count(array_filter($allRdvs, static fn (RendezVous $r): bool => $r->getStatut() === 'en attente')),
-            'confirme' => count(array_filter(
-                $allRdvs,
-                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'confirm')
-            )),
-            'annule' => count(array_filter(
-                $allRdvs,
-                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'annul')
-            )),
+            'attente' => $attente,
+            'confirme' => $confirme,
+            'annule' => $annule,
         ];
 
         $session = $request->getSession();
@@ -328,8 +341,9 @@ class RDVController extends AbstractController
     #[IsGranted('ROLE_PATIENT')]
     public function hideDurationPrediction(int $id, Request $request, RendezVousRepository $rdvRepository): JsonResponse
     {
+        $patient = $this->getAuthenticatedPatient();
         $rdv = $rdvRepository->find($id);
-        if (!$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $this->getUser()?->getId()) {
+        if (!$patient || !$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $patient->getId()) {
             return $this->json(['ok' => false, 'message' => 'Rendez-vous introuvable'], 404);
         }
 
@@ -342,7 +356,7 @@ class RDVController extends AbstractController
     }
 
     /**
-     * 👁️ Consulter un rendez-vous (lecture seule pour RDV annulés)
+     * ðŸ‘ï¸ Consulter un rendez-vous (lecture seule pour RDV annulÃ©s)
      */
     #[Route('/rdv/consulter/{id}', name: 'app_rdv_consulter', methods: ['GET'])]
     #[IsGranted('ROLE_PATIENT')]
@@ -353,10 +367,11 @@ class RDVController extends AbstractController
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouvÃ©');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        $patient = $this->getAuthenticatedPatient();
+        if (!$patient || ($rdv->getPatient()?->getId() ?? 0) !== $patient->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -366,7 +381,7 @@ class RDVController extends AbstractController
     }
 
     /**
-     * ❌ Annuler un rendez-vous
+     * âŒ Annuler un rendez-vous
      */
     #[Route('/rdv/annuler/{id}', name: 'app_rdv_annuler', methods: ['POST'])]
     #[IsGranted('ROLE_PATIENT')]
@@ -378,38 +393,35 @@ class RDVController extends AbstractController
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
-            throw $this->createNotFoundException('Rendez-vous non trouvé');
+            throw $this->createNotFoundException('Rendez-vous non trouvÃ©');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        $patient = $this->getAuthenticatedPatient();
+        if (!$patient || ($rdv->getPatient()?->getId() ?? 0) !== $patient->getId()) {
             throw $this->createAccessDeniedException();
         }
 
-        if ($rdv->getStatut() === 'Annulé') {
-            $this->addFlash('error', '❌ Ce rendez-vous est déjà annulé');
+        if ($rdv->getStatut() === 'AnnulÃ©') {
+            $this->addFlash('error', 'âŒ Ce rendez-vous est dÃ©jÃ  annulÃ©');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        $rdvDateTime = new \DateTime();
-        $rdvDateTime->setDate(
-            $rdv->getDateRdv()->format('Y'),
-            $rdv->getDateRdv()->format('m'),
-            $rdv->getDateRdv()->format('d')
-        );
-        $rdvDateTime->setTime(
-            $rdv->getHeureRdv()->format('H'),
-            $rdv->getHeureRdv()->format('i')
-        );
-
-        if ($rdvDateTime < new \DateTime()) {
-            $this->addFlash('error', '❌ Impossible d\'annuler un rendez-vous passé');
+        if (!$rdv->getDateRdv() || !$rdv->getHeureRdv()) {
+            $this->addFlash('error', 'âŒ Date/heure du rendez-vous invalide');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
-        $rdv->setStatut('Annulé');
+        $rdvDateTime = $this->combineDateAndTime($rdv->getDateRdv(), $rdv->getHeureRdv());
+
+        if ($rdvDateTime < new \DateTimeImmutable()) {
+            $this->addFlash('error', 'âŒ Impossible d\'annuler un rendez-vous passÃ©');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
+
+        $rdv->setStatut('AnnulÃ©');
         $em->flush();
 
-        $this->addFlash('success', '✅ Rendez-vous annulé avec succès');
+        $this->addFlash('success', 'âœ… Rendez-vous annulÃ© avec succÃ¨s');
         return $this->redirectToRoute('app_rdv_mes_rdv');
     }
 
@@ -533,8 +545,9 @@ class RDVController extends AbstractController
         RendezVousRepository $rdvRepository,
         PatientAppointmentGuidanceService $guidanceService
     ): JsonResponse {
+        $patient = $this->getAuthenticatedPatient();
         $rdv = $rdvRepository->find($id);
-        if (!$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $this->getUser()?->getId()) {
+        if (!$patient || !$rdv || !$rdv->getPatient() || $rdv->getPatient()->getId() !== $patient->getId()) {
             return $this->json([
                 'success' => false,
                 'error' => 'Rendez-vous introuvable.',
@@ -549,4 +562,7 @@ class RDVController extends AbstractController
         ]);
     }
 }
+
+
+
 

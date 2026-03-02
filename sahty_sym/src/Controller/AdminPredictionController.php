@@ -206,7 +206,7 @@ class AdminPredictionController extends AbstractController
         }
 
         usort($results, static function (array $a, array $b): int {
-            return ($b['overall_risk'] ?? 0) <=> ($a['overall_risk'] ?? 0);
+            return $b['overall_risk'] <=> $a['overall_risk'];
         });
 
         return $results;

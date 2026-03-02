@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
@@ -18,25 +19,25 @@ class Evenement
     private ?int $id = null;
 
     #[ORM\Column(length: 200)]
-    private ?string $titre = null;
+    private string $titre = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
      #[Assert\Choice(choices: ['webinaire', 'atelier', 'depistage', 'conference', 'groupe_parole'])]
     #[ORM\Column(length: 50)]
-    private ?string $type = null;
+    private string $type = '';
 
-   #[ORM\Column(type: 'datetime')]
-private ?\DateTimeInterface $dateDebut = null;
+   #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $dateDebut;
 
-#[ORM\Column(type: 'datetime', nullable: true)]
-private ?\DateTimeInterface $dateFin = null;
+#[ORM\Column(type: 'datetime_immutable', nullable: true)]
+private ?\DateTimeImmutable $dateFin = null;
 
 
     #[Assert\Choice(choices: ['en_ligne', 'presentiel', 'hybride'])]
     #[ORM\Column(length: 50)]
-    private ?string $mode = null;
+    private string $mode = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $lieu = null;
@@ -52,7 +53,7 @@ private ?\DateTimeInterface $dateFin = null;
 
     #[Assert\Choice(choices: ['brouillon', 'planifie', 'confirme', 'en_cours', 'termine', 'annule'])]
     #[ORM\Column(length: 50)]
-    private ?string $statut = 'brouillon';
+    private string $statut = 'brouillon';
 
    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
 #[ORM\JoinColumn(
@@ -67,23 +68,26 @@ private ?Utilisateur $createur = null;
     private ?string $tarif = null;
 
     #[ORM\Column(type: 'string', length: 10, options: ['default' => 'DT'])]
-    private ?string $devise = 'DT';
+    private string $devise = 'DT';
 
-    #[ORM\Column]
-    private ?\DateTime $creeLe = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $creeLe;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTime $modifieLe = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $modifieLe = null;
 
     /**
      * @var Collection<int, InscriptionEvenement>
      */
-    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $inscriptions;
 
+    /**
+     * @var Collection<int, GroupeCible>
+     */
     #[ORM\ManyToMany(targetEntity: GroupeCible::class, inversedBy: 'evenements')]
-#[ORM\JoinTable(name: 'evenement_groupe_cible')]
-private Collection $groupeCibles;
+    #[ORM\JoinTable(name: 'evenement_groupe_cible')]
+    private Collection $groupeCibles;
 
 
 #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -107,14 +111,22 @@ public function setStatutDemande(?string $statutDemande): self
     {
         $this->inscriptions = new ArrayCollection();
         $this->groupeCibles = new ArrayCollection();
+        $this->dateDebut = new \DateTimeImmutable();
+        $this->creeLe = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
-    public function getTitre(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getTitre(): string
     {
         return $this->titre;
     }
@@ -138,7 +150,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): string
     {
         return $this->type;
     }
@@ -150,31 +162,31 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTime
+    public function getDateDebut(): \DateTimeImmutable
     {
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTime $dateDebut): static
+    public function setDateDebut(\DateTimeInterface $dateDebut): static
     {
-        $this->dateDebut = $dateDebut;
+        $this->dateDebut = self::toImmutable($dateDebut);
 
         return $this;
     }
 
-    public function getDateFin(): ?\DateTime
+    public function getDateFin(): ?\DateTimeImmutable
     {
         return $this->dateFin;
     }
 
-    public function setDateFin(\DateTime $dateFin): static
+    public function setDateFin(?\DateTimeInterface $dateFin): static
     {
-        $this->dateFin = $dateFin;
+        $this->dateFin = $dateFin !== null ? self::toImmutable($dateFin) : null;
 
         return $this;
     }
 
-    public function getMode(): ?string
+    public function getMode(): string
     {
         return $this->mode;
     }
@@ -234,7 +246,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -270,7 +282,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDevise(): ?string
+    public function getDevise(): string
     {
         return $this->devise;
     }
@@ -282,26 +294,26 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->creeLe;
     }
 
-    public function setCreeLe(\DateTime $creeLe): static
+    public function setCreeLe(\DateTimeInterface $creeLe): static
     {
-        $this->creeLe = $creeLe;
+        $this->creeLe = self::toImmutable($creeLe);
 
         return $this;
     }
 
-    public function getModifieLe(): ?\DateTime
+    public function getModifieLe(): ?\DateTimeImmutable
     {
         return $this->modifieLe;
     }
 
-    public function setModifieLe(?\DateTime $modifieLe): static
+    public function setModifieLe(?\DateTimeInterface $modifieLe): static
     {
-        $this->modifieLe = $modifieLe;
+        $this->modifieLe = $modifieLe !== null ? self::toImmutable($modifieLe) : null;
 
         return $this;
     }
@@ -336,9 +348,13 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getGroupeCibles(): Collection {
-    return $this->groupeCibles;
-}
+    /**
+     * @return Collection<int, GroupeCible>
+     */
+    public function getGroupeCibles(): Collection
+    {
+        return $this->groupeCibles;
+    }
 
 public function addGroupeCible(GroupeCible $groupe): self {
     if (!$this->groupeCibles->contains($groupe)) {
@@ -350,6 +366,11 @@ public function addGroupeCible(GroupeCible $groupe): self {
 public function removeGroupeCible(GroupeCible $groupe): self {
     $this->groupeCibles->removeElement($groupe);
     return $this;
+}
+
+private static function toImmutable(\DateTimeInterface $value): \DateTimeImmutable
+{
+    return $value instanceof \DateTimeImmutable ? $value : \DateTimeImmutable::createFromInterface($value);
 }
 
 }

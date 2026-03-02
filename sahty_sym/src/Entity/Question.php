@@ -2,11 +2,10 @@
 
 namespace App\Entity;
 
-use App\Repository\QuestionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: QuestionRepository::class)]
+#[ORM\Entity]
 class Question
 {
     #[ORM\Id]
@@ -15,16 +14,16 @@ class Question
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'questions')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Quiz $quiz = null;
 
     #[ORM\Column(type: 'text')]
     #[Assert\NotBlank(message: "Le texte de la question est obligatoire.")]
-    private ?string $text = null;
+    private string $text = '';
 
     #[ORM\Column(length: 30)]
     #[Assert\Choice(choices: ['likert_0_4', 'likert_1_5', 'yes_no'], message: 'Type invalide.')]
-    private ?string $type = 'likert_0_4';
+    private string $type = 'likert_0_4';
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $category = null; // ex: stress, anxiete, concentration, sommeil
@@ -38,7 +37,13 @@ class Question
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getQuiz(): ?Quiz
@@ -52,7 +57,7 @@ class Question
         return $this;
     }
 
-    public function getText(): ?string
+    public function getText(): string
     {
         return $this->text;
     }
@@ -63,7 +68,7 @@ class Question
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): string
     {
         return $this->type;
     }

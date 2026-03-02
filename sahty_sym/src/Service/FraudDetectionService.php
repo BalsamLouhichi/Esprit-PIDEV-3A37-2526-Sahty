@@ -10,7 +10,9 @@ use Doctrine\ORM\EntityManagerInterface;
 class FraudDetectionService
 {
     private EntityManagerInterface $em;
+    /** @var array<string, int|float> */
     private array $thresholds;
+    /** @var array<string, int|float> */
     private array $weights;
 
     /**

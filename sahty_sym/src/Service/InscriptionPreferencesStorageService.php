@@ -10,12 +10,17 @@ class InscriptionPreferencesStorageService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        $projectDir = (string) $parameterBag->get('kernel.project_dir');
+        $projectDirValue = $parameterBag->get('kernel.project_dir');
+        $projectDir = is_scalar($projectDirValue) ? (string) $projectDirValue : '';
         $this->storagePath = $projectDir . '/var/inscription_preferences.json';
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function saveForInscription(int $inscriptionId, array $payload): void
     {
+        /** @var array<string, array<string, mixed>> $all */
         $all = $this->readAll();
         $all[(string) $inscriptionId] = $payload;
         $this->writeAll($all);
@@ -23,17 +28,24 @@ class InscriptionPreferencesStorageService
 
     public function removeForInscription(int $inscriptionId): void
     {
+        /** @var array<string, array<string, mixed>> $all */
         $all = $this->readAll();
         unset($all[(string) $inscriptionId]);
         $this->writeAll($all);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getForInscription(int $inscriptionId): array
     {
         $all = $this->readAll();
         return $all[(string) $inscriptionId] ?? [];
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getForEvent(int $eventId): array
     {
         $all = $this->readAll();
@@ -48,6 +60,9 @@ class InscriptionPreferencesStorageService
         return $result;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     private function readAll(): array
     {
         if (!is_file($this->storagePath)) {
@@ -60,9 +75,24 @@ class InscriptionPreferencesStorageService
         }
 
         $decoded = json_decode($raw, true);
-        return is_array($decoded) ? $decoded : [];
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($decoded as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $normalized[(string) $key] = $item;
+        }
+
+        return $normalized;
     }
 
+    /**
+     * @param array<int|string, array<string, mixed>> $payload
+     */
     private function writeAll(array $payload): void
     {
         $dir = dirname($this->storagePath);

@@ -15,7 +15,7 @@ class LaboratoireTypeAnalyse
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'laboratoireTypeAnalyses')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Laboratoire $laboratoire = null;
 
     #[ORM\ManyToOne(inversedBy: 'laboratoireTypeAnalyses')]
@@ -23,7 +23,7 @@ class LaboratoireTypeAnalyse
     private ?TypeAnalyse $typeAnalyse = null;
 
     #[ORM\Column]
-    private ?bool $disponible = null;
+    private bool $disponible = true;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     private ?string $prix = null;
@@ -36,7 +36,13 @@ class LaboratoireTypeAnalyse
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getLaboratoire(): ?Laboratoire
@@ -63,7 +69,7 @@ class LaboratoireTypeAnalyse
         return $this;
     }
 
-    public function isDisponible(): ?bool
+    public function isDisponible(): bool
     {
         return $this->disponible;
     }

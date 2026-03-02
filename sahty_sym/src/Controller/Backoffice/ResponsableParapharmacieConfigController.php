@@ -45,10 +45,11 @@ class ResponsableParapharmacieConfigController extends AbstractController
 
         // Créer un formulaire manuel pour la configuration
         if ($request->isMethod('POST')) {
-            $nom = $request->request->get('nom');
-            $adresse = $request->request->get('adresse');
-            $telephone = $request->request->get('telephone');
-            $email = $request->request->get('email');
+            $nom = trim($request->request->getString('nom'));
+            $adresse = trim($request->request->getString('adresse'));
+            $telephone = trim($request->request->getString('telephone'));
+            $emailValue = trim($request->request->getString('email'));
+            $email = $emailValue === '' ? null : $emailValue;
 
             // Validation basique
             $errors = [];

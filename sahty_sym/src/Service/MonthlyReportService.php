@@ -39,6 +39,9 @@ class MonthlyReportService
         ];
     }
 
+    /**
+     * @param array<string, mixed> $report
+     */
     public function renderPdf(array $report): string
     {
         $options = new Options();
@@ -58,6 +61,9 @@ class MonthlyReportService
         return $dompdf->output();
     }
 
+    /**
+     * @param array<string, mixed> $report
+     */
     public function savePdf(array $report, string $directory): string
     {
         if (!is_dir($directory)) {

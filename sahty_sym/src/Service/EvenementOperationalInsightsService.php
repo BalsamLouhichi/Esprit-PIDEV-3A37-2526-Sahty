@@ -18,6 +18,10 @@ class EvenementOperationalInsightsService
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $context
+     * @return array{location_valid: bool, location_message: ?string, weather_warning: ?string}
+     */
     public function analyze(Evenement $evenement, array $context = []): array
     {
         $insights = [
@@ -108,6 +112,9 @@ class EvenementOperationalInsightsService
         return in_array((string) $evenement->getMode(), ['presentiel', 'hybride'], true);
     }
 
+    /**
+     * @return array{lat: float, lon: float}|null
+     */
     private function geocodeLocation(string $query): ?array
     {
         if ($this->mapboxAccessToken !== '') {
@@ -120,6 +127,9 @@ class EvenementOperationalInsightsService
         return $this->geocodeWithNominatim($query);
     }
 
+    /**
+     * @return array{lat: float, lon: float}|null
+     */
     private function geocodeWithMapbox(string $query): ?array
     {
         try {
@@ -154,6 +164,9 @@ class EvenementOperationalInsightsService
         }
     }
 
+    /**
+     * @return array{lat: float, lon: float}|null
+     */
     private function geocodeWithNominatim(string $query): ?array
     {
         try {
@@ -171,7 +184,7 @@ class EvenementOperationalInsightsService
             ]);
 
             $results = $response->toArray(false);
-            if (!is_array($results) || count($results) === 0) {
+            if (count($results) === 0) {
                 return null;
             }
 

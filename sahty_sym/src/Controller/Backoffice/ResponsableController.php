@@ -27,7 +27,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/responsable')]
 class ResponsableController extends AbstractController
 {
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
     
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -241,7 +241,7 @@ class ResponsableController extends AbstractController
                     
                     // Supprimer l'ancienne image
                     if ($produit->getImage()) {
-                        $oldImage = $this->getParameter('produits_images_directory').'/'.$produit->getImage();
+                        $oldImage = $this->getProduitsImagesDirectory() . '/' . $produit->getImage();
                         if (file_exists($oldImage)) {
                             unlink($oldImage);
                         }
@@ -288,10 +288,10 @@ class ResponsableController extends AbstractController
             return $this->redirectToRoute('app_responsable_produits');
         }
         
-        if ($this->isCsrfTokenValid('delete'.$produit->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$produit->getId(), $request->request->getString('_token'))) {
             // Supprimer l'image associée
             if ($produit->getImage()) {
-                $imagePath = $this->getParameter('produits_images_directory').'/'.$produit->getImage();
+                $imagePath = $this->getProduitsImagesDirectory() . '/' . $produit->getImage();
                 if (file_exists($imagePath)) {
                     unlink($imagePath);
                 }
@@ -354,12 +354,13 @@ class ResponsableController extends AbstractController
         }
         
         // Vérifier que la commande appartient bien à cette parapharmacie
-        if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
+        $commandeParapharmacie = $commande->getParapharmacie();
+        if (!$commandeParapharmacie || $commandeParapharmacie->getId() !== $parapharmacie->getId()) {
             $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
         
-        $nouveauStatut = $request->request->get('statut');
+        $nouveauStatut = $request->request->getString('statut');
         $statutsValides = ['en_attente', 'confirmee', 'preparation', 'expediee', 'livree', 'annulee'];
         
         if (in_array($nouveauStatut, $statutsValides)) {
@@ -387,13 +388,13 @@ class ResponsableController extends AbstractController
             return;
         }
 
-        $from = (string) (
-            $_ENV['APP_MAILER_FROM']
-            ?? getenv('APP_MAILER_FROM')
-            ?? $_ENV['MAILER_FROM']
-            ?? getenv('MAILER_FROM')
-            ?: 'no-reply@sahty.local'
-        );
+        $from = getenv('APP_MAILER_FROM');
+        if (!is_string($from) || $from === '') {
+            $from = getenv('MAILER_FROM');
+        }
+        if (!is_string($from) || $from === '') {
+            $from = 'no-reply@sahty.local';
+        }
 
         try {
             $html = $this->renderView('emails/commande_acceptee_patient.html.twig', [
@@ -428,7 +429,8 @@ class ResponsableController extends AbstractController
         }
         
         // Vérifier que la commande appartient bien à cette parapharmacie
-        if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
+        $commandeParapharmacie = $commande->getParapharmacie();
+        if (!$commandeParapharmacie || $commandeParapharmacie->getId() !== $parapharmacie->getId()) {
             $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
@@ -596,6 +598,16 @@ class ResponsableController extends AbstractController
             'count' => count($alerts),
             'alerts' => $alerts,
         ]);
+    }
+
+    private function getProduitsImagesDirectory(): string
+    {
+        $dir = $this->getParameter('produits_images_directory');
+        if (!is_string($dir) || $dir === '') {
+            throw new \RuntimeException('Invalid produits_images_directory parameter.');
+        }
+
+        return $dir;
     }
 }
 

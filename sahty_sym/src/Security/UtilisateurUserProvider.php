@@ -4,6 +4,7 @@ namespace App\Security;
 
 use App\Entity\Utilisateur;
 use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -11,7 +12,10 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class UtilisateurUserProvider implements UserProviderInterface
 {
-    public function __construct(private UtilisateurRepository $userRepository)
+    public function __construct(
+        private UtilisateurRepository $userRepository,
+        private EntityManagerInterface $entityManager
+    )
     {
     }
 
@@ -40,8 +44,10 @@ class UtilisateurUserProvider implements UserProviderInterface
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', $user::class));
         }
 
-        // Reload user from database
-        $refreshedUser = $this->userRepository->find($user->getId());
+        // Reload using the concrete class to avoid unnecessary JOINs on sibling subclasses.
+        $refreshedUser = $this->entityManager
+            ->getRepository($user::class)
+            ->find($user->getId());
 
         if (!$refreshedUser) {
             throw new UserNotFoundException(sprintf('User with id %d not found', $user->getId()));

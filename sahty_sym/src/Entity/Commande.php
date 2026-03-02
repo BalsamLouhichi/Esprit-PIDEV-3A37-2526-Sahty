@@ -17,7 +17,7 @@ class Commande
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
-    private ?string $numero = null;
+    private string $numero = '';
 
     #[ORM\ManyToOne(targetEntity: Produit::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -28,34 +28,34 @@ class Commande
     private ?Parapharmacie $parapharmacie = null;
 
     #[ORM\Column]
-    private ?int $quantite = null;
+    private int $quantite = 0;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $prixUnitaire = null;
+    private string $prixUnitaire = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $prixTotal = null;
+    private string $prixTotal = '0.00';
 
     #[ORM\Column(length: 100)]
-    private ?string $nomClient = null;
+    private string $nomClient = '';
 
     #[ORM\Column(length: 150)]
-    private ?string $email = null;
+    private string $email = '';
 
     #[ORM\Column(length: 30)]
-    private ?string $telephone = null;
+    private string $telephone = '';
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $adresseLivraison = null;
+    private string $adresseLivraison = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $statut = 'en_attente';
+    private string $statut = 'en_attente';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateCreation = null;
+    private \DateTimeInterface $dateCreation;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateModification = null;
@@ -78,14 +78,18 @@ class Commande
         return 'CMD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
     }
 
-    // ----- Getters et Setters -----
-
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNumero(): ?string
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getNumero(): string
     {
         return $this->numero;
     }
@@ -118,7 +122,7 @@ class Commande
         return $this;
     }
 
-    public function getQuantite(): ?int
+    public function getQuantite(): int
     {
         return $this->quantite;
     }
@@ -129,7 +133,7 @@ class Commande
         return $this;
     }
 
-    public function getPrixUnitaire(): ?string
+    public function getPrixUnitaire(): string
     {
         return $this->prixUnitaire;
     }
@@ -140,7 +144,7 @@ class Commande
         return $this;
     }
 
-    public function getPrixTotal(): ?string
+    public function getPrixTotal(): string
     {
         return $this->prixTotal;
     }
@@ -151,7 +155,7 @@ class Commande
         return $this;
     }
 
-    public function getNomClient(): ?string
+    public function getNomClient(): string
     {
         return $this->nomClient;
     }
@@ -162,7 +166,7 @@ class Commande
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): string
     {
         return $this->email;
     }
@@ -173,7 +177,7 @@ class Commande
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getTelephone(): string
     {
         return $this->telephone;
     }
@@ -184,7 +188,7 @@ class Commande
         return $this;
     }
 
-    public function getAdresseLivraison(): ?string
+    public function getAdresseLivraison(): string
     {
         return $this->adresseLivraison;
     }
@@ -206,7 +210,7 @@ class Commande
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -217,7 +221,7 @@ class Commande
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeInterface
+    public function getDateCreation(): \DateTimeInterface
     {
         return $this->dateCreation;
     }
@@ -266,12 +270,9 @@ class Commande
         return $this;
     }
 
-    // Méthodes utilitaires
     public function calculerPrixTotal(): void
     {
-        if ($this->prixUnitaire && $this->quantite) {
-            $this->prixTotal = bcmul($this->prixUnitaire, (string)$this->quantite, 2);
-        }
+        $this->prixTotal = number_format((float) $this->prixUnitaire * $this->quantite, 2, '.', '');
     }
 
     public function getStatutLibelle(): string
@@ -279,14 +280,14 @@ class Commande
         $statuts = [
             'en_attente' => 'En attente',
             'en_attente_paiement' => 'En attente de paiement',
-            'confirmee' => 'Confirmée',
-            'en_preparation' => 'En préparation',
-            'pret' => 'Prête à être récupérée',
-            'recuperee' => 'Récupérée',
-            'annulee' => 'Annulée'
+            'confirmee' => 'Confirmee',
+            'en_preparation' => 'En preparation',
+            'pret' => 'Prete a etre recuperee',
+            'recuperee' => 'Recuperee',
+            'annulee' => 'Annulee',
         ];
 
-        return $statuts[$this->statut] ?? $this->statut;
+        return $statuts[$this->statut] ?? 'Inconnu';
     }
 
     public function getStatutCouleur(): string
@@ -298,15 +299,12 @@ class Commande
             'en_preparation' => 'info',
             'pret' => 'success',
             'recuperee' => 'secondary',
-            'annulee' => 'danger'
+            'annulee' => 'danger',
         ];
 
         return $couleurs[$this->statut] ?? 'secondary';
     }
 
-    /**
-     * Obtenir le nombre total d'articles dans la commande
-     */
     public function getNombreTotalArticles(): int
     {
         $total = 0;
@@ -317,17 +315,18 @@ class Commande
     }
 
     /**
-     * Obtenir le détail des articles pour l'affichage
+     * @return list<array{produit: string, quantite: int, prix_unitaire: string, sous_total: string}>
      */
     public function getDetailsArticles(): array
     {
         $details = [];
         foreach ($this->lignesCommandes as $ligne) {
+            $produit = $ligne->getProduit();
             $details[] = [
-                'produit' => $ligne->getProduit()->getNom(),
+                'produit' => $produit?->getNom() ?? 'Produit inconnu',
                 'quantite' => $ligne->getQuantite(),
                 'prix_unitaire' => $ligne->getPrixUnitaire(),
-                'sous_total' => $ligne->getSousTotal()
+                'sous_total' => $ligne->getSousTotal(),
             ];
         }
         return $details;

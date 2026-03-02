@@ -86,7 +86,7 @@ final class GoogleMeetApiService
         $status = $response->getStatusCode();
         $data = $response->toArray(false);
         if ($status < 200 || $status >= 300) {
-            $message = is_array($data) ? json_encode($data) : (string) $response->getContent(false);
+            $message = (string) json_encode($data);
             throw new \RuntimeException('Google Calendar event creation failed: ' . $message);
         }
 
@@ -131,7 +131,7 @@ final class GoogleMeetApiService
         $status = $response->getStatusCode();
         $data = $response->toArray(false);
         if ($status < 200 || $status >= 300 || empty($data['access_token'])) {
-            $message = is_array($data) ? json_encode($data) : (string) $response->getContent(false);
+            $message = (string) json_encode($data);
             throw new \RuntimeException('Failed to get Google access token: ' . $message);
         }
 

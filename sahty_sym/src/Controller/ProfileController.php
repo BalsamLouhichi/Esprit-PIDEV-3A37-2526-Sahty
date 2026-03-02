@@ -6,98 +6,93 @@ use App\Entity\Utilisateur;
 use App\Form\ProfileEditType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class ProfileController extends AbstractController
 {
+    private function getAuthenticatedUtilisateur(): Utilisateur
+    {
+        $user = $this->getUser();
+        if (!$user instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
+    }
+
     #[Route('/profile', name: 'app_profile')]
     public function index(): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        
-        $user = $this->getUser();
-        
+
         return $this->render('profile/index.html.twig', [
-            'user' => $user,
+            'user' => $this->getAuthenticatedUtilisateur(),
         ]);
     }
 
     #[Route('/profile/edit', name: 'app_profile_edit')]
     public function edit(
-        Request $request, 
+        Request $request,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger
-    ): Response
-    {
+    ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        
-        /** @var Utilisateur $user */
-        $user = $this->getUser();
-        
-        // IMPORTANT: Récupérer l'utilisateur depuis la base pour éviter les problèmes de proxy
-        $user = $entityManager->getRepository(Utilisateur::class)->find($user->getId());
-        
+
+        $user = $entityManager->getRepository(Utilisateur::class)->find(
+            $this->getAuthenticatedUtilisateur()->getId()
+        );
+        if (!$user instanceof Utilisateur) {
+            throw $this->createNotFoundException('Utilisateur introuvable');
+        }
+
         $form = $this->createForm(ProfileEditType::class, $user);
         $form->handleRequest($request);
-        
+
         if ($form->isSubmitted() && $form->isValid()) {
-            
-            // ===========================================
-            // GESTION DE L'UPLOAD DE LA PHOTO
-            // ===========================================
             $photoFile = $form->get('photoProfil')->getData();
-            
-            if ($photoFile) {
+
+            if ($photoFile !== null) {
                 $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-                
-                // Nettoyer le nom du fichier
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
-                
+                $safeFilename = $slugger->slug((string) $originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid('', true) . '.' . $photoFile->guessExtension();
+
                 try {
-                    // Créer le dossier s'il n'existe pas
-                    $uploadDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    if (!is_string($projectDir)) {
+                        throw new \RuntimeException('Invalid project dir parameter.');
+                    }
+                    $uploadDirectory = $projectDir . '/public/uploads/profiles';
                     if (!is_dir($uploadDirectory)) {
                         mkdir($uploadDirectory, 0777, true);
                     }
-                    
-                    // Déplacer le fichier
-                    $photoFile->move(
-                        $uploadDirectory,
-                        $newFilename
-                    );
-                    
-                    // Supprimer l'ancienne photo si elle existe
-                    if ($user->getPhotoProfil()) {
-                        $oldPhotoPath = $uploadDirectory . '/' . $user->getPhotoProfil();
-                        if (file_exists($oldPhotoPath) && is_file($oldPhotoPath)) {
+
+                    $photoFile->move($uploadDirectory, $newFilename);
+
+                    $existingPhoto = $user->getPhotoProfil();
+                    if ($existingPhoto !== null && $existingPhoto !== '') {
+                        $oldPhotoPath = $uploadDirectory . '/' . $existingPhoto;
+                        if (is_file($oldPhotoPath)) {
                             unlink($oldPhotoPath);
                         }
                     }
-                    
-                    // Mettre à jour le nom du fichier dans l'entité
+
                     $user->setPhotoProfil($newFilename);
-                    
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo.');
+                } catch (FileException) {
+                    $this->addFlash('error', 'Erreur lors du telechargement de la photo.');
                 }
             }
-            
-            // ===========================================
-            // SAUVEGARDER LES MODIFICATIONS
-            // ===========================================
-            // Pas besoin de persist() pour un update, flush() suffit
+
             $entityManager->flush();
-            
-            $this->addFlash('success', 'Votre profil a été mis à jour avec succès.');
+            $this->addFlash('success', 'Votre profil a ete mis a jour avec succes.');
+
             return $this->redirectToRoute('app_profile');
         }
-        
+
         return $this->render('profile/edit.html.twig', [
             'form' => $form->createView(),
             'user' => $user,
@@ -106,51 +101,46 @@ class ProfileController extends AbstractController
 
     #[Route('/profile/change-password', name: 'app_profile_change_password')]
     public function changePassword(
-        Request $request, 
+        Request $request,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher
     ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        
-        /** @var Utilisateur $user */
-        $user = $this->getUser();
-        
-        // Récupérer l'utilisateur depuis la base
-        $user = $entityManager->getRepository(Utilisateur::class)->find($user->getId());
-        
+
+        $user = $entityManager->getRepository(Utilisateur::class)->find(
+            $this->getAuthenticatedUtilisateur()->getId()
+        );
+        if (!$user instanceof Utilisateur) {
+            throw $this->createNotFoundException('Utilisateur introuvable');
+        }
+
         if ($request->isMethod('POST')) {
-            $oldPassword = $request->request->get('old_password');
-            $newPassword = $request->request->get('new_password');
-            $confirmPassword = $request->request->get('confirm_password');
-            
-            // Vérifier l'ancien mot de passe
+            $oldPassword = (string) $request->request->get('old_password', '');
+            $newPassword = (string) $request->request->get('new_password', '');
+            $confirmPassword = (string) $request->request->get('confirm_password', '');
+
             if (!$passwordHasher->isPasswordValid($user, $oldPassword)) {
-                $this->addFlash('error', 'L\'ancien mot de passe est incorrect.');
+                $this->addFlash('error', 'L ancien mot de passe est incorrect.');
                 return $this->redirectToRoute('app_profile_change_password');
             }
-            
-            // Vérifier que les nouveaux mots de passe correspondent
+
             if ($newPassword !== $confirmPassword) {
                 $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas.');
                 return $this->redirectToRoute('app_profile_change_password');
             }
-            
-            // Vérifier la longueur du mot de passe
+
             if (strlen($newPassword) < 6) {
-                $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères.');
+                $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caracteres.');
                 return $this->redirectToRoute('app_profile_change_password');
             }
-            
-            // Hash et sauvegarde du nouveau mot de passe
-            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-            $user->setPassword($hashedPassword);
-            
+
+            $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
             $entityManager->flush();
-            
-            $this->addFlash('success', 'Votre mot de passe a été changé avec succès.');
+
+            $this->addFlash('success', 'Votre mot de passe a ete change avec succes.');
             return $this->redirectToRoute('app_profile');
         }
-        
+
         return $this->render('profile/change_password.html.twig', [
             'user' => $user,
         ]);

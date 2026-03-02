@@ -36,13 +36,15 @@ class FicheMedicaleController extends AbstractController
         DictationTranscriptionService $dictationTranscriptionService
     ): Response
     {
-        $user = $this->getUser();
+         $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
 
         $dictationStatus = $dictationTranscriptionService->getConfigurationStatus();
-        if (!($dictationStatus['ok'] ?? false)) {
-            $this->addFlash('warning', 'Dictée vocale indisponible: ' . (string) ($dictationStatus['error'] ?? 'Configuration invalide.'));
+        if ($dictationStatus['ok'] === false) {
+            $dictationError = isset($dictationStatus['error']) ? (string) $dictationStatus['error'] : 'Configuration invalide.';
+            $this->addFlash('warning', 'Dictee vocale indisponible: ' . $dictationError);
         }
         
         // Mode par défaut : LISTE
@@ -61,7 +63,7 @@ class FicheMedicaleController extends AbstractController
                 
                 // ✅ Vérifier les permissions d'accès
                 if ($fiche) {
-                    if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                    if ($isPatient && (!$patientUser || ($fiche->getPatient()?->getId() ?? 0) !== $patientUser->getId())) {
                         $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
                         return $this->redirectToRoute('app_fiche_medicale_index');
                     }
@@ -99,7 +101,10 @@ class FicheMedicaleController extends AbstractController
             
             $mode = 'new';
             $fiche = new FicheMedicale();
-            $fiche->setPatient($user);
+            if (!$patientUser) {
+                throw $this->createAccessDeniedException();
+            }
+            $fiche->setPatient($patientUser);
             
             $form = $this->createForm(FicheMedicaleType::class, $fiche, [
                 'is_medecin' => false
@@ -134,7 +139,7 @@ class FicheMedicaleController extends AbstractController
             }
             
             // ✅ Vérifier les permissions d'accès
-            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+            if ($isPatient && (!$patientUser || ($fiche->getPatient()?->getId() ?? 0) !== $patientUser->getId())) {
                 $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
@@ -175,7 +180,7 @@ class FicheMedicaleController extends AbstractController
             }
             
             // ✅ Vérifier les permissions de modification
-            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+            if ($isPatient && (!$patientUser || ($fiche->getPatient()?->getId() ?? 0) !== $patientUser->getId())) {
                 $this->addFlash('error', '❌ Vous ne pouvez modifier que vos propres fiches');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
@@ -217,9 +222,10 @@ class FicheMedicaleController extends AbstractController
             $ficheId = $request->request->get('delete_id');
             $fiche = $ficheMedicaleRepository->find($ficheId);
             
-            if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, $request->request->get('_token'))) {
+            $csrfToken = $request->request->get('_token');
+            if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, is_string($csrfToken) ? $csrfToken : null)) {
                 // ✅ Vérifier les permissions de suppression
-                if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                if ($isPatient && (!$patientUser || ($fiche->getPatient()?->getId() ?? 0) !== $patientUser->getId())) {
                     $this->addFlash('error', '❌ Vous ne pouvez supprimer que vos propres fiches');
                     return $this->redirectToRoute('app_fiche_medicale_index');
                 }
@@ -241,7 +247,7 @@ class FicheMedicaleController extends AbstractController
         
         // ✅ Recherche textuelle avec permissions (utilise le repository)
         if ($request->query->has('search')) {
-            $searchTerm = $request->query->get('search');
+             $searchTerm = (string) $request->query->get('search', '');
             if (!empty($searchTerm)) {
                 $fiches = $ficheMedicaleRepository->searchByText($searchTerm, $user);
             }
@@ -290,7 +296,8 @@ class FicheMedicaleController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         $fiche = $ficheMedicaleRepository->find($id);
-        $user = $this->getUser();
+         $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
         
         if (!$fiche) {
             $this->addFlash('error', '❌ Fiche non trouvée !');
@@ -301,7 +308,7 @@ class FicheMedicaleController extends AbstractController
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
         
-        if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+        if ($isPatient && (!$patientUser || ($fiche->getPatient()?->getId() ?? 0) !== $patientUser->getId())) {
             $this->addFlash('error', '❌ Accès non autorisé');
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
@@ -341,7 +348,8 @@ class FicheMedicaleController extends AbstractController
         FicheMedicaleRepository $ficheMedicaleRepository,
         EntityManagerInterface $entityManager
     ): Response {
-        $user = $this->getUser();
+         $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
         
         // ✅ Récupérer les fiches selon les permissions (utilise le repository)
         $fiches = $ficheMedicaleRepository->findByUserRole($user);
@@ -374,8 +382,9 @@ public function searchAjax(
     Request $request,
     FicheMedicaleRepository $repository
 ): JsonResponse {
-    $query = $request->query->get('q', '');
-    $user = $this->getUser();
+     $query = (string) $request->query->get('q', '');
+     $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
     
     if (strlen($query) < 2) {
         return $this->json([]);
@@ -419,13 +428,13 @@ public function searchAjax(
     }
     
     #[Route('/{id}', name: 'app_fiche_medicale_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function showRedirect($id): Response
+    public function showRedirect(int $id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['view' => $id]);
     }
     
     #[Route('/{id}/edit', name: 'app_fiche_medicale_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function editRedirect($id): Response
+    public function editRedirect(int $id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['edit' => $id]);
     }
@@ -448,7 +457,8 @@ public function searchAjax(
         }
         
         // Vérifier les permissions 
-        $user = $this->getUser();
+         $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
         if ($user instanceof Patient && $user->getId() !== $patient->getId()) {
             $this->addFlash('error', '❌ Vous ne pouvez créer une fiche que pour vous-même');
             return $this->redirectToRoute('app_fiche_medicale_index');
@@ -507,7 +517,9 @@ public function searchAjax(
         }
         
         // Vérifier que l'utilisateur est bien le patient du rendez-vous
-        if ($this->getUser()->getId() !== $rdv->getPatient()->getId()) {
+         $user = $this->getUser();
+         $patientUser = $user instanceof Patient ? $user : null;
+        if (!$patientUser || $patientUser->getId() !== ($rdv->getPatient()?->getId() ?? 0)) {
             $this->addFlash('error', '❌ Accès non autorisé !');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
@@ -594,10 +606,10 @@ public function searchAjax(
 
         $language = (string) $request->request->get('language', 'fr');
         $result = $dictationTranscriptionService->transcribe($audio, $language);
-        if (!($result['ok'] ?? false)) {
+        if ($result['ok'] === false) {
             return $this->json([
                 'success' => false,
-                'error' => (string) ($result['error'] ?? 'Erreur de transcription.'),
+                'error' => isset($result['error']) ? (string) $result['error'] : 'Erreur de transcription.',
             ], 502);
         }
 
@@ -645,10 +657,10 @@ public function searchAjax(
         }
 
         $result = $translationService->translateBatch($texts, [$targetLanguage], $sourceLanguage);
-        if (!($result['ok'] ?? false)) {
+        if ($result['ok'] === false) {
             return $this->json([
                 'success' => false,
-                'error' => (string) ($result['error'] ?? 'Erreur de traduction.'),
+                'error' => isset($result['error']) ? (string) $result['error'] : 'Erreur de traduction.',
             ], 502);
         }
 
@@ -658,3 +670,8 @@ public function searchAjax(
         ]);
     }
 }
+
+
+
+
+

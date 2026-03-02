@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Recommandation;
+use App\Entity\Quiz;
 use App\Form\RecommandationType;
 use App\Repository\QuizRepository;
 use App\Repository\RecommandationRepository;
@@ -116,14 +117,14 @@ class RecommandationController extends AbstractController
     public function getQuestions(int $quizId, QuizRepository $quizRepository): JsonResponse
     {
         $quiz = $quizRepository->find($quizId);
-        if (!$quiz) {
+        if (!$quiz instanceof Quiz) {
             return new JsonResponse([]);
         }
 
         $choices = [];
-        foreach ($quiz->getQuestions() ?? [] as $question) {
+        foreach ($quiz->getQuestions() as $question) {
             $choices[] = [
-                'text' => method_exists($question, 'getText') ? ($question->getText() ?? 'Question') : 'Question',
+                'text' => (string) $question->getText(),
             ];
         }
 
@@ -248,7 +249,7 @@ class RecommandationController extends AbstractController
     #[Route('/{id}', name: 'app_recommandation_delete', methods: ['POST'])]
     public function delete(Request $request, Recommandation $recommandation, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $recommandation->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $recommandation->getId(), $request->request->getString('_token'))) {
             $em->remove($recommandation);
             $em->flush();
             $this->addFlash('success', 'Recommandation supprimee avec succes.');

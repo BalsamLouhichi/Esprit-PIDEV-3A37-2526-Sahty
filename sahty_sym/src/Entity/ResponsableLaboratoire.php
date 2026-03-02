@@ -45,7 +45,7 @@ class ResponsableLaboratoire extends Utilisateur
     }
 
     /**
-     * Compatibilité avec l'ancien code utilisant laboratoireId
+     * CompatibilitÃ© avec l'ancien code utilisant laboratoireId
      */
     public function getLaboratoireId(): ?int
     {
@@ -55,7 +55,7 @@ class ResponsableLaboratoire extends Utilisateur
     // COMBINED: Keep YOUR setLaboratoireId but make it update both
     public function setLaboratoireId(?int $laboratoireId): self
     {
-        // Déprécié mais gardé pour compatibilité avec SignupController
+        // DÃ©prÃ©ciÃ© mais gardÃ© pour compatibilitÃ© avec SignupController
         return $this;
     }
 

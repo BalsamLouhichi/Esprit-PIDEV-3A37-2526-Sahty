@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
@@ -39,19 +40,20 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     protected ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    protected ?string $email = null;
+    protected string $email = '';
 
     #[ORM\Column(length: 255)]
-    protected ?string $password = null;
+    #[Ignore]
+    protected string $password = '';
 
     #[ORM\Column(length: 30)]
-    protected ?string $role = null;
+    protected string $role = '';
 
     #[ORM\Column(length: 100)]
-    protected ?string $nom = null;
+    protected string $nom = '';
 
     #[ORM\Column(length: 100)]
-    protected ?string $prenom = null;
+    protected string $prenom = '';
 
     #[ORM\Column(length: 20, nullable: true)]
     protected ?string $telephone = null;
@@ -68,12 +70,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     protected ?string $photoProfil = null;
 
-    #[ORM\Column(type: 'datetime')]
-    protected \DateTime $creeLe;
+    #[ORM\Column(type: 'datetime_immutable')]
+    protected \DateTimeImmutable $creeLe;
 
     public function __construct()
     {
-        $this->creeLe = new \DateTime();
+        $this->creeLe = new \DateTimeImmutable();
     }
 
     // ================== UserInterface ==================
@@ -100,6 +102,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         };
     }
 
+    #[Ignore]
     public function getPassword(): string
     {
         return $this->password;
@@ -115,12 +118,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // ================== GETTERS / SETTERS ==================
 
     public function getId(): ?int { return $this->id; }
-    public function getEmail(): ?string { return $this->email; }
+    public function getEmail(): string { return $this->email; }
     public function setEmail(string $email): self { $this->email = $email; return $this; }
 
-    public function setPassword(string $password): self { $this->password = $password; return $this; }
+    public function setPassword(#[\SensitiveParameter] string $password): self { $this->password = $password; return $this; }
 
-    public function getRole(): ?string { return $this->role; }
+    public function getRole(): string { return $this->role; }
     public function setRole(string $role): self
     {
         $validRoles = [
@@ -132,17 +135,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         ];
 
         if (!in_array($role, $validRoles)) {
-            throw new \InvalidArgumentException(sprintf('Rôle "%s" invalide', $role));
+            throw new \InvalidArgumentException(sprintf('RÃƒÂ´le "%s" invalide', $role));
         }
 
         $this->role = $role;
         return $this;
     }
 
-    public function getNom(): ?string { return $this->nom; }
+    public function getNom(): string { return $this->nom; }
     public function setNom(string $nom): self { $this->nom = $nom; return $this; }
 
-    public function getPrenom(): ?string { return $this->prenom; }
+    public function getPrenom(): string { return $this->prenom; }
     public function setPrenom(string $prenom): self { $this->prenom = $prenom; return $this; }
 
     public function getTelephone(): ?string { return $this->telephone; }
@@ -160,10 +163,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPhotoProfil(): ?string { return $this->photoProfil; }
     public function setPhotoProfil(?string $photoProfil): self { $this->photoProfil = $photoProfil; return $this; }
 
-    public function getCreeLe(): \DateTime { return $this->creeLe; }
-    public function setCreeLe(\DateTime $creeLe): self { $this->creeLe = $creeLe; return $this; }
+    public function getCreeLe(): \DateTimeImmutable { return $this->creeLe; }
+    public function setCreeLe(\DateTimeInterface $creeLe): self { $this->creeLe = \DateTimeImmutable::createFromInterface($creeLe); return $this; }
 
-    // ================== MÉTHODES UTILITAIRES ==================
+    // ================== MÃƒâ€°THODES UTILITAIRES ==================
 
     public function getNomComplet(): string
     {
@@ -173,7 +176,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getAge(): ?int
     {
         if (!$this->dateNaissance) return null;
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         return $now->diff($this->dateNaissance)->y;
     }
 
@@ -187,3 +190,4 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->getRoleSymfony() === $roleSymfony;
     }
 }
+

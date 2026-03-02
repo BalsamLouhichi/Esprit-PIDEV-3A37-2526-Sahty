@@ -15,7 +15,7 @@ class LigneCommande
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'lignesCommandes')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Commande $commande = null;
 
     #[ORM\ManyToOne]
@@ -23,17 +23,23 @@ class LigneCommande
     private ?Produit $produit = null;
 
     #[ORM\Column]
-    private ?int $quantite = null;
+    private int $quantite = 0;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?string $prixUnitaire = null;
+    private string $prixUnitaire = '0.00';
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?string $sousTotal = null;
+    private string $sousTotal = '0.00';
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     public function getCommande(): ?Commande
@@ -58,7 +64,7 @@ class LigneCommande
         return $this;
     }
 
-    public function getQuantite(): ?int
+    public function getQuantite(): int
     {
         return $this->quantite;
     }
@@ -70,7 +76,7 @@ class LigneCommande
         return $this;
     }
 
-    public function getPrixUnitaire(): ?string
+    public function getPrixUnitaire(): string
     {
         return $this->prixUnitaire;
     }
@@ -82,7 +88,7 @@ class LigneCommande
         return $this;
     }
 
-    public function getSousTotal(): ?string
+    public function getSousTotal(): string
     {
         return $this->sousTotal;
     }
@@ -95,9 +101,7 @@ class LigneCommande
 
     public function calculerSousTotal(): self
     {
-        if ($this->prixUnitaire && $this->quantite) {
-            $this->sousTotal = bcmul($this->prixUnitaire, (string)$this->quantite, 2);
-        }
+        $this->sousTotal = number_format((float) $this->prixUnitaire * $this->quantite, 2, '.', '');
         return $this;
     }
 }

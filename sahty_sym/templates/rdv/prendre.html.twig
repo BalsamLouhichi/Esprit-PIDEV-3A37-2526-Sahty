@@ -1229,7 +1229,7 @@
                     </div>
 
                     <div class="form-field">
-                        {{ form_label(form.raison, 'Décrivez votre motif') }}
+                        {{ form_label(form.raison, 'Décrivez votre motif (obligatoire)') }}
                         {{ form_widget(form.raison, {attr: {class: 'form-control', id: 'reasonInput', placeholder: 'Exemple: Consultation générale, suivi médical, symptômes spécifiques...'}}) }}
                         <div class="field-hint">Soyez précis pour permettre au médecin de mieux vous accompagner</div>
                         {{ form_errors(form.raison) }}
@@ -1727,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 hasError=true; 
             }
-            
+
             if(hasError){ 
                 e.preventDefault(); 
                 return false; 
