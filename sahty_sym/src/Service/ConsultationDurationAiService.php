@@ -110,6 +110,9 @@ class ConsultationDurationAiService
         return min(round($adjusted, 1), 60.0);
     }
 
+    /**
+     * @param list<string> $keywords
+     */
     private function containsAny(string $text, array $keywords): bool
     {
         foreach ($keywords as $keyword) {

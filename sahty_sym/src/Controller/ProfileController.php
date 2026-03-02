@@ -36,11 +36,16 @@ class ProfileController extends AbstractController
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         
-        /** @var Utilisateur $user */
-        $user = $this->getUser();
+        $securityUser = $this->getUser();
+        if (!$securityUser instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Utilisateur non authentifie.');
+        }
         
         // IMPORTANT: Récupérer l'utilisateur depuis la base pour éviter les problèmes de proxy
-        $user = $entityManager->getRepository(Utilisateur::class)->find($user->getId());
+        $user = $entityManager->getRepository(Utilisateur::class)->find($securityUser->getId());
+        if (!$user instanceof Utilisateur) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
         
         $form = $this->createForm(ProfileEditType::class, $user);
         $form->handleRequest($request);
@@ -112,11 +117,16 @@ class ProfileController extends AbstractController
     ): Response {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         
-        /** @var Utilisateur $user */
-        $user = $this->getUser();
+        $securityUser = $this->getUser();
+        if (!$securityUser instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Utilisateur non authentifie.');
+        }
         
         // Récupérer l'utilisateur depuis la base
-        $user = $entityManager->getRepository(Utilisateur::class)->find($user->getId());
+        $user = $entityManager->getRepository(Utilisateur::class)->find($securityUser->getId());
+        if (!$user instanceof Utilisateur) {
+            throw $this->createNotFoundException('Utilisateur introuvable.');
+        }
         
         if ($request->isMethod('POST')) {
             $oldPassword = $request->request->get('old_password');

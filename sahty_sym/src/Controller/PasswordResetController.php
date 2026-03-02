@@ -144,6 +144,10 @@ class PasswordResetController extends AbstractController
 
             // Mettre à jour le mot de passe
             $utilisateur = $passwordResetToken->getUtilisateur();
+            if (!$utilisateur instanceof Utilisateur) {
+                $this->addFlash('error', 'Utilisateur invalide pour ce token.');
+                return $this->redirectToRoute('app_forgot_password');
+            }
             $hashedPassword = $this->passwordHasher->hashPassword($utilisateur, $newPassword);
             $utilisateur->setPassword($hashedPassword);
 

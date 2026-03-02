@@ -21,6 +21,7 @@ class LaboratoireController extends AbstractController
     #[Route('/', name: 'app_labo_index', methods: ['GET'])]
     public function index(Request $request, LaboratoireRepository $laboratoireRepository): Response
     {
+        $limit = max(12, min(120, (int) $request->query->get('limit', 60)));
         $name = trim((string) $request->query->get('name', ''));
         $ville = trim((string) $request->query->get('ville', ''));
         $typeBilan = trim((string) $request->query->get('type_bilan', ''));
@@ -29,7 +30,8 @@ class LaboratoireController extends AbstractController
         $laboratoires = $laboratoireRepository->findWithPublicFilters(
             $name !== '' ? $name : null,
             $ville !== '' ? $ville : null,
-            $typeBilan !== '' ? $typeBilan : null
+            $typeBilan !== '' ? $typeBilan : null,
+            $limit
         );
 
         $villes = $laboratoireRepository->findDistinctVilles();
@@ -69,6 +71,7 @@ class LaboratoireController extends AbstractController
     #[Route('/filter', name: 'app_labo_filter', methods: ['GET'])]
     public function filter(Request $request, LaboratoireRepository $laboratoireRepository): Response
     {
+        $limit = max(12, min(120, (int) $request->query->get('limit', 60)));
         $name = trim((string) $request->query->get('name', ''));
         $ville = trim((string) $request->query->get('ville', ''));
         $typeBilan = trim((string) $request->query->get('type_bilan', ''));
@@ -76,7 +79,8 @@ class LaboratoireController extends AbstractController
         $laboratoires = $laboratoireRepository->findWithPublicFilters(
             $name !== '' ? $name : null,
             $ville !== '' ? $ville : null,
-            $typeBilan !== '' ? $typeBilan : null
+            $typeBilan !== '' ? $typeBilan : null,
+            $limit
         );
 
         return $this->render('laboratoire/_lab_cards.html.twig', [

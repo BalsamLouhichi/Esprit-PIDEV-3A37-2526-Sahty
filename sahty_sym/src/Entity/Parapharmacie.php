@@ -16,13 +16,13 @@ class Parapharmacie
     private ?int $id = null;
 
     #[ORM\Column(length: 150)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(length: 255)]
-    private ?string $adresse = null;
+    private string $adresse = '';
 
     #[ORM\Column(length: 30)]
-    private ?string $telephone = null;
+    private string $telephone = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
@@ -30,9 +30,16 @@ class Parapharmacie
     #[ORM\ManyToMany(targetEntity: Produit::class, mappedBy: 'parapharmacies')]
     private Collection $produits;
 
+    /**
+     * @var Collection<int, ResponsableParapharmacie>
+     */
+    #[ORM\OneToMany(targetEntity: ResponsableParapharmacie::class, mappedBy: 'parapharmacie')]
+    private Collection $responsables;
+
     public function __construct()
     {
         $this->produits = new ArrayCollection();
+        $this->responsables = new ArrayCollection();
     }
 
     // ----- Getters et Setters -----
@@ -42,7 +49,7 @@ class Parapharmacie
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -53,7 +60,7 @@ class Parapharmacie
         return $this;
     }
 
-    public function getAdresse(): ?string
+    public function getAdresse(): string
     {
         return $this->adresse;
     }
@@ -64,7 +71,7 @@ class Parapharmacie
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getTelephone(): string
     {
         return $this->telephone;
     }
@@ -87,7 +94,7 @@ class Parapharmacie
     }
 
     /**
-     * @return Collection|Produit[]
+     * @return Collection<int, Produit>
      */
     public function getProduits(): Collection
     {
@@ -110,6 +117,35 @@ class Parapharmacie
             // Note: Pour une relation ManyToMany, on utilise removeParapharmacie()
             $produit->removeParapharmacie($this);
         }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ResponsableParapharmacie>
+     */
+    public function getResponsables(): Collection
+    {
+        return $this->responsables;
+    }
+
+    public function addResponsable(ResponsableParapharmacie $responsable): self
+    {
+        if (!$this->responsables->contains($responsable)) {
+            $this->responsables->add($responsable);
+            $responsable->setParapharmacie($this);
+        }
+
+        return $this;
+    }
+
+    public function removeResponsable(ResponsableParapharmacie $responsable): self
+    {
+        if ($this->responsables->removeElement($responsable)) {
+            if ($responsable->getParapharmacie() === $this) {
+                $responsable->setParapharmacie(null);
+            }
+        }
+
         return $this;
     }
 }

@@ -35,6 +35,8 @@ parameters:
     app.fastapi_semantic.endpoint: '%env(default::FASTAPI_SEMANTIC_ENDPOINT)%'
     app.fastapi_semantic.timeout: '%env(int:FASTAPI_SEMANTIC_TIMEOUT)%'
     app.fastapi_semantic.api_key: '%env(default::FASTAPI_SEMANTIC_API_KEY)%'
+    app.report_sender_default: 'no-reply@sahty.local'
+    app.report_recipients_default: ''
 
 
 services:
@@ -115,8 +117,8 @@ services:
 
     App\Command\MonthlyReportCommand:
         arguments:
-            $reportSender: '%env(default::REPORT_SENDER)%'
-            $reportRecipients: '%env(default::REPORT_RECIPIENTS)%'
+            $reportSender: '%env(default:app.report_sender_default:REPORT_SENDER)%'
+            $reportRecipients: '%env(default:app.report_recipients_default:REPORT_RECIPIENTS)%'
 
     App\Service\GoogleMeetApiService:
         arguments:

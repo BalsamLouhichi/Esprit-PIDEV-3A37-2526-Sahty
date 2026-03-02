@@ -4,6 +4,7 @@ namespace App\Repository;
 use App\Entity\Patient;
 use App\Entity\Medecin;
 use App\Entity\FicheMedicale;
+use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,7 +18,7 @@ class FicheMedicaleRepository extends ServiceEntityRepository
         parent::__construct($registry, FicheMedicale::class);
     }
 
-    public function searchWithPermissions(string $query, $user): array
+    public function searchWithPermissions(string $query, ?Utilisateur $user): array
     {
         $qb = $this->createQueryBuilder('f')
             ->leftJoin('f.patient', 'p')
@@ -53,7 +54,7 @@ class FicheMedicaleRepository extends ServiceEntityRepository
     /**
      * Récupère les fiches selon le rôle de l'utilisateur
      */
-    public function findByUserRole($user): array
+    public function findByUserRole(?Utilisateur $user): array
     {
         if ($user instanceof Patient) {
             return $this->findBy(['patient' => $user], ['creeLe' => 'DESC']);
@@ -75,7 +76,7 @@ class FicheMedicaleRepository extends ServiceEntityRepository
     /**
      * Recherche textuelle avancée
      */
-    public function searchByText(string $searchTerm, $user): array
+    public function searchByText(string $searchTerm, ?Utilisateur $user): array
     {
         $qb = $this->createQueryBuilder('f')
             ->leftJoin('f.patient', 'p')
@@ -110,7 +111,7 @@ class FicheMedicaleRepository extends ServiceEntityRepository
     /**
      * Compte les fiches par statut
      */
-    public function countByStatut(string $statut, $user): int
+    public function countByStatut(string $statut, ?Utilisateur $user): int
     {
         $qb = $this->createQueryBuilder('f')
             ->select('COUNT(f.id)')
@@ -133,7 +134,7 @@ class FicheMedicaleRepository extends ServiceEntityRepository
     /**
      * Récupère les fiches récentes (moins de 30 jours)
      */
-    public function findRecent($user, int $limit = 5): array
+    public function findRecent(?Utilisateur $user, int $limit = 5): array
     {
         $date = new \DateTime('-30 days');
         

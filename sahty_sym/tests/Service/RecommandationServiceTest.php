@@ -213,10 +213,12 @@ class RecommandationServiceTest extends TestCase
 
         // Act
         $urgent = $this->service->getUrgent($quiz);
+        $firstUrgent = reset($urgent);
 
         // Assert
         $this->assertCount(1, $urgent);
-        $this->assertEquals('High', reset($urgent)->getName());
+        $this->assertInstanceOf(Recommandation::class, $firstUrgent);
+        $this->assertEquals('High', $firstUrgent->getName());
     }
 
     /**

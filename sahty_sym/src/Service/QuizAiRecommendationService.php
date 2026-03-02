@@ -77,7 +77,7 @@ class QuizAiRecommendationService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 return $fallback;
             }
 

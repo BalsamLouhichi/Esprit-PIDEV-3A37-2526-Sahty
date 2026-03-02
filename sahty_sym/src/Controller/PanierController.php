@@ -366,6 +366,9 @@ class PanierController extends AbstractController
     private function notifierParapharmacie(Commande $commande, array $articles, MailerInterface $mailer): void
     {
         $parapharmacie = $commande->getParapharmacie();
+        if (!$parapharmacie) {
+            return;
+        }
         
         // Envoyer un email de notification à la parapharmacie
         if ($parapharmacie->getEmail()) {

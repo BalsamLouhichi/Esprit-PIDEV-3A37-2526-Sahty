@@ -17,14 +17,17 @@ class GroupeCible
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(length: 50)]
-    private ?string $type = null;
+    private string $type = '';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $critereOptionnel = null;
 
+    /**
+     * @var Collection<int, Evenement>
+     */
     #[ORM\ManyToMany(targetEntity: Evenement::class, mappedBy: 'groupeCibles')]
     private Collection $evenements;
 
@@ -33,17 +36,20 @@ class GroupeCible
         $this->evenements = new ArrayCollection();
     }
 
+    /**
+     * @return Collection<int, Evenement>
+     */
     public function getEvenements(): Collection
-{
-    return $this->evenements;
-}
+    {
+        return $this->evenements;
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -55,7 +61,7 @@ class GroupeCible
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): string
     {
         return $this->type;
     }

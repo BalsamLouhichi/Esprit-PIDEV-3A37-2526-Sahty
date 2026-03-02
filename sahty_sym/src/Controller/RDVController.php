@@ -57,15 +57,22 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_prendre');
             }
 
+            $rdvDate = $rdv->getDateRdv();
+            $rdvHeure = $rdv->getHeureRdv();
+            if (!$rdvDate instanceof \DateTimeInterface || !$rdvHeure instanceof \DateTimeInterface) {
+                $this->addFlash('error', '❌ Date/heure du rendez-vous invalide');
+                return $this->redirectToRoute('app_rdv_prendre');
+            }
+
             $rdvDateTime = new \DateTime();
             $rdvDateTime->setDate(
-                $rdv->getDateRdv()->format('Y'),
-                $rdv->getDateRdv()->format('m'),
-                $rdv->getDateRdv()->format('d')
+                (int) $rdvDate->format('Y'),
+                (int) $rdvDate->format('m'),
+                (int) $rdvDate->format('d')
             );
             $rdvDateTime->setTime(
-                $rdv->getHeureRdv()->format('H'),
-                $rdv->getHeureRdv()->format('i')
+                (int) $rdvHeure->format('H'),
+                (int) $rdvHeure->format('i')
             );
 
             if ($rdvDateTime < new \DateTime()) {
@@ -119,13 +126,18 @@ class RDVController extends AbstractController
         EntityManagerInterface $em,
         MedecinRepository $medecinRepository
     ): Response {
+        $currentPatient = $this->getUser();
+        if (!$currentPatient instanceof Patient) {
+            throw $this->createAccessDeniedException('Accès patient requis');
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
             throw $this->createNotFoundException('Rendez-vous non trouvé');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getPatient()?->getId() !== $currentPatient->getId()) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce rendez-vous');
         }
 
@@ -134,15 +146,22 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
+        $rdvDate = $rdv->getDateRdv();
+        $rdvHeure = $rdv->getHeureRdv();
+        if (!$rdvDate instanceof \DateTimeInterface || !$rdvHeure instanceof \DateTimeInterface) {
+            $this->addFlash('error', '❌ Date/heure du rendez-vous invalide');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
+
         $rdvDateTime = new \DateTime();
         $rdvDateTime->setDate(
-            $rdv->getDateRdv()->format('Y'),
-            $rdv->getDateRdv()->format('m'),
-            $rdv->getDateRdv()->format('d')
+            (int) $rdvDate->format('Y'),
+            (int) $rdvDate->format('m'),
+            (int) $rdvDate->format('d')
         );
         $rdvDateTime->setTime(
-            $rdv->getHeureRdv()->format('H'),
-            $rdv->getHeureRdv()->format('i')
+            (int) $rdvHeure->format('H'),
+            (int) $rdvHeure->format('i')
         );
 
         if ($rdvDateTime < new \DateTime()) {
@@ -153,6 +172,10 @@ class RDVController extends AbstractController
         $oldMedecin = $rdv->getMedecin();
         $oldDate = $rdv->getDateRdv();
         $oldHeure = $rdv->getHeureRdv();
+        if (!$oldMedecin || !$oldDate instanceof \DateTimeInterface || !$oldHeure instanceof \DateTimeInterface) {
+            $this->addFlash('error', '❌ Données historiques du rendez-vous invalides');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
 
         $form = $this->createForm(RendezVousType::class, $rdv);
         $form->handleRequest($request);
@@ -168,15 +191,22 @@ class RDVController extends AbstractController
                 return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
             }
 
+            $newDate = $rdv->getDateRdv();
+            $newHeure = $rdv->getHeureRdv();
+            if (!$newDate instanceof \DateTimeInterface || !$newHeure instanceof \DateTimeInterface) {
+                $this->addFlash('error', '❌ Date/heure du rendez-vous invalide');
+                return $this->redirectToRoute('app_rdv_modifier', ['id' => $id]);
+            }
+
             $newRdvDateTime = new \DateTime();
             $newRdvDateTime->setDate(
-                $rdv->getDateRdv()->format('Y'),
-                $rdv->getDateRdv()->format('m'),
-                $rdv->getDateRdv()->format('d')
+                (int) $newDate->format('Y'),
+                (int) $newDate->format('m'),
+                (int) $newDate->format('d')
             );
             $newRdvDateTime->setTime(
-                $rdv->getHeureRdv()->format('H'),
-                $rdv->getHeureRdv()->format('i')
+                (int) $newHeure->format('H'),
+                (int) $newHeure->format('i')
             );
 
             if ($newRdvDateTime < new \DateTime()) {
@@ -254,32 +284,27 @@ class RDVController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $allRdvs = $rdvRepository->findBy(
-            ['patient' => $patient],
-            ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']
-        );
-
-        $totalItems = count($allRdvs);
         $perPage = 6;
+        $totalItems = $rdvRepository->countByPatientEntity($patient);
         $totalPages = max(1, (int) ceil($totalItems / $perPage));
         $currentPage = max(1, (int) $request->query->get('page', 1));
         if ($currentPage > $totalPages) {
             $currentPage = $totalPages;
         }
 
-        $offset = ($currentPage - 1) * $perPage;
-        $rdvs = array_slice($allRdvs, $offset, $perPage);
+        $rdvs = $rdvRepository->findPageByPatient($patient, $currentPage, $perPage);
+        $allStatuses = $rdvRepository->findStatusesByPatient($patient);
 
         $stats = [
             'total' => $totalItems,
-            'attente' => count(array_filter($allRdvs, static fn (RendezVous $r): bool => $r->getStatut() === 'en attente')),
+            'attente' => count(array_filter($allStatuses, static fn (string $status): bool => strtolower(trim($status)) === 'en attente')),
             'confirme' => count(array_filter(
-                $allRdvs,
-                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'confirm')
+                $allStatuses,
+                static fn (string $status): bool => str_starts_with(strtolower(str_replace('é', 'e', $status)), 'confirm')
             )),
             'annule' => count(array_filter(
-                $allRdvs,
-                static fn (RendezVous $r): bool => str_starts_with(strtolower(str_replace('é', 'e', (string) $r->getStatut())), 'annul')
+                $allStatuses,
+                static fn (string $status): bool => str_starts_with(strtolower(str_replace('é', 'e', $status)), 'annul')
             )),
         ];
 
@@ -350,13 +375,18 @@ class RDVController extends AbstractController
         int $id,
         RendezVousRepository $rdvRepository
     ): Response {
+        $currentPatient = $this->getUser();
+        if (!$currentPatient instanceof Patient) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
             throw $this->createNotFoundException('Rendez-vous non trouvé');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getPatient()?->getId() !== $currentPatient->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -375,13 +405,18 @@ class RDVController extends AbstractController
         RendezVousRepository $rdvRepository,
         EntityManagerInterface $em
     ): Response {
+        $currentPatient = $this->getUser();
+        if (!$currentPatient instanceof Patient) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
             throw $this->createNotFoundException('Rendez-vous non trouvé');
         }
 
-        if ($rdv->getPatient()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getPatient()?->getId() !== $currentPatient->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -390,15 +425,22 @@ class RDVController extends AbstractController
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }
 
+        $rdvDate = $rdv->getDateRdv();
+        $rdvHeure = $rdv->getHeureRdv();
+        if (!$rdvDate instanceof \DateTimeInterface || !$rdvHeure instanceof \DateTimeInterface) {
+            $this->addFlash('error', '❌ Date/heure du rendez-vous invalide');
+            return $this->redirectToRoute('app_rdv_mes_rdv');
+        }
+
         $rdvDateTime = new \DateTime();
         $rdvDateTime->setDate(
-            $rdv->getDateRdv()->format('Y'),
-            $rdv->getDateRdv()->format('m'),
-            $rdv->getDateRdv()->format('d')
+            (int) $rdvDate->format('Y'),
+            (int) $rdvDate->format('m'),
+            (int) $rdvDate->format('d')
         );
         $rdvDateTime->setTime(
-            $rdv->getHeureRdv()->format('H'),
-            $rdv->getHeureRdv()->format('i')
+            (int) $rdvHeure->format('H'),
+            (int) $rdvHeure->format('i')
         );
 
         if ($rdvDateTime < new \DateTime()) {

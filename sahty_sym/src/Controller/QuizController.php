@@ -809,15 +809,16 @@ class QuizController extends AbstractController
     }
 
     /**
-     * @return array<string, bool>
+     * @return array<int|string, bool>
      */
     private function buildValidQuestionIdMap(Quiz $quiz): array
     {
+        /** @var array<int|string, bool> $ids */
         $ids = [];
         foreach ($quiz->getQuestions() as $question) {
             $id = $question->getId();
             if ($id !== null) {
-                $ids[(string) $id] = true;
+                $ids[$id] = true;
             }
         }
 

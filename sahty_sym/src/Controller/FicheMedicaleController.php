@@ -61,7 +61,8 @@ class FicheMedicaleController extends AbstractController
                 
                 // ✅ Vérifier les permissions d'accès
                 if ($fiche) {
-                    if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                    $fichePatient = $fiche->getPatient();
+                    if ($isPatient && (!($user instanceof Patient) || !$fichePatient || $fichePatient->getId() !== $user->getId())) {
                         $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
                         return $this->redirectToRoute('app_fiche_medicale_index');
                     }
@@ -92,7 +93,7 @@ class FicheMedicaleController extends AbstractController
         
         // ============ CRÉATION D'UNE NOUVELLE FICHE (Patient uniquement) ============
         if ($request->query->has('new')) {
-            if (!$isPatient) {
+            if (!$isPatient || !($user instanceof Patient)) {
                 $this->addFlash('error', '❌ Seuls les patients peuvent créer des fiches médicales');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
@@ -134,7 +135,8 @@ class FicheMedicaleController extends AbstractController
             }
             
             // ✅ Vérifier les permissions d'accès
-            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+            $fichePatient = $fiche->getPatient();
+            if ($isPatient && (!($user instanceof Patient) || !$fichePatient || $fichePatient->getId() !== $user->getId())) {
                 $this->addFlash('error', '❌ Accès non autorisé à cette fiche');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
@@ -175,7 +177,8 @@ class FicheMedicaleController extends AbstractController
             }
             
             // ✅ Vérifier les permissions de modification
-            if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+            $fichePatient = $fiche->getPatient();
+            if ($isPatient && (!($user instanceof Patient) || !$fichePatient || $fichePatient->getId() !== $user->getId())) {
                 $this->addFlash('error', '❌ Vous ne pouvez modifier que vos propres fiches');
                 return $this->redirectToRoute('app_fiche_medicale_index');
             }
@@ -219,7 +222,8 @@ class FicheMedicaleController extends AbstractController
             
             if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, $request->request->get('_token'))) {
                 // ✅ Vérifier les permissions de suppression
-                if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+                $fichePatient = $fiche->getPatient();
+                if ($isPatient && (!($user instanceof Patient) || !$fichePatient || $fichePatient->getId() !== $user->getId())) {
                     $this->addFlash('error', '❌ Vous ne pouvez supprimer que vos propres fiches');
                     return $this->redirectToRoute('app_fiche_medicale_index');
                 }
@@ -301,7 +305,8 @@ class FicheMedicaleController extends AbstractController
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
         
-        if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
+        $fichePatient = $fiche->getPatient();
+        if ($isPatient && (!($user instanceof Patient) || !$fichePatient || $fichePatient->getId() !== $user->getId())) {
             $this->addFlash('error', '❌ Accès non autorisé');
             return $this->redirectToRoute('app_fiche_medicale_index');
         }
@@ -419,13 +424,13 @@ public function searchAjax(
     }
     
     #[Route('/{id}', name: 'app_fiche_medicale_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function showRedirect($id): Response
+    public function showRedirect(int $id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['view' => $id]);
     }
     
     #[Route('/{id}/edit', name: 'app_fiche_medicale_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function editRedirect($id): Response
+    public function editRedirect(int $id): Response
     {
         return $this->redirectToRoute('app_fiche_medicale_index', ['edit' => $id]);
     }
@@ -507,7 +512,8 @@ public function searchAjax(
         }
         
         // Vérifier que l'utilisateur est bien le patient du rendez-vous
-        if ($this->getUser()->getId() !== $rdv->getPatient()->getId()) {
+        $currentUser = $this->getUser();
+        if (!($currentUser instanceof Patient) || !$rdv->getPatient() || $currentUser->getId() !== $rdv->getPatient()->getId()) {
             $this->addFlash('error', '❌ Accès non autorisé !');
             return $this->redirectToRoute('app_rdv_mes_rdv');
         }

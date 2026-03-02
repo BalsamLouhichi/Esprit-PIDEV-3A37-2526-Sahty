@@ -3,6 +3,8 @@
 namespace App\Command;
 
 use App\Entity\InscriptionEvenement;
+use App\Entity\Evenement;
+use App\Entity\Utilisateur;
 use App\Service\TwilioMessagingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -65,9 +67,17 @@ class SendEventRemindersCommand extends Command
         $sent = 0;
         $failed = 0;
         foreach ($inscriptions as $inscription) {
+            $user = $inscription->getUtilisateur();
+            $evenement = $inscription->getEvenement();
+
+            if (!$user instanceof Utilisateur || !$evenement instanceof Evenement) {
+                $failed++;
+                continue;
+            }
+
             $ok = $this->twilioMessagingService->sendReminderForEvent(
-                $inscription->getUtilisateur(),
-                $inscription->getEvenement(),
+                $user,
+                $evenement,
                 $channel
             );
 

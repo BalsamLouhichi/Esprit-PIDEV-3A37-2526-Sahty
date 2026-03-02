@@ -65,7 +65,10 @@ class MonthlyReportCommand extends Command
         $output->writeln('<info>Rapport genere:</info> ' . $filePath);
 
         if ($input->getOption('send')) {
-            $recipients = array_filter(array_map('trim', explode(',', $this->reportRecipients)));
+            $recipients = array_values(array_filter(
+                array_map('trim', explode(',', $this->reportRecipients)),
+                static fn (string $email): bool => $email !== ''
+            ));
             if (!$recipients) {
                 $output->writeln('<error>Aucun destinataire configure (REPORT_RECIPIENTS).</error>');
                 return Command::FAILURE;

@@ -19,13 +19,13 @@ class Produit
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $prix = null;
+    private string $prix = '0.00';
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $stock = null;
@@ -40,7 +40,7 @@ class Produit
     private ?int $promotion = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
-    private ?bool $estActif = true;
+    private bool $estActif = true;
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $poids = null;
@@ -76,7 +76,7 @@ class Produit
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -98,14 +98,14 @@ class Produit
         return $this;
     }
 
-    public function getPrix(): ?float
+    public function getPrix(): float
     {
-        return $this->prix;
+        return (float) $this->prix;
     }
 
     public function setPrix(float $prix): self
     {
-        $this->prix = $prix;
+        $this->prix = number_format($prix, 2, '.', '');
         return $this;
     }
 
@@ -153,7 +153,7 @@ class Produit
         return $this;
     }
 
-    public function isEstActif(): ?bool
+    public function isEstActif(): bool
     {
         return $this->estActif;
     }

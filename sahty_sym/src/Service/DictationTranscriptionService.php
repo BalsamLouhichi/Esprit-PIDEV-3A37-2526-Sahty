@@ -101,10 +101,7 @@ class DictationTranscriptionService
 
                 $statusCode = $response->getStatusCode();
                 $data = $response->toArray(false);
-                $providerError = '';
-                if (is_array($data)) {
-                    $providerError = trim((string) (($data['error']['message'] ?? $data['message'] ?? '')));
-                }
+                $providerError = trim((string) (($data['error']['message'] ?? $data['message'] ?? '')));
 
                 if (($statusCode === 429 || $statusCode >= 500) && $attempt < $attempts) {
                     $headers = $response->getHeaders(false);
@@ -122,10 +119,6 @@ class DictationTranscriptionService
 
                     return ['ok' => false, 'error' => 'Erreur API de transcription' . ($providerError !== '' ? ': ' . $providerError : '')];
                 }
-                if (!is_array($data)) {
-                    return ['ok' => false, 'error' => 'Reponse de transcription invalide'];
-                }
-
                 $text = trim((string) ($data['text'] ?? ''));
                 if ($text === '') {
                     return ['ok' => false, 'error' => 'Transcription vide'];

@@ -174,27 +174,30 @@ class AdminController extends AbstractController
         $staffPercent = $totalUsers > 0 ? round((($totalResponsableLabo + $totalResponsablePara) / $totalUsers) * 100) : 0;
         $adminPercent = max(0, 100 - ($doctorsPercent + $patientsPercent + $staffPercent));
 
-        // Utilisateurs récents
-        $recentUsers = $this->userRepo->findBy([], ['creeLe' => 'DESC'], 5);
+        // Utilisateurs récents (requete SQL legere pour eviter les JOIN inutiles de l'heritage JOINED)
+        $recentUsers = $this->em->getConnection()->executeQuery(
+            <<<'SQL'
+                SELECT
+                    u.id AS id,
+                    u.prenom AS prenom,
+                    u.nom AS nom,
+                    u.email AS email,
+                    u.photo_profil AS photoProfil,
+                    u.role AS role,
+                    u.est_actif AS estActif,
+                    rl.laboratoire_id AS laboratoireId
+                FROM utilisateur u
+                LEFT JOIN responsable_laboratoire rl ON rl.id = u.id
+                ORDER BY u.cree_le DESC
+                LIMIT 5
+            SQL
+        )->fetchAllAssociative();
 
         // Rendez-vous récents
         $recentAppointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC'], 10);
 
         // Fiches médicales récentes
         $recentMedicalRecords = $ficheRepo->findBy([], ['creeLe' => 'DESC'], 10);
-
-        // Comptages pour chaque utilisateur
-        $appointmentsCount = [];
-        $medicalRecordsCount = [];
-        
-        foreach ($recentUsers as $user) {
-            if ($user instanceof Patient) {
-                $appointmentsCount[$user->getId()] = $rdvRepo->count(['patient' => $user]);
-                $medicalRecordsCount[$user->getId()] = $ficheRepo->count(['patient' => $user]);
-            } elseif ($user instanceof Medecin) {
-                $appointmentsCount[$user->getId()] = $rdvRepo->count(['medecin' => $user]);
-            }
-        }
 
         // Données pour les graphiques
         $months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
@@ -305,8 +308,6 @@ class AdminController extends AbstractController
             'recent_medical_records' => $recentMedicalRecords,
             'recent_activities' => [],
             'recent_users' => $recentUsers,
-            'appointments_count' => $appointmentsCount,
-            'medical_records_count' => $medicalRecordsCount,
             'app_name' => 'Sahty',
             'app_version' => '1.0.0',
         ]);
@@ -2222,7 +2223,7 @@ class AdminController extends AbstractController
         $appointment->setStatut($newStatus);
         
         if ($newStatus === 'confirmé') {
-            $appointment->setDateValidation(new \DateTime());
+            $appointment->setDateValidation(new \DateTimeImmutable());
         }
 
         $this->em->flush();
@@ -2525,7 +2526,7 @@ class AdminController extends AbstractController
             $user->setNom($data->get('nom'));
             $user->setPrenom($data->get('prenom'));
             $user->setEmail($data->get('email'));
-            $user->setRole($role ?: $user->getRole());
+            $user->setRole(is_string($role) && $role !== '' ? $role : $user->getRole());
 
             if ($tel = $data->get('telephone')) {
                 $user->setTelephone($tel);
@@ -2967,7 +2968,7 @@ class AdminController extends AbstractController
         if (empty($appointments)) return 0;
         $totalMinutes = count($appointments) * 30;
         $capaciteMax = 480 * 30;
-        return $capaciteMax > 0 ? min(100, round(($totalMinutes / $capaciteMax) * 100)) : 0;
+        return $capaciteMax > 0 ? (int) min(100, round(($totalMinutes / $capaciteMax) * 100)) : 0;
     }
 
     private function calculateDailyAverage(array $appointments, array $dateRanges): int

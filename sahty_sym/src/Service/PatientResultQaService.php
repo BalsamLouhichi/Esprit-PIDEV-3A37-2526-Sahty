@@ -348,9 +348,9 @@ class PatientResultQaService
             return null;
         }
 
-        $high = (int) ($matches[2] ?? 0);
-        $low = (int) ($matches[3] ?? 0);
-        $unknown = (int) ($matches[4] ?? 0);
+        $high = (int) $matches[2];
+        $low = (int) $matches[3];
+        $unknown = (int) $matches[4];
         $outOfRange = $high + $low;
 
         if ($outOfRange <= 0) {

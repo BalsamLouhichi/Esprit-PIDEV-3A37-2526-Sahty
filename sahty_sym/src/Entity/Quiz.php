@@ -20,14 +20,14 @@ class Quiz
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank(message: "Le nom du quiz est obligatoire.")]
     #[Assert\Length(min: 3, max: 180)]
-    private ?string $name = null;
+    private string $name = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 3000)]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    private \DateTimeInterface $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
@@ -35,14 +35,14 @@ class Quiz
     /**
      * @var Collection<int, Question>
      */
-    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Question::class, orphanRemoval: true, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Question::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     #[ORM\OrderBy(['orderInQuiz' => 'ASC'])]
     private Collection $questions;
 
     /**
      * @var Collection<int, Recommandation>
      */
-    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $recommandations;
 
     public function __construct()
@@ -63,7 +63,7 @@ class Quiz
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -85,7 +85,7 @@ class Quiz
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): \DateTimeInterface
     {
         return $this->createdAt;
     }
@@ -153,5 +153,4 @@ class Quiz
 
         return $this;
     }
-    
 }

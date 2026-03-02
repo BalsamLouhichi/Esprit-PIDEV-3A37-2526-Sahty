@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\PasswordResetTokenRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: PasswordResetTokenRepository::class)]
 #[ORM\Table(name: 'password_reset_token')]
@@ -15,32 +16,40 @@ class PasswordResetToken
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255, unique: true)]
-    private ?string $token = null;
+    #[Ignore]
+    private string $token = '';
 
     #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Utilisateur $utilisateur = null;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $createdAt = null;
+    private \DateTimeInterface $createdAt;
 
     #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $expiresAt = null;
+    private \DateTimeInterface $expiresAt;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isUsed = false;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->expiresAt = (new \DateTimeImmutable())->modify('+1 hour');
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getToken(): ?string
+    #[Ignore]
+    public function getToken(): string
     {
         return $this->token;
     }
 
-    public function setToken(string $token): self
+    public function setToken(#[\SensitiveParameter] string $token): self
     {
         $this->token = $token;
         return $this;
@@ -57,7 +66,7 @@ class PasswordResetToken
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): \DateTimeInterface
     {
         return $this->createdAt;
     }
@@ -68,7 +77,7 @@ class PasswordResetToken
         return $this;
     }
 
-    public function getExpiresAt(): ?\DateTimeInterface
+    public function getExpiresAt(): \DateTimeInterface
     {
         return $this->expiresAt;
     }

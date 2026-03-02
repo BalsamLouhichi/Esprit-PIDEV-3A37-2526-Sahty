@@ -171,7 +171,7 @@ class EvenementOperationalInsightsService
             ]);
 
             $results = $response->toArray(false);
-            if (!is_array($results) || count($results) === 0) {
+            if (count($results) === 0) {
                 return null;
             }
 

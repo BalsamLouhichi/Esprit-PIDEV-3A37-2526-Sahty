@@ -84,6 +84,11 @@ class MedecinRDVController extends AbstractController
         MeetingSchedulerService $meetingSchedulerService,
         AppointmentNotificationMailer $appointmentNotificationMailer
     ): Response {
+        $currentMedecin = $this->getUser();
+        if (!$currentMedecin instanceof Medecin) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
@@ -91,7 +96,7 @@ class MedecinRDVController extends AbstractController
         }
 
         // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
-        if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getMedecin()?->getId() !== $currentMedecin->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -137,6 +142,11 @@ class MedecinRDVController extends AbstractController
         EntityManagerInterface $em,
         AppointmentNotificationMailer $appointmentNotificationMailer
     ): Response {
+        $currentMedecin = $this->getUser();
+        if (!$currentMedecin instanceof Medecin) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
@@ -144,7 +154,7 @@ class MedecinRDVController extends AbstractController
         }
 
         // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
-        if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getMedecin()?->getId() !== $currentMedecin->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -175,6 +185,11 @@ class MedecinRDVController extends AbstractController
         int $id,
         RendezVousRepository $rdvRepository
     ): Response {
+        $currentMedecin = $this->getUser();
+        if (!$currentMedecin instanceof Medecin) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($id);
 
         if (!$rdv) {
@@ -182,7 +197,7 @@ class MedecinRDVController extends AbstractController
         }
 
         // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
-        if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getMedecin()?->getId() !== $currentMedecin->getId()) {
             throw $this->createAccessDeniedException();
         }
 
@@ -202,6 +217,11 @@ class MedecinRDVController extends AbstractController
         FicheMedicaleRepository $ficheRepository,
         EntityManagerInterface $em
     ): Response {
+        $currentMedecin = $this->getUser();
+        if (!$currentMedecin instanceof Medecin) {
+            throw $this->createAccessDeniedException();
+        }
+
         $rdv = $rdvRepository->find($rdvId);
 
         if (!$rdv) {
@@ -209,7 +229,7 @@ class MedecinRDVController extends AbstractController
         }
 
         // VÃƒÆ’Ã‚Â©rifier que c'est le mÃƒÆ’Ã‚Â©decin du RDV
-        if ($rdv->getMedecin()->getId() !== $this->getUser()->getId()) {
+        if ($rdv->getMedecin()?->getId() !== $currentMedecin->getId()) {
             throw $this->createAccessDeniedException();
         }
 

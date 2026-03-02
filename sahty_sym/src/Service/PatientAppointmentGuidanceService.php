@@ -14,19 +14,7 @@ class PatientAppointmentGuidanceService
     }
 
     /**
-     * @return array{
-     *   disclaimer: string,
-     *   temporary_advice: array<int, string>,
-     *   safety_alerts: array<int, string>,
-     *   general_recommendations: array<int, string>,
-     *   emergency: array{
-     *     detected: bool,
-     *     level: string,
-     *     reasons: array<int, string>,
-     *     actions: array<int, string>
-     *   },
-     *   sources: array{motif: string, antecedents: string, allergies: string, traitements: string}
-     * }
+     * @return array<string, mixed>
      */
     public function generate(RendezVous $rendezVous): array
     {
@@ -172,6 +160,9 @@ class PatientAppointmentGuidanceService
         return !$this->containsAny($motifNormalized, $acuteTerms);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function buildFollowUpGuidance(
         string $motif,
         string $antecedents,
@@ -211,6 +202,9 @@ class PatientAppointmentGuidanceService
 
     /**
      * Guidance deterministe orientee par motif (plus stable que la generation libre).
+     */
+    /**
+     * @return array<string, mixed>|null
      */
     private function buildMotifSpecificGuidance(
         string $motifNormalized,
@@ -300,6 +294,9 @@ class PatientAppointmentGuidanceService
         return null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function buildInsufficientInputGuidance(
         string $motif,
         string $antecedents,
@@ -620,7 +617,7 @@ class PatientAppointmentGuidanceService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 return null;
             }
 

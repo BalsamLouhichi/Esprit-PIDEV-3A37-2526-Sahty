@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
@@ -18,17 +19,17 @@ class Evenement
     private ?int $id = null;
 
     #[ORM\Column(length: 200)]
-    private ?string $titre = null;
+    private string $titre = '';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-     #[Assert\Choice(choices: ['webinaire', 'atelier', 'depistage', 'conference', 'groupe_parole'])]
+    #[Assert\Choice(choices: ['webinaire', 'atelier', 'depistage', 'conference', 'groupe_parole'])]
     #[ORM\Column(length: 50)]
-    private ?string $type = null;
+    private string $type = 'atelier';
 
-   #[ORM\Column(type: 'datetime')]
-private ?\DateTimeInterface $dateDebut = null;
+#[ORM\Column(type: 'datetime')]
+private \DateTimeInterface $dateDebut;
 
 #[ORM\Column(type: 'datetime', nullable: true)]
 private ?\DateTimeInterface $dateFin = null;
@@ -36,7 +37,7 @@ private ?\DateTimeInterface $dateFin = null;
 
     #[Assert\Choice(choices: ['en_ligne', 'presentiel', 'hybride'])]
     #[ORM\Column(length: 50)]
-    private ?string $mode = null;
+    private string $mode = 'en_ligne';
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $lieu = null;
@@ -52,9 +53,9 @@ private ?\DateTimeInterface $dateFin = null;
 
     #[Assert\Choice(choices: ['brouillon', 'planifie', 'confirme', 'en_cours', 'termine', 'annule'])]
     #[ORM\Column(length: 50)]
-    private ?string $statut = 'brouillon';
+    private string $statut = 'brouillon';
 
-   #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+   #[ORM\ManyToOne(targetEntity: Utilisateur::class, fetch: 'LAZY')]
 #[ORM\JoinColumn(
     name: 'createur_id', 
     referencedColumnName: 'id', 
@@ -67,23 +68,31 @@ private ?Utilisateur $createur = null;
     private ?string $tarif = null;
 
     #[ORM\Column(type: 'string', length: 10, options: ['default' => 'DT'])]
-    private ?string $devise = 'DT';
+    private string $devise = 'DT';
 
-    #[ORM\Column]
-    private ?\DateTime $creeLe = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $creeLe;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTime $modifieLe = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $modifieLe = null;
 
     /**
      * @var Collection<int, InscriptionEvenement>
      */
-    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true)]
+    #[ORM\OneToMany(
+        targetEntity: InscriptionEvenement::class,
+        mappedBy: 'evenement',
+        orphanRemoval: true,
+        cascade: ['persist', 'remove']
+    )]
     private Collection $inscriptions;
 
+    /**
+     * @var Collection<int, GroupeCible>
+     */
     #[ORM\ManyToMany(targetEntity: GroupeCible::class, inversedBy: 'evenements')]
-#[ORM\JoinTable(name: 'evenement_groupe_cible')]
-private Collection $groupeCibles;
+    #[ORM\JoinTable(name: 'evenement_groupe_cible')]
+    private Collection $groupeCibles;
 
 
 #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -107,6 +116,8 @@ public function setStatutDemande(?string $statutDemande): self
     {
         $this->inscriptions = new ArrayCollection();
         $this->groupeCibles = new ArrayCollection();
+        $this->creeLe = new \DateTimeImmutable();
+        $this->dateDebut = new \DateTime();
     }
 
     public function getId(): ?int
@@ -114,7 +125,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this->id;
     }
 
-    public function getTitre(): ?string
+    public function getTitre(): string
     {
         return $this->titre;
     }
@@ -138,7 +149,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): string
     {
         return $this->type;
     }
@@ -150,7 +161,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTime
+    public function getDateDebut(): \DateTimeInterface
     {
         return $this->dateDebut;
     }
@@ -162,19 +173,19 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDateFin(): ?\DateTime
+    public function getDateFin(): ?\DateTimeInterface
     {
         return $this->dateFin;
     }
 
-    public function setDateFin(\DateTime $dateFin): static
+    public function setDateFin(?\DateTimeInterface $dateFin): static
     {
         $this->dateFin = $dateFin;
 
         return $this;
     }
 
-    public function getMode(): ?string
+    public function getMode(): string
     {
         return $this->mode;
     }
@@ -234,7 +245,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -270,7 +281,7 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDevise(): ?string
+    public function getDevise(): string
     {
         return $this->devise;
     }
@@ -282,24 +293,24 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->creeLe;
     }
 
-    public function setCreeLe(\DateTime $creeLe): static
+    public function setCreeLe(\DateTimeImmutable $creeLe): static
     {
         $this->creeLe = $creeLe;
 
         return $this;
     }
 
-    public function getModifieLe(): ?\DateTime
+    public function getModifieLe(): ?\DateTimeImmutable
     {
         return $this->modifieLe;
     }
 
-    public function setModifieLe(?\DateTime $modifieLe): static
+    public function setModifieLe(?\DateTimeImmutable $modifieLe): static
     {
         $this->modifieLe = $modifieLe;
 
@@ -336,20 +347,26 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getGroupeCibles(): Collection {
-    return $this->groupeCibles;
-}
-
-public function addGroupeCible(GroupeCible $groupe): self {
-    if (!$this->groupeCibles->contains($groupe)) {
-        $this->groupeCibles->add($groupe);
+    /**
+     * @return Collection<int, GroupeCible>
+     */
+    public function getGroupeCibles(): Collection
+    {
+        return $this->groupeCibles;
     }
-    return $this;
-}
 
-public function removeGroupeCible(GroupeCible $groupe): self {
-    $this->groupeCibles->removeElement($groupe);
-    return $this;
-}
+    public function addGroupeCible(GroupeCible $groupe): self
+    {
+        if (!$this->groupeCibles->contains($groupe)) {
+            $this->groupeCibles->add($groupe);
+        }
+        return $this;
+    }
+
+    public function removeGroupeCible(GroupeCible $groupe): self
+    {
+        $this->groupeCibles->removeElement($groupe);
+        return $this;
+    }
 
 }

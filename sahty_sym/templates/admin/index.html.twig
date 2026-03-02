@@ -2345,8 +2345,8 @@
                                                 </a>
                                             {% endif %}
                                             {% if user.role == 'responsable_labo' %}
-                                                {% if user.laboratoire is not null %}
-                                                    <a href="{{ path('admin_laboratoire_view', {id: user.laboratoire.id}) }}" class="row-action-btn" title="Voir laboratoire">
+                                                {% if user.laboratoireId is defined and user.laboratoireId %}
+                                                    <a href="{{ path('admin_laboratoire_view', {id: user.laboratoireId}) }}" class="row-action-btn" title="Voir laboratoire">
                                                         <i class="fas fa-flask"></i>
                                                     </a>
                                                 {% else %}

@@ -27,7 +27,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/responsable')]
 class ResponsableController extends AbstractController
 {
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
     
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -354,7 +354,8 @@ class ResponsableController extends AbstractController
         }
         
         // Vérifier que la commande appartient bien à cette parapharmacie
-        if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
+        $commandeParapharmacie = $commande->getParapharmacie();
+        if (!$commandeParapharmacie || $commandeParapharmacie->getId() !== $parapharmacie->getId()) {
             $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
@@ -428,7 +429,8 @@ class ResponsableController extends AbstractController
         }
         
         // Vérifier que la commande appartient bien à cette parapharmacie
-        if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
+        $commandeParapharmacie = $commande->getParapharmacie();
+        if (!$commandeParapharmacie || $commandeParapharmacie->getId() !== $parapharmacie->getId()) {
             $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }

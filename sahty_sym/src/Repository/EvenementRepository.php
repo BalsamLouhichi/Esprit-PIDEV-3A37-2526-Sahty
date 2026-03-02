@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Evenement;
+use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -123,7 +124,7 @@ class EvenementRepository extends ServiceEntityRepository
    
     public function getNombreParticipants(Evenement $evenement): int
     {
-        return $this->createQueryBuilder('e')
+        return (int) $this->createQueryBuilder('e')
             ->select('COUNT(i.id)')
             ->leftJoin('e.inscriptions', 'i')
             ->andWhere('e.id = :id')
@@ -190,7 +191,7 @@ class EvenementRepository extends ServiceEntityRepository
               ->getResult();
 }
 
-public function findVisibleEventsForClient($user = null): array {
+public function findVisibleEventsForClient(?Utilisateur $user = null): array {
     $qb = $this->createQueryBuilder('e')
         ->orderBy('e.dateDebut', 'ASC');
 

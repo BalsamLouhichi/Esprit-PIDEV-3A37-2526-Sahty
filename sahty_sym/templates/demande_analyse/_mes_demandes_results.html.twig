@@ -60,23 +60,23 @@
                                 <span class="cell-truncate">{{ demande.typeBilan }}</span>
                             </td>
                             <td class="lab-cell">
-                                {% if demande.laboratoire %}
-                                    <div class="entity-chip" title="{{ demande.laboratoire.nom }}">
+                                {% if demande.laboratoireNom %}
+                                    <div class="entity-chip" title="{{ demande.laboratoireNom }}">
                                         <i class="fa fa-hospital text-primary me-2"></i>
-                                        <span class="cell-truncate">{{ demande.laboratoire.nom }}</span>
+                                        <span class="cell-truncate">{{ demande.laboratoireNom }}</span>
                                     </div>
                                 {% else %}
                                     <span class="text-muted fst-italic">Non specifie</span>
                                 {% endif %}
                             </td>
                             <td class="medecin-cell">
-                                {% if demande.medecin %}
+                                {% if demande.medecinNom %}
                                     <div class="medecin-info">
                                         <i class="fas fa-user-md medecin-icon"></i>
                                         <div class="medecin-text">
-                                            <div class="fw-bold small cell-truncate" title="Dr. {{ demande.medecin.nomComplet }}">Dr. {{ demande.medecin.nomComplet }}</div>
-                                            {% if demande.medecin.specialite %}
-                                                <div class="text-muted smaller cell-truncate" title="{{ demande.medecin.specialite }}">{{ demande.medecin.specialite }}</div>
+                                            <div class="fw-bold small cell-truncate" title="Dr. {{ demande.medecinPrenom }} {{ demande.medecinNom }}">Dr. {{ demande.medecinPrenom }} {{ demande.medecinNom }}</div>
+                                            {% if demande.medecinSpecialite %}
+                                                <div class="text-muted smaller cell-truncate" title="{{ demande.medecinSpecialite }}">{{ demande.medecinSpecialite }}</div>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -183,7 +183,7 @@
                             <i class="fas fa-user-md"></i>
                         </div>
                         <h4 class="mb-2">
-                            {% set avec_medecin = demandes|filter(d => d.medecin is not null)|length %}
+                            {% set avec_medecin = demandes|filter(d => d.medecinNom is not empty)|length %}
                             {{ avec_medecin }}
                         </h4>
                         <p class="text-muted mb-0">Avec medecin</p>
@@ -208,8 +208,8 @@
                             <i class="fas fa-user-md text-primary me-2"></i>
                             Repartition par medecin prescripteur
                         </h5>
-                        {% set avec_medecin = demandes|filter(d => d.medecin is not null)|length %}
-                        {% set sans_medecin = demandes|filter(d => d.medecin is null)|length %}
+                        {% set avec_medecin = demandes|filter(d => d.medecinNom is not empty)|length %}
+                        {% set sans_medecin = demandes|filter(d => d.medecinNom is empty)|length %}
 
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">

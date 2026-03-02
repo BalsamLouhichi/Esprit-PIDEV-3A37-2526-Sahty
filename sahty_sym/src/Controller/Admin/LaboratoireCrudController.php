@@ -17,6 +17,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 
+/** @extends AbstractCrudController<Laboratoire> */
 class LaboratoireCrudController extends AbstractCrudController
 {
     public function __construct(private LaboratoireRepository $laboratoireRepository)

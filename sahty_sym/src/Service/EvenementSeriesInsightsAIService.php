@@ -100,8 +100,6 @@ class EvenementSeriesInsightsAIService
             if ($msg !== '') {
                 $syntheseText = $msg;
             }
-        } elseif (is_string($aiSynthesis) && trim($aiSynthesis) !== '') {
-            $syntheseText = trim($aiSynthesis);
         }
 
         return [

@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Patient;
 use App\Entity\RendezVous;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -51,7 +52,7 @@ class RendezVousRepository extends ServiceEntityRepository
             return $this->count([]);
         }
 
-        return $this->createQueryBuilder('r')
+        return (int) $this->createQueryBuilder('r')
             ->select('COUNT(r.id)')
             ->andWhere('r.dateRdv BETWEEN :start AND :end')
             ->setParameter('start', $start)
@@ -94,6 +95,57 @@ class RendezVousRepository extends ServiceEntityRepository
             ->orderBy('r.dateRdv', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return RendezVous[]
+     */
+    public function findPageByPatient(Patient $patient, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+
+        return $this->createQueryBuilder('r')
+            ->leftJoin('r.medecin', 'm')
+            ->addSelect('m')
+            ->leftJoin('r.ficheMedicale', 'f')
+            ->addSelect('f')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->orderBy('r.dateRdv', 'DESC')
+            ->addOrderBy('r.heureRdv', 'DESC')
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByPatientEntity(Patient $patient): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function findStatusesByPatient(Patient $patient): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.statut AS statut')
+            ->andWhere('r.patient = :patient')
+            ->setParameter('patient', $patient)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_values(array_map(
+            static fn (array $row): string => (string) ($row['statut'] ?? ''),
+            $rows
+        ));
     }
 
     /**
@@ -185,7 +237,7 @@ class RendezVousRepository extends ServiceEntityRepository
                ->setParameter('end', $end);
         }
 
-        return $qb->getQuery()->getSingleScalarResult();
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**

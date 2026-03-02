@@ -2,12 +2,14 @@
 
 namespace App\Security;
 
-use League\OAuth2\Client\Provider\GoogleUser;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 
+/**
+ * @implements UserProviderInterface<UserInterface>
+ */
 class GoogleUserProvider implements UserProviderInterface
 {
     public function loadUserByIdentifier(string $identifier): UserInterface
@@ -17,7 +19,7 @@ class GoogleUserProvider implements UserProviderInterface
 
     public function refreshUser(UserInterface $user): UserInterface
     {
-        if (!$user instanceof GoogleUser) {
+        if (!$this->supportsClass($user::class)) {
             throw new UnsupportedUserException();
         }
 
@@ -26,6 +28,6 @@ class GoogleUserProvider implements UserProviderInterface
 
     public function supportsClass(string $class): bool
     {
-        return GoogleUser::class === $class;
+        return is_a($class, UserInterface::class, true);
     }
 }

@@ -25,7 +25,7 @@ class Laboratoire
         pattern: "/^[A-Za-z]+(?:[ '\\-][A-Za-z]+)*$/",
         message: 'Le nom doit contenir uniquement des lettres, espaces, tirets ou apostrophes.'
     )]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'La ville est obligatoire.')]
@@ -33,7 +33,7 @@ class Laboratoire
         pattern: "/^[A-Za-z]+(?:[ '\\-,][A-Za-z]+)*$/",
         message: 'La ville doit contenir uniquement des lettres, espaces, tirets, apostrophes ou virgules.'
     )]
-    private ?string $ville = null;
+    private string $ville = '';
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'L\'adresse est obligatoire.')]
@@ -41,7 +41,7 @@ class Laboratoire
         pattern: "/^[A-Za-z0-9 '\\-,]+$/",
         message: 'L\'adresse doit contenir uniquement lettres, chiffres, espaces, tirets, apostrophes ou virgules.'
     )]
-    private ?string $adresse = null;
+    private string $adresse = '';
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le telephone est obligatoire.')]
@@ -49,7 +49,7 @@ class Laboratoire
         pattern: '/^(?:\+216\s?)?[0-9]{8}$/',
         message: 'Le telephone doit contenir 8 chiffres (optionnellement avec +216).'
     )]
-    private ?string $telephone = null;
+    private string $telephone = '';
 
     #[ORM\Column]
     #[Assert\NotNull(message: 'La latitude est obligatoire.')]
@@ -58,7 +58,7 @@ class Laboratoire
         max: 90,
         notInRangeMessage: 'La latitude doit etre entre -90 et 90.'
     )]
-    private ?float $latitude = null;
+    private float $latitude = 0.0;
 
     #[ORM\Column]
     #[Assert\NotNull(message: 'La longitude est obligatoire.')]
@@ -67,13 +67,13 @@ class Laboratoire
         max: 180,
         notInRangeMessage: 'La longitude doit etre entre -180 et 180.'
     )]
-    private ?float $longitude = null;
+    private float $longitude = 0.0;
 
     #[ORM\Column]
-    private ?bool $disponible = null;
+    private bool $disponible = true;
 
-    #[ORM\Column]
-    private ?\DateTime $cree_le = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $cree_le;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
@@ -93,17 +93,22 @@ class Laboratoire
     /**
      * @var Collection<int, LaboratoireTypeAnalyse>
      */
-    #[ORM\OneToMany(targetEntity: LaboratoireTypeAnalyse::class, mappedBy: 'laboratoire', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(
+        targetEntity: LaboratoireTypeAnalyse::class,
+        mappedBy: 'laboratoire',
+        cascade: ['persist'],
+        orphanRemoval: true
+    )]
     private Collection $laboratoireTypeAnalyses;
 
-    #[ORM\OneToOne(targetEntity: ResponsableLaboratoire::class, mappedBy: 'laboratoire')]
+    #[ORM\OneToOne(targetEntity: ResponsableLaboratoire::class, mappedBy: 'laboratoire', fetch: 'LAZY')]
     private ?ResponsableLaboratoire $responsable = null;
 
     public function __construct()
     {
         $this->demandeAnalyses = new ArrayCollection();
         $this->laboratoireTypeAnalyses = new ArrayCollection();
-        $this->cree_le = new \DateTime();
+        $this->cree_le = new \DateTimeImmutable();
         $this->disponible = true;
     }
 
@@ -112,7 +117,7 @@ class Laboratoire
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -123,7 +128,7 @@ class Laboratoire
         return $this;
     }
 
-    public function getVille(): ?string
+    public function getVille(): string
     {
         return $this->ville;
     }
@@ -134,7 +139,7 @@ class Laboratoire
         return $this;
     }
 
-    public function getAdresse(): ?string
+    public function getAdresse(): string
     {
         return $this->adresse;
     }
@@ -145,7 +150,7 @@ class Laboratoire
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getTelephone(): string
     {
         return $this->telephone;
     }
@@ -156,7 +161,7 @@ class Laboratoire
         return $this;
     }
 
-    public function getLatitude(): ?float
+    public function getLatitude(): float
     {
         return $this->latitude;
     }
@@ -167,7 +172,7 @@ class Laboratoire
         return $this;
     }
 
-    public function getLongitude(): ?float
+    public function getLongitude(): float
     {
         return $this->longitude;
     }
@@ -178,7 +183,7 @@ class Laboratoire
         return $this;
     }
 
-    public function isDisponible(): ?bool
+    public function isDisponible(): bool
     {
         return $this->disponible;
     }
@@ -189,12 +194,12 @@ class Laboratoire
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->cree_le;
     }
 
-    public function setCreeLe(\DateTime $cree_le): static
+    public function setCreeLe(\DateTimeImmutable $cree_le): static
     {
         $this->cree_le = $cree_le;
         return $this;
@@ -284,7 +289,7 @@ class Laboratoire
     {
         if ($this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis)) {
             if ($laboratoireTypeAnalysis->getLaboratoire() === $this) {
-                $laboratoireTypeAnalysis->setLaboratoire(null);
+                // orphanRemoval=true: retire de la collection => suppression de l'entite enfant
             }
         }
 

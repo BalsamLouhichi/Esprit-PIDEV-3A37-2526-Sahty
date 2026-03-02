@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'responsable_laboratoire')]
 class ResponsableLaboratoire extends Utilisateur
 {
-    #[ORM\OneToOne(targetEntity: Laboratoire::class, inversedBy: 'responsable')]
+    #[ORM\OneToOne(targetEntity: Laboratoire::class, inversedBy: 'responsable', fetch: 'LAZY')]
     #[ORM\JoinColumn(name: 'laboratoire_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Laboratoire $laboratoire = null;
 

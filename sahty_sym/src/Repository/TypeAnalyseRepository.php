@@ -41,7 +41,7 @@ class TypeAnalyseRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-     public function findByCategorie($categorie)
+     public function findByCategorie(string $categorie): array
     {
         return $this->createQueryBuilder('t')
             ->where('t.categorie = :categorie')
@@ -53,7 +53,7 @@ class TypeAnalyseRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findAllActifsGroupedByCategorie()
+    public function findAllActifsGroupedByCategorie(): array
     {
         $types = $this->createQueryBuilder('t')
             ->where('t.actif = :actif')

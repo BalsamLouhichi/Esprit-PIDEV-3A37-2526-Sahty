@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\DemandeAnalyse;
+use App\Entity\FicheMedicale;
 use App\Entity\RendezVous;
 use App\Entity\Utilisateur;
 use App\Repository\DemandeAnalyseRepository;
@@ -37,6 +38,9 @@ class AdminAnalyticsService
         $this->em = $em;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getSnapshot(?\DateTimeInterface $since = null, ?\DateTimeInterface $until = null): array
     {
         $until = $until ? \DateTimeImmutable::createFromInterface($until) : new \DateTimeImmutable();
@@ -106,7 +110,7 @@ class AdminAnalyticsService
         $totalFiches = $this->ficheRepo->count([]);
         $fichesPeriod = (int) $this->em->createQueryBuilder()
             ->select('COUNT(f.id)')
-            ->from('App\Entity\FicheMedicale', 'f')
+            ->from(FicheMedicale::class, 'f')
             ->where('f.creeLe >= :since')
             ->andWhere('f.creeLe <= :until')
             ->setParameter('since', $since)
@@ -171,6 +175,7 @@ class AdminAnalyticsService
     }
 
     /**
+     * @param class-string $entityClass
      * @return array<string, int>
      */
     private function groupCountByField(string $entityClass, string $field): array

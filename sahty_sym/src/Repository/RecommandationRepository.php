@@ -7,6 +7,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
+/**
+ * @extends ServiceEntityRepository<Recommandation>
+ */
 class RecommandationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -35,7 +38,16 @@ class RecommandationRepository extends ServiceEntityRepository
         ];
     }
 
-    public function findByFilters($search = null, $quizId = null, $minScore = null, $maxScore = null, $sort = 'id', $direction = 'desc', $page = 1, $limit = 10)
+    public function findByFilters(
+        ?string $search = null,
+        ?int $quizId = null,
+        ?int $minScore = null,
+        ?int $maxScore = null,
+        string $sort = 'id',
+        string $direction = 'desc',
+        int $page = 1,
+        int $limit = 10
+    ): array
 {
     $qb = $this->createQueryBuilder('r')
         ->leftJoin('r.quiz', 'q');

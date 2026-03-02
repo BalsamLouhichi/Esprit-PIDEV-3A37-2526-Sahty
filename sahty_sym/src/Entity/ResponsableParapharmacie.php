@@ -5,6 +5,7 @@ namespace App\Entity;
 
 use App\Repository\ResponsableParapharmacieRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: ResponsableParapharmacieRepository::class)]
 #[ORM\Table(name: 'responsable_parapharmacie')]
@@ -37,6 +38,7 @@ class ResponsableParapharmacie extends Utilisateur
      * Utilisé lors du processus d'invitation
      */
     #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    #[Ignore]
     private ?string $invitationToken = null;
 
     /**
@@ -143,6 +145,7 @@ class ResponsableParapharmacie extends Utilisateur
     /**
      * Get the invitation token
      */
+    #[Ignore]
     public function getInvitationToken(): ?string
     {
         return $this->invitationToken;
@@ -151,7 +154,7 @@ class ResponsableParapharmacie extends Utilisateur
     /**
      * Set the invitation token
      */
-    public function setInvitationToken(?string $invitationToken): self
+    public function setInvitationToken(#[\SensitiveParameter] ?string $invitationToken): self
     {
         $this->invitationToken = $invitationToken;
         return $this;

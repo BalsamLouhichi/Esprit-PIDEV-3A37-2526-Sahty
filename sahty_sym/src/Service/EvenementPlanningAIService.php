@@ -6,7 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class EvenementPlanningAIService
 {
-    private $em;
+    private EntityManagerInterface $em;
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -63,6 +63,10 @@ class EvenementPlanningAIService
             ->from(Evenement::class, 'e')
             ->where('e.placesMax IS NOT NULL');
         $result = $qb->getQuery()->getSingleScalarResult();
-        return $result ? (int) round($result) : null;
+        if (!is_numeric($result)) {
+            return null;
+        }
+
+        return (int) round((float) $result);
     }
 }

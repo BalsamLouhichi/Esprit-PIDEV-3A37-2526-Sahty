@@ -17,16 +17,16 @@ class TypeAnalyse
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $nom = null;
+    private string $nom = '';
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $description = null;
+    private string $description = '';
 
     #[ORM\Column]
-    private ?bool $actif = null;
+    private bool $actif = true;
 
-    #[ORM\Column]
-    private ?\DateTime $cree_le = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $cree_le;
 
     /**
      * @var Collection<int, LaboratoireTypeAnalyse>
@@ -40,6 +40,7 @@ class TypeAnalyse
     public function __construct()
     {
         $this->laboratoireTypeAnalyses = new ArrayCollection();
+        $this->cree_le = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -47,7 +48,7 @@ class TypeAnalyse
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -59,7 +60,7 @@ class TypeAnalyse
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -71,7 +72,7 @@ class TypeAnalyse
         return $this;
     }
 
-    public function isActif(): ?bool
+    public function isActif(): bool
     {
         return $this->actif;
     }
@@ -83,12 +84,12 @@ class TypeAnalyse
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->cree_le;
     }
 
-    public function setCreeLe(\DateTime $cree_le): static
+    public function setCreeLe(\DateTimeImmutable $cree_le): static
     {
         $this->cree_le = $cree_le;
 

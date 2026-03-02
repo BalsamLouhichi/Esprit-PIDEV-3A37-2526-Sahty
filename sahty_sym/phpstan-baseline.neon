@@ -1,0 +1,1363 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads/docs'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 5
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Binary operation "/" between bool\|float\|int\|string and int\<1, max\> results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Call to method App\\Entity\\ResponsableParapharmacie\:\:setParapharmacieId\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTimeInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Comparison operation "\>" between 14400 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$adresse of method App\\Entity\\Laboratoire\:\:setAdresse\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$adresseCabinet of method App\\Entity\\Medecin\:\:setAdresseCabinet\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$allergies of method App\\Entity\\FicheMedicale\:\:setAllergies\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$analyses of method App\\Entity\\DemandeAnalyse\:\:setAnalyses\(\) expects array\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$antecedents of method App\\Entity\\FicheMedicale\:\:setAntecedents\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$categorie of method App\\Entity\\TypeAnalyse\:\:setCategorie\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$contactUrgence of method App\\Entity\\Patient\:\:setContactUrgence\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$datetime of class DateTime constructor expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 6
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$description of method App\\Entity\\Laboratoire\:\:setDescription\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$description of method App\\Entity\\TypeAnalyse\:\:setDescription\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$diagnostic of method App\\Entity\\FicheMedicale\:\:setDiagnostic\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$disponibilite of method App\\Entity\\Medecin\:\:setDisponibilite\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$email of method App\\Entity\\Laboratoire\:\:setEmail\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$email of method App\\Entity\\Utilisateur\:\:setEmail\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$grade of method App\\Entity\\Medecin\:\:setGrade\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$groupeSanguin of method App\\Entity\\Patient\:\:setGroupeSanguin\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$latitude of method App\\Entity\\Laboratoire\:\:setLatitude\(\) expects float, float\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$longitude of method App\\Entity\\Laboratoire\:\:setLongitude\(\) expects float, float\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Entity\\Laboratoire\:\:setNom\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Entity\\TypeAnalyse\:\:setNom\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Entity\\Utilisateur\:\:setNom\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$nomEtablissement of method App\\Entity\\Medecin\:\:setNomEtablissement\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$notes of method App\\Entity\\DemandeAnalyse\:\:setNotes\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$numeroAgrement of method App\\Entity\\Laboratoire\:\:setNumeroAgrement\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$numeroUrgence of method App\\Entity\\Medecin\:\:setNumeroUrgence\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$observations of method App\\Entity\\FicheMedicale\:\:setObservations\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$period of method App\\Controller\\AdminController\:\:getDateRangeForPeriod\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$period of method App\\Controller\\AdminController\:\:getPeriodLabel\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$photoProfil of method App\\Entity\\Utilisateur\:\:setPhotoProfil\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$poids of method App\\Entity\\FicheMedicale\:\:setPoids\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$prenom of method App\\Entity\\Utilisateur\:\:setPrenom\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$priorite of method App\\Entity\\DemandeAnalyse\:\:setPriorite\(\) expects string, bool\|float\|int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$priorite of method App\\Entity\\DemandeAnalyse\:\:setPriorite\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Repository\\UtilisateurRepository\:\:search\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$role of method App\\Entity\\Utilisateur\:\:setRole\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$role of method App\\Entity\\Utilisateur\:\:setRole\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$sexe of method App\\Entity\\Patient\:\:setSexe\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$specialite of method App\\Entity\\Medecin\:\:setSpecialite\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$statut of method App\\Entity\\DemandeAnalyse\:\:setStatut\(\) expects string, bool\|float\|int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$statut of method App\\Entity\\DemandeAnalyse\:\:setStatut\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$statut of method App\\Entity\\RendezVous\:\:setStatut\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$taille of method App\\Entity\\FicheMedicale\:\:setTaille\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$telephone of method App\\Entity\\Laboratoire\:\:setTelephone\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$telephone of method App\\Entity\\Utilisateur\:\:setTelephone\(\) expects string\|null, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$telephoneCabinet of method App\\Entity\\Medecin\:\:setTelephoneCabinet\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$traitement_en_cours of method App\\Entity\\FicheMedicale\:\:setTraitementEnCours\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$traitement_prescrit of method App\\Entity\\FicheMedicale\:\:setTraitementPrescrit\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$type of method App\\Controller\\AdminController\:\:isProblemAnswer\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$type_bilan of method App\\Entity\\DemandeAnalyse\:\:setTypeBilan\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$ville of method App\\Entity\\Laboratoire\:\:setVille\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$year of method DateTime\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$count of function array_fill expects int, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\:\:get\(\) expects bool\|float\|int\|string\|null, array given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$plainPassword of method Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface\:\:hashPassword\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$role of method App\\Repository\\UtilisateurRepository\:\:search\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$startDate of method App\\Controller\\AdminController\:\:getDateRangeForPeriod\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$timestamp of function date expects int\|null, int\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 20
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#3 \$endDate of method App\\Controller\\AdminController\:\:getDateRangeForPeriod\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Offset ''overall_risk'' on non\-empty\-array\<string, mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/AdminPredictionController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:findByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:findByParapharmacieAndStatut\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:findRecentByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:getMonthlyStatsByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:getStatsByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\CommandeRepository\:\:getStatsByStatutAndParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\ProduitRepository\:\:countByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\ProduitRepository\:\:findByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\ProduitRepository\:\:findTopSellingByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$parapharmacieId of method App\\Repository\\ProduitRepository\:\:searchByParapharmacie\(\) expects int, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$statut of method App\\Entity\\Commande\:\:setStatut\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#2 \$statut of method App\\Repository\\CommandeRepository\:\:findByParapharmacieAndStatut\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Parameter \#1 \$adresse of method App\\Entity\\Parapharmacie\:\:setAdresse\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableParapharmacieConfigController.php
+
+		-
+			message: '#^Parameter \#1 \$email of method App\\Entity\\Parapharmacie\:\:setEmail\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableParapharmacieConfigController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Entity\\Parapharmacie\:\:setNom\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableParapharmacieConfigController.php
+
+		-
+			message: '#^Parameter \#1 \$telephone of method App\\Entity\\Parapharmacie\:\:setTelephone\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Backoffice/ResponsableParapharmacieConfigController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset ''line'' on array\{line\: string, metric_name\: string, level\: string, is_critical\: bool, priority\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 4
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset ''priority'' on array\{line\: string, metric_name\: string, level\: string, is_critical\: bool, priority\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{0\: non\-falsy\-string, 1\: non\-empty\-string, 2\: non\-empty\-string, 3\?\: non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{0\: non\-falsy\-string, 1\: non\-empty\-string, 2\: non\-empty\-string, 3\?\: non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 3 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 4 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Parameter \#1 \$type_bilan of method App\\Entity\\DemandeAnalyse\:\:setTypeBilan\(\) expects string, bool\|float\|int\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Property App\\Controller\\DemandeAnalyseController\:\:\$security is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Binary operation "\*" between int and 0\|string results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$createur of method App\\Entity\\Evenement\:\:setCreateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtolower expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$targetObject of method DateTime\:\:diff\(\) expects DateTimeInterface, DateTimeInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$tri of method App\\Repository\\EvenementRepository\:\:getEvenementsTries\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$type of method App\\Repository\\EvenementRepository\:\:findByFilters\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\EvenementController\:\:canUserSubscribe\(\) expects App\\Entity\\Utilisateur, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 6
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\EvenementRepository\:\:findVisibleEventsForClient\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$utilisateur of method App\\Entity\\InscriptionEvenement\:\:setUtilisateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$needle of function stripos expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$ordre of method App\\Repository\\EvenementRepository\:\:getEvenementsTries\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$statut of method App\\Repository\\EvenementRepository\:\:findByFilters\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Controller\\EvenementController\:\:applyClientDiscoveryMode\(\) expects App\\Entity\\Utilisateur, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#3 \$recherche of method App\\Repository\\EvenementRepository\:\:findByFilters\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#3 \$statut of method App\\Repository\\EvenementRepository\:\:getEvenementsTries\(\) expects string\|null, float\|int\|string\|false\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#5 \$tri of method App\\Controller\\EvenementController\:\:applyClientDiscoveryMode\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$query of method App\\Repository\\FicheMedicaleRepository\:\:searchWithPermissions\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#1 \$searchTerm of method App\\Repository\\FicheMedicaleRepository\:\:searchByText\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Repository\\FicheMedicaleRepository\:\:findByUserRole\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Repository\\FicheMedicaleRepository\:\:searchByText\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Repository\\FicheMedicaleRepository\:\:searchWithPermissions\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Method App\\Controller\\GoogleController\:\:authenticateAndRedirect\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/GoogleController.php
+
+		-
+			message: '#^Parameter \#1 \$role of method App\\Controller\\GoogleController\:\:createUtilisateurByRole\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/GoogleController.php
+
+		-
+			message: '#^Parameter \#1 \$role of method App\\Entity\\Utilisateur\:\:setRole\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/GoogleController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/Controller/HomeController.php
+
+		-
+			message: '#^Class App\\Controller\\ChoiceType not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$utilisateur of method App\\Entity\\InscriptionEvenement\:\:setUtilisateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: src/Controller/LaboratoireController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/LaboratoireController.php
+
+		-
+			message: '#^Binary operation "\*" between non\-falsy\-string and non\-falsy\-string results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/MedecinRDVController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtolower expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/MedecinRDVController.php
+
+		-
+			message: '#^Offset ''articles'' on array\{pharmacie_nom\: mixed, articles\: non\-empty\-list\<mixed\>, total\: float\} in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$adresseLivraison of method App\\Entity\\Commande\:\:setAdresseLivraison\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$email of method App\\Entity\\Commande\:\:setEmail\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$nomClient of method App\\Controller\\PanierController\:\:notifierClient\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$nomClient of method App\\Entity\\Commande\:\:setNomClient\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$notes of method App\\Entity\\Commande\:\:setNotes\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$telephone of method App\\Entity\\Commande\:\:setTelephone\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#2 \$emailClient of method App\\Controller\\PanierController\:\:notifierClient\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Repository\\ProduitRepository\:\:findByNormalizedName\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ParapharmacieController.php
+
+		-
+			message: '#^Parameter \#1 \.\.\.\$addresses of method Symfony\\Component\\Mime\\Email\:\:to\(\) expects string\|Symfony\\Component\\Mime\\Address, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PasswordResetController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/PaymentController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/PaymentController.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Mollie\\Api\\EndpointCollection\\PaymentEndpointCollection\:\:get\(\) expects string, float\|int\<min, \-1\>\|int\<1, max\>\|string\|true given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$nom of method App\\Repository\\ProduitRepository\:\:findByNormalizedName\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$prixUnitaire of method App\\Entity\\Commande\:\:setPrixUnitaire\(\) expects string, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$url of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:redirect\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Parameter \#2 \$plainPassword of method Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface\:\:hashPassword\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Parameter \#2 \$plainPassword of method Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface\:\:isPasswordValid\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/var/quiz_ai_reco'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/var/quiz_ai_reco…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Parameter \#1 \$answersJson of method App\\Entity\\QuizAttempt\:\:setAnswersJson\(\) expects string\|null, string\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Parameter \#1 \$detectedCategoriesJson of method App\\Entity\\QuizAttempt\:\:setDetectedCategoriesJson\(\) expects string\|null, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Instanceof between DateTime and DateTimeInterface will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/Controller/RDVController.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: src/Controller/RDVController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/RecommandationController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Method App\\Controller\\ResponsableLaboratoireController\:\:formatTopAnomalies\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Parameter \#2 \$token of method Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController\:\:isCsrfTokenValid\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type DateTimeImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Binary operation "\." between array\|bool\|float\|int\|string\|UnitEnum\|null and ''/public/uploads…'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Call to method App\\Entity\\ResponsableParapharmacie\:\:setParapharmacieId\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createPatient\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createResponsableLaboratoire\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createResponsableParapharmacie\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$adresseCabinet of method App\\Entity\\Medecin\:\:setAdresseCabinet\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$contactUrgence of method App\\Entity\\Patient\:\:setContactUrgence\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$disponibilite of method App\\Entity\\Medecin\:\:setDisponibilite\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$grade of method App\\Entity\\Medecin\:\:setGrade\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$groupeSanguin of method App\\Entity\\Patient\:\:setGroupeSanguin\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$nomEtablissement of method App\\Entity\\Medecin\:\:setNomEtablissement\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$numeroUrgence of method App\\Entity\\Medecin\:\:setNumeroUrgence\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$sexe of method App\\Entity\\Patient\:\:setSexe\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$specialite of method App\\Entity\\Medecin\:\:setSpecialite\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#1 \$telephoneCabinet of method App\\Entity\\Medecin\:\:setTelephoneCabinet\(\) expects string\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Parameter \#2 \$plainPassword of method Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface\:\:hashPassword\(\) expects string, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setActif'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setCreeLe'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setDescription'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Property App\\Entity\\Commande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Commande.php
+
+		-
+			message: '#^Property App\\Entity\\Commande\:\:\$statut \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Commande.php
+
+		-
+			message: '#^Property App\\Entity\\DemandeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/DemandeAnalyse.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$devise \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$statut \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\FicheMedicale\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/FicheMedicale.php
+
+		-
+			message: '#^Property App\\Entity\\GroupeCible\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/GroupeCible.php
+
+		-
+			message: '#^Property App\\Entity\\InscriptionEvenement\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/InscriptionEvenement.php
+
+		-
+			message: '#^Property App\\Entity\\Laboratoire\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Laboratoire.php
+
+		-
+			message: '#^Property App\\Entity\\LaboratoireTypeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/LaboratoireTypeAnalyse.php
+
+		-
+			message: '#^Property App\\Entity\\LigneCommande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/LigneCommande.php
+
+		-
+			message: '#^Method App\\Entity\\Parapharmacie\:\:getProduits\(\) return type with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Parapharmacie.php
+
+		-
+			message: '#^Property App\\Entity\\Parapharmacie\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Parapharmacie.php
+
+		-
+			message: '#^Property App\\Entity\\Parapharmacie\:\:\$produits with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Parapharmacie.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordResetToken\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/PasswordResetToken.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$estActif \(bool\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$parapharmacies with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Property App\\Entity\\Question\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Question.php
+
+		-
+			message: '#^Property App\\Entity\\Question\:\:\$type \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Question.php
+
+		-
+			message: '#^Property App\\Entity\\Quiz\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Quiz.php
+
+		-
+			message: '#^Property App\\Entity\\QuizAttempt\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/QuizAttempt.php
+
+		-
+			message: '#^Property App\\Entity\\Recommandation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Recommandation.php
+
+		-
+			message: '#^Property App\\Entity\\RendezVous\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/RendezVous.php
+
+		-
+			message: '#^Property App\\Entity\\ResultatAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ResultatAnalyse.php
+
+		-
+			message: '#^Property App\\Entity\\TypeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/TypeAnalyse.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Form/RecommandationType.php
+
+		-
+			message: '#^Parameter \#1 \$form of closure expects Symfony\\Component\\Form\\FormInterface, Symfony\\Component\\Form\\FormInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Form/RecommandationType.php

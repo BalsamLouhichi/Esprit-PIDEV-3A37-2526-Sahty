@@ -4,9 +4,13 @@ namespace App\Repository;
 
 use App\Entity\Laboratoire;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
+/**
+ * @extends ServiceEntityRepository<Laboratoire>
+ */
 class LaboratoireRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,6 +20,9 @@ class LaboratoireRepository extends ServiceEntityRepository
 
     /**
      * Trouve les laboratoires avec filtres et pagination
+     */
+    /**
+     * @return Paginator<Laboratoire>
      */
     public function findWithFilters(
         ?string $search = null,
@@ -58,11 +65,12 @@ class LaboratoireRepository extends ServiceEntityRepository
     /**
      * Trouve les villes distinctes des laboratoires
      */
-    public function findDistinctVilles(): array
+    public function findDistinctVilles(int $limit = 80): array
     {
         $result = $this->createQueryBuilder('l')
             ->select('DISTINCT l.ville')
             ->orderBy('l.ville', 'ASC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
 
@@ -72,14 +80,23 @@ class LaboratoireRepository extends ServiceEntityRepository
     /**
      * Trouve les types de bilan distincts associes aux laboratoires
      */
-    public function findDistinctTypeBilans(): array
+    public function findDistinctTypeBilans(int $limit = 80): array
     {
-        $result = $this->createQueryBuilder('l')
-            ->leftJoin('l.laboratoireTypeAnalyses', 'lta')
-            ->leftJoin('lta.typeAnalyse', 'ta')
-            ->select('DISTINCT ta.nom')
+        $result = $this->getEntityManager()
+            ->createQueryBuilder()
+            ->select('DISTINCT ta.nom AS nom')
+            ->from('App\Entity\TypeAnalyse', 'ta')
             ->where('ta.nom IS NOT NULL')
+            ->andWhere(
+                'EXISTS (
+                    SELECT 1
+                    FROM App\Entity\LaboratoireTypeAnalyse lta
+                    JOIN lta.laboratoire l
+                    WHERE lta.typeAnalyse = ta
+                )'
+            )
             ->orderBy('ta.nom', 'ASC')
+            ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
 
@@ -89,12 +106,15 @@ class LaboratoireRepository extends ServiceEntityRepository
     /**
      * Filtre par nom, ville et type de bilan
      */
-    public function findWithPublicFilters(?string $name, ?string $ville, ?string $typeBilan): array
+    public function findWithPublicFilters(
+        ?string $name,
+        ?string $ville,
+        ?string $typeBilan,
+        int $limit = 60
+    ): array
     {
         $queryBuilder = $this->createQueryBuilder('l')
-            ->leftJoin('l.laboratoireTypeAnalyses', 'lta')
-            ->leftJoin('lta.typeAnalyse', 'ta')
-            ->addSelect('lta', 'ta')
+            ->select('partial l.{id,nom,ville,adresse,description,disponible}')
             ->orderBy('l.nom', 'ASC');
 
         if ($name) {
@@ -108,11 +128,27 @@ class LaboratoireRepository extends ServiceEntityRepository
         }
 
         if ($typeBilan) {
-            $queryBuilder->andWhere('ta.nom = :typeBilan')
+            $queryBuilder
+                ->andWhere(
+                    'EXISTS (
+                        SELECT 1
+                        FROM App\Entity\LaboratoireTypeAnalyse lta_filter
+                        JOIN lta_filter.typeAnalyse ta_filter
+                        WHERE lta_filter.laboratoire = l
+                          AND ta_filter.nom = :typeBilan
+                    )'
+                )
                 ->setParameter('typeBilan', $typeBilan);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        $query = $queryBuilder
+            ->distinct()
+            ->setMaxResults($limit)
+            ->getQuery();
+
+        $query->setHint(Query::HINT_FORCE_PARTIAL_LOAD, true);
+
+        return $query->getResult();
     }
 
     /**
@@ -162,7 +198,8 @@ class LaboratoireRepository extends ServiceEntityRepository
      */
     public function findRecommendedForVille(string $ville, int $limit = 6): array
     {
-        return $this->createQueryBuilder('l')
+        $query = $this->createQueryBuilder('l')
+            ->select('partial l.{id,nom,ville,adresse,description,disponible}')
             ->andWhere('l.disponible = :disponible')
             ->setParameter('disponible', true)
             ->addOrderBy('CASE WHEN LOWER(l.ville) = LOWER(:ville) THEN 0 ELSE 1 END', 'ASC')
@@ -170,8 +207,11 @@ class LaboratoireRepository extends ServiceEntityRepository
             ->addOrderBy('l.nom', 'ASC')
             ->setParameter('ville', trim($ville))
             ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->getQuery();
+
+        $query->setHint(Query::HINT_FORCE_PARTIAL_LOAD, true);
+
+        return $query->getResult();
     }
 
     /**

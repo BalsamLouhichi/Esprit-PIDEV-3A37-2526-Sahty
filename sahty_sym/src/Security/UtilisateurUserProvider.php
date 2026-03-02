@@ -9,6 +9,9 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
+/**
+ * @implements UserProviderInterface<Utilisateur>
+ */
 class UtilisateurUserProvider implements UserProviderInterface
 {
     public function __construct(private UtilisateurRepository $userRepository)
@@ -43,7 +46,7 @@ class UtilisateurUserProvider implements UserProviderInterface
         // Reload user from database
         $refreshedUser = $this->userRepository->find($user->getId());
 
-        if (!$refreshedUser) {
+        if (!$refreshedUser instanceof Utilisateur) {
             throw new UserNotFoundException(sprintf('User with id %d not found', $user->getId()));
         }
 

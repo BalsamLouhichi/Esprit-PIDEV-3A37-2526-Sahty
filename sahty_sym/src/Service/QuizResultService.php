@@ -8,6 +8,17 @@ use App\Entity\Recommandation;
 
 class QuizResultService
 {
+    /**
+     * @param array<int, int|string> $answers
+     * @return array{
+     *   totalScore:int,
+     *   maxScore:int,
+     *   categoryScores:array<string,int>,
+     *   problems:array<int,string>,
+     *   recommendations:array<int,Recommandation>,
+     *   interpretation:string
+     * }
+     */
     public function calculate(Quiz $quiz, array $answers): array
     {
         $totalScore = 0;
@@ -49,7 +60,7 @@ class QuizResultService
                 $targets = array_map('trim', explode(',', $reco->getTargetCategories()));
                 $catMatch = false;
                 foreach ($targets as $t) {
-                    if (in_array($t, $problemCats)) {
+                    if (in_array($t, $problemCats, true)) {
                         $catMatch = true;
                         break;
                     }
@@ -63,9 +74,9 @@ class QuizResultService
 
         // Trier par gravité descendante
         usort($selected, fn($a, $b) => 
-            ['high' => 3, 'medium' => 2, 'low' => 1][$b->getSeverity() ?? 'low'] 
+            ['high' => 3, 'medium' => 2, 'low' => 1][$b->getSeverity()] 
             <=> 
-            ['high' => 3, 'medium' => 2, 'low' => 1][$a->getSeverity() ?? 'low']
+            ['high' => 3, 'medium' => 2, 'low' => 1][$a->getSeverity()]
         );
 
         return [

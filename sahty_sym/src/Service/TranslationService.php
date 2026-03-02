@@ -150,7 +150,7 @@ class TranslationService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 $providerError = trim((string) ($data['error']['message'] ?? $data['error'] ?? $data['message'] ?? ''));
                 return ['ok' => false, 'error' => 'Erreur API traduction' . ($providerError !== '' ? ': ' . $providerError : '')];
             }
@@ -296,7 +296,7 @@ class TranslationService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 $providerError = trim((string) ($data['error']['message'] ?? $data['error'] ?? $data['message'] ?? ''));
                 return [
                     'ok' => false,
@@ -451,7 +451,7 @@ class TranslationService
         $clean = preg_replace_callback(
             '/:\s*\'((?:\\\\.|[^\'\\\\])*)\'/s',
             static function (array $matches): string {
-                $decoded = stripcslashes((string) ($matches[1] ?? ''));
+                $decoded = stripcslashes((string) $matches[1]);
                 $encoded = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 return ': ' . ($encoded !== false ? $encoded : '""');
             },

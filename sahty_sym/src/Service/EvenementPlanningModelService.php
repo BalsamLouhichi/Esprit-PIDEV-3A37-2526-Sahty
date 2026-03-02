@@ -15,6 +15,10 @@ class EvenementPlanningModelService
         $this->iaDir = $this->projectDir . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'IA_evenement';
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
     public function predict(array $payload): array
     {
         $predictScript = $this->iaDir . DIRECTORY_SEPARATOR . 'predict_planning.py';
@@ -213,6 +217,10 @@ class EvenementPlanningModelService
         return utf8_encode($value);
     }
 
+    /**
+     * @param array<string|int, mixed> $data
+     * @return array<string|int, mixed>
+     */
     private function sanitizeUtf8Array(array $data): array
     {
         foreach ($data as $key => $value) {

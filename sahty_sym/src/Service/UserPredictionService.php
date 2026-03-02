@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class UserPredictionService
 {
     private EntityManagerInterface $em;
+    /** @var array<string, int|float> */
     private array $config;
 
     /**
@@ -81,7 +82,7 @@ class UserPredictionService
             $results[] = [
                 'user_id' => $userId,
                 'role' => (string) ($patient['role'] ?? 'patient'),
-                'last_activity' => $lastActivity ? $lastActivity->format('Y-m-d H:i') : null,
+                'last_activity' => $lastActivity->format('Y-m-d H:i'),
                 'activity_30d' => $demands30d + $appointments30d,
                 'demands_30d' => $demands30d,
                 'appointments_30d' => $appointments30d,
@@ -296,14 +297,14 @@ class UserPredictionService
         return 'faible';
     }
 
-    private function maxDate(?\DateTimeInterface ...$dates): ?\DateTimeInterface
+    private function maxDate(\DateTimeInterface $first, ?\DateTimeInterface ...$dates): \DateTimeInterface
     {
-        $max = null;
+        $max = $first;
         foreach ($dates as $date) {
             if ($date === null) {
                 continue;
             }
-            if (!$max || $date > $max) {
+            if ($date > $max) {
                 $max = $date;
             }
         }

@@ -16,18 +16,18 @@ class Recommandation
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'recommandations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull(message: "Le quiz est obligatoire.")]
     private ?Quiz $quiz = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank(message: "Le nom est obligatoire.")]
-    private ?string $name = null;
+    private string $name = '';
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre est obligatoire.")]
     #[Assert\Length(min: 3, max: 255)]
-    private ?string $title = null; // titre court pour l'affichage
+    private string $title = ''; // titre court pour l'affichage
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
@@ -37,11 +37,11 @@ class Recommandation
 
     #[ORM\Column]
     #[Assert\NotBlank]
-    private ?int $min_score = null;
+    private int $min_score = 0;
 
     #[ORM\Column]
     #[Assert\NotBlank]
-    private ?int $max_score = null;
+    private int $max_score = 0;
 
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $type_probleme = null;
@@ -52,8 +52,8 @@ class Recommandation
     #[ORM\Column(length: 20, options: ["default" => "medium"])]
     private string $severity = 'medium'; // low / medium / high
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $video_url = null; // URL de la vidéo YouTube
@@ -71,7 +71,7 @@ class Recommandation
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     // Tous les getters & setters (je mets seulement les nouveaux + importants)
@@ -92,7 +92,7 @@ class Recommandation
         return $this;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -103,12 +103,12 @@ class Recommandation
         return $this;
     }
 
-    public function getTitle(): ?string
+    public function getTitle(): string
     {
         return $this->title;
     }
 
-    public function setTitle(?string $title): static
+    public function setTitle(string $title): static
     {
         $this->title = $title;
         return $this;
@@ -136,7 +136,7 @@ class Recommandation
         return $this;
     }
 
-    public function getMinScore(): ?int
+    public function getMinScore(): int
     {
         return $this->min_score;
     }
@@ -147,7 +147,7 @@ class Recommandation
         return $this;
     }
 
-    public function getMaxScore(): ?int
+    public function getMaxScore(): int
     {
         return $this->max_score;
     }
@@ -191,7 +191,7 @@ class Recommandation
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }

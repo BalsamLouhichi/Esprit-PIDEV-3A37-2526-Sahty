@@ -54,7 +54,7 @@ class MedecinProximityRecommendationService
 
         $addressQueries = [];
         foreach ($candidates as $item) {
-            foreach (($item['queries'] ?? []) as $query) {
+            foreach ($item['queries'] as $query) {
                 if (is_string($query) && $query !== '') {
                     $addressQueries[] = $query;
                 }
@@ -67,7 +67,7 @@ class MedecinProximityRecommendationService
             /** @var Medecin $medecin */
             $medecin = $item['medecin'];
             $coords = null;
-            foreach (($item['queries'] ?? []) as $query) {
+            foreach ($item['queries'] as $query) {
                 $coords = $coordsByAddress[$query] ?? null;
                 if ($coords !== null) {
                     break;

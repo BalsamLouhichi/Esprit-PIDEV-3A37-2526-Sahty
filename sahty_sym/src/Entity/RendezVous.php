@@ -15,22 +15,22 @@ class RendezVous
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTime $dateRdv = null;
+    private \DateTime $dateRdv;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
-    private ?\DateTime $heureRdv = null;
+    private \DateTime $heureRdv;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $raison = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $statut = null;
+    private string $statut = 'en attente';
 
-    #[ORM\Column]
-    private ?\DateTime $creeLe = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $creeLe;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTime $dateValidation = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $dateValidation = null;
 
     #[ORM\Column(length: 20)]
     private string $typeConsultation = 'cabinet';
@@ -41,18 +41,18 @@ class RendezVous
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $meetingProvider = null;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $meetingCreatedAt = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $meetingCreatedAt;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'rendezVous', fetch: 'LAZY')]
     private ?Patient $patient = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Medecin $medecin = null;
     
     // ✅ Fiche médicale maintenant facultative
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'rendezVous', cascade: ['persist', 'remove'], fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: true)]
     private ?FicheMedicale $ficheMedicale = null;
 
@@ -61,7 +61,9 @@ class RendezVous
      */
     public function __construct()
     {
-        $this->creeLe = new \DateTime();
+        $now = new \DateTimeImmutable();
+        $this->creeLe = $now;
+        $this->meetingCreatedAt = $now;
     }
 
     public function getId(): ?int
@@ -71,7 +73,7 @@ class RendezVous
 
     public function getDateRdv(): ?\DateTime
     {
-        return $this->dateRdv;
+        return isset($this->dateRdv) ? $this->dateRdv : null;
     }
 
     public function setDateRdv(\DateTime $dateRdv): static
@@ -83,7 +85,7 @@ class RendezVous
 
     public function getHeureRdv(): ?\DateTime
     {
-        return $this->heureRdv;
+        return isset($this->heureRdv) ? $this->heureRdv : null;
     }
 
     public function setHeureRdv(\DateTime $heureRdv): static
@@ -105,7 +107,7 @@ class RendezVous
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -117,24 +119,24 @@ class RendezVous
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->creeLe;
     }
 
-    public function setCreeLe(\DateTime $creeLe): static
+    public function setCreeLe(\DateTimeImmutable $creeLe): static
     {
         $this->creeLe = $creeLe;
 
         return $this;
     }
 
-    public function getDateValidation(): ?\DateTime
+    public function getDateValidation(): ?\DateTimeImmutable
     {
         return $this->dateValidation;
     }
 
-    public function setDateValidation(?\DateTime $dateValidation): static
+    public function setDateValidation(?\DateTimeImmutable $dateValidation): static
     {
         $this->dateValidation = $dateValidation;
 
@@ -177,12 +179,12 @@ class RendezVous
         return $this;
     }
 
-    public function getMeetingCreatedAt(): ?\DateTimeImmutable
+    public function getMeetingCreatedAt(): \DateTimeImmutable
     {
         return $this->meetingCreatedAt;
     }
 
-    public function setMeetingCreatedAt(?\DateTimeImmutable $meetingCreatedAt): static
+    public function setMeetingCreatedAt(\DateTimeImmutable $meetingCreatedAt): static
     {
         $this->meetingCreatedAt = $meetingCreatedAt;
 

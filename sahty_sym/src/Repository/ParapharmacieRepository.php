@@ -21,7 +21,7 @@ class ParapharmacieRepository extends ServiceEntityRepository
     /**
      * Trouver toutes les parapharmacies qui ont un produit avec son prix
      */
-    public function findAllWithProductAndPrice(Produit $produit)
+    public function findAllWithProductAndPrice(Produit $produit): array
     {
         return $this->createQueryBuilder('p')
             ->innerJoin('p.produits', 'prod')

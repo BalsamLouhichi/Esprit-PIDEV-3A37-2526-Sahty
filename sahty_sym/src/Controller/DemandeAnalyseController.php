@@ -1178,29 +1178,10 @@ class DemandeAnalyseController extends AbstractController
             }
         }
 
-        $allDemandes = $demandeAnalyseRepository->findBy(
-            ['patient' => $user],
-            ['programme_le' => 'DESC']
-        );
-
         $typeBilanFilter = trim((string) $request->query->get('type_bilan', ''));
-        $demandes = $allDemandes;
-
-        if ($typeBilanFilter !== '') {
-            $demandes = array_values(array_filter(
-                $allDemandes,
-                static fn (DemandeAnalyse $demande) => $demande->getTypeBilan() === $typeBilanFilter
-            ));
-        }
-
-        $typeBilanOptions = [];
-        foreach ($allDemandes as $demande) {
-            $type = $demande->getTypeBilan();
-            if ($type) {
-                $typeBilanOptions[$type] = $type;
-            }
-        }
-        ksort($typeBilanOptions);
+        $demandes = $demandeAnalyseRepository->findMesDemandesForPatient($user, $typeBilanFilter, 100);
+        $typeBilanOptionsList = $demandeAnalyseRepository->findTypeBilanOptionsForPatient($user);
+        $typeBilanOptions = array_combine($typeBilanOptionsList, $typeBilanOptionsList) ?: [];
 
         return [$demandes, $typeBilanOptions, $typeBilanFilter];
     }

@@ -25,6 +25,9 @@ class StripeCheckoutService
         return $this->stripeWebhookSecret !== '';
     }
 
+    /**
+     * @return array{id:string,url:string}
+     */
     public function createCheckoutSession(
         Evenement $evenement,
         Utilisateur $user,
@@ -70,6 +73,9 @@ class StripeCheckoutService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function parseAndVerifyWebhook(string $payload, ?string $signatureHeader): array
     {
         if (!$this->hasWebhookSecret()) {
@@ -113,4 +119,3 @@ class StripeCheckoutService
         return $event;
     }
 }
-

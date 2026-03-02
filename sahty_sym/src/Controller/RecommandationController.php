@@ -122,8 +122,13 @@ class RecommandationController extends AbstractController
 
         $choices = [];
         foreach ($quiz->getQuestions() ?? [] as $question) {
+            $label = 'Question';
+            if (is_object($question) && method_exists($question, 'getText')) {
+                $text = $question->getText();
+                $label = is_string($text) && $text !== '' ? $text : 'Question';
+            }
             $choices[] = [
-                'text' => method_exists($question, 'getText') ? ($question->getText() ?? 'Question') : 'Question',
+                'text' => $label,
             ];
         }
 

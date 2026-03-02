@@ -14,37 +14,37 @@ class InscriptionEvenement
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'inscriptions')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Evenement $evenement = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Utilisateur $utilisateur = null;
 
-    #[ORM\Column]
-    private ?\DateTime $dateInscription = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $dateInscription;
 
     #[ORM\Column(length: 50)]
-    private ?string $statut = null;
+    private string $statut = 'en_attente';
 
     #[ORM\Column]
-    private ?bool $present = null;
+    private bool $present = false;
 
 
     #[ORM\ManyToOne]
 #[ORM\JoinColumn(nullable: true)]
 private ?GroupeCible $groupeCible = null;
 
-    #[ORM\Column]
-    private ?\DateTime $creeLe = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $creeLe;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTime $modifieLe = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $modifieLe = null;
 
     public function __construct()
 {
-    $this->dateInscription = new \DateTime();
-    $this->creeLe = new \DateTime();
+    $this->dateInscription = new \DateTimeImmutable();
+    $this->creeLe = new \DateTimeImmutable();
     $this->present = false;
     $this->statut = 'en_attente'; 
 }
@@ -78,19 +78,19 @@ private ?GroupeCible $groupeCible = null;
         return $this;
     }
 
-    public function getDateInscription(): ?\DateTime
+    public function getDateInscription(): \DateTimeImmutable
     {
         return $this->dateInscription;
     }
 
-    public function setDateInscription(\DateTime $dateInscription): static
+    public function setDateInscription(\DateTimeImmutable $dateInscription): static
     {
         $this->dateInscription = $dateInscription;
 
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -102,7 +102,7 @@ private ?GroupeCible $groupeCible = null;
         return $this;
     }
 
-    public function isPresent(): ?bool
+    public function isPresent(): bool
     {
         return $this->present;
     }
@@ -114,24 +114,24 @@ private ?GroupeCible $groupeCible = null;
         return $this;
     }
 
-    public function getCreeLe(): ?\DateTime
+    public function getCreeLe(): \DateTimeImmutable
     {
         return $this->creeLe;
     }
 
-    public function setCreeLe(\DateTime $creeLe): static
+    public function setCreeLe(\DateTimeImmutable $creeLe): static
     {
         $this->creeLe = $creeLe;
 
         return $this;
     }
 
-    public function getModifieLe(): ?\DateTime
+    public function getModifieLe(): ?\DateTimeImmutable
     {
         return $this->modifieLe;
     }
 
-    public function setModifieLe(?\DateTime $modifieLe): static
+    public function setModifieLe(?\DateTimeImmutable $modifieLe): static
     {
         $this->modifieLe = $modifieLe;
 

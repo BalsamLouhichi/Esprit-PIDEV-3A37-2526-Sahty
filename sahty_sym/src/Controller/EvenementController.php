@@ -36,6 +36,7 @@ use App\Service\EventRegistrationEmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -591,7 +592,7 @@ class EvenementController extends AbstractController
 
         $form = $this->createForm(EvenementType::class, $evenement, [
 
-            'user_role' => ($user->getRoles()[0] ?? 'ROLE_USER'),
+            'user_role' => ($user instanceof Utilisateur ? ($user->getRoles()[0] ?? 'ROLE_USER') : 'ROLE_USER'),
 
             'is_admin' => $isAdmin,
             'is_demande' => !$isAdmin,
@@ -835,7 +836,7 @@ class EvenementController extends AbstractController
 
     #[Route('/{id}/supprimer', name: 'evenement_delete', methods: ['POST'])]
 
-    public function delete(Request $request, $id, EntityManagerInterface $em, EvenementRepository $evenementRepository): Response
+    public function delete(Request $request, int $id, EntityManagerInterface $em, EvenementRepository $evenementRepository): Response
 
     {
 
@@ -4316,7 +4317,7 @@ class EvenementController extends AbstractController
 
 
 
-        return min(99, max(0, $score));
+        return (int) min(99, max(0, $score));
 
     }
 
@@ -4448,7 +4449,7 @@ class EvenementController extends AbstractController
 
 
 
-    private function applySurfaceEditionSelection($form, Evenement $evenement): void
+    private function applySurfaceEditionSelection(FormInterface $form, Evenement $evenement): void
 
     {
 

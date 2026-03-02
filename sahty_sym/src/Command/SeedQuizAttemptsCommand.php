@@ -50,6 +50,7 @@ class SeedQuizAttemptsCommand extends Command
             $io->warning('Existing quiz_attempt rows deleted.');
         }
 
+        /** @var list<Quiz> $quizzes */
         $quizzes = [];
         if ($quizId !== null && $quizId !== '') {
             $quiz = $this->quizRepository->find((int) $quizId);
@@ -67,13 +68,16 @@ class SeedQuizAttemptsCommand extends Command
             return Command::SUCCESS;
         }
 
-        $users = $this->utilisateurRepository->findAll();
-        $userPool = array_values(array_filter($users, fn ($u) => $u instanceof Utilisateur));
+        /** @var list<Utilisateur> $userPool */
+        $userPool = array_values($this->utilisateurRepository->findAll());
 
         $created = 0;
         $now = new \DateTime();
 
         foreach ($quizzes as $quiz) {
+            if (!$quiz instanceof Quiz) {
+                continue;
+            }
             $questionIds = [];
             foreach ($quiz->getQuestions() as $question) {
                 if ($question->getId() !== null) {
@@ -131,8 +135,11 @@ class SeedQuizAttemptsCommand extends Command
                     $attempt->setUpdatedAt($updatedAt);
                 }
 
-                $attempt->setAnswersJson(json_encode($answers, JSON_UNESCAPED_UNICODE));
-                $attempt->setDetectedCategoriesJson(json_encode([], JSON_UNESCAPED_UNICODE));
+                $answersJson = json_encode($answers, JSON_UNESCAPED_UNICODE);
+                $categoriesJson = json_encode([], JSON_UNESCAPED_UNICODE);
+
+                $attempt->setAnswersJson($answersJson !== false ? $answersJson : '{}');
+                $attempt->setDetectedCategoriesJson($categoriesJson !== false ? $categoriesJson : '[]');
 
                 $this->em->persist($attempt);
                 $created++;

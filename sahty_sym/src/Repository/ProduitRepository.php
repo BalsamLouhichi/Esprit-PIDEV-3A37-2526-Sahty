@@ -106,7 +106,7 @@ class ProduitRepository extends ServiceEntityRepository
     /**
      * Trouver les produits par parapharmacie
      */
-    public function findByParapharmacie($parapharmacieId)
+    public function findByParapharmacie(int $parapharmacieId): array
     {
         return $this->createQueryBuilder('p')
             ->join('p.parapharmacies', 'ph')
@@ -120,9 +120,9 @@ class ProduitRepository extends ServiceEntityRepository
     /**
      * Compter les produits d'une parapharmacie
      */
-    public function countByParapharmacie($parapharmacieId)
+    public function countByParapharmacie(int $parapharmacieId): int
     {
-        return $this->createQueryBuilder('p')
+        return (int) $this->createQueryBuilder('p')
             ->select('COUNT(p.id)')
             ->join('p.parapharmacies', 'ph')
             ->where('ph.id = :parapharmacieId')
@@ -154,7 +154,7 @@ class ProduitRepository extends ServiceEntityRepository
    /**
  * Produits les plus vendus par parapharmacie
  */
-public function findTopSellingByParapharmacie($parapharmacieId, $limit = 10)
+public function findTopSellingByParapharmacie(int $parapharmacieId, int $limit = 10): array
 {
     $conn = $this->getEntityManager()->getConnection();
     
@@ -183,7 +183,7 @@ public function findTopSellingByParapharmacie($parapharmacieId, $limit = 10)
     /**
      * Recherche avancée de produits par parapharmacie
      */
-    public function searchByParapharmacie($parapharmacieId, $searchTerm)
+    public function searchByParapharmacie(int $parapharmacieId, string $searchTerm): array
     {
         return $this->createQueryBuilder('p')
             ->join('p.parapharmacies', 'ph')

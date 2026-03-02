@@ -7,6 +7,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
+/**
+ * @extends ServiceEntityRepository<Quiz>
+ */
 class QuizRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -34,7 +37,14 @@ class QuizRepository extends ServiceEntityRepository
             'total_items' => $total
         ];
     }
-  public function findByFilters($search = null, $minQuestions = null, $sort = 'id', $direction = 'desc', $page = 1, $limit = 6)
+  public function findByFilters(
+      ?string $search = null,
+      ?int $minQuestions = null,
+      string $sort = 'id',
+      string $direction = 'desc',
+      int $page = 1,
+      int $limit = 6
+  ): array
 {
     $qb = $this->createQueryBuilder('q');
 

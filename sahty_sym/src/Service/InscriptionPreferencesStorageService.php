@@ -10,7 +10,8 @@ class InscriptionPreferencesStorageService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        $projectDir = (string) $parameterBag->get('kernel.project_dir');
+        $projectDirValue = $parameterBag->get('kernel.project_dir');
+        $projectDir = is_string($projectDirValue) ? $projectDirValue : '';
         $this->storagePath = $projectDir . '/var/inscription_preferences.json';
     }
 
