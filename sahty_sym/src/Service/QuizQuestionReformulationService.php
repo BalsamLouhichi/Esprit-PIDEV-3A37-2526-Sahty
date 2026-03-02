@@ -20,56 +20,31 @@ class QuizQuestionReformulationService
 
         $apiKey = trim((string) ($_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? ''));
         $model = trim((string) ($_ENV['QUIZ_REFORMULATION_MODEL'] ?? $_ENV['OPENAI_MODEL'] ?? 'gpt-4o-mini'));
+        $result = $this->fallbackReformulation($normalizedQuestion);
 
-        if ($apiKey === '') {
-            return $this->fallbackReformulation($normalizedQuestion);
+        if ($apiKey !== '') {
+            $systemPrompt = 'Tu reformules des questions de quiz sante pour des patients. '
+                . 'Conserve strictement le sens medical, le niveau de gravite et la temporalite. '
+                . 'Utilise un francais simple, clair, sans jargon. '
+                . 'Reponds avec UNE seule phrase, sans puces, sans guillemets, sans explication.';
+
+            $userPrompt = sprintf(
+                "Quiz: %s\nQuestion originale: %s\n\nReformule pour un patient qui ne comprend pas bien.",
+                $quizName ? trim($quizName) : 'Quiz de sante',
+                $normalizedQuestion
+            );
+
+            try {
+                $content = $this->requestReformulatedContent($apiKey, $model, $systemPrompt, $userPrompt);
+                if ($content !== '') {
+                    $result = $this->normalizeOutput($content, $normalizedQuestion);
+                }
+            } catch (\Throwable) {
+                $result = $this->fallbackReformulation($normalizedQuestion);
+            }
         }
 
-        $systemPrompt = 'Tu reformules des questions de quiz sante pour des patients. '
-            . 'Conserve strictement le sens medical, le niveau de gravite et la temporalite. '
-            . 'Utilise un francais simple, clair, sans jargon. '
-            . 'Reponds avec UNE seule phrase, sans puces, sans guillemets, sans explication.';
-
-        $userPrompt = sprintf(
-            "Quiz: %s\nQuestion originale: %s\n\nReformule pour un patient qui ne comprend pas bien.",
-            $quizName ? trim($quizName) : 'Quiz de sante',
-            $normalizedQuestion
-        );
-
-        try {
-            $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'json' => [
-                    'model' => $model,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $userPrompt],
-                    ],
-                    'temperature' => 0.2,
-                    'max_tokens' => 120,
-                ],
-                'timeout' => 20,
-            ]);
-
-            $statusCode = $response->getStatusCode();
-            $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
-                return $this->fallbackReformulation($normalizedQuestion);
-            }
-
-            $content = $this->extractAssistantContent($data);
-            if ($content === '') {
-                return $this->fallbackReformulation($normalizedQuestion);
-            }
-
-            return $this->normalizeOutput($content, $normalizedQuestion);
-        } catch (\Throwable) {
-            return $this->fallbackReformulation($normalizedQuestion);
-        }
+        return $result;
     }
 
     /**
@@ -78,33 +53,12 @@ class QuizQuestionReformulationService
     private function extractAssistantContent(array $data): string
     {
         $content = $data['choices'][0]['message']['content'] ?? null;
-        if (is_string($content)) {
-            return trim($content);
+        $extracted = $this->extractContentFromMessage($content);
+        if ($extracted === '') {
+            $extracted = $this->extractFallbackContent($data);
         }
 
-        if (is_array($content)) {
-            $parts = [];
-            foreach ($content as $item) {
-                if (is_string($item) && trim($item) !== '') {
-                    $parts[] = trim($item);
-                    continue;
-                }
-                if (!is_array($item)) {
-                    continue;
-                }
-                $text = $item['text'] ?? $item['content'] ?? $item['value'] ?? null;
-                if (is_string($text) && trim($text) !== '') {
-                    $parts[] = trim($text);
-                }
-            }
-
-            if ($parts !== []) {
-                return trim(implode(' ', $parts));
-            }
-        }
-
-        $fallbackContent = $data['choices'][0]['text'] ?? $data['output_text'] ?? null;
-        return is_string($fallbackContent) ? trim($fallbackContent) : '';
+        return $extracted;
     }
 
     private function normalizeOutput(string $raw, string $fallback): string
@@ -134,6 +88,88 @@ class QuizQuestionReformulationService
     private function fallbackReformulation(string $question): string
     {
         return 'En termes simples: ' . $question;
+    }
+
+    private function requestReformulatedContent(
+        string $apiKey,
+        string $model,
+        string $systemPrompt,
+        string $userPrompt
+    ): string {
+        $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ],
+            'json' => [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+                'temperature' => 0.2,
+                'max_tokens' => 120,
+            ],
+            'timeout' => 20,
+        ]);
+
+        $content = '';
+        $statusCode = $response->getStatusCode();
+        $data = $response->toArray(false);
+        if ($statusCode < 400 && is_array($data)) {
+            $content = $this->extractAssistantContent($data);
+        }
+
+        return $content;
+    }
+
+    private function extractContentFromMessage(mixed $content): string
+    {
+        $extracted = '';
+
+        if (is_string($content)) {
+            $extracted = trim($content);
+        } elseif (is_array($content)) {
+            $parts = [];
+            foreach ($content as $item) {
+                $piece = $this->extractTextFromMessagePart($item);
+                if ($piece !== '') {
+                    $parts[] = $piece;
+                }
+            }
+            if ($parts !== []) {
+                $extracted = trim(implode(' ', $parts));
+            }
+        }
+
+        return $extracted;
+    }
+
+    private function extractTextFromMessagePart(mixed $item): string
+    {
+        $text = '';
+
+        if (is_string($item)) {
+            $text = trim($item);
+        } elseif (is_array($item)) {
+            $candidate = $item['text'] ?? $item['content'] ?? $item['value'] ?? null;
+            if (is_string($candidate)) {
+                $text = trim($candidate);
+            }
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function extractFallbackContent(array $data): string
+    {
+        $fallbackContent = $data['choices'][0]['text'] ?? $data['output_text'] ?? null;
+
+        return is_string($fallbackContent) ? trim($fallbackContent) : '';
     }
 }
 

@@ -42,7 +42,7 @@ class Quiz
     /**
      * @var Collection<int, Recommandation>
      */
-    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'quiz', targetEntity: Recommandation::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $recommandations;
 
     public function __construct()
@@ -115,12 +115,7 @@ class Quiz
 
     public function removeQuestion(Question $question): static
     {
-        if ($this->questions->removeElement($question)) {
-            // set the owning side to null (unless already changed)
-            if ($question->getQuiz() === $this) {
-                $question->setQuiz(null);
-            }
-        }
+        $this->questions->removeElement($question);
 
         return $this;
     }
@@ -145,11 +140,7 @@ class Quiz
 
     public function removeRecommandation(Recommandation $recommandation): static
     {
-        if ($this->recommandations->removeElement($recommandation)) {
-            if ($recommandation->getQuiz() === $this) {
-                $recommandation->setQuiz(null);
-            }
-        }
+        $this->recommandations->removeElement($recommandation);
 
         return $this;
     }

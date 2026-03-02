@@ -24,6 +24,7 @@ class LaboratoireController extends AbstractController
         $name = trim((string) $request->query->get('name', ''));
         $ville = trim((string) $request->query->get('ville', ''));
         $typeBilan = trim((string) $request->query->get('type_bilan', ''));
+        $currentVille = trim((string) $request->query->get('current_ville', ''));
 
         $laboratoires = $laboratoireRepository->findWithPublicFilters(
             $name !== '' ? $name : null,
@@ -36,10 +37,18 @@ class LaboratoireController extends AbstractController
 
         $recommendedLaboratoires = [];
         $patientVille = null;
+        $locationActive = $currentVille !== '';
 
-        $user = $this->getUser();
-        if ($user instanceof Patient && $user->getVille()) {
-            $patientVille = $user->getVille();
+        if ($locationActive) {
+            $patientVille = $currentVille;
+        } else {
+            $user = $this->getUser();
+            if ($user instanceof Patient && $user->getVille()) {
+                $patientVille = $user->getVille();
+            }
+        }
+
+        if ($patientVille) {
             $recommendedLaboratoires = $laboratoireRepository->findRecommendedForVille($patientVille, 6);
         }
 
@@ -51,6 +60,8 @@ class LaboratoireController extends AbstractController
             'filter_villes' => $villes,
             'filter_type_bilans' => $typeBilans,
             'patient_ville' => $patientVille,
+            'current_ville' => $currentVille,
+            'location_active' => $locationActive,
             'recommended_laboratoires' => $recommendedLaboratoires,
         ]);
     }
@@ -155,7 +166,6 @@ class LaboratoireController extends AbstractController
         // Trier les catégories
         ksort($analysesParCategorie);
         ksort($analysesDetailsParCategorie);
-
         return $this->render('laboratoire/labo-details.html.twig', [
             'laboratoire' => $laboratoire,
             'analysesParCategorie' => $analysesParCategorie,

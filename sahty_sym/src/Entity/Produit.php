@@ -25,7 +25,7 @@ class Produit
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $prix = null;
+    private ?string $prix = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $stock = null;
@@ -98,14 +98,14 @@ class Produit
         return $this;
     }
 
-    public function getPrix(): ?float
+    public function getPrix(): ?string
     {
         return $this->prix;
     }
 
-    public function setPrix(float $prix): self
+    public function setPrix(string|float $prix): self
     {
-        $this->prix = $prix;
+        $this->prix = is_float($prix) ? number_format($prix, 2, '.', '') : $prix;
         return $this;
     }
 

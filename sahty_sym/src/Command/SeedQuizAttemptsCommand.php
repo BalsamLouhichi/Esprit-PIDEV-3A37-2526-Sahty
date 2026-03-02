@@ -67,8 +67,8 @@ class SeedQuizAttemptsCommand extends Command
             return Command::SUCCESS;
         }
 
-        $users = $this->utilisateurRepository->findAll();
-        $userPool = array_values(array_filter($users, fn ($u) => $u instanceof Utilisateur));
+        /** @var array<int, Utilisateur> $userPool */
+        $userPool = $this->utilisateurRepository->findAll();
 
         $created = 0;
         $now = new \DateTime();

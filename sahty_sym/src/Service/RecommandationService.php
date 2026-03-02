@@ -4,80 +4,201 @@ namespace App\Service;
 
 use App\Entity\Quiz;
 use App\Entity\Recommandation;
-use App\Repository\RecommandationRepository;
 
 class RecommandationService
 {
     private const DEFAULT_VIDEO_URL = 'https://www.youtube.com/embed/hnpQrMqDoqE';
+    private const VIDEO_ANXIETE_URL = 'https://www.youtube.com/embed/inpok4MKVLM';
+    private const VIDEO_SOMMEIL_URL = 'https://www.youtube.com/embed/aEqlQvczMJQ';
+    private const VIDEO_ALIMENTATION_URL = 'https://www.youtube.com/embed/fqhYBTg73fw';
+    private const VIDEO_ACTIVITE_URL = 'https://www.youtube.com/embed/ml6cT4AZdqI';
+    private const VIDEO_HUMEUR_URL = 'https://www.youtube.com/embed/ZToicYcHIOU';
+    private const VIDEO_CONCENTRATION_URL = 'https://www.youtube.com/embed/W19PdslW7iw';
+    private const VIDEO_ENERGIE_URL = 'https://www.youtube.com/embed/50kH47ZztHs';
 
+    /**
+     * @var array<string, string>
+     */
     private const CATEGORY_VIDEO_MAP = [
-        'stress' => 'https://www.youtube.com/embed/hnpQrMqDoqE',
-        'anxiete' => 'https://www.youtube.com/embed/inpok4MKVLM',
-        'sommeil' => 'https://www.youtube.com/embed/aEqlQvczMJQ',
-        'alimentation' => 'https://www.youtube.com/embed/fqhYBTg73fw',
-        'nutrition' => 'https://www.youtube.com/embed/fqhYBTg73fw',
-        'activite' => 'https://www.youtube.com/embed/ml6cT4AZdqI',
-        'sport' => 'https://www.youtube.com/embed/ml6cT4AZdqI',
-        'humeur' => 'https://www.youtube.com/embed/ZToicYcHIOU',
-        'concentration' => 'https://www.youtube.com/embed/W19PdslW7iw',
-        'energie' => 'https://www.youtube.com/embed/50kH47ZztHs',
-        'bien_etre' => 'https://www.youtube.com/embed/hnpQrMqDoqE',
-        'bien-etre' => 'https://www.youtube.com/embed/hnpQrMqDoqE',
-        'bienetre' => 'https://www.youtube.com/embed/hnpQrMqDoqE',
+        'stress' => self::DEFAULT_VIDEO_URL,
+        'anxiete' => self::VIDEO_ANXIETE_URL,
+        'sommeil' => self::VIDEO_SOMMEIL_URL,
+        'alimentation' => self::VIDEO_ALIMENTATION_URL,
+        'nutrition' => self::VIDEO_ALIMENTATION_URL,
+        'activite' => self::VIDEO_ACTIVITE_URL,
+        'sport' => self::VIDEO_ACTIVITE_URL,
+        'humeur' => self::VIDEO_HUMEUR_URL,
+        'concentration' => self::VIDEO_CONCENTRATION_URL,
+        'energie' => self::VIDEO_ENERGIE_URL,
+        'bien_etre' => self::DEFAULT_VIDEO_URL,
+        'bien-etre' => self::DEFAULT_VIDEO_URL,
+        'bienetre' => self::DEFAULT_VIDEO_URL,
     ];
 
-    public function __construct(private RecommandationRepository $repository)
-    {
-    }
-
     /**
-     * Get recommendations filtered by score and categories
-     *
-     * @param Quiz $quiz
-     * @param int $score
-     * @param array $problems Array of problematic categories
+     * @param string[] $detectedProblems
      * @return Recommandation[]
      */
-    public function getFiltered(Quiz $quiz, int $score, array $problems = []): array
+    public function getFiltered(Quiz $quiz, int $totalScore, array $detectedProblems): array
     {
-        $selected = [];
+        $normalizedProblems = $this->normalizeList($detectedProblems);
+        $filtered = [];
 
-        foreach ($quiz->getRecommandations() as $reco) {
-            if (!$this->matchesScore($score, $reco)) {
-                continue;
+        foreach ($quiz->getRecommandations()->toArray() as $recommandation) {
+            if ($this->matchesRecommendationFilters($recommandation, $totalScore, $normalizedProblems)) {
+                $filtered[] = $recommandation;
             }
-
-            if (!$this->matchesCategory($problems, $reco)) {
-                continue;
-            }
-
-            $selected[] = $reco;
         }
 
-        return $this->sortBySeverity($selected);
+        return $this->sortBySeverity($filtered);
+    }
+
+    public function resolveVideoUrl(Recommandation $recommandation): ?string
+    {
+        $raw = trim((string) $recommandation->getVideoUrl());
+        if ($raw !== '') {
+            $youtubeEmbed = $this->toYoutubeEmbedUrl($raw);
+            return $youtubeEmbed ?? $raw;
+        }
+
+        return $this->pickFallbackVideoUrl($recommandation);
     }
 
     /**
-     * Resolve the video URL to display for a recommendation.
-     * Priority: explicit URL from admin > category fallback map.
+     * @param string[] $values
+     * @return string[]
      */
-    public function resolveVideoUrl(Recommandation $recommandation): ?string
+    private function normalizeList(array $values): array
     {
-        $manualUrl = $this->normalizeYoutubeUrl($recommandation->getVideoUrl());
-        if ($manualUrl) {
-            return $manualUrl;
+        return array_values(array_unique(array_filter(array_map(
+            static fn (string $value): string => mb_strtolower(trim($value)),
+            $values
+        ), static fn (string $value): bool => $value !== '')));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function extractTargetCategories(Recommandation $recommandation): array
+    {
+        $raw = (string) ($recommandation->getTargetCategories() ?? '');
+        if (trim($raw) === '') {
+            return [];
         }
 
-        $categories = [];
+        $parts = preg_split('/[,;|]+/', $raw) ?: [];
+        $normalized = array_map(
+            static fn (string $value): string => mb_strtolower(trim($value)),
+            $parts
+        );
 
-        $targetCategories = $recommandation->getTargetCategories();
-        if ($targetCategories) {
-            $categories = array_merge($categories, array_map('trim', explode(',', $targetCategories)));
+        return array_values(array_unique(array_filter(
+            $normalized,
+            static fn (string $value): bool => $value !== ''
+        )));
+    }
+
+    /**
+     * @param Recommandation[] $recommendations
+     * @return Recommandation[]
+     */
+    private function sortBySeverity(array $recommendations): array
+    {
+        usort($recommendations, static function (Recommandation $a, Recommandation $b): int {
+            $order = ['high' => 3, 'medium' => 2, 'low' => 1];
+            return ($order[$b->getSeverity()] ?? 1) <=> ($order[$a->getSeverity()] ?? 1);
+        });
+
+        return $recommendations;
+    }
+
+    /**
+     * @param string[] $normalizedProblems
+     */
+    private function matchesRecommendationFilters(
+        Recommandation $recommandation,
+        int $totalScore,
+        array $normalizedProblems
+    ): bool {
+        if (!$this->isScoreInRange($recommandation, $totalScore)) {
+            return false;
         }
 
-        $typeProbleme = $recommandation->getTypeProbleme();
-        if ($typeProbleme) {
-            $categories[] = $typeProbleme;
+        if ($normalizedProblems === []) {
+            return true;
+        }
+
+        return $this->matchesDetectedProblems($recommandation, $normalizedProblems);
+    }
+
+    private function isScoreInRange(Recommandation $recommandation, int $totalScore): bool
+    {
+        $minScore = (int) ($recommandation->getMinScore() ?? 0);
+        $maxScore = (int) ($recommandation->getMaxScore() ?? PHP_INT_MAX);
+
+        return $totalScore >= $minScore && $totalScore <= $maxScore;
+    }
+
+    /**
+     * @param string[] $normalizedProblems
+     */
+    private function matchesDetectedProblems(Recommandation $recommandation, array $normalizedProblems): bool
+    {
+        $targetCategories = $this->extractTargetCategories($recommandation);
+        $typeProbleme = mb_strtolower(trim((string) $recommandation->getTypeProbleme()));
+
+        if ($targetCategories !== [] && array_intersect($targetCategories, $normalizedProblems) !== []) {
+            return true;
+        }
+
+        foreach ($normalizedProblems as $problem) {
+            if ($problem !== '' && str_contains($typeProbleme, $problem)) {
+                return true;
+            }
+        }
+
+        return $targetCategories === [] && $typeProbleme === '';
+    }
+
+    private function toYoutubeEmbedUrl(string $url): ?string
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return null;
+        }
+
+        $host = mb_strtolower((string) ($parts['host'] ?? ''));
+        $path = (string) ($parts['path'] ?? '');
+        $videoId = '';
+
+        if (str_contains($host, 'youtu.be')) {
+            $videoId = trim($path, '/');
+        } elseif (str_contains($host, 'youtube.com')) {
+            if (str_starts_with($path, '/embed/')) {
+                $videoId = trim(substr($path, 7), '/');
+            } elseif (str_starts_with($path, '/shorts/')) {
+                $videoId = trim(substr($path, 8), '/');
+            } elseif ($path === '/watch') {
+                parse_str((string) ($parts['query'] ?? ''), $query);
+                $videoId = is_string($query['v'] ?? null) ? $query['v'] : '';
+            }
+        }
+
+        $videoId = preg_replace('/[^A-Za-z0-9_-]/', '', $videoId) ?? '';
+        if ($videoId === '') {
+            return null;
+        }
+
+        return 'https://www.youtube.com/embed/' . $videoId;
+    }
+
+    private function pickFallbackVideoUrl(Recommandation $recommandation): string
+    {
+        $categories = $this->extractTargetCategories($recommandation);
+
+        $typeProbleme = trim((string) $recommandation->getTypeProbleme());
+        if ($typeProbleme !== '') {
+            $categories[] = mb_strtolower($typeProbleme);
         }
 
         foreach ($categories as $category) {
@@ -90,176 +211,32 @@ class RecommandationService
         return self::DEFAULT_VIDEO_URL;
     }
 
-    /**
-     * Check if score falls within recommendation range
-     */
-    private function matchesScore(int $score, Recommandation $reco): bool
-    {
-        $minScore = $reco->getMinScore();
-        $maxScore = $reco->getMaxScore();
-
-        if ($minScore === null || $maxScore === null) {
-            return true;
-        }
-
-        return $score >= $minScore && $score <= $maxScore;
-    }
-
-    /**
-     * Check if problematic categories match recommendation targets
-     */
-    private function matchesCategory(array $problems, Recommandation $reco): bool
-    {
-        $targets = $reco->getTargetCategories();
-
-        if (!$targets) {
-            return true;
-        }
-
-        if (empty($problems)) {
-            return false;
-        }
-
-        $targetArray = array_map('trim', explode(',', $targets));
-
-        foreach ($targetArray as $target) {
-            if (in_array($target, $problems, true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Sort recommendations by severity: high > medium > low
-     */
-    private function sortBySeverity(array $recommendations): array
-    {
-        usort($recommendations, function (Recommandation $a, Recommandation $b) {
-            $severityOrder = ['high' => 3, 'medium' => 2, 'low' => 1];
-
-            $aOrder = $severityOrder[$a->getSeverity() ?? 'low'] ?? 1;
-            $bOrder = $severityOrder[$b->getSeverity() ?? 'low'] ?? 1;
-
-            return $bOrder <=> $aOrder;
-        });
-
-        return $recommendations;
-    }
-
-    /**
-     * Get all recommendations for a quiz, grouped by severity
-     */
-    public function getGroupedBySeverity(Quiz $quiz): array
-    {
-        $grouped = [
-            'high' => [],
-            'medium' => [],
-            'low' => [],
-        ];
-
-        foreach ($quiz->getRecommandations() as $reco) {
-            $severity = $reco->getSeverity() ?? 'low';
-            if (isset($grouped[$severity])) {
-                $grouped[$severity][] = $reco;
-            }
-        }
-
-        return $grouped;
-    }
-
-    /**
-     * Get urgent recommendations (high severity)
-     */
-    public function getUrgent(Quiz $quiz): array
-    {
-        return array_filter(
-            $quiz->getRecommandations()->toArray(),
-            fn (Recommandation $r) => $r->getSeverity() === 'high'
-        );
-    }
-
-    /**
-     * Count recommendations by severity for a quiz
-     */
-    public function countBySeverity(Quiz $quiz): array
-    {
-        return [
-            'high' => count(array_filter(
-                $quiz->getRecommandations()->toArray(),
-                fn (Recommandation $r) => $r->getSeverity() === 'high'
-            )),
-            'medium' => count(array_filter(
-                $quiz->getRecommandations()->toArray(),
-                fn (Recommandation $r) => $r->getSeverity() === 'medium'
-            )),
-            'low' => count(array_filter(
-                $quiz->getRecommandations()->toArray(),
-                fn (Recommandation $r) => $r->getSeverity() === 'low'
-            )),
-        ];
-    }
-
     private function normalizeCategory(string $value): string
     {
-        $value = strtolower(trim($value));
+        $value = mb_strtolower(trim($value));
+        $normalized = $value;
 
-        if (str_contains($value, 'stress')) {
-            return 'stress';
-        }
-        if (str_contains($value, 'anx')) {
-            return 'anxiete';
-        }
-        if (str_contains($value, 'sommeil')) {
-            return 'sommeil';
-        }
-        if (str_contains($value, 'aliment') || str_contains($value, 'nutri')) {
-            return 'alimentation';
-        }
-        if (str_contains($value, 'activ') || str_contains($value, 'sport')) {
-            return 'activite';
-        }
-        if (str_contains($value, 'humeur') || str_contains($value, 'emotion')) {
-            return 'humeur';
-        }
-        if (str_contains($value, 'concentr')) {
-            return 'concentration';
-        }
-        if (str_contains($value, 'energie') || str_contains($value, 'fatigue')) {
-            return 'energie';
-        }
-        if (str_contains($value, 'bien_etre') || str_contains($value, 'bien-etre') || str_contains($value, 'bienetre') || str_contains($value, 'bien etre')) {
-            return 'bien_etre';
-        }
-
-        return $value;
-    }
-
-    private function normalizeYoutubeUrl(?string $url): ?string
-    {
-        if (!$url) {
-            return null;
-        }
-
-        $url = trim($url);
-
-        if (str_contains($url, '/embed/')) {
-            return $url;
-        }
-
-        $patterns = [
-            '#youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})#',
-            '#youtu\.be/([a-zA-Z0-9_-]{11})#',
-            '#youtube\.com/shorts/([a-zA-Z0-9_-]{11})#',
+        $rules = [
+            'stress' => ['stress'],
+            'anxiete' => ['anx'],
+            'sommeil' => ['sommeil'],
+            'alimentation' => ['aliment', 'nutri'],
+            'activite' => ['activ', 'sport'],
+            'humeur' => ['humeur', 'emotion'],
+            'concentration' => ['concentr'],
+            'energie' => ['energie', 'fatigue'],
+            'bien_etre' => ['bien_etre', 'bien-etre', 'bienetre', 'bien etre'],
         ];
 
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $url, $matches) === 1) {
-                return 'https://www.youtube.com/embed/' . $matches[1];
+        foreach ($rules as $category => $tokens) {
+            foreach ($tokens as $token) {
+                if (str_contains($value, $token)) {
+                    $normalized = $category;
+                    break 2;
+                }
             }
         }
 
-        return $url;
+        return $normalized;
     }
 }

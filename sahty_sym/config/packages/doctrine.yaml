@@ -1,6 +1,10 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        options:
+            # Force MySQL session timezone + strict SQL mode on each connection.
+            # Use +01:00 until MySQL timezone tables are loaded (then switch to Europe/Berlin).
+            1002: "SET SESSION time_zone = '+01:00', SESSION sql_mode = 'NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO'"
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
@@ -8,6 +12,8 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        types:
+            array: Doctrine\DBAL\Types\JsonType
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

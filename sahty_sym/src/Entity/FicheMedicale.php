@@ -31,7 +31,7 @@ class FicheMedicale
     private ?string $poids = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
-    private ?float $imc = null;
+    private ?string $imc = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $categorieImc = null;
@@ -55,8 +55,8 @@ class FicheMedicale
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $statut = null;
 
-    #[ORM\ManyToOne(inversedBy: 'fichesMedicales')]
-    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\ManyToOne(inversedBy: 'ficheMedicales')]
+    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Patient $patient = null;
 
     #[ORM\OneToOne(inversedBy: 'ficheMedicale')]
@@ -125,14 +125,14 @@ class FicheMedicale
         return $this;
     }
 
-    public function getImc(): ?float
+    public function getImc(): ?string
     {
         return $this->imc;
     }
 
-    public function setImc(?float $imc): static
+    public function setImc(string|float|null $imc): static
     {
-        $this->imc = $imc;
+        $this->imc = is_float($imc) ? number_format($imc, 2, '.', '') : $imc;
         return $this;
     }
 
@@ -267,7 +267,7 @@ class FicheMedicale
             $poidsEnKg = (float)$this->poids;
 
             $imc = $poidsEnKg / ($tailleEnMetres * $tailleEnMetres);
-            $this->imc = round($imc, 2);
+            $this->imc = number_format(round($imc, 2), 2, '.', '');
 
             // Déterminer la catégorie
             if ($imc < 18.5) {

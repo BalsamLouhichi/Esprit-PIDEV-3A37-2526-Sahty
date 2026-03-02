@@ -1,0 +1,243 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques parapharmacies - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Statistiques Parapharmacies</h4>
+        <a href="{{ path('admin_parapharmacies') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Parapharmacies</div>
+                    <div class="h4 mb-0">{{ total_parapharmacies }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Produits</div>
+                    <div class="h4 mb-0">{{ total_produits }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Commandes</div>
+                    <div class="h4 mb-0">{{ total_commandes }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Chiffre d'affaires</div>
+                    <div class="h4 mb-0">{{ commande_stats.total_chiffre|default(0)|number_format(2, '.', ' ') }} DT</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Top 5 par commandes</h5>
+                    <div style="height: 260px;">
+                        <canvas id="topCommandesChart"></canvas>
+                    </div>
+                    <hr class="my-4">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Parapharmacie</th>
+                                    <th class="text-end">Commandes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in top_commandes %}
+                                    <tr>
+                                        <td>{{ row.nom }}</td>
+                                        <td class="text-end">{{ row.commandes }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">Aucune donnée</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Top 5 par chiffre d'affaires</h5>
+                    <div style="height: 260px;">
+                        <canvas id="topRevenuChart"></canvas>
+                    </div>
+                    <hr class="my-4">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Parapharmacie</th>
+                                    <th class="text-end">Revenu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in top_revenu %}
+                                    <tr>
+                                        <td>{{ row.nom }}</td>
+                                        <td class="text-end">{{ row.revenu|number_format(2, '.', ' ') }} DT</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">Aucune donnée</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Répartition des statuts de commande</h5>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div style="height: 260px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Statut</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in status_rows %}
+                            <tr>
+                                <td>{{ row.statut }}</td>
+                                <td class="text-end">{{ row.total }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">Aucune donnée</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const topCommandesLabels = {{ top_commandes_labels|default([])|json_encode|raw }};
+        const topCommandesCounts = {{ top_commandes_counts|default([])|json_encode|raw }};
+        const topRevenuLabels = {{ top_revenu_labels|default([])|json_encode|raw }};
+        const topRevenuValues = {{ top_revenu_values|default([])|json_encode|raw }};
+        const statusLabels = {{ status_labels|default([])|json_encode|raw }};
+        const statusCounts = {{ status_counts|default([])|json_encode|raw }};
+
+        const topCommandesCtx = document.getElementById('topCommandesChart');
+        if (topCommandesCtx) {
+            new Chart(topCommandesCtx, {
+                type: 'bar',
+                data: {
+                    labels: topCommandesLabels,
+                    datasets: [{
+                        label: 'Commandes',
+                        data: topCommandesCounts,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        }
+
+        const topRevenuCtx = document.getElementById('topRevenuChart');
+        if (topRevenuCtx) {
+            new Chart(topRevenuCtx, {
+                type: 'bar',
+                data: {
+                    labels: topRevenuLabels,
+                    datasets: [{
+                        label: 'Revenu (DT)',
+                        data: topRevenuValues,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusCounts,
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#6366f1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, boxWidth: 8 }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

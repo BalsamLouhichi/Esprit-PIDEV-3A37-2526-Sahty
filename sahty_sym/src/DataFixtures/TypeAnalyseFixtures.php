@@ -54,15 +54,9 @@ class TypeAnalyseFixtures extends Fixture
                 $type->setNom($nom);
                 $type->setCategorie($categorie);
 
-                if (method_exists($type, 'setDescription')) {
-                    $type->setDescription($description);
-                }
-                if (method_exists($type, 'setActif')) {
-                    $type->setActif(true);
-                }
-                if (method_exists($type, 'setCreeLe')) {
-                    $type->setCreeLe(new \DateTime());
-                }
+                $type->setDescription($description);
+                $type->setActif(true);
+                $type->setCreeLe(new \DateTime());
 
                 $manager->persist($type);
             }

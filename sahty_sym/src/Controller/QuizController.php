@@ -12,6 +12,7 @@ use App\Form\QuizType;
 use App\Repository\QuizAttemptRepository;
 use App\Repository\QuizRepository;
 use App\Service\AiQuizGeneratorService;
+use App\Service\QuizAiGeneratedQuizBuilderService;
 use App\Service\QuizAiRecommendationService;
 use App\Service\QuizQuestionReformulationService;
 use App\Service\QuizPdfReportService;
@@ -26,11 +27,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class QuizController extends AbstractController
 {
-    #[Route('/quiz', name: 'app_quiz_index', methods: ['GET'])]
-    public function index(Request $request, QuizRepository $quizRepository): Response
-    {
-        return $this->frontQuizList($quizRepository, $request);
-    }
+    private const INVALID_PAYLOAD_MESSAGE = 'Payload invalide';
+    private const INVALID_CSRF_MESSAGE = 'Token CSRF invalide';
 
     #[Route('/admin/quiz/new', name: 'app_quiz_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
@@ -55,61 +53,39 @@ class QuizController extends AbstractController
     public function generateAiQuiz(
         Request $request,
         EntityManagerInterface $em,
-        AiQuizGeneratorService $aiQuizGenerator
+        AiQuizGeneratorService $aiQuizGenerator,
+        QuizAiGeneratedQuizBuilderService $generatedQuizBuilder
     ): Response {
         $form = $this->createForm(QuizAiGenerateType::class);
         $form->handleRequest($request);
+        $response = $this->render('admin/quiz_ai_generate.html.twig', [
+            'form' => $form->createView(),
+        ]);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $category = (string) $form->get('category')->getData();
+            $response = $this->redirectToRoute('app_quiz_generate_ai');
 
             try {
-                $generatedQuiz = $aiQuizGenerator->generateFromCategory($category);
+                $quiz = $generatedQuizBuilder->buildFromPayload(
+                    $category,
+                    $aiQuizGenerator->generateFromCategory($category)
+                );
+
+                if ($quiz instanceof Quiz) {
+                    $em->persist($quiz);
+                    $em->flush();
+                    $this->addFlash('success', 'Quiz genere par IA avec succes.');
+                    $response = $this->redirectToRoute('app_quiz_edit', ['id' => $quiz->getId()]);
+                } else {
+                    $this->addFlash('danger', 'Aucune question valide n a ete generee.');
+                }
             } catch (\Throwable $e) {
                 $this->addFlash('danger', 'Generation IA indisponible. Verifiez OPENAI_API_KEY puis reessayez.');
-                return $this->redirectToRoute('app_quiz_generate_ai');
             }
-
-            $quiz = new Quiz();
-            $quiz->setName((string) ($generatedQuiz['name'] ?? 'Quiz IA - ' . ucfirst($category)));
-            $quiz->setDescription((string) ($generatedQuiz['description'] ?? ('Quiz genere automatiquement pour la categorie ' . $category . '.')));
-
-            $questions = $generatedQuiz['questions'] ?? [];
-            if (!is_array($questions) || count($questions) === 0) {
-                $this->addFlash('danger', 'Aucune question valide n a ete generee.');
-                return $this->redirectToRoute('app_quiz_generate_ai');
-            }
-
-            foreach (array_values($questions) as $index => $questionData) {
-                if (!is_array($questionData) || empty($questionData['text'])) {
-                    continue;
-                }
-
-                $question = new Question();
-                $question->setText((string) $questionData['text']);
-                $question->setType((string) ($questionData['type'] ?? 'likert_0_4'));
-                $question->setCategory((string) ($questionData['category'] ?? $category));
-                $question->setReverse((bool) ($questionData['reverse'] ?? false));
-                $question->setOrderInQuiz($index + 1);
-
-                $quiz->addQuestion($question);
-            }
-
-            if ($quiz->getQuestions()->count() === 0) {
-                $this->addFlash('danger', 'La generation IA a retourne des donnees invalides.');
-                return $this->redirectToRoute('app_quiz_generate_ai');
-            }
-
-            $em->persist($quiz);
-            $em->flush();
-
-            $this->addFlash('success', 'Quiz genere par IA avec succes.');
-            return $this->redirectToRoute('app_quiz_edit', ['id' => $quiz->getId()]);
         }
 
-        return $this->render('admin/quiz_ai_generate.html.twig', [
-            'form' => $form->createView(),
-        ]);
+        return $response;
     }
 
     #[Route('/admin/quiz/edit/{id}', name: 'app_quiz_edit', methods: ['GET', 'POST'])]
@@ -146,7 +122,13 @@ class QuizController extends AbstractController
     public function show(Quiz $quiz, EntityManagerInterface $em, QuizAttemptRepository $attemptRepository): Response
     {
         $attempt = $this->getOrCreateAttempt($quiz, $em, $attemptRepository);
-        $savedAnswers = $this->decodeJsonMap($attempt->getAnswersJson());
+        $savedAnswers = [];
+        $decodedAnswers = json_decode((string) $attempt->getAnswersJson(), true);
+        if (is_array($decodedAnswers)) {
+            foreach ($decodedAnswers as $key => $value) {
+                $savedAnswers[(string) $key] = (int) $value;
+            }
+        }
 
         return $this->render('quiz/front/show.html.twig', [
             'quiz' => $quiz,
@@ -165,17 +147,23 @@ class QuizController extends AbstractController
         QuizAttemptRepository $attemptRepository
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
+        $errorResponse = null;
+
         if (!is_array($payload)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Payload invalide'], 400);
+            $errorResponse = new JsonResponse(['ok' => false, 'message' => self::INVALID_PAYLOAD_MESSAGE], 400);
+        } else {
+            $csrf = (string) ($payload['_token'] ?? '');
+            if (!$this->isCsrfTokenValid('quiz_progress_' . $quiz->getId(), $csrf)) {
+                $errorResponse = new JsonResponse(['ok' => false, 'message' => self::INVALID_CSRF_MESSAGE], 403);
+            }
         }
 
-        $csrf = (string) ($payload['_token'] ?? '');
-        if (!$this->isCsrfTokenValid('quiz_progress_' . $quiz->getId(), $csrf)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
+        if ($errorResponse instanceof JsonResponse) {
+            return $errorResponse;
         }
 
         $attempt = $this->resolveAttemptFromPayload($quiz, $payload, $attemptRepository, $em);
-        if (!$attempt) {
+        if (!$attempt instanceof QuizAttempt) {
             return new JsonResponse(['ok' => false, 'message' => 'Tentative introuvable'], 404);
         }
 
@@ -184,7 +172,13 @@ class QuizController extends AbstractController
             $answers = [];
         }
 
-        $validQuestionIds = $this->buildValidQuestionIdMap($quiz);
+        $validQuestionIds = [];
+        foreach ($quiz->getQuestions() as $question) {
+            $questionId = $question->getId();
+            if ($questionId !== null) {
+                $validQuestionIds[(string) $questionId] = true;
+            }
+        }
         $sanitizedAnswers = [];
         foreach ($answers as $questionId => $value) {
             $questionId = (string) $questionId;
@@ -223,7 +217,13 @@ class QuizController extends AbstractController
         QuizAttemptRepository $attemptRepository
     ): Response {
         $answers = $request->request->all('answers') ?? [];
-        $validQuestionIds = $this->buildValidQuestionIdMap($quiz);
+        $validQuestionIds = [];
+        foreach ($quiz->getQuestions() as $question) {
+            $questionId = $question->getId();
+            if ($questionId !== null) {
+                $validQuestionIds[(string) $questionId] = true;
+            }
+        }
         $sanitizedAnswers = [];
         foreach ($answers as $questionId => $value) {
             $questionId = (string) $questionId;
@@ -243,7 +243,14 @@ class QuizController extends AbstractController
             }
 
             $answerValue = (int) $answers[$questionId];
-            if (!$this->isProblemAnswer((string) $question->getType(), $answerValue)) {
+            $isProblematicAnswer = match ((string) $question->getType()) {
+                'likert_0_4' => $answerValue >= 3,
+                'likert_1_5' => $answerValue >= 4,
+                'yes_no' => $answerValue === 1,
+                default => false,
+            };
+
+            if (!$isProblematicAnswer) {
                 continue;
             }
 
@@ -350,25 +357,18 @@ class QuizController extends AbstractController
                 ->setParameter('minQuestions', $minQuestions);
         }
 
-        switch ($sort) {
-            case 'name_asc':
-                $qb->orderBy('q.name', 'ASC');
-                break;
-            case 'name_desc':
-                $qb->orderBy('q.name', 'DESC');
-                break;
-            case 'questions_asc':
-                $qb->orderBy('questions_count', 'ASC')->addOrderBy('q.createdAt', 'DESC');
-                break;
-            case 'questions_desc':
-                $qb->orderBy('questions_count', 'DESC')->addOrderBy('q.createdAt', 'DESC');
-                break;
-            case 'oldest':
-                $qb->orderBy('q.createdAt', 'ASC');
-                break;
-            default:
-                $qb->orderBy('q.createdAt', 'DESC');
-                break;
+        $sortParts = match ($sort) {
+            'name_asc' => ['q.name', 'ASC', null, null],
+            'name_desc' => ['q.name', 'DESC', null, null],
+            'questions_asc' => ['questions_count', 'ASC', 'q.createdAt', 'DESC'],
+            'questions_desc' => ['questions_count', 'DESC', 'q.createdAt', 'DESC'],
+            'oldest' => ['q.createdAt', 'ASC', null, null],
+            default => ['q.createdAt', 'DESC', null, null],
+        };
+
+        $qb->orderBy($sortParts[0], $sortParts[1]);
+        if (is_string($sortParts[2]) && is_string($sortParts[3])) {
+            $qb->addOrderBy($sortParts[2], $sortParts[3]);
         }
 
         $query = $qb
@@ -399,13 +399,19 @@ class QuizController extends AbstractController
         QuizQuestionReformulationService $reformulationService
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
+        $errorResponse = null;
+
         if (!is_array($payload)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Payload invalide'], 400);
+            $errorResponse = new JsonResponse(['ok' => false, 'message' => self::INVALID_PAYLOAD_MESSAGE], 400);
+        } else {
+            $csrf = (string) ($payload['_token'] ?? '');
+            if (!$this->isCsrfTokenValid('quiz_reformulate_' . $quiz->getId(), $csrf)) {
+                $errorResponse = new JsonResponse(['ok' => false, 'message' => self::INVALID_CSRF_MESSAGE], 403);
+            }
         }
 
-        $csrf = (string) ($payload['_token'] ?? '');
-        if (!$this->isCsrfTokenValid('quiz_reformulate_' . $quiz->getId(), $csrf)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
+        if ($errorResponse instanceof JsonResponse) {
+            return $errorResponse;
         }
 
         $targetQuestion = null;
@@ -416,13 +422,18 @@ class QuizController extends AbstractController
             }
         }
 
+        $questionText = '';
         if (!$targetQuestion instanceof Question) {
-            return new JsonResponse(['ok' => false, 'message' => 'Question introuvable pour ce quiz'], 404);
+            $errorResponse = new JsonResponse(['ok' => false, 'message' => 'Question introuvable pour ce quiz'], 404);
+        } else {
+            $questionText = trim((string) $targetQuestion->getText());
+            if ($questionText === '') {
+                $errorResponse = new JsonResponse(['ok' => false, 'message' => 'Texte de question vide'], 422);
+            }
         }
 
-        $questionText = trim((string) $targetQuestion->getText());
-        if ($questionText === '') {
-            return new JsonResponse(['ok' => false, 'message' => 'Texte de question vide'], 422);
+        if ($errorResponse instanceof JsonResponse) {
+            return $errorResponse;
         }
 
         $reformulated = $reformulationService->reformulateForPatient($questionText, (string) $quiz->getName());
@@ -434,6 +445,7 @@ class QuizController extends AbstractController
         ]);
     }
 
+    #[Route('/quiz', name: 'app_quiz_index', methods: ['GET'])]
     #[Route('/quizzes', name: 'app_quiz_front_list', methods: ['GET'])]
     public function frontQuizList(QuizRepository $quizRepository, Request $request): Response
     {
@@ -459,30 +471,26 @@ class QuizController extends AbstractController
                 ->setParameter('category', $category);
         }
 
-        if ($duration === 'quick') {
-            $qb->having('COUNT(question.id) < 6');
-        } elseif ($duration === 'medium') {
-            $qb->having('COUNT(question.id) BETWEEN 6 AND 10');
-        } elseif ($duration === 'long') {
-            $qb->having('COUNT(question.id) > 10');
+        $durationHaving = match ($duration) {
+            'quick' => 'COUNT(question.id) < 6',
+            'medium' => 'COUNT(question.id) BETWEEN 6 AND 10',
+            'long' => 'COUNT(question.id) > 10',
+            default => null,
+        };
+        if (is_string($durationHaving)) {
+            $qb->having($durationHaving);
         }
 
-        switch ($sort) {
-            case 'name_asc':
-                $qb->orderBy('q.name', 'ASC');
-                break;
-            case 'name_desc':
-                $qb->orderBy('q.name', 'DESC');
-                break;
-            case 'questions_asc':
-                $qb->orderBy('questions_count', 'ASC')->addOrderBy('q.createdAt', 'DESC');
-                break;
-            case 'questions_desc':
-                $qb->orderBy('questions_count', 'DESC')->addOrderBy('q.createdAt', 'DESC');
-                break;
-            default:
-                $qb->orderBy('q.createdAt', 'DESC');
-                break;
+        $sortParts = match ($sort) {
+            'name_asc' => ['q.name', 'ASC', null, null],
+            'name_desc' => ['q.name', 'DESC', null, null],
+            'questions_asc' => ['questions_count', 'ASC', 'q.createdAt', 'DESC'],
+            'questions_desc' => ['questions_count', 'DESC', 'q.createdAt', 'DESC'],
+            default => ['q.createdAt', 'DESC', null, null],
+        };
+        $qb->orderBy($sortParts[0], $sortParts[1]);
+        if (is_string($sortParts[2]) && is_string($sortParts[3])) {
+            $qb->addOrderBy($sortParts[2], $sortParts[3]);
         }
 
         $query = $qb
@@ -525,82 +533,51 @@ class QuizController extends AbstractController
         QuizAttemptRepository $attemptRepository
     ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
+        $response = null;
+
         if (!is_array($payload)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Payload invalide'], 400);
-        }
+            $response = new JsonResponse(['ok' => false, 'message' => self::INVALID_PAYLOAD_MESSAGE], 400);
+        } else {
+            $csrf = (string) ($payload['_token'] ?? '');
+            if (!$this->isCsrfTokenValid('quiz_ai_reco_' . $quiz->getId(), $csrf)) {
+                $response = new JsonResponse(['ok' => false, 'message' => self::INVALID_CSRF_MESSAGE], 403);
+            } else {
+                $score = max(0, (int) ($payload['score'] ?? 0));
+                $maxScore = max(1, (int) ($payload['max_score'] ?? 1));
+                $percentage = (int) round(($score / $maxScore) * 100);
+                $detectedProblems = array_values(array_unique($this->sanitizeScalarStringList($payload['detected_problems'] ?? [])));
+                $existingRecommendations = $this->sanitizeScalarStringList($payload['existing_recommendations'] ?? []);
+                $attemptId = max(0, (int) ($payload['attempt_id'] ?? 0));
 
-        $csrf = (string) ($payload['_token'] ?? '');
-        if (!$this->isCsrfTokenValid('quiz_ai_reco_' . $quiz->getId(), $csrf)) {
-            return new JsonResponse(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
-        }
+                $attemptValidationError = $this->validateAiRecommendationAttempt($attemptId, $quiz, $attemptRepository);
+                if ($attemptValidationError !== null) {
+                    $response = $attemptValidationError;
+                } else {
+                    $result = $aiRecommendationService->generate(
+                        (string) $quiz->getName(),
+                        $score,
+                        $maxScore,
+                        $percentage,
+                        $detectedProblems,
+                        $existingRecommendations
+                    );
 
-        $score = max(0, (int) ($payload['score'] ?? 0));
-        $maxScore = max(1, (int) ($payload['max_score'] ?? 1));
-        $percentage = (int) round(($score / $maxScore) * 100);
-        $detectedProblemsRaw = $payload['detected_problems'] ?? [];
-        $detectedProblems = [];
-        if (is_array($detectedProblemsRaw)) {
-            foreach ($detectedProblemsRaw as $item) {
-                if (!is_scalar($item)) {
-                    continue;
+                    if ($attemptId > 0) {
+                        $this->saveQuizAiRecoForAttempt($attemptId, $result);
+                    }
+
+                    $response = new JsonResponse([
+                        'ok' => true,
+                        'summary' => $result['summary'],
+                        'recommendations' => $result['recommendations'],
+                        'videos' => $result['videos'],
+                        'disclaimer' => $result['disclaimer'],
+                    ]);
                 }
-                $text = trim((string) $item);
-                if ($text !== '') {
-                    $detectedProblems[] = $text;
-                }
-            }
-        }
-        $detectedProblems = array_values(array_unique($detectedProblems));
-
-        $existingRaw = $payload['existing_recommendations'] ?? [];
-        $existingRecommendations = [];
-        if (is_array($existingRaw)) {
-            foreach ($existingRaw as $line) {
-                if (!is_scalar($line)) {
-                    continue;
-                }
-                $text = trim((string) $line);
-                if ($text !== '') {
-                    $existingRecommendations[] = $text;
-                }
             }
         }
 
-        $attemptId = max(0, (int) ($payload['attempt_id'] ?? 0));
-        if ($attemptId > 0) {
-            $attempt = $attemptRepository->find($attemptId);
-            if (!$attempt instanceof QuizAttempt) {
-                return new JsonResponse(['ok' => false, 'message' => 'Tentative introuvable'], 404);
-            }
-            if ($attempt->getQuiz()?->getId() !== $quiz->getId()) {
-                return new JsonResponse(['ok' => false, 'message' => 'Tentative non associee a ce quiz'], 400);
-            }
-            $user = $this->getUser();
-            if ($user instanceof Utilisateur && $attempt->getUser() && $attempt->getUser()->getId() !== $user->getId() && !$this->isGranted('ROLE_ADMIN')) {
-                return new JsonResponse(['ok' => false, 'message' => 'Acces refuse'], 403);
-            }
-        }
-
-        $result = $aiRecommendationService->generate(
-            (string) $quiz->getName(),
-            $score,
-            $maxScore,
-            $percentage,
-            $detectedProblems,
-            $existingRecommendations
-        );
-
-        if ($attemptId > 0) {
-            $this->saveQuizAiRecoForAttempt($attemptId, $result);
-        }
-
-        return new JsonResponse([
-            'ok' => true,
-            'summary' => $result['summary'],
-            'recommendations' => $result['recommendations'],
-            'videos' => $result['videos'],
-            'disclaimer' => $result['disclaimer'],
-        ]);
+        return $response;
     }
 
     /**
@@ -634,50 +611,22 @@ class QuizController extends AbstractController
      */
     private function loadQuizAiRecoForAttempt(int $attemptId): ?array
     {
-        if ($attemptId <= 0) {
-            return null;
-        }
+        $decoded = null;
 
-        $path = $this->getParameter('kernel.project_dir') . '/var/quiz_ai_reco/attempt_' . $attemptId . '.json';
-        if (!is_file($path)) {
-            return null;
-        }
-
-        $raw = @file_get_contents($path);
-        if (!is_string($raw) || trim($raw) === '') {
-            return null;
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return null;
+        if ($attemptId > 0) {
+            $path = $this->getParameter('kernel.project_dir') . '/var/quiz_ai_reco/attempt_' . $attemptId . '.json';
+            if (is_file($path)) {
+                $raw = @file_get_contents($path);
+                if (is_string($raw) && trim($raw) !== '') {
+                    $data = json_decode($raw, true);
+                    if (is_array($data)) {
+                        $decoded = $data;
+                    }
+                }
+            }
         }
 
         return $decoded;
-    }
-
-    private function isProblemAnswer(string $type, int $answer): bool
-    {
-        return match ($type) {
-            'likert_0_4' => $answer >= 3,
-            'likert_1_5' => $answer >= 4,
-            'yes_no' => $answer === 1,
-            default => false,
-        };
-    }
-
-    /**
-     * @param Recommandation[] $recommendations
-     * @return Recommandation[]
-     */
-    private function sortBySeverity(array $recommendations): array
-    {
-        usort($recommendations, function (Recommandation $a, Recommandation $b) {
-            $order = ['high' => 3, 'medium' => 2, 'low' => 1];
-            return ($order[$b->getSeverity()] ?? 1) <=> ($order[$a->getSeverity()] ?? 1);
-        });
-
-        return $recommendations;
     }
 
     /**
@@ -685,17 +634,26 @@ class QuizController extends AbstractController
      */
     private function buildRecommendationItems(Quiz $quiz, int $totalScore, array $detectedProblems, RecommandationService $recommandationService): array
     {
+        $sortBySeverity = static function (array $recommendations): array {
+            usort($recommendations, static function (Recommandation $a, Recommandation $b): int {
+                $order = ['high' => 3, 'medium' => 2, 'low' => 1];
+                return ($order[$b->getSeverity()] ?? 1) <=> ($order[$a->getSeverity()] ?? 1);
+            });
+
+            return $recommendations;
+        };
+
         $recommandations = $recommandationService->getFiltered($quiz, $totalScore, $detectedProblems);
 
         if (empty($recommandations)) {
             $scoreOnly = $quiz->getRecommandations()->filter(
                 fn (Recommandation $reco) => $totalScore >= $reco->getMinScore() && $totalScore <= $reco->getMaxScore()
             )->toArray();
-            $recommandations = $this->sortBySeverity($scoreOnly);
+            $recommandations = $sortBySeverity($scoreOnly);
         }
 
         if (empty($recommandations)) {
-            $recommandations = $this->sortBySeverity($quiz->getRecommandations()->toArray());
+            $recommandations = $sortBySeverity($quiz->getRecommandations()->toArray());
         }
 
         $items = [];
@@ -742,48 +700,60 @@ class QuizController extends AbstractController
         EntityManagerInterface $em
     ): ?QuizAttempt {
         $attemptId = (int) ($payload['attemptId'] ?? 0);
-        $attempt = null;
-        if ($attemptId > 0) {
-            $attempt = $attemptRepository->find($attemptId);
-        }
+        $attempt = $attemptId > 0 ? $attemptRepository->find($attemptId) : null;
 
         $user = $this->getUser();
         if (!$user instanceof Utilisateur) {
             return $attempt instanceof QuizAttempt ? $attempt : null;
         }
 
-        if ($attempt instanceof QuizAttempt) {
-            if ($attempt->getQuiz()?->getId() !== $quiz->getId()) {
-                return null;
-            }
-            if ($attempt->getUser()?->getId() !== $user->getId()) {
-                return null;
-            }
-            return $attempt;
+        if (!$attempt instanceof QuizAttempt) {
+            return $this->getOrCreateAttempt($quiz, $em, $attemptRepository);
         }
 
-        return $this->getOrCreateAttempt($quiz, $em, $attemptRepository);
+        $matchesQuiz = $attempt->getQuiz()?->getId() === $quiz->getId();
+        $matchesUser = $attempt->getUser()?->getId() === $user->getId();
+
+        return ($matchesQuiz && $matchesUser) ? $attempt : null;
     }
 
     /**
-     * @return array<string, int>
+     * @param mixed $raw
+     * @return string[]
      */
-    private function decodeJsonMap(?string $json): array
+    private function sanitizeScalarStringList(mixed $raw): array
     {
-        if (!$json) {
+        if (!is_array($raw)) {
             return [];
         }
 
-        $decoded = json_decode($json, true);
-        if (!is_array($decoded)) {
-            return [];
+        return array_values(array_filter(array_map(
+            static fn (mixed $item): string => is_scalar($item) ? trim((string) $item) : '',
+            $raw
+        ), static fn (string $text): bool => $text !== ''));
+    }
+
+    private function validateAiRecommendationAttempt(int $attemptId, Quiz $quiz, QuizAttemptRepository $attemptRepository): ?JsonResponse
+    {
+        $errorResponse = null;
+
+        if ($attemptId <= 0) {
+            return $errorResponse;
         }
 
-        $result = [];
-        foreach ($decoded as $key => $value) {
-            $result[(string) $key] = (int) $value;
+        $attempt = $attemptRepository->find($attemptId);
+        if (!$attempt instanceof QuizAttempt) {
+            $errorResponse = new JsonResponse(['ok' => false, 'message' => 'Tentative introuvable'], 404);
+        } elseif ($attempt->getQuiz()?->getId() !== $quiz->getId()) {
+            $errorResponse = new JsonResponse(['ok' => false, 'message' => 'Tentative non associee a ce quiz'], 400);
+        } else {
+            $user = $this->getUser();
+            if ($user instanceof Utilisateur && $attempt->getUser() && $attempt->getUser()->getId() !== $user->getId() && !$this->isGranted('ROLE_ADMIN')) {
+                $errorResponse = new JsonResponse(['ok' => false, 'message' => 'Acces refuse'], 403);
+            }
         }
-        return $result;
+
+        return $errorResponse;
     }
 
     /**
@@ -808,19 +778,4 @@ class QuizController extends AbstractController
         return array_values(array_unique($result));
     }
 
-    /**
-     * @return array<string, bool>
-     */
-    private function buildValidQuestionIdMap(Quiz $quiz): array
-    {
-        $ids = [];
-        foreach ($quiz->getQuestions() as $question) {
-            $id = $question->getId();
-            if ($id !== null) {
-                $ids[(string) $id] = true;
-            }
-        }
-
-        return $ids;
-    }
 }

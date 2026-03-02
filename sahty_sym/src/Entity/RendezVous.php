@@ -44,7 +44,8 @@ class RendezVous
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $meetingCreatedAt = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'rendezVous')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Patient $patient = null;
 
     #[ORM\ManyToOne]
@@ -52,8 +53,7 @@ class RendezVous
     private ?Medecin $medecin = null;
     
     // ✅ Fiche médicale maintenant facultative
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\OneToOne(mappedBy: 'rendezVous', cascade: ['persist', 'remove'])]
     private ?FicheMedicale $ficheMedicale = null;
 
     /**

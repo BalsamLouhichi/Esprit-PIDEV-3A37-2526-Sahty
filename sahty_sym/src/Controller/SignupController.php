@@ -8,6 +8,7 @@ use App\Entity\Medecin;
 use App\Entity\ResponsableLaboratoire;
 use App\Entity\ResponsableParapharmacie;
 use App\Entity\Laboratoire;
+use App\Entity\Parapharmacie;
 use App\Form\SignupType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -99,7 +100,13 @@ class SignupController extends AbstractController
 
                 case 'responsable_para':
                     $user = new ResponsableParapharmacie();
-                    $user->setParapharmacieId((int)$request->request->get('parapharmacie_id', 0));
+                    $parapharmacieId = (int) $request->request->get('parapharmacie_id', 0);
+                    if ($parapharmacieId > 0) {
+                        $parapharmacie = $em->getRepository(Parapharmacie::class)->find($parapharmacieId);
+                        if ($parapharmacie instanceof Parapharmacie) {
+                            $user->setParapharmacie($parapharmacie);
+                        }
+                    }
                     break;
 
                 case 'patient':
@@ -190,7 +197,6 @@ class SignupController extends AbstractController
     private function createResponsableParapharmacie(Request $request): ResponsableParapharmacie
     {
         $user = new ResponsableParapharmacie();
-        $user->setParapharmacieId((int)$request->request->get('signup[parapharmacie_id]', 0));
         return $user;
     }
 

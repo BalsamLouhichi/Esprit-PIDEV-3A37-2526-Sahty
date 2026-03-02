@@ -15,7 +15,7 @@ class LaboratoireTypeAnalyse
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'laboratoireTypeAnalyses')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Laboratoire $laboratoire = null;
 
     #[ORM\ManyToOne(inversedBy: 'laboratoireTypeAnalyses')]

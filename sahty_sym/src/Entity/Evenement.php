@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
@@ -78,7 +79,7 @@ private ?Utilisateur $createur = null;
     /**
      * @var Collection<int, InscriptionEvenement>
      */
-    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $inscriptions;
 
     #[ORM\ManyToMany(targetEntity: GroupeCible::class, inversedBy: 'evenements')]
@@ -150,24 +151,24 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTime
+    public function getDateDebut(): ?\DateTimeInterface
     {
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTime $dateDebut): static
+    public function setDateDebut(\DateTimeInterface $dateDebut): static
     {
         $this->dateDebut = $dateDebut;
 
         return $this;
     }
 
-    public function getDateFin(): ?\DateTime
+    public function getDateFin(): ?\DateTimeInterface
     {
         return $this->dateFin;
     }
 
-    public function setDateFin(\DateTime $dateFin): static
+    public function setDateFin(\DateTimeInterface $dateFin): static
     {
         $this->dateFin = $dateFin;
 
@@ -324,14 +325,9 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-   public function removeInscription(InscriptionEvenement $inscription): static
+    public function removeInscription(InscriptionEvenement $inscription): static
     {
-        if ($this->inscriptions->removeElement($inscription)) {
-            
-            if ($inscription->getEvenement() === $this) {
-                $inscription->setEvenement(null);
-            }
-        }
+        $this->inscriptions->removeElement($inscription);
 
         return $this;
     }

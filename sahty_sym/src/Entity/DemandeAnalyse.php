@@ -18,7 +18,7 @@ class DemandeAnalyse
     #[ORM\JoinColumn(name: 'patient_id', nullable: false)]
     private ?Patient $patient = null; // Changé de patient_id à patient
 
-    #[ORM\ManyToOne(targetEntity: Medecin::class, inversedBy: 'demandeAnalyses')]
+    #[ORM\ManyToOne(targetEntity: Medecin::class)]
     #[ORM\JoinColumn(name: 'medecin_id', nullable: true)] // ← Changer à true
     private ?Medecin $medecin = null;
 

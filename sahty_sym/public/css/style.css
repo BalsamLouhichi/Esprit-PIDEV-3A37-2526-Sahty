@@ -68,7 +68,6 @@
 .navbar-light .navbar-nav .nav-link:hover,
 .navbar-light .navbar-nav .nav-link.active {
     color: var(--primary);
-
 }
 
 @media (min-width: 992px) {
@@ -245,3 +244,4 @@
     width: 150px;
     height: 150px;
 }
+

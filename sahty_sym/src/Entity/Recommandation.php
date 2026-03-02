@@ -16,7 +16,7 @@ class Recommandation
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'recommandations')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull(message: "Le quiz est obligatoire.")]
     private ?Quiz $quiz = null;
 

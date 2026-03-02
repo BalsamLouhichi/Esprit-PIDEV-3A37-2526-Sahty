@@ -14,7 +14,7 @@ class ResponsableParapharmacie extends Utilisateur
      * Relation avec l'entité Parapharmacie
      * Un responsable peut gérer une seule parapharmacie
      */
-    #[ORM\ManyToOne(targetEntity: Parapharmacie::class, inversedBy: 'responsables')]
+    #[ORM\ManyToOne(targetEntity: Parapharmacie::class)]
     #[ORM\JoinColumn(name: 'parapharmacie_id', referencedColumnName: 'id', nullable: true)]
     private ?Parapharmacie $parapharmacie = null;
 

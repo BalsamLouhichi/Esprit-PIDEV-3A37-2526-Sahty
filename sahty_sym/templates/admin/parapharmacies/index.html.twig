@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Parapharmacies - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Parapharmacies</h4>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_parapharmacies_stats') }}" class="btn btn-info">
+                <i class="fas fa-chart-bar me-1"></i> Statistiques
+            </a>
+            <a href="{{ path('admin_parapharmacie_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Ajouter
+            </a>
+        </div>
+    </div>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Adresse</th>
+                            <th>Téléphone</th>
+                            <th>Email</th>
+                            <th class="text-center">Produits</th>
+                            <th class="text-center">Commandes</th>
+                            <th class="text-end">Chiffre d'affaires</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for para in parapharmacies %}
+                            {% set produitCount = produits_counts[para.id]|default(0) %}
+                            {% set commandeStats = commandes_stats[para.id]|default({total: 0, revenu: 0}) %}
+                            <tr>
+                                <td>{{ para.nom }}</td>
+                                <td>{{ para.adresse }}</td>
+                                <td>{{ para.telephone }}</td>
+                                <td>{{ para.email ?? '-' }}</td>
+                                <td class="text-center">{{ produitCount }}</td>
+                                <td class="text-center">{{ commandeStats.total }}</td>
+                                <td class="text-end">{{ commandeStats.revenu|number_format(2, '.', ' ') }} DT</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Aucune parapharmacie.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

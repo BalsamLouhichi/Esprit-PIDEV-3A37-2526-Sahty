@@ -10,6 +10,6 @@
   ],
   "target": "target_sequence",
   "model": "RandomForestClassifier",
-  "model_path": "models\\planning_model.joblib",
-  "phase_stats_path": "models\\phase_stats.json"
+  "model_path": "src\\IA_evenement\\models\\planning_model.joblib",
+  "phase_stats_path": "src\\IA_evenement\\models\\phase_stats.json"
 }

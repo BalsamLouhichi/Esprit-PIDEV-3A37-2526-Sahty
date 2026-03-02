@@ -1,0 +1,763 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Instanceof between App\\Entity\\Utilisateur and App\\Entity\\Utilisateur will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Command/SeedQuizAttemptsCommand.php
+
+		-
+			message: '#^Interface Symfony\\Component\\Console\\Output\\OutputInterface referenced with incorrect case\: Symfony\\component\\Console\\Output\\OutputInterface\.$#'
+			identifier: interface.nameCase
+			count: 2
+			path: src/Command/UserDebugCommand.php
+
+		-
+			message: '#^Call to method App\\Entity\\ResponsableParapharmacie\:\:setParapharmacieId\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Comparison operation "\>" between 14400 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Comparison operation "\>" between 1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11\|12\|13\|14\|15\|16\|17\|18\|19\|20\|21\|22\|23\|24\|25\|26\|27\|28\|29\|30\|31 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 3
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Instanceof between Symfony\\Component\\HttpFoundation\\File\\UploadedFile and Symfony\\Component\\HttpFoundation\\File\\UploadedFile will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 5
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Offset float on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$analyses of method App\\Entity\\DemandeAnalyse\:\:setAnalyses\(\) expects array\|null, bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$array of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$year of method DateTime\:\:setDate\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$count of function array_fill expects int, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\:\:get\(\) expects bool\|float\|int\|string\|null, array given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/AdminController.php
+
+		-
+			message: '#^Offset ''overall_risk'' on non\-empty\-array\<string, mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/AdminPredictionController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Controller/Backoffice/ResponsableController.php
+
+		-
+			message: '#^Offset ''line'' on array\{line\: string, metric_name\: string, level\: string, is_critical\: bool, priority\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 5
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset ''priority'' on array\{line\: string, metric_name\: string, level\: string, is_critical\: bool, priority\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 4
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{0\: non\-falsy\-string, 1\: non\-empty\-string, 2\: non\-empty\-string, 3\?\: non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{0\: non\-falsy\-string, 1\: non\-empty\-string, 2\: non\-empty\-string, 3\?\: non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 3 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Offset 4 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Property App\\Controller\\DemandeAnalyseController\:\:\$security is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Controller/DemandeAnalyseController.php
+
+		-
+			message: '#^Call to an undefined method App\\Repository\\EvenementRepository\:\:findPublicEvents\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$createur of method App\\Entity\\Evenement\:\:setCreateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\EvenementController\:\:canUserSubscribe\(\) expects App\\Entity\\Utilisateur, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 6
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$utilisateur of method App\\Entity\\InscriptionEvenement\:\:setUtilisateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Controller\\EvenementController\:\:applyClientDiscoveryMode\(\) expects App\\Entity\\Utilisateur, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: src/Controller/EvenementController.php
+
+		-
+			message: '#^Call to an undefined method App\\Service\\DictationTranscriptionService\:\:getConfigurationStatus\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getId\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Offset ''error'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, text\?\: string, error\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, translations\?\: array\<string, array\<string, string\>\>, error\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Parameter \#1 \$patient of method App\\Entity\\FicheMedicale\:\:setPatient\(\) expects App\\Entity\\Patient\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/FicheMedicaleController.php
+
+		-
+			message: '#^Method App\\Controller\\GoogleController\:\:authenticateAndRedirect\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/GoogleController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/Controller/HomeController.php
+
+		-
+			message: '#^Call to an undefined method App\\Controller\\InscriptionEvenementController\:\:getDoctrine\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Call to an undefined method App\\Entity\\InscriptionEvenement\:\:setReference\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Class App\\Controller\\ChoiceType not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Parameter \#1 \$utilisateur of method App\\Entity\\InscriptionEvenement\:\:setUtilisateur\(\) expects App\\Entity\\Utilisateur\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/InscriptionEvenementController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: src/Controller/LaboratoireController.php
+
+		-
+			message: '#^Binary operation "\*" between non\-falsy\-string and non\-falsy\-string results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Controller/MedecinRDVController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getId\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: src/Controller/MedecinRDVController.php
+
+		-
+			message: '#^Offset ''articles'' on array\{pharmacie_nom\: mixed, articles\: non\-empty\-list\<mixed\>, total\: float\} in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Controller/PanierController.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Produit and App\\Entity\\Produit will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Controller/ParapharmacieController.php
+
+		-
+			message: '#^Call to an undefined method App\\Repository\\ProduitRepository\:\:findMostPopular\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Parameter \#1 \$prixUnitaire of method App\\Entity\\Commande\:\:setPrixUnitaire\(\) expects string, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProduitController.php
+
+		-
+			message: '#^Call to function is_string\(\) with ''DESC'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Controller/QuizController.php
+
+		-
+			message: '#^Method App\\Controller\\ResponsableLaboratoireController\:\:formatTopAnomalies\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type DateTimeImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Controller/ResponsableLaboratoireController.php
+
+		-
+			message: '#^Call to method App\\Entity\\ResponsableParapharmacie\:\:setParapharmacieId\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 2
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createPatient\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createResponsableLaboratoire\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Method App\\Controller\\SignupController\:\:createResponsableParapharmacie\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Controller/SignupController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setActif'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setCreeLe'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Entity\\TypeAnalyse and ''setDescription'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DataFixtures/TypeAnalyseFixtures.php
+
+		-
+			message: '#^Property App\\Entity\\Commande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Commande.php
+
+		-
+			message: '#^Property App\\Entity\\Commande\:\:\$statut \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Commande.php
+
+		-
+			message: '#^Property App\\Entity\\DemandeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/DemandeAnalyse.php
+
+		-
+			message: '#^Attribute class App\\Entity\\Assert\\Choice does not exist\.$#'
+			identifier: attribute.notFound
+			count: 3
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Method App\\Entity\\Evenement\:\:getDateDebut\(\) should return DateTime\|null but returns DateTimeInterface\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Method App\\Entity\\Evenement\:\:getDateFin\(\) should return DateTime\|null but returns DateTimeInterface\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$devise \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\Evenement\:\:\$statut \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Evenement.php
+
+		-
+			message: '#^Property App\\Entity\\FicheMedicale\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/FicheMedicale.php
+
+		-
+			message: '#^Property App\\Entity\\GroupeCible\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/GroupeCible.php
+
+		-
+			message: '#^Property App\\Entity\\InscriptionEvenement\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/InscriptionEvenement.php
+
+		-
+			message: '#^Property App\\Entity\\Laboratoire\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Laboratoire.php
+
+		-
+			message: '#^Property App\\Entity\\LaboratoireTypeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/LaboratoireTypeAnalyse.php
+
+		-
+			message: '#^Property App\\Entity\\LigneCommande\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/LigneCommande.php
+
+		-
+			message: '#^Property App\\Entity\\Parapharmacie\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Parapharmacie.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordResetToken\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/PasswordResetToken.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$estActif \(bool\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Property App\\Entity\\Produit\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Produit.php
+
+		-
+			message: '#^Class App\\Repository\\QuestionRepository not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Entity/Question.php
+
+		-
+			message: '#^Property App\\Entity\\Question\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Question.php
+
+		-
+			message: '#^Property App\\Entity\\Question\:\:\$type \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Question.php
+
+		-
+			message: '#^Property App\\Entity\\Quiz\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Quiz.php
+
+		-
+			message: '#^Property App\\Entity\\QuizAttempt\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/QuizAttempt.php
+
+		-
+			message: '#^Property App\\Entity\\Recommandation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Recommandation.php
+
+		-
+			message: '#^Property App\\Entity\\RendezVous\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/RendezVous.php
+
+		-
+			message: '#^Property App\\Entity\\ResultatAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ResultatAnalyse.php
+
+		-
+			message: '#^Property App\\Entity\\TypeAnalyse\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/TypeAnalyse.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Form/RecommandationType.php
+
+		-
+			message: '#^Offset ''action'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/Security/RecaptchaVerifier.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Service/DictationTranscriptionService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Service/EvenementOperationalInsightsService.php
+
+		-
+			message: '#^Call to function is_string\(\) with null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Service/EvenementSeriesInsightsAIService.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: src/Service/EvenementSeriesInsightsAIService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Service/GoogleMeetApiService.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Medecin and App\\Entity\\Medecin will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Service/MedecinProximityRecommendationService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\FicheMedicale and App\\Entity\\FicheMedicale will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Offset ''emergency'' on array\{temporary_advice\: array\<int, string\>, safety_alerts\: array\<int, string\>, general_recommendations\: array\<int, string\>, emergency\: array\{detected\: bool, level\: string, reasons\: array\<int, string\>, actions\: array\<int, string\>\}\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Offset ''general…'' on array\{temporary_advice\: array\<int, string\>, safety_alerts\: array\<int, string\>, general_recommendations\: array\<int, string\>, emergency\: array\{detected\: bool, level\: string, reasons\: array\<int, string\>, actions\: array\<int, string\>\}\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Offset ''safety_alerts'' on array\{temporary_advice\: array\<int, string\>, safety_alerts\: array\<int, string\>, general_recommendations\: array\<int, string\>, emergency\: array\{detected\: bool, level\: string, reasons\: array\<int, string\>, actions\: array\<int, string\>\}\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Offset ''temporary_advice'' on array\{temporary_advice\: array\<int, string\>, safety_alerts\: array\<int, string\>, general_recommendations\: array\<int, string\>, emergency\: array\{detected\: bool, level\: string, reasons\: array\<int, string\>, actions\: array\<int, string\>\}\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientAppointmentGuidanceService.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientResultQaService.php
+
+		-
+			message: '#^Offset 3 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientResultQaService.php
+
+		-
+			message: '#^Offset 4 on array\{non\-falsy\-string, numeric\-string, numeric\-string, numeric\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/PatientResultQaService.php
+
+		-
+			message: '#^Dead catch \- Symfony\\Contracts\\HttpClient\\Exception\\TransportExceptionInterface is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: src/Service/ProductContentGenerator.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Service/QuizPdfReportService.php
+
+		-
+			message: '#^Offset ''reco'' on array\{reco\: object, selectedVideo\: string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/QuizPdfReportService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Service/QuizQuestionReformulationService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Offset ''error'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, text\?\: string, error\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, texts\?\: array\<string, string\>, error\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: src/Service/TranslationService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/TranslationService.php

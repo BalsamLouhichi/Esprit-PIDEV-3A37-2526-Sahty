@@ -93,7 +93,7 @@ class Laboratoire
     /**
      * @var Collection<int, LaboratoireTypeAnalyse>
      */
-    #[ORM\OneToMany(targetEntity: LaboratoireTypeAnalyse::class, mappedBy: 'laboratoire', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: LaboratoireTypeAnalyse::class, mappedBy: 'laboratoire', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $laboratoireTypeAnalyses;
 
     #[ORM\OneToOne(targetEntity: ResponsableLaboratoire::class, mappedBy: 'laboratoire')]
@@ -282,11 +282,7 @@ class Laboratoire
 
     public function removeLaboratoireTypeAnalysis(LaboratoireTypeAnalyse $laboratoireTypeAnalysis): static
     {
-        if ($this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis)) {
-            if ($laboratoireTypeAnalysis->getLaboratoire() === $this) {
-                $laboratoireTypeAnalysis->setLaboratoire(null);
-            }
-        }
+        $this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis);
 
         return $this;
     }

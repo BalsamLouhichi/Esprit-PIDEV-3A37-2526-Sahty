@@ -21,7 +21,13 @@ final class MeetingSchedulerService
         $provider = strtolower(trim($this->provider));
 
         if (in_array($provider, ['google_meet', 'google'], true)) {
-            return $this->googleMeetApiService->createMeetingLink($rendezVous);
+            try {
+                return $this->googleMeetApiService->createMeetingLink($rendezVous);
+            } catch (\Throwable) {
+                // Graceful fallback: if Google OAuth token is expired/revoked,
+                // keep the workflow operational with a Jitsi link.
+                return $this->meetingLinkGenerator->generate($this->buildSeed($rendezVous));
+            }
         }
 
         return $this->meetingLinkGenerator->generate($this->buildSeed($rendezVous));

@@ -258,11 +258,7 @@ class Commande
 
     public function removeLignesCommande(LigneCommande $ligneCommande): self
     {
-        if ($this->lignesCommandes->removeElement($ligneCommande)) {
-            if ($ligneCommande->getCommande() === $this) {
-                $ligneCommande->setCommande(null);
-            }
-        }
+        $this->lignesCommandes->removeElement($ligneCommande);
         return $this;
     }
 

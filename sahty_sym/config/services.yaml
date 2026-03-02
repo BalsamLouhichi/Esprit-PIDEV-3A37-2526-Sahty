@@ -90,6 +90,10 @@ services:
             $timeout: '%app.fastapi_ai.timeout%'
             $apiKey: '%app.fastapi_ai.api_key%'
 
+    App\Controller\AdminController:
+        arguments:
+            $userRepo: '@App\Repository\UtilisateurRepository'
+            $em: '@doctrine.orm.entity_manager'
     App\Integration\FastApiSemanticSearchClient:
         arguments:
             $endpoint: '%app.fastapi_semantic.endpoint%'
@@ -109,6 +113,11 @@ services:
             $provider: '%env(default::APP_MEETING_PROVIDER)%'
             $jitsiDomain: '%env(default::APP_JITSI_DOMAIN)%'
 
+    App\Command\MonthlyReportCommand:
+        arguments:
+            $reportSender: '%env(default::REPORT_SENDER)%'
+            $reportRecipients: '%env(default::REPORT_RECIPIENTS)%'
+
     App\Service\GoogleMeetApiService:
         arguments:
             $clientId: '%env(default::GOOGLE_CLIENT_ID)%'
@@ -119,6 +128,9 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+
+
 
     App\Service\EvenementPlanningModelService:
         arguments:

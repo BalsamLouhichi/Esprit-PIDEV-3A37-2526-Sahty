@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Produits parapharmacie - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="mb-0">Produits des parapharmacies</h4>
+        <a href="{{ path('admin_parapharmacies') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Catégorie</th>
+                            <th>Prix</th>
+                            <th class="text-center">Parapharmacies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            {% set produit = row.produit %}
+                            <tr>
+                                <td>{{ produit.nom }}</td>
+                                <td>{{ produit.categorie ?? '-' }}</td>
+                                <td>{{ produit.prix is not null ? produit.prix|number_format(2, '.', ' ') ~ ' DT' : '-' }}</td>
+                                <td class="text-center">{{ row.total|default(0) }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Aucun produit.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

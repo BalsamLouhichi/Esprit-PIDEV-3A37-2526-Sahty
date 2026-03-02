@@ -1,0 +1,237 @@
+PIDEV Sprint WEB - Semaine 7 (2025-2026)
+Equipe: mohamedanis.benlasmar, linda ouerfelli
+Projet: Symfony 6.4 (sahty_sym)
+
+OBJECTIF GLOBAL
+- Realiser le suivi note:
+  1) Tests unitaires
+  2) Analyse statique PHPStan
+  3) Analyse Doctrine Doctor
+  4) Valeur ajoutee (IA / amelioration fonctionnelle)
+  5) Integration du travail sur une seule machine avec GitHub
+
+====================================================================
+PARTIE A - TESTS UNITAIRES (PHPUnit)
+====================================================================
+
+1) Verifier PHPUnit
+Commande:
+  php .\bin\phpunit --version
+Explication:
+  Verifie que l'outil de tests est disponible.
+
+2) Structure recommandee
+- tests/Service/
+- tests/Controller/ (si besoin de tests fonctionnels)
+
+3) Ce qui est deja fait dans ce projet
+- tests/Service/QuizResultServiceTest.php
+- tests/Service/RecommandationServiceTest.php
+
+4) Lancer les tests unitaires
+Commandes:
+  php .\bin\phpunit tests\Service\QuizResultServiceTest.php
+  php .\bin\phpunit tests\Service\RecommandationServiceTest.php
+  php .\bin\phpunit tests\Service\QuizResultServiceTest.php tests\Service\RecommandationServiceTest.php
+Explication:
+  Valide la logique metier des services de quiz/recommandations.
+
+5) Travail a completer (obligatoire rapport)
+- Choisir au moins 1 autre entite metier (ex: RDV, Evenement, DemandeAnalyse).
+- Definir au moins 2 regles metier.
+- Creer/etendre un service metier.
+- Ecrire des tests unitaires de succes + echec (exceptions).
+
+Exemple de regles:
+- Date fin evenement > date debut.
+- Quantite >= 0.
+- Prix > 0.
+- Champ obligatoire non vide.
+
+====================================================================
+PARTIE B - ANALYSE STATIQUE (PHPStan)
+====================================================================
+
+1) Installer/verifier PHPStan
+Commande:
+  composer require --dev phpstan/phpstan
+  vendor\bin\phpstan --version
+
+2) Configuration
+Fichier:
+  phpstan.neon
+Contenu minimum:
+  includes:
+      - phpstan-baseline.neon
+  parameters:
+      level: 5
+      paths:
+          - src
+
+Explication:
+- level 5: niveau intermediaire.
+- paths: dossiers analyses.
+- baseline: neutralise temporairement les erreurs deja connues.
+
+3) Premiere analyse
+Commandes:
+  vendor\bin\phpstan analyse src
+  vendor\bin\phpstan analyse src\Controller
+  vendor\bin\phpstan analyse src\Service
+
+4) Analyse ciblee (deja executee)
+Commande:
+  php .\vendor\bin\phpstan analyse -c phpstan.neon src\Service\QuizResultService.php src\Service\RecommandationService.php tests\Service\QuizResultServiceTest.php tests\Service\RecommandationServiceTest.php
+Resultat attendu:
+  [OK] No errors
+
+5) Monter le niveau (atelier)
+- Modifier:
+  level: 8
+- Relancer:
+  vendor\bin\phpstan analyse
+
+6) Ignorer temporairement certaines erreurs (si demande atelier)
+Dans phpstan.neon:
+  parameters:
+      ignoreErrors:
+          - '#Call to an undefined method#'
+Note:
+  Utiliser temporairement, puis supprimer progressivement.
+
+7) Plan de correction reel (recommande)
+- Corriger par lots:
+  Lot 1: erreurs de types DateTime (setDate/setTime int)
+  Lot 2: getUser() non type -> helper utilisateur type
+  Lot 3: injections de dependances manquantes
+  Lot 4: signatures de methodes/retours
+  Lot 5: logique/conditions toujours vraies
+
+====================================================================
+PARTIE C - DOCTRINE DOCTOR
+====================================================================
+
+1) Installation
+Commande:
+  composer require --dev ahmed-bhs/doctrine-doctor
+
+Si conflit de dependances:
+  composer require ahmed-bhs/doctrine-doctor:^1.0 webmozart/assert:^1.11 --with-all-dependencies
+  composer require --dev ahmed-bhs/doctrine-doctor
+
+2) Config bundle (si non detecte)
+Fichier:
+  config/bundles.php
+Ligne attendue:
+  AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true, 'test' => true],
+
+3) Correction importante deja faite
+Fichier:
+  config/packages/doctrine_doctor.yaml
+Point cle:
+  doctrine_doctor:
+      enabled: true
+Explication:
+  Evite l'erreur "Expected bool, got string".
+
+4) Utilisation
+- Demarrer l'app en dev
+- Ouvrir une page
+- Ouvrir Symfony Web Profiler
+- Ouvrir panel Doctrine Doctor
+- Capturer:
+  integrity, security, configuration, slowest queries
+
+5) Boucle de correction
+Apres chaque correction:
+  php bin/console cache:clear
+  relancer serveur dev
+  reverifier panel Doctrine Doctor
+
+====================================================================
+PARTIE D - VALEUR AJOUTEE IA (A MONTRER AU SUIVI)
+====================================================================
+
+Fonctions IA deja presentes dans le projet (exemples):
+- Generation de quiz par IA
+- Reformulation de questions pour patient
+- Recommandations IA + suggestions videos
+- Prediction duree consultation
+
+Travail recommande a presenter:
+1) Ajouter garde-fous:
+   - fallback local si API indisponible
+   - messages utilisateur clairs
+2) Ajouter logs techniques:
+   - temps de reponse IA
+   - statut (success/fallback/error)
+3) Ajouter tests unitaires:
+   - parse/reponse IA valide
+   - fallback si contenu vide
+4) Ajouter metrique simple:
+   - compteur d'utilisation IA dans admin
+
+====================================================================
+PARTIE E - INTEGRATION GITHUB (TRAVAIL D'EQUIPE)
+====================================================================
+
+1) Branche par membre
+- feature/tests-phpstan
+- feature/doctrine-doctor
+- feature/ia-improvements
+
+2) Regles commits
+- Commits petits et clairs
+- Message type:
+  feat(test): add QuizResultService tests
+  fix(phpstan): correct DateTime arg types in RDVController
+
+3) Workflow
+- Pull latest main
+- Push branch
+- Ouvrir Pull Request
+- Revue en equipe
+- Merge
+
+4) Checklist avant merge
+- phpunit OK
+- phpstan OK (ou baseline mise a jour et justifiee)
+- app demarre sans erreur
+- captures Doctrine Doctor ajoutees
+
+====================================================================
+PARTIE F - CHECKLIST RAPIDE DE LIVRAISON
+====================================================================
+
+[ ] Tests unitaires executes et captures ajoutees
+[ ] phpstan.neon configure et analyse lancee
+[ ] Niveau 8 teste (au moins une execution)
+[ ] Doctrine Doctor installe + panel verifie
+[ ] Captures integrity/security/config/slow queries
+[ ] Corrections effectuees et expliquees
+[ ] Valeur ajoutee IA montree
+[ ] Code pousse sur GitHub (branches + PR)
+[ ] Rapport equipe complete
+
+====================================================================
+COMMANDES RAPIDES (COPIER/COLLER)
+====================================================================
+
+Tests:
+  php .\bin\phpunit
+
+PHPStan:
+  vendor\bin\phpstan analyse src
+  vendor\bin\phpstan analyse src\Controller
+  vendor\bin\phpstan analyse src\Service
+
+Doctrine Doctor:
+  php bin/console cache:clear
+  php -S 127.0.0.1:8000 -t public
+
+Git:
+  git checkout -b feature/tests-phpstan
+  git add .
+  git commit -m "feat: add tests and static analysis updates"
+  git push -u origin feature/tests-phpstan
+

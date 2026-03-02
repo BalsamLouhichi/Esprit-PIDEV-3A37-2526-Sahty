@@ -30,8 +30,25 @@ class QuizPdfReportService
     ): string {
         $patientName = $user ? trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? '')) : 'Patient';
         $createdAt = (new \DateTimeImmutable())->format('Y-m-d H:i');
+        $lines = $this->buildHeaderLines($quiz, $patientName, $createdAt, $score, $maxScore, $percentage);
+        $this->appendRecommendationSection($lines, $recommendationItems);
+        $this->appendAiRecommendationSection($lines, $aiRecommendation);
 
-        $lines = [
+        return $this->buildSimplePdf($this->normalizeLines($lines));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function buildHeaderLines(
+        Quiz $quiz,
+        string $patientName,
+        string $createdAt,
+        int $score,
+        int $maxScore,
+        int $percentage
+    ): array {
+        return [
             'SAHTY - Quiz Report',
             'Generated at: ' . $createdAt,
             '',
@@ -41,81 +58,135 @@ class QuizPdfReportService
             '',
             'Recommendations:',
         ];
+    }
 
-        if (count($recommendationItems) === 0) {
+    /**
+     * @param array<int, array{reco: object, selectedVideo: ?string}> $recommendationItems
+     * @param string[] $lines
+     */
+    private function appendRecommendationSection(array &$lines, array $recommendationItems): void
+    {
+        if (empty($recommendationItems)) {
             $lines[] = '- No specific recommendation for this score.';
         } else {
             foreach ($recommendationItems as $item) {
-                $reco = $item['reco'] ?? null;
-                if (!$reco || !method_exists($reco, 'getTitle')) {
-                    continue;
-                }
-
-                $title = (string) ($reco->getTitle() ?: $reco->getName());
-                $severity = $this->normalizeSeverityLabel((string) $reco->getSeverity());
-                $description = trim((string) ($reco->getDescription() ?? ''));
-                $video = trim((string) ($item['selectedVideo'] ?? ''));
-
-                $lines[] = '- [' . $severity . '] ' . $title;
-                if ($description !== '') {
-                    foreach ($this->wrapText($description, 95) as $wrapped) {
-                        $lines[] = '  ' . $wrapped;
-                    }
-                }
-                if ($video !== '') {
-                    $lines[] = '  Video: ' . $video;
-                }
-                $lines[] = '';
+                $this->appendRecommendationItemLines($lines, $item);
             }
         }
+    }
 
-        // Include IA recommendation only if it was executed and persisted.
-        if (is_array($aiRecommendation) && trim((string) ($aiRecommendation['summary'] ?? '')) !== '') {
-            $lines[] = '';
-            $lines[] = 'AI Recommendation:';
-            $lines[] = trim((string) $aiRecommendation['summary']);
-
-            $aiRows = $aiRecommendation['recommendations'] ?? [];
-            if (is_array($aiRows) && $aiRows !== []) {
-                foreach ($aiRows as $row) {
-                    if (!is_scalar($row) || trim((string) $row) === '') {
-                        continue;
-                    }
-                    $lines[] = '- ' . trim((string) $row);
-                }
-            }
-
-            $videoRows = $aiRecommendation['videos'] ?? [];
-            if (is_array($videoRows) && $videoRows !== []) {
-                $lines[] = '';
-                $lines[] = 'AI Suggested YouTube Videos:';
-                foreach ($videoRows as $video) {
-                    if (!is_array($video)) {
-                        continue;
-                    }
-                    $title = trim((string) ($video['title'] ?? 'YouTube video'));
-                    $url = trim((string) ($video['url'] ?? ''));
-                    $channel = trim((string) ($video['channel_hint'] ?? ''));
-                    if ($url === '') {
-                        continue;
-                    }
-                    $line = '- ' . ($title !== '' ? $title : 'YouTube video');
-                    if ($channel !== '') {
-                        $line .= ' (' . $channel . ')';
-                    }
-                    $lines[] = $line;
-                    $lines[] = '  Link: ' . $url;
-                }
-            }
-
-            $disclaimer = trim((string) ($aiRecommendation['disclaimer'] ?? ''));
-            if ($disclaimer !== '') {
-                $lines[] = '';
-                $lines[] = 'IA Disclaimer: ' . $disclaimer;
-            }
+    /**
+     * @param array{reco: object, selectedVideo: ?string} $item
+     * @param string[] $lines
+     */
+    private function appendRecommendationItemLines(array &$lines, array $item): void
+    {
+        $reco = $item['reco'] ?? null;
+        if (!$reco || !method_exists($reco, 'getTitle')) {
+            return;
         }
 
-        return $this->buildSimplePdf($this->normalizeLines($lines));
+        $title = (string) ($reco->getTitle() ?: $reco->getName());
+        $severity = $this->normalizeSeverityLabel((string) $reco->getSeverity());
+        $description = trim((string) ($reco->getDescription() ?? ''));
+        $video = trim((string) ($item['selectedVideo'] ?? ''));
+
+        $lines[] = '- [' . $severity . '] ' . $title;
+        if ($description !== '') {
+            foreach ($this->wrapText($description, 95) as $wrapped) {
+                $lines[] = '  ' . $wrapped;
+            }
+        }
+        if ($video !== '') {
+            $lines[] = '  Video: ' . $video;
+        }
+        $lines[] = '';
+    }
+
+    /**
+     * @param string[] $lines
+     * @param array<string,mixed>|null $aiRecommendation
+     */
+    private function appendAiRecommendationSection(array &$lines, ?array $aiRecommendation): void
+    {
+        if (!is_array($aiRecommendation)) {
+            return;
+        }
+
+        $summary = trim((string) ($aiRecommendation['summary'] ?? ''));
+        if ($summary === '') {
+            return;
+        }
+
+        $lines[] = '';
+        $lines[] = 'AI Recommendation:';
+        $lines[] = $summary;
+
+        $this->appendAiRecommendationRows($lines, $aiRecommendation['recommendations'] ?? []);
+        $this->appendAiVideoRows($lines, $aiRecommendation['videos'] ?? []);
+        $this->appendAiDisclaimer($lines, (string) ($aiRecommendation['disclaimer'] ?? ''));
+    }
+
+    /**
+     * @param string[] $lines
+     */
+    private function appendAiRecommendationRows(array &$lines, mixed $rows): void
+    {
+        if (!is_array($rows) || $rows === []) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if (!is_scalar($row) || trim((string) $row) === '') {
+                continue;
+            }
+            $lines[] = '- ' . trim((string) $row);
+        }
+    }
+
+    /**
+     * @param string[] $lines
+     */
+    private function appendAiVideoRows(array &$lines, mixed $videoRows): void
+    {
+        if (!is_array($videoRows) || $videoRows === []) {
+            return;
+        }
+
+        $lines[] = '';
+        $lines[] = 'AI Suggested YouTube Videos:';
+
+        foreach ($videoRows as $video) {
+            if (!is_array($video)) {
+                continue;
+            }
+            $title = trim((string) ($video['title'] ?? 'YouTube video'));
+            $url = trim((string) ($video['url'] ?? ''));
+            $channel = trim((string) ($video['channel_hint'] ?? ''));
+            if ($url === '') {
+                continue;
+            }
+            $line = '- ' . ($title !== '' ? $title : 'YouTube video');
+            if ($channel !== '') {
+                $line .= ' (' . $channel . ')';
+            }
+            $lines[] = $line;
+            $lines[] = '  Link: ' . $url;
+        }
+    }
+
+    /**
+     * @param string[] $lines
+     */
+    private function appendAiDisclaimer(array &$lines, string $disclaimer): void
+    {
+        $trimmed = trim($disclaimer);
+        if ($trimmed === '') {
+            return;
+        }
+
+        $lines[] = '';
+        $lines[] = 'IA Disclaimer: ' . $trimmed;
     }
 
     /**
@@ -144,7 +215,7 @@ class QuizPdfReportService
         $pageObjectIds = [];
         $contentObjectIds = [];
         $nextObjectId = 4;
-        foreach ($lineChunks as $_) {
+        for ($index = 0; $index < count($lineChunks); $index++) {
             $pageObjectIds[] = $nextObjectId++;
             $contentObjectIds[] = $nextObjectId++;
         }
@@ -283,18 +354,24 @@ class QuizPdfReportService
     private function normalizeSeverityLabel(string $severity): string
     {
         $normalized = mb_strtolower(trim($severity));
+        $label = strtoupper($this->toPrintableAscii($severity));
 
-        if (str_contains($normalized, 'high') || str_contains($normalized, 'elev')) {
-            return 'ELEVE';
-        }
-        if (str_contains($normalized, 'medium') || str_contains($normalized, 'moy')) {
-            return 'MOYEN';
-        }
-        if (str_contains($normalized, 'low') || str_contains($normalized, 'faib')) {
-            return 'FAIBLE';
+        $rules = [
+            'ELEVE' => ['high', 'elev'],
+            'MOYEN' => ['medium', 'moy'],
+            'FAIBLE' => ['low', 'faib'],
+        ];
+
+        foreach ($rules as $candidateLabel => $tokens) {
+            foreach ($tokens as $token) {
+                if (str_contains($normalized, $token)) {
+                    $label = $candidateLabel;
+                    break 2;
+                }
+            }
         }
 
-        return strtoupper($this->toPrintableAscii($severity));
+        return $label;
     }
 
     private function toPrintableAscii(string $value): string

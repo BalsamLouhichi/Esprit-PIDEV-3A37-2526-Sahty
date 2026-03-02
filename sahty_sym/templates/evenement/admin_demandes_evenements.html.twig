@@ -377,6 +377,16 @@
                 </div>
             </div>
 
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    {% set bsType = type == 'error' ? 'danger' : type %}
+                    <div class="alert alert-{{ bsType }} alert-dismissible fade show mb-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
             <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-4">
@@ -653,7 +663,7 @@
                                     <td class="text-end">
                                         <div class="d-flex gap-2 justify-content-end">
                                             <form method="post" 
-                                                  action="{{ path('evenements_evenement_approuver', {'id': demande.id}) }}" 
+                                                  action="{{ path('evenements_admin_evenement_approuver', {'id': demande.id}) }}" 
                                                   class="d-inline"
                                                   onsubmit="return confirm('✅ Approuver cette demande ?\n\nL\'événement sera immédiatement visible par tous les utilisateurs concernés et les inscriptions seront ouvertes.')">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('approuver' ~ demande.id) }}">

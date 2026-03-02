@@ -30,98 +30,39 @@ class QuizAiRecommendationService
         array $existingRecommendations
     ): array {
         $fallback = $this->fallback($percentage, $detectedProblems);
+        $result = $fallback;
+        $apiKey = $this->resolveApiKey();
 
-        $apiKey = trim((string) ($_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? ''));
-        $model = trim((string) ($_ENV['QUIZ_AI_RECO_MODEL'] ?? $_ENV['OPENAI_MODEL'] ?? 'gpt-4o-mini'));
-        if ($apiKey === '') {
-            return $fallback;
-        }
+        if ($apiKey !== '') {
+            $model = $this->resolveModel();
+            $decoded = $this->requestRecommendationPayload(
+                $apiKey,
+                $model,
+                $quizName,
+                $score,
+                $maxScore,
+                $percentage,
+                $detectedProblems,
+                $existingRecommendations
+            );
 
-        $problemsText = $detectedProblems ? implode(', ', $detectedProblems) : 'Aucune categorie specifique detectee';
-        $existingText = $existingRecommendations ? implode("\n- ", $existingRecommendations) : 'Aucune';
+            if (is_array($decoded)) {
+                $summary = trim((string) ($decoded['summary'] ?? ''));
+                $disclaimer = trim((string) ($decoded['disclaimer'] ?? ''));
+                $recommendations = $this->normalizeRecommendationLines($decoded['recommendations'] ?? null);
 
-        $systemPrompt = 'Tu es un assistant de prevention sante. '
-            . 'Tu proposes des recommandations non diagnostiques, concretes, courtes, en francais simple. '
-            . 'Ne donne pas de diagnostic medical. '
-            . 'Reponds en JSON strict avec les cles: summary (string), recommendations (array de 3 a 5 strings), disclaimer (string).';
-
-        $userPrompt = sprintf(
-            "Quiz: %s\nScore: %d/%d (%d%%)\nCategories detectees: %s\nRecommandations existantes:\n- %s\n\nGenere une version IA complementaire concise.",
-            $quizName !== '' ? $quizName : 'Quiz sante',
-            $score,
-            $maxScore,
-            $percentage,
-            $problemsText,
-            $existingText
-        );
-
-        try {
-            $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'json' => [
-                    'model' => $model,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $userPrompt],
-                    ],
-                    'temperature' => 0.3,
-                    'max_tokens' => 500,
-                    'response_format' => ['type' => 'json_object'],
-                ],
-                'timeout' => 25,
-            ]);
-
-            $statusCode = $response->getStatusCode();
-            $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
-                return $fallback;
-            }
-
-            $content = $this->extractAssistantContent($data);
-            if ($content === '') {
-                return $fallback;
-            }
-
-            $decoded = json_decode($content, true);
-            if (!is_array($decoded)) {
-                return $fallback;
-            }
-
-            $summary = trim((string) ($decoded['summary'] ?? ''));
-            $disclaimer = trim((string) ($decoded['disclaimer'] ?? ''));
-            $recommendations = [];
-            if (is_array($decoded['recommendations'] ?? null)) {
-                foreach ($decoded['recommendations'] as $line) {
-                    if (!is_string($line)) {
-                        continue;
-                    }
-                    $line = trim($line);
-                    if ($line !== '') {
-                        $recommendations[] = $line;
-                    }
+                if ($summary !== '' && $recommendations !== []) {
+                    $result = [
+                        'summary' => mb_substr($summary, 0, 400),
+                        'recommendations' => $recommendations,
+                        'videos' => $this->buildDiversifiedYoutubeSuggestions($recommendations, $detectedProblems),
+                        'disclaimer' => $disclaimer !== '' ? mb_substr($disclaimer, 0, 220) : $fallback['disclaimer'],
+                    ];
                 }
             }
-
-            if ($summary === '' || $recommendations === []) {
-                return $fallback;
-            }
-
-        return [
-            'summary' => mb_substr($summary, 0, 400),
-            'recommendations' => array_slice(array_values(array_unique($recommendations)), 0, 5),
-            'videos' => $this->buildDiversifiedYoutubeSuggestions(
-                array_slice(array_values(array_unique($recommendations)), 0, 5),
-                $detectedProblems
-            ),
-            'disclaimer' => $disclaimer !== '' ? mb_substr($disclaimer, 0, 220) : $fallback['disclaimer'],
-        ];
-        } catch (\Throwable) {
-            return $fallback;
         }
+
+        return $result;
     }
 
     /**
@@ -220,47 +161,184 @@ class QuizAiRecommendationService
 
         $queries = [];
         foreach ($recommendations as $line) {
-            $lineToken = mb_strtolower(trim($line), 'UTF-8');
-            if ($lineToken === '') {
-                continue;
-            }
-
-            if (str_contains($lineToken, 'sommeil')) {
-                $queries[] = 'hygiene du sommeil insomnie conseils';
-            } elseif (str_contains($lineToken, 'respiration') || str_contains($lineToken, 'apaisement')) {
-                $queries[] = 'exercices de respiration pour anxiete';
-            } elseif (str_contains($lineToken, 'stress')) {
-                $queries[] = 'gestion du stress techniques simples';
-            } elseif (str_contains($lineToken, 'professionnel') || str_contains($lineToken, 'consultez')) {
-                $queries[] = 'quand consulter pour anxiete et stress';
-            } elseif (str_contains($lineToken, 'suivez') || str_contains($lineToken, 'symptomes')) {
-                $queries[] = 'journal des symptomes anxiete comment faire';
-            } else {
-                $queries[] = 'bien etre mental conseils pratiques';
+            $query = $this->mapRecommendationLineToQuery($line);
+            if ($query !== null) {
+                $queries[] = $query;
             }
         }
 
         foreach ($detectedProblems as $problem) {
-            $p = mb_strtolower(trim((string) $problem), 'UTF-8');
-            if ($p === '') {
-                continue;
-            }
-            if (str_contains($p, 'anx')) {
-                $queries[] = 'anxiete comprendre et agir';
-            } elseif (str_contains($p, 'stress')) {
-                $queries[] = 'stress chronique solutions';
-            } elseif (str_contains($p, 'sommeil')) {
-                $queries[] = 'ameliorer sommeil routine';
-            } elseif (str_contains($p, 'humeur')) {
-                $queries[] = 'stabiliser humeur habitudes';
+            $query = $this->mapProblemToQuery($problem);
+            if ($query !== null) {
+                $queries[] = $query;
             }
         }
 
         if ($queries === []) {
             $queries = $topicFallbacks;
         }
-
         $queries = array_values(array_unique($queries));
+
+        return $this->buildYoutubeSearchLinks($queries, $channelHints);
+    }
+
+    private function resolveApiKey(): string
+    {
+        return trim((string) ($_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? ''));
+    }
+
+    private function resolveModel(): string
+    {
+        return trim((string) ($_ENV['QUIZ_AI_RECO_MODEL'] ?? $_ENV['OPENAI_MODEL'] ?? 'gpt-4o-mini'));
+    }
+
+    /**
+     * @param array<int,string> $detectedProblems
+     * @param array<int,string> $existingRecommendations
+     * @return array<string,mixed>|null
+     */
+    private function requestRecommendationPayload(
+        string $apiKey,
+        string $model,
+        string $quizName,
+        int $score,
+        int $maxScore,
+        int $percentage,
+        array $detectedProblems,
+        array $existingRecommendations
+    ): ?array {
+        $problemsText = $detectedProblems ? implode(', ', $detectedProblems) : 'Aucune categorie specifique detectee';
+        $existingText = $existingRecommendations ? implode("\n- ", $existingRecommendations) : 'Aucune';
+
+        $systemPrompt = 'Tu es un assistant de prevention sante. '
+            . 'Tu proposes des recommandations non diagnostiques, concretes, courtes, en francais simple. '
+            . 'Ne donne pas de diagnostic medical. '
+            . 'Reponds en JSON strict avec les cles: summary (string), recommendations (array de 3 a 5 strings), disclaimer (string).';
+
+        $userPrompt = sprintf(
+            "Quiz: %s\nScore: %d/%d (%d%%)\nCategories detectees: %s\nRecommandations existantes:\n- %s\n\nGenere une version IA complementaire concise.",
+            $quizName !== '' ? $quizName : 'Quiz sante',
+            $score,
+            $maxScore,
+            $percentage,
+            $problemsText,
+            $existingText
+        );
+
+        $decoded = null;
+
+        try {
+            $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'json' => [
+                    'model' => $model,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userPrompt],
+                    ],
+                    'temperature' => 0.3,
+                    'max_tokens' => 500,
+                    'response_format' => ['type' => 'json_object'],
+                ],
+                'timeout' => 25,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $data = $response->toArray(false);
+            if ($statusCode < 400) {
+                $content = $this->extractAssistantContent($data);
+                if ($content !== '') {
+                    $payload = json_decode($content, true);
+                    if (is_array($payload)) {
+                        $decoded = $payload;
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            $decoded = null;
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function normalizeRecommendationLines(mixed $rawLines): array
+    {
+        if (!is_array($rawLines)) {
+            return [];
+        }
+
+        $recommendations = [];
+        foreach ($rawLines as $line) {
+            if (!is_string($line)) {
+                continue;
+            }
+            $line = trim($line);
+            if ($line !== '') {
+                $recommendations[] = $line;
+            }
+        }
+
+        return array_slice(array_values(array_unique($recommendations)), 0, 5);
+    }
+
+    private function mapRecommendationLineToQuery(string $line): ?string
+    {
+        $token = mb_strtolower(trim($line), 'UTF-8');
+        if ($token === '') {
+            return null;
+        }
+
+        $query = 'bien etre mental conseils pratiques';
+        if (str_contains($token, 'sommeil')) {
+            $query = 'hygiene du sommeil insomnie conseils';
+        } elseif (str_contains($token, 'respiration') || str_contains($token, 'apaisement')) {
+            $query = 'exercices de respiration pour anxiete';
+        } elseif (str_contains($token, 'stress')) {
+            $query = 'gestion du stress techniques simples';
+        } elseif (str_contains($token, 'professionnel') || str_contains($token, 'consultez')) {
+            $query = 'quand consulter pour anxiete et stress';
+        } elseif (str_contains($token, 'suivez') || str_contains($token, 'symptomes')) {
+            $query = 'journal des symptomes anxiete comment faire';
+        }
+
+        return $query;
+    }
+
+    private function mapProblemToQuery(mixed $problem): ?string
+    {
+        $token = mb_strtolower(trim((string) $problem), 'UTF-8');
+        if ($token === '') {
+            return null;
+        }
+
+        $query = null;
+        if (str_contains($token, 'anx')) {
+            $query = 'anxiete comprendre et agir';
+        } elseif (str_contains($token, 'stress')) {
+            $query = 'stress chronique solutions';
+        } elseif (str_contains($token, 'sommeil')) {
+            $query = 'ameliorer sommeil routine';
+        } elseif (str_contains($token, 'humeur')) {
+            $query = 'stabiliser humeur habitudes';
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param string[] $queries
+     * @param string[] $channelHints
+     * @return array<int,array{title:string,url:string,channel_hint:string}>
+     */
+    private function buildYoutubeSearchLinks(array $queries, array $channelHints): array
+    {
         $videos = [];
         $usedChannels = [];
 

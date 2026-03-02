@@ -1020,7 +1020,7 @@ class DemandeAnalyseController extends AbstractController
         }
 
         $metricNames = $this->extractMetricNamesForGlossary($analysis, $raw);
-        $missingMetricNames = [];
+        $metricsToEnrich = [];
         foreach ($metricNames as $metricName) {
             $normalizedMetric = $this->normalizeMetricGlossaryKey($metricName);
             if ($normalizedMetric === '') {
@@ -1031,17 +1031,19 @@ class DemandeAnalyseController extends AbstractController
             }
 
             $canonicalName = $normalizedToCanonical[$normalizedMetric];
-            if (!isset($glossary[$canonicalName])) {
-                $missingMetricNames[] = $canonicalName;
+            $currentDescription = $glossary[$canonicalName] ?? null;
+            if (!is_string($currentDescription) || $currentDescription === '' || $this->isRuleBasedGlossaryDescription($currentDescription)) {
+                $metricsToEnrich[] = $canonicalName;
             }
         }
 
-        if ($missingMetricNames === []) {
+        $metricsToEnrich = array_values(array_unique($metricsToEnrich));
+        if ($metricsToEnrich === []) {
             return $glossary;
         }
 
-        $generatedDescriptions = $this->fastApiLabAiClient->generateMetricGlossary($missingMetricNames);
-        foreach ($missingMetricNames as $canonicalName) {
+        $generatedDescriptions = $this->fastApiLabAiClient->generateMetricGlossary($metricsToEnrich);
+        foreach ($metricsToEnrich as $canonicalName) {
             if (!isset($generatedDescriptions[$canonicalName])) {
                 continue;
             }
@@ -1059,6 +1061,20 @@ class DemandeAnalyseController extends AbstractController
         }
 
         return $glossary;
+    }
+
+    private function isRuleBasedGlossaryDescription(string $description): bool
+    {
+        $normalized = strtolower(trim($description));
+        if ($normalized === '') {
+            return false;
+        }
+
+        return str_contains($normalized, 'statut:')
+            || str_contains($normalized, 'severite:')
+            || str_contains($normalized, 'severity:')
+            || str_contains($normalized, 'note:')
+            || str_contains($normalized, 'flag=');
     }
 
     private function normalizeMetricGlossaryKey(string $value): string

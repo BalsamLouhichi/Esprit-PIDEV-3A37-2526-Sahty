@@ -376,6 +376,9 @@
                 <form method="post" action="{{ path('app_login') }}" id="loginForm">
                     {# Protection CSRF #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    {% if recaptcha_enabled and recaptcha_site_key %}
+                        <input type="hidden" name="g-recaptcha-response" id="recaptchaResponse">
+                    {% endif %}
 
                     <div class="form-group">
                         <label for="inputEmail"><i class="fas fa-envelope"></i> Adresse email</label>
@@ -436,7 +439,9 @@
 
                 <!-- Boutons de connexion sociale (MEDINOVA) -->
                 <div class="social-login">
-                    <button type="button" class="btn-google"><i class="fab fa-google"></i> Se connecter avec Google</button>
+                    <a href="{{ path('connect_google') }}" class="btn-google">
+                        <i class="fab fa-google"></i> Se connecter avec Google
+                    </a>
                     <button type="button" class="btn-apple"><i class="fab fa-apple"></i> Se connecter avec Apple</button>
                 </div>
 
@@ -525,5 +530,51 @@
             }
         });
     </script>
+    {% if recaptcha_enabled and recaptcha_site_key %}
+        <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
+        <script>
+            (function () {
+                const loginForm = document.getElementById('loginForm');
+                const recaptchaInput = document.getElementById('recaptchaResponse');
+                if (!loginForm || !recaptchaInput || typeof grecaptcha === 'undefined') {
+                    return;
+                }
+
+                const siteKey = '{{ recaptcha_site_key|e('js') }}';
+                const action = 'login';
+
+                const executeRecaptcha = function (callback) {
+                    grecaptcha.execute(siteKey, { action: action }).then(function (token) {
+                        recaptchaInput.value = token;
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                    }).catch(function () {
+                        recaptchaInput.value = '';
+                    });
+                };
+
+                grecaptcha.ready(function () {
+                    executeRecaptcha();
+                });
+
+                loginForm.addEventListener('submit', function (event) {
+                    if (recaptchaInput.value) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    if (loginForm.dataset.recaptchaSubmitting === '1') {
+                        return;
+                    }
+
+                    loginForm.dataset.recaptchaSubmitting = '1';
+                    executeRecaptcha(function () {
+                        loginForm.submit();
+                    });
+                });
+            })();
+        </script>
+    {% endif %}
 </body>
 </html>

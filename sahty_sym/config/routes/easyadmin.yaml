@@ -1,2 +1,3 @@
-# Keep this file intentionally minimal.
-# Admin routes are defined via controller attributes.
+easyadmin:
+    resource: .
+    type: easyadmin.routes

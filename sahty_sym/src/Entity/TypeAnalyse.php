@@ -115,12 +115,7 @@ class TypeAnalyse
 
     public function removeLaboratoireTypeAnalysis(LaboratoireTypeAnalyse $laboratoireTypeAnalysis): static
     {
-        if ($this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis)) {
-            // set the owning side to null (unless already changed)
-            if ($laboratoireTypeAnalysis->getTypeAnalyse() === $this) {
-                $laboratoireTypeAnalysis->setTypeAnalyse(null);
-            }
-        }
+        $this->laboratoireTypeAnalyses->removeElement($laboratoireTypeAnalysis);
 
         return $this;
     }

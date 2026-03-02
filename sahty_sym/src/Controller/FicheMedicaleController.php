@@ -32,12 +32,18 @@ class FicheMedicaleController extends AbstractController
         Request $request,
         FicheMedicaleRepository $ficheMedicaleRepository,
         PatientRepository $patientRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        DictationTranscriptionService $dictationTranscriptionService
     ): Response
     {
         $user = $this->getUser();
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
+
+        $dictationStatus = $dictationTranscriptionService->getConfigurationStatus();
+        if (!($dictationStatus['ok'] ?? false)) {
+            $this->addFlash('warning', 'Dictée vocale indisponible: ' . (string) ($dictationStatus['error'] ?? 'Configuration invalide.'));
+        }
         
         // Mode par défaut : LISTE
         $mode = 'list';

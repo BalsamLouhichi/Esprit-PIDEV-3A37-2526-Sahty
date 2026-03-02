@@ -1482,6 +1482,11 @@
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.__sahtyClientDemandeInitDone) {
+        return;
+    }
+    window.__sahtyClientDemandeInitDone = true;
+
 
     const form = document.querySelector('form');
 
@@ -1654,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         editionFieldBlocks.forEach((block) => {
 
-            block.style.display = isEditionEl.checked '' : 'none';
+            block.style.display = isEditionEl.checked ? '' : 'none';
 
         });
 
@@ -1662,9 +1667,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    isEditionEl.addEventListener('change', toggleEditionFields);
-
-    toggleEditionFields();
+    if (isEditionEl) {
+        isEditionEl.addEventListener('change', toggleEditionFields);
+        toggleEditionFields();
+    }
 
 
 
@@ -1686,15 +1692,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const localVenueResults = document.getElementById('venue-search-results');
 
-        onlineConfigPanel.style.display = isOnline '' : 'none';
+        onlineConfigPanel.style.display = isOnline ? '' : 'none';
 
-        platformWrap.style.display = isOnline '' : 'none';
+        platformWrap.style.display = isOnline ? '' : 'none';
 
-        linkWrap.style.display = (isOnline && platformEl.value === 'custom') '' : 'none';
+        linkWrap.style.display = (isOnline && platformEl.value === 'custom') ? '' : 'none';
 
         if (venuePanel) {
 
-            venuePanel.style.display = isPresential '' : 'none';
+            venuePanel.style.display = isPresential ? '' : 'none';
 
             if (!isPresential && localVenueResults) {
 
@@ -1854,13 +1860,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-            const riskLevel = plan.risk.level || 'moyen';
+            const riskLevel = (plan.risk && plan.risk.level) ? plan.risk.level : 'moyen';
 
             const riskClass = riskLevel === 'faible'
-
-                'bg-success text-white'
-
-                : (riskLevel === 'moyen' 'bg-warning text-dark' : 'bg-danger text-white');
+                ? 'bg-success text-white'
+                : (riskLevel === 'moyen' ? 'bg-warning text-dark' : 'bg-danger text-white');
 
             resourceRiskChip.className = `resource-chip ${riskClass}`;
 
@@ -2449,6 +2453,11 @@ function deselectAllGroups() {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.__sahtyClientDemandeInitDone) {
+        return;
+    }
+    window.__sahtyClientDemandeInitDone = true;
+
     const venueBtn = document.getElementById('venue-search-btn');
     const planningBtn = document.getElementById('planning-ia-generate-btn');
     const planningAcceptBtn = document.getElementById('planning-ia-accept-btn');
@@ -2845,7 +2854,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </body>
 
 </html>
-
 
 
 
