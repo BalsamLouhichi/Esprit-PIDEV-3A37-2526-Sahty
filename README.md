@@ -61,7 +61,7 @@ php bin/console doctrine:fixtures:load --no-interaction
 symfony server:start
 
 # 7) Lancer le service IA FastAPI (terminal 2)
-cd ai/semantic_search_service
+cd sahty_sym/fastapi_local_ai_lab
 pip install -r requirements.txt
 uvicorn app:app --host 127.0.0.1 --port 8001 --reload
 
