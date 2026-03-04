@@ -30,7 +30,7 @@ class FicheMedicale
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
     private ?string $poids = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
     private ?float $imc = null;
 
     #[ORM\Column(length: 50, nullable: true)]
@@ -55,8 +55,8 @@ class FicheMedicale
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $statut = null;
 
-    #[ORM\ManyToOne(inversedBy: 'fichesMedicales')]
-    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\ManyToOne(inversedBy: 'ficheMedicales')]
+    #[ORM\JoinColumn(name: 'patient_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Patient $patient = null;
 
     #[ORM\OneToOne(inversedBy: 'ficheMedicale')]

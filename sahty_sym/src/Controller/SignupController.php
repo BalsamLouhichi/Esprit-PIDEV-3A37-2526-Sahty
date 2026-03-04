@@ -26,7 +26,7 @@ class SignupController extends AbstractController
         UserPasswordHasherInterface $passwordHasher,
         SluggerInterface $slugger
     ): Response {
-        // Si l'utilisateur est déjà connecté
+        // Si l'utilisateur est deja connecte
         if ($this->getUser()) {
             return $this->redirectToRoute('app_profile');
         }
@@ -37,7 +37,7 @@ class SignupController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $roleSelected = $form->get('role')->getData();
             $confirmPassword = $request->request->get('confirm_password');
-            $password = $form->get('password')->getData();
+            $password = $this->toRequiredString($form->get('password')->getData());
 
             if ($password !== $confirmPassword) {
                 $this->addFlash('error', 'Les mots de passe ne correspondent pas.');
@@ -46,7 +46,7 @@ class SignupController extends AbstractController
                 ]);
             }
 
-            // Création de l'utilisateur selon le rôle
+            // Creation de l'utilisateur selon le role
             switch ($roleSelected) {
                 case 'admin':
                     $user = new Administrateur();
@@ -54,14 +54,14 @@ class SignupController extends AbstractController
 
                 case 'medecin':
                     $user = new Medecin();
-                    $user->setSpecialite($request->request->get('specialite', ''));
-                    $user->setAnneeExperience((int)$request->request->get('annee_experience', 0));
-                    $user->setGrade($request->request->get('grade', ''));
-                    $user->setAdresseCabinet($request->request->get('adresse_cabinet', ''));
-                    $user->setTelephoneCabinet($request->request->get('telephone_cabinet', ''));
-                    $user->setNomEtablissement($request->request->get('nom_etablissement', ''));
-                    $user->setNumeroUrgence($request->request->get('numero_urgence', ''));
-                    $user->setDisponibilite($request->request->get('disponibilite', ''));
+                    $user->setSpecialite($this->toNullableString($request->request->get('specialite')));
+                    $user->setAnneeExperience((int) ($request->request->get('annee_experience', 0) ?: 0));
+                    $user->setGrade($this->toNullableString($request->request->get('grade')));
+                    $user->setAdresseCabinet($this->toNullableString($request->request->get('adresse_cabinet')));
+                    $user->setTelephoneCabinet($this->toNullableString($request->request->get('telephone_cabinet')));
+                    $user->setNomEtablissement($this->toNullableString($request->request->get('nom_etablissement')));
+                    $user->setNumeroUrgence($this->toNullableString($request->request->get('numero_urgence')));
+                    $user->setDisponibilite($this->toNullableString($request->request->get('disponibilite')));
 
                     // Gestion document PDF
                     $documentPdfFile = $request->files->get('document_pdf');
@@ -70,8 +70,10 @@ class SignupController extends AbstractController
                         $safeFilename = $slugger->slug($originalFilename);
                         $newFilename = $safeFilename.'-'.uniqid().'.'.$documentPdfFile->guessExtension();
 
-                        $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/documents';
-                        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                        $uploadDir = $this->getProjectDir().'/public/uploads/documents';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
 
                         $documentPdfFile->move($uploadDir, $newFilename);
                         $user->setDocumentPdf('uploads/documents/'.$newFilename);
@@ -79,35 +81,28 @@ class SignupController extends AbstractController
                     break;
 
                 case 'responsable_labo':
-                    $user = new ResponsableLaboratoire();
-                    $laboratoireId = (int)$request->request->get('laboratoire_id', 0);
-                    if ($laboratoireId > 0) {
-                        $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
-                        if ($laboratoire) {
-                            $user->setLaboratoire($laboratoire);
-                            if ($laboratoire->hasResponsable()) {
-                                $this->addFlash('warning', 'Ce laboratoire a déjà un responsable.');
-                            }
-                        } else {
-                            $this->addFlash('error', 'Le laboratoire sélectionné n\'existe pas.');
-                            return $this->render('signup/signup.html.twig', [
-                                'form' => $form->createView(),
-                            ]);
-                        }
+                    try {
+                        $user = $this->createResponsableLaboratoire($request, $em);
+                    } catch (\InvalidArgumentException $exception) {
+                        $this->addFlash('error', $exception->getMessage());
+                        return $this->render('signup/signup.html.twig', [
+                            'form' => $form->createView(),
+                        ]);
+                    }
+
+                    $laboratoire = $user->getLaboratoire();
+                    if ($laboratoire !== null && $laboratoire->hasResponsable()) {
+                        $this->addFlash('warning', 'Ce laboratoire a deja un responsable.');
                     }
                     break;
 
                 case 'responsable_para':
-                    $user = new ResponsableParapharmacie();
-                    $user->setParapharmacieId((int)$request->request->get('parapharmacie_id', 0));
+                    $user = $this->createResponsableParapharmacie($request);
                     break;
 
                 case 'patient':
                 default:
-                    $user = new Patient();
-                    $user->setSexe($request->request->get('sexe', ''));
-                    $user->setGroupeSanguin($request->request->get('groupe_sanguin', ''));
-                    $user->setContactUrgence($request->request->get('contact_urgence', ''));
+                    $user = $this->createPatient($request);
                     break;
             }
 
@@ -134,8 +129,10 @@ class SignupController extends AbstractController
                 $safeFilename = $slugger->slug($originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$photoProfilFile->guessExtension();
 
-                $uploadDir = $this->getParameter('kernel.project_dir').'/public/uploads/photos';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                $uploadDir = $this->getProjectDir().'/public/uploads/photos';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
 
                 $photoProfilFile->move($uploadDir, $newFilename);
                 $user->setPhotoProfil('uploads/photos/'.$newFilename);
@@ -145,12 +142,12 @@ class SignupController extends AbstractController
                 $em->persist($user);
                 $em->flush();
 
-                $this->addFlash('success', 'Votre compte a été créé avec succès !');
+                $this->addFlash('success', 'Votre compte a ete cree avec succes !');
                 return $this->redirectToRoute('app_login');
 
             } catch (\Exception $e) {
                 if (strpos($e->getMessage(), 'UNIQ') !== false || strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                    $this->addFlash('error', 'Cet email est déjà utilisé.');
+                    $this->addFlash('error', 'Cet email est deja utilise.');
                 } else {
                     $this->addFlash('error', 'Erreur: '.$e->getMessage());
                 }
@@ -160,52 +157,70 @@ class SignupController extends AbstractController
                 ]);
             }
         }
-        
+
         return $this->render('signup/signup.html.twig', [
             'form' => $form->createView(),
         ]);
     }
 
-    /**
-     * Create a ResponsableLaboratoire user (NEW from Balsam)
-     */
     private function createResponsableLaboratoire(Request $request, EntityManagerInterface $em): ResponsableLaboratoire
     {
         $user = new ResponsableLaboratoire();
-        
-        $laboratoireId = (int)$request->request->get('signup[laboratoire_id]', 0);
+
+        $laboratoireId = (int) ($request->request->get('laboratoire_id', 0) ?: 0);
         if ($laboratoireId > 0) {
             $laboratoire = $em->getRepository(Laboratoire::class)->find($laboratoireId);
             if ($laboratoire) {
                 $user->setLaboratoire($laboratoire);
+            } else {
+                throw new \InvalidArgumentException('Le laboratoire selectionne n\'existe pas.');
             }
         }
-        
+
         return $user;
     }
 
-    /**
-     * Create a ResponsableParapharmacie user (NEW from Balsam)
-     */
     private function createResponsableParapharmacie(Request $request): ResponsableParapharmacie
     {
         $user = new ResponsableParapharmacie();
-        $user->setParapharmacieId((int)$request->request->get('signup[parapharmacie_id]', 0));
+        $user->setParapharmacieId((int) ($request->request->get('parapharmacie_id', 0) ?: 0));
         return $user;
     }
 
-    /**
-     * Create a Patient user with patient-specific fields (keep YOUR version)
-     */
     private function createPatient(Request $request): Patient
     {
         $user = new Patient();
-        
+
         // Patient specific fields
-        $user->setSexe($request->request->get('signup[sexe]', ''));
-        $user->setGroupeSanguin($request->request->get('signup[groupe_sanguin]', ''));
-        $user->setContactUrgence($request->request->get('signup[contact_urgence]', ''));
-        
+        $user->setSexe($this->toNullableString($request->request->get('sexe')));
+        $user->setGroupeSanguin($this->toNullableString($request->request->get('groupe_sanguin')));
+        $user->setContactUrgence($this->toNullableString($request->request->get('contact_urgence')));
+
         return $user;
+    }
+
+    private function toNullableString(mixed $value): ?string
+    {
+        if (!is_scalar($value) && $value !== null) {
+            return null;
+        }
+
+        $normalized = trim((string) ($value ?? ''));
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function toRequiredString(mixed $value): string
+    {
+        if (!is_scalar($value) && $value !== null) {
+            return '';
+        }
+
+        return trim((string) ($value ?? ''));
+    }
+
+    private function getProjectDir(): string
+    {
+        $projectDir = $this->getParameter('kernel.project_dir');
+        return is_string($projectDir) ? $projectDir : '';
     }
 }

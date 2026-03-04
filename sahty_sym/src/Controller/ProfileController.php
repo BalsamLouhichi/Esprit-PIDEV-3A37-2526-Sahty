@@ -61,7 +61,7 @@ class ProfileController extends AbstractController
                 
                 try {
                     // Créer le dossier s'il n'existe pas
-                    $uploadDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                    $uploadDirectory = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
                     if (!is_dir($uploadDirectory)) {
                         mkdir($uploadDirectory, 0777, true);
                     }
@@ -156,3 +156,4 @@ class ProfileController extends AbstractController
         ]);
     }
 }
+

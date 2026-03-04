@@ -47,7 +47,7 @@ class AdminPredictionController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        if (!$this->isCsrfTokenValid('recalc_predictions', (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('recalc_predictions', (string) (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_predictions');
         }
@@ -274,3 +274,7 @@ class AdminPredictionController extends AbstractController
         return 'python';
     }
 }
+
+
+
+

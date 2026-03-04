@@ -434,6 +434,7 @@
             overflow-x: auto;
             overflow-y: hidden;
             box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+
         }
 
         #mes-demandes-page .demandes-main-table {
@@ -470,10 +471,12 @@
         
         #mes-demandes-page .demandes-main-table tbody tr {
             transition: all 0.3s ease;
+
         }
         
         #mes-demandes-page .demandes-main-table tbody tr:hover {
             background: rgba(var(--primary-rgb), 0.05);
+
         }
 
         #mes-demandes-page .th-id,
@@ -1655,6 +1658,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const aiResultEvidenceCount = document.getElementById('aiResultEvidenceCount');
     const aiResultEvidence = document.getElementById('aiResultEvidence');
     const aiResultRecCount = document.getElementById('aiResultRecCount');
+
     const aiResultRecommendations = document.getElementById('aiResultRecommendations');
     const qaModalElement = document.getElementById('ai-patient-qa-modal');
     const qaModal = qaModalElement ? new bootstrap.Modal(qaModalElement) : null;
@@ -2083,6 +2087,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dangerLevel = payload.danger_level || '-';
         const dangerLevelLabel = payload.danger_level_label || payload.danger_level || '-';
         const dangerScore = payload.danger_score;
+
         const dangerText = dangerScore !== null && dangerScore !== undefined && dangerScore !== ''
             ? `${dangerLevelLabel} (${dangerScore}/100)`
             : dangerLevelLabel;
@@ -2618,4 +2623,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>
 
 </html>
-

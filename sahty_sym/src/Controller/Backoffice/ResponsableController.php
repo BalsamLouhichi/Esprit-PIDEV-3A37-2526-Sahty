@@ -29,7 +29,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[Route('/responsable')]
 class ResponsableController extends AbstractController
 {
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
     
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -37,21 +37,21 @@ class ResponsableController extends AbstractController
     }
 
     /**
-     * Méthode helper pour récupérer la parapharmacie de l'utilisateur connecté
+     * MÃ©thode helper pour rÃ©cupÃ©rer la parapharmacie de l'utilisateur connectÃ©
      */
     private function getCurrentParapharmacie(): Parapharmacie
     {
         $user = $this->getUser();
         
         if (!$user instanceof ResponsableParapharmacie) {
-            throw new AccessDeniedException('Accès réservé aux responsables de parapharmacie');
+            throw new AccessDeniedException('AccÃ¨s rÃ©servÃ© aux responsables de parapharmacie');
         }
 
         $parapharmacie = $user->getParapharmacie();
         
         if (!$parapharmacie) {
-            $this->addFlash('error', 'Vous n\'êtes pas associé à une parapharmacie. Veuillez contacter l\'administrateur.');
-            throw new AccessDeniedException('Aucune parapharmacie associée à ce compte');
+            $this->addFlash('error', 'Vous n\'Ãªtes pas associÃ© Ã  une parapharmacie. Veuillez contacter l\'administrateur.');
+            throw new AccessDeniedException('Aucune parapharmacie associÃ©e Ã  ce compte');
         }
 
         return $parapharmacie;
@@ -162,7 +162,7 @@ class ResponsableController extends AbstractController
         $form->handleRequest($request);
         
         if ($form->isSubmitted() && $form->isValid()) {
-            // Gérer l'upload de l'image
+            // GÃ©rer l'upload de l'image
             $imageFile = $form->get('imageFile')->getData();
             
             if ($imageFile) {
@@ -190,7 +190,7 @@ class ResponsableController extends AbstractController
             
             
             
-            $this->addFlash('success', 'Produit ajouté avec succès !');
+            $this->addFlash('success', 'Produit ajoutÃ© avec succÃ¨s !');
             
             return $this->redirectToRoute('app_responsable_produits');
         }
@@ -218,9 +218,9 @@ class ResponsableController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Vérifier que le produit appartient bien à cette parapharmacie
+        // VÃ©rifier que le produit appartient bien Ã  cette parapharmacie
         if (!$produit->getParapharmacies()->contains($parapharmacie)) {
-            $this->addFlash('error', 'Ce produit n\'appartient pas à votre parapharmacie');
+            $this->addFlash('error', 'Ce produit n\'appartient pas Ã  votre parapharmacie');
             return $this->redirectToRoute('app_responsable_produits');
         }
         
@@ -257,7 +257,7 @@ class ResponsableController extends AbstractController
             
             $this->entityManager->flush();
             
-            $this->addFlash('success', 'Produit modifié avec succès !');
+            $this->addFlash('success', 'Produit modifiÃ© avec succÃ¨s !');
             
             return $this->redirectToRoute('app_responsable_produits');
         }
@@ -284,14 +284,14 @@ class ResponsableController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Vérifier que le produit appartient bien à cette parapharmacie
+        // VÃ©rifier que le produit appartient bien Ã  cette parapharmacie
         if (!$produit->getParapharmacies()->contains($parapharmacie)) {
-            $this->addFlash('error', 'Ce produit n\'appartient pas à votre parapharmacie');
+            $this->addFlash('error', 'Ce produit n\'appartient pas Ã  votre parapharmacie');
             return $this->redirectToRoute('app_responsable_produits');
         }
         
-        if ($this->isCsrfTokenValid('delete'.$produit->getId(), $request->request->get('_token'))) {
-            // Supprimer l'image associée
+        if ($this->isCsrfTokenValid('delete'.$produit->getId(), (string) $request->request->get('_token'))) {
+            // Supprimer l'image associÃ©e
             if ($produit->getImage()) {
                 $imagePath = $this->getParameter('produits_images_directory').'/'.$produit->getImage();
                 if (file_exists($imagePath)) {
@@ -302,7 +302,7 @@ class ResponsableController extends AbstractController
             $this->entityManager->remove($produit);
             $this->entityManager->flush();
             
-            $this->addFlash('success', 'Produit supprimé avec succès');
+            $this->addFlash('success', 'Produit supprimÃ© avec succÃ¨s');
         }
         
         return $this->redirectToRoute('app_responsable_produits');
@@ -355,9 +355,9 @@ class ResponsableController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Vérifier que la commande appartient bien à cette parapharmacie
+        // VÃ©rifier que la commande appartient bien Ã  cette parapharmacie
         if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
-            $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
+            $this->addFlash('error', 'Cette commande n\'appartient pas Ã  votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
         
@@ -376,7 +376,7 @@ class ResponsableController extends AbstractController
                 $this->notifierPatientCommandeAcceptee($commande, $mailer);
             }
             
-            $this->addFlash('success', 'Statut de la commande mis à jour');
+            $this->addFlash('success', 'Statut de la commande mis Ã  jour');
         }
         
         return $this->redirectToRoute('app_responsable_commandes');
@@ -417,7 +417,7 @@ class ResponsableController extends AbstractController
     }
 
     /**
-     * Détails d'une commande
+     * DÃ©tails d'une commande
      */
     #[Route('/commande/{id}', name: 'app_responsable_commande_details')]
     public function commandeDetails(
@@ -429,9 +429,9 @@ class ResponsableController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
         
-        // Vérifier que la commande appartient bien à cette parapharmacie
+        // VÃ©rifier que la commande appartient bien Ã  cette parapharmacie
         if ($commande->getParapharmacie()->getId() !== $parapharmacie->getId()) {
-            $this->addFlash('error', 'Cette commande n\'appartient pas à votre parapharmacie');
+            $this->addFlash('error', 'Cette commande n\'appartient pas Ã  votre parapharmacie');
             return $this->redirectToRoute('app_responsable_commandes');
         }
         
@@ -442,7 +442,7 @@ class ResponsableController extends AbstractController
     }
     
     /**
-     * Statistiques détaillées
+     * Statistiques dÃ©taillÃ©es
      */
     #[Route('/statistiques', name: 'app_responsable_statistiques')]
     public function statistiques(
@@ -468,7 +468,7 @@ class ResponsableController extends AbstractController
     }
     
     /**
-     * Paramètres de la parapharmacie
+     * ParamÃ¨tres de la parapharmacie
      */
     #[Route('/parametres', name: 'app_responsable_parametres')]
     public function parametres(
@@ -483,7 +483,7 @@ class ResponsableController extends AbstractController
         $form = $this->createFormBuilder($parapharmacie)
             ->add('nom', null, ['label' => 'Nom de la parapharmacie'])
             ->add('adresse', null, ['label' => 'Adresse'])
-            ->add('telephone', null, ['label' => 'Téléphone'])
+            ->add('telephone', null, ['label' => 'TÃ©lÃ©phone'])
             ->add('email', null, ['label' => 'Email'])
             ->getForm();
         
@@ -491,7 +491,7 @@ class ResponsableController extends AbstractController
         
         if ($form->isSubmitted() && $form->isValid()) {
             $this->entityManager->flush();
-            $this->addFlash('success', 'Paramètres mis à jour avec succès');
+            $this->addFlash('success', 'ParamÃ¨tres mis Ã  jour avec succÃ¨s');
             
             return $this->redirectToRoute('app_responsable_parametres');
         }
@@ -600,5 +600,8 @@ class ResponsableController extends AbstractController
         ]);
     }
 }
+
+
+
 
 

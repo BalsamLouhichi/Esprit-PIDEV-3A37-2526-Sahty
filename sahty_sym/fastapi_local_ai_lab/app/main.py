@@ -1,11 +1,11 @@
-import os
+﻿import os
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .analysis_builder import build_analysis_from_structured
+from .analysis_builder import build_analysis_from_structured, build_rule_based_metric_glossary
 from .domain_context_service import DomainContextService
 from .layout_row_parser import LayoutParserError, parse_document_with_layout
 from .ocr_service import OCRExtraction, OCRServiceError, extract_text
@@ -121,6 +121,8 @@ async def api_analyze(
             structured.warnings.append(f"Layout parser fallback used: {layout_exc}")
 
         analysis = build_analysis_from_structured(structured)
+        # Baseline glossary is always derived from the rule-based anomalies.
+        metric_glossary = build_rule_based_metric_glossary(analysis)
 
         if _is_true(use_ollama):
             domain_context = domain_context_service.get_context_text()
@@ -149,11 +151,16 @@ async def api_analyze(
 
             if run_glossary:
                 try:
-                    metric_glossary = describe_metrics_with_ollama(
+                    llm_glossary = describe_metrics_with_ollama(
                         structured=structured,
                         model=model,
                         domain_context=domain_context,
                     )
+                    # Keep rule-based anomaly descriptions as source of truth.
+                    # LLM may enrich only missing metrics.
+                    for metric_name, description in llm_glossary.items():
+                        if metric_name not in metric_glossary and description:
+                            metric_glossary[metric_name] = description
                 except OllamaServiceError as exc:
                     structured.warnings.append(f"Ollama metric glossary unavailable: {exc}")
     except OCRServiceError as exc:
@@ -181,9 +188,8 @@ def api_metric_glossary(payload: MetricGlossaryRequest) -> MetricGlossaryRespons
             model=payload.model or os.getenv("OLLAMA_MODEL", "llama3:latest"),
             domain_context=domain_context_service.get_context_text(),
         )
-    except OllamaServiceError:
-        # Non-blocking fallback: keep API available even when Ollama is down.
-        return MetricGlossaryResponse(metric_glossary={})
+    except OllamaServiceError as exc:
+        raise HTTPException(status_code=503, detail=f"Ollama metric glossary unavailable: {exc}") from exc
 
     return MetricGlossaryResponse(metric_glossary=glossary)
 

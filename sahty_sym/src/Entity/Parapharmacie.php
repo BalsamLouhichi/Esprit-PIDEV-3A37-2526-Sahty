@@ -27,6 +27,9 @@ class Parapharmacie
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
+    /**
+     * @var Collection<int, Produit>
+     */
     #[ORM\ManyToMany(targetEntity: Produit::class, mappedBy: 'parapharmacies')]
     private Collection $produits;
 
@@ -87,7 +90,7 @@ class Parapharmacie
     }
 
     /**
-     * @return Collection|Produit[]
+     * @return Collection<int, Produit>
      */
     public function getProduits(): Collection
     {

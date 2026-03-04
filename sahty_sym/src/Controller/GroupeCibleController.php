@@ -116,7 +116,7 @@ final class GroupeCibleController extends AbstractController
         $referrer = (string) $request->query->get('referrer', '');
         $eventId = $request->query->get('event_id');
 
-        if ($this->isCsrfTokenValid('delete'.$groupe->getId(), (string) $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$groupe->getId(), (string) (string) $request->request->get('_token'))) {
             $em->remove($groupe);
             $em->flush();
             $this->addFlash('success', 'Groupe cible supprime avec succes.');
@@ -160,3 +160,7 @@ final class GroupeCibleController extends AbstractController
         return ['groupe_cible_index', []];
     }
 }
+
+
+
+

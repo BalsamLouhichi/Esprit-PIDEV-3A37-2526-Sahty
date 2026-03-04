@@ -1,6 +1,6 @@
 <?php
 
-$bundles = [
+return [
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
     Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class => ['all' => true],
     Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class => ['all' => true],
@@ -16,14 +16,7 @@ $bundles = [
     Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class => ['dev' => true, 'test' => true],
     Symfony\UX\TwigComponent\TwigComponentBundle::class => ['all' => true],
     EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle::class => ['all' => true],
+    KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle::class => ['all' => true],
+    Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
+    AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true, 'test' => true],
 ];
-
-if (class_exists(KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle::class)) {
-    $bundles[KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle::class] = ['all' => true];
-}
-
-if (class_exists(Vich\UploaderBundle\VichUploaderBundle::class)) {
-    $bundles[Vich\UploaderBundle\VichUploaderBundle::class] = ['all' => true];
-}
-
-return $bundles;

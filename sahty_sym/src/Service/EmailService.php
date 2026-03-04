@@ -53,6 +53,9 @@ class EmailService
     /**
      * Envoyer un email avec une pièce jointe PDF
      */
+    /**
+     * @param array<int, string> $toEmails
+     */
     public function sendWithAttachment(
         string $fromEmail,
         array $toEmails,

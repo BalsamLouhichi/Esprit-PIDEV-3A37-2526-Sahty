@@ -26,7 +26,7 @@ class ResponsableLaboratoire extends Utilisateur
 
     public function setLaboratoire(?Laboratoire $laboratoire): self
     {
-        // Désassocier l'ancien laboratoire
+        // DÃ©sassocier l'ancien laboratoire
         if ($this->laboratoire !== null && $this->laboratoire->getResponsable() === $this) {
             $this->laboratoire->setResponsable(null);
         }
@@ -42,7 +42,7 @@ class ResponsableLaboratoire extends Utilisateur
     }
 
     /**
-     * Compatibilité avec l'ancien code utilisant laboratoireId
+     * CompatibilitÃ© avec l'ancien code utilisant laboratoireId
      */
     public function getLaboratoireId(): ?int
     {

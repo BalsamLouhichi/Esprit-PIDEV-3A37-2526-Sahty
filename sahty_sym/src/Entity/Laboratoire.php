@@ -93,7 +93,7 @@ class Laboratoire
     /**
      * @var Collection<int, LaboratoireTypeAnalyse>
      */
-    #[ORM\OneToMany(targetEntity: LaboratoireTypeAnalyse::class, mappedBy: 'laboratoire', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: LaboratoireTypeAnalyse::class, mappedBy: 'laboratoire', cascade: ['persist'])]
     private Collection $laboratoireTypeAnalyses;
 
     #[ORM\OneToOne(targetEntity: ResponsableLaboratoire::class, mappedBy: 'laboratoire')]

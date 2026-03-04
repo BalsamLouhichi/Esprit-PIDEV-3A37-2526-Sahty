@@ -269,8 +269,10 @@ class Commande
     // Méthodes utilitaires
     public function calculerPrixTotal(): void
     {
-        if ($this->prixUnitaire && $this->quantite) {
-            $this->prixTotal = bcmul($this->prixUnitaire, (string)$this->quantite, 2);
+        if ($this->prixUnitaire !== null && $this->quantite !== null && is_numeric($this->prixUnitaire)) {
+            /** @var numeric-string $prixUnitaire */
+            $prixUnitaire = $this->prixUnitaire;
+            $this->prixTotal = bcmul($prixUnitaire, (string) $this->quantite, 2);
         }
     }
 
@@ -286,7 +288,7 @@ class Commande
             'annulee' => 'Annulée'
         ];
 
-        return $statuts[$this->statut] ?? $this->statut;
+        return $statuts[$this->statut ?? ''] ?? ($this->statut ?? 'Inconnu');
     }
 
     public function getStatutCouleur(): string
@@ -319,12 +321,16 @@ class Commande
     /**
      * Obtenir le détail des articles pour l'affichage
      */
+    /**
+     * @return list<array{produit: string, quantite: int|null, prix_unitaire: string|null, sous_total: string|null}>
+     */
     public function getDetailsArticles(): array
     {
         $details = [];
         foreach ($this->lignesCommandes as $ligne) {
+            $produit = $ligne->getProduit();
             $details[] = [
-                'produit' => $ligne->getProduit()->getNom(),
+                'produit' => $produit?->getNom() ?? '',
                 'quantite' => $ligne->getQuantite(),
                 'prix_unitaire' => $ligne->getPrixUnitaire(),
                 'sous_total' => $ligne->getSousTotal()

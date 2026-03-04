@@ -52,6 +52,7 @@ class DemandeAnalyse
     private string $priorite = 'Normale'; // Ajout de la priorité
 
     // Liste des analyses demandées (peut être JSON ou relation OneToMany)
+    /** @var array<int, string>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $analyses = [];
 
@@ -184,11 +185,17 @@ class DemandeAnalyse
         return $this;
     }
 
+    /**
+     * @return array<int, string>|null
+     */
     public function getAnalyses(): ?array
     {
         return $this->analyses;
     }
 
+    /**
+     * @param array<int, string>|null $analyses
+     */
     public function setAnalyses(?array $analyses): static
     {
         $this->analyses = $analyses;
@@ -225,7 +232,8 @@ class DemandeAnalyse
     // Méthodes pratiques
     public function addAnalyse(string $analyse): static
     {
-        if (!in_array($analyse, $this->analyses)) {
+        $analyses = $this->analyses ?? [];
+        if (!in_array($analyse, $analyses, true)) {
             $this->analyses[] = $analyse;
         }
         return $this;
@@ -233,7 +241,8 @@ class DemandeAnalyse
 
     public function removeAnalyse(string $analyse): static
     {
-        if (($key = array_search($analyse, $this->analyses)) !== false) {
+        $analyses = $this->analyses ?? [];
+        if (($key = array_search($analyse, $analyses, true)) !== false) {
             unset($this->analyses[$key]);
             $this->analyses = array_values($this->analyses); // Réindexer
         }
@@ -242,7 +251,7 @@ class DemandeAnalyse
 
     public function getNbAnalyses(): int
     {
-        return count($this->analyses);
+        return count($this->analyses ?? []);
     }
 
     // Pour faciliter l'affichage dans le template

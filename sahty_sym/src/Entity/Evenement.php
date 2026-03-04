@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
@@ -23,7 +24,7 @@ class Evenement
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-     #[Assert\Choice(choices: ['webinaire', 'atelier', 'depistage', 'conference', 'groupe_parole'])]
+     #[Assert\Choice(choices: ['webinaire', 'atelier', 'depistage', 'conference', 'groupe_parole', 'formation'])]
     #[ORM\Column(length: 50)]
     private ?string $type = null;
 
@@ -50,7 +51,7 @@ private ?\DateTimeInterface $dateFin = null;
     #[ORM\Column(nullable: true)]
     private ?int $placesMax = null;
 
-    #[Assert\Choice(choices: ['brouillon', 'planifie', 'confirme', 'en_cours', 'termine', 'annule'])]
+    #[Assert\Choice(choices: ['brouillon', 'en_attente_approbation', 'approuve', 'planifie', 'confirme', 'en_cours', 'termine', 'annule', 'refuse'])]
     #[ORM\Column(length: 50)]
     private ?string $statut = 'brouillon';
 
@@ -78,12 +79,15 @@ private ?Utilisateur $createur = null;
     /**
      * @var Collection<int, InscriptionEvenement>
      */
-    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: InscriptionEvenement::class, mappedBy: 'evenement', orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $inscriptions;
 
+    /**
+     * @var Collection<int, GroupeCible>
+     */
     #[ORM\ManyToMany(targetEntity: GroupeCible::class, inversedBy: 'evenements')]
-#[ORM\JoinTable(name: 'evenement_groupe_cible')]
-private Collection $groupeCibles;
+    #[ORM\JoinTable(name: 'evenement_groupe_cible')]
+    private Collection $groupeCibles;
 
 
 #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -150,24 +154,24 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTime
+    public function getDateDebut(): ?\DateTimeInterface
     {
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTime $dateDebut): static
+    public function setDateDebut(\DateTimeInterface $dateDebut): static
     {
         $this->dateDebut = $dateDebut;
 
         return $this;
     }
 
-    public function getDateFin(): ?\DateTime
+    public function getDateFin(): ?\DateTimeInterface
     {
         return $this->dateFin;
     }
 
-    public function setDateFin(\DateTime $dateFin): static
+    public function setDateFin(\DateTimeInterface $dateFin): static
     {
         $this->dateFin = $dateFin;
 
@@ -336,9 +340,13 @@ public function setStatutDemande(?string $statutDemande): self
         return $this;
     }
 
-    public function getGroupeCibles(): Collection {
-    return $this->groupeCibles;
-}
+    /**
+     * @return Collection<int, GroupeCible>
+     */
+    public function getGroupeCibles(): Collection
+    {
+        return $this->groupeCibles;
+    }
 
 public function addGroupeCible(GroupeCible $groupe): self {
     if (!$this->groupeCibles->contains($groupe)) {
@@ -353,3 +361,5 @@ public function removeGroupeCible(GroupeCible $groupe): self {
 }
 
 }
+
+

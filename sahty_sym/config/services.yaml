@@ -93,7 +93,7 @@ services:
 
     App\Service\AppointmentNotificationMailer:
         arguments:
-            $fromAddress: 'no-reply@sahty.local'
+            $fromAddress: '%env(APP_MAILER_FROM)%'
 
     App\Service\MeetingSchedulerService:
         arguments:
@@ -124,3 +124,4 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
             $pythonBin: '%app.ia_evenement.python%'
+

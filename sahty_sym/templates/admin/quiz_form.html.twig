@@ -1,0 +1,292 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{% if form.vars.data.id %}Modifier{% else %}Ajouter{% endif %} Quiz{% endblock %}
+
+{% block content %}
+<section class="quiz-form-page">
+    <div class="form-header mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-question-circle me-2"></i>
+                {% if form.vars.data.id %}Modifier le Quiz{% else %}Nouveau Quiz{% endif %}
+            </h2>
+            <p class="mb-0 text-muted">Configurez les informations du quiz et sa banque de questions.</p>
+        </div>
+        <a href="{{ path('admin_quiz_index') }}" class="btn btn-outline-secondary rounded-pill px-4">Retour a la liste</a>
+    </div>
+
+    <div class="card form-shell border-0">
+        <div class="card-body p-4 p-lg-5">
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="section-card mb-4">
+                <div class="section-title-row">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations Generales</h5>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        {{ form_label(form.name, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control form-control-lg', 'placeholder': 'Ex: Evaluation du stress'}}) }}
+                        {{ form_errors(form.name) }}
+                    </div>
+                    <div class="col-lg-6">
+                        {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control form-control-lg', 'rows': 3, 'placeholder': 'Description du quiz'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card mb-4">
+                <div class="section-title-row">
+                    <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Questions</h5>
+                    <button type="button" class="btn btn-primary rounded-pill px-3" id="add-question">
+                        <i class="fas fa-plus me-2"></i>Ajouter une question
+                    </button>
+                </div>
+
+                <div id="questions-collection"
+                     class="question-stack"
+                     data-prototype="{{ form_widget(form.questions.vars.prototype)|e('html_attr') }}"
+                     data-index="{{ form.questions|length }}">
+                    {% for question in form.questions %}
+                        <article class="question-item">
+                            <div class="question-item-header">
+                                <h6 class="mb-0">Question <span class="question-number">{{ loop.index }}</span></h6>
+                                <div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-circle remove-question" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {{ form_row(question.text) }}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form_row(question.type) }}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form_row(question.category) }}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form_row(question.orderInQuiz) }}
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="form-check question-check">
+                                        {{ form_widget(question.reverse, {'attr': {'class': 'form-check-input'}}) }}
+                                        {{ form_label(question.reverse, null, {'label_attr': {'class': 'form-check-label ms-1'}}) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-2">
+                    {{ form_errors(form.questions) }}
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a href="{{ path('admin_quiz_index') }}" class="btn btn-light border rounded-pill px-4">Annuler</a>
+                <button type="submit" class="btn btn-success rounded-pill px-4">
+                    <i class="fas fa-save me-2"></i>
+                    {% if form.vars.data.id %}Mettre a jour{% else %}Creer le quiz{% endif %}
+                </button>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .quiz-form-page {
+        animation: fadeIn 0.25s ease-out;
+    }
+
+    .form-header {
+        background: linear-gradient(120deg, #ffffff 0%, #f3fbff 100%);
+        border: 1px solid #d9edf5;
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 8px 22px rgba(29, 42, 77, 0.06);
+    }
+
+    .form-shell {
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(29, 42, 77, 0.08);
+    }
+
+    .section-card {
+        border: 1px solid #e6edf2;
+        border-radius: 14px;
+        background: #fbfdff;
+        padding: 1rem;
+    }
+
+    .section-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        border-color: #dce6ee;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #13c5dd;
+        box-shadow: 0 0 0 0.2rem rgba(19, 197, 221, 0.12);
+    }
+
+    .question-stack {
+        display: grid;
+        gap: 12px;
+    }
+
+    .question-item {
+        border: 1px solid #dde7ee;
+        border-radius: 12px;
+        background: #fff;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(29, 42, 77, 0.04);
+    }
+
+    .question-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .question-number {
+        color: #13c5dd;
+        font-weight: 700;
+    }
+
+    .question-check {
+        margin-bottom: 0.35rem;
+    }
+
+    .question-item .form-label {
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .question-item .form-control,
+    .question-item .form-select {
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .form-header,
+        .section-title-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const collection = document.getElementById('questions-collection');
+    const addBtn = document.getElementById('add-question');
+
+    if (!collection || !addBtn) {
+        return;
+    }
+
+    const styleFieldElements = (root) => {
+        root.querySelectorAll('label').forEach((label) => label.classList.add('form-label', 'fw-semibold'));
+        root.querySelectorAll('textarea').forEach((el) => el.classList.add('form-control'));
+        root.querySelectorAll('select').forEach((el) => el.classList.add('form-select'));
+        root.querySelectorAll('input[type="text"], input[type="number"]').forEach((el) => el.classList.add('form-control'));
+        root.querySelectorAll('input[type="checkbox"]').forEach((el) => el.classList.add('form-check-input'));
+    };
+
+    const syncQuestionOrdering = () => {
+        collection.querySelectorAll('.question-item').forEach((item, idx) => {
+            const number = item.querySelector('.question-number');
+            if (number) {
+                number.textContent = String(idx + 1);
+            }
+
+            const orderInput = item.querySelector('input[name$="[orderInQuiz]"]');
+            if (orderInput) {
+                orderInput.value = String(idx + 1);
+            }
+        });
+    };
+
+    const bindRemoveButtons = () => {
+        collection.querySelectorAll('.remove-question').forEach((btn) => {
+            btn.onclick = function () {
+                const item = this.closest('.question-item');
+                if (item) {
+                    item.remove();
+                    syncQuestionOrdering();
+                }
+            };
+        });
+    };
+
+    addBtn.addEventListener('click', function () {
+        const index = parseInt(collection.dataset.index, 10);
+        const prototypeHtml = collection.dataset.prototype.replace(/__name__/g, index);
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = prototypeHtml;
+        const formBlock = wrapper.firstElementChild;
+        if (!formBlock) {
+            return;
+        }
+
+        const item = document.createElement('article');
+        item.className = 'question-item';
+        item.innerHTML = `
+            <div class="question-item-header">
+                <h6 class="mb-0">Question <span class="question-number">${index + 1}</span></h6>
+                <div>
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-circle remove-question" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        item.appendChild(formBlock);
+
+        styleFieldElements(item);
+        collection.appendChild(item);
+        collection.dataset.index = index + 1;
+
+        bindRemoveButtons();
+        syncQuestionOrdering();
+    });
+
+    collection.querySelectorAll('.question-item').forEach(styleFieldElements);
+    bindRemoveButtons();
+    syncQuestionOrdering();
+});
+</script>
+{% endblock %}

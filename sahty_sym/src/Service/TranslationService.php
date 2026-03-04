@@ -72,7 +72,7 @@ class TranslationService
                 $sourceLanguage,
                 $targetLanguage
             );
-            if (!($result['ok'] ?? false)) {
+            if (!$result['ok']) {
                 return ['ok' => false, 'error' => (string) ($result['error'] ?? 'Erreur de traduction')];
             }
             $translations[$targetLanguage] = $result['texts'] ?? [];
@@ -106,7 +106,7 @@ class TranslationService
                     $sourceLanguage,
                     $targetLanguage
                 );
-                if (!($chunkResult['ok'] ?? false)) {
+                if (!$chunkResult['ok']) {
                     return $chunkResult;
                 }
                 $merged = array_replace($merged, (array) ($chunkResult['texts'] ?? []));
@@ -150,7 +150,7 @@ class TranslationService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 $providerError = trim((string) ($data['error']['message'] ?? $data['error'] ?? $data['message'] ?? ''));
                 return ['ok' => false, 'error' => 'Erreur API traduction' . ($providerError !== '' ? ': ' . $providerError : '')];
             }
@@ -182,7 +182,7 @@ class TranslationService
                     $sourceLanguage,
                     $targetLanguage
                 );
-                if (($fallback['ok'] ?? false) === true) {
+                if ($fallback['ok'] === true) {
                     foreach ((array) ($fallback['texts'] ?? []) as $key => $value) {
                         $translatedTexts[(string) $key] = trim((string) $value);
                     }
@@ -231,7 +231,7 @@ class TranslationService
                 $sourceLanguage,
                 $targetLanguage
             );
-            if (!($single['ok'] ?? false)) {
+            if (!$single['ok']) {
                 $singleError = trim((string) ($single['error'] ?? ''));
                 return [
                     'ok' => false,
@@ -296,7 +296,7 @@ class TranslationService
 
             $statusCode = $response->getStatusCode();
             $data = $response->toArray(false);
-            if ($statusCode >= 400 || !is_array($data)) {
+            if ($statusCode >= 400) {
                 $providerError = trim((string) ($data['error']['message'] ?? $data['error'] ?? $data['message'] ?? ''));
                 return [
                     'ok' => false,
@@ -394,6 +394,9 @@ class TranslationService
         return null;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function extractAssistantContent(array $data): string
     {
         $content = $data['choices'][0]['message']['content'] ?? null;
@@ -451,7 +454,7 @@ class TranslationService
         $clean = preg_replace_callback(
             '/:\s*\'((?:\\\\.|[^\'\\\\])*)\'/s',
             static function (array $matches): string {
-                $decoded = stripcslashes((string) ($matches[1] ?? ''));
+                $decoded = stripcslashes((string) $matches[1]);
                 $encoded = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 return ': ' . ($encoded !== false ? $encoded : '""');
             },

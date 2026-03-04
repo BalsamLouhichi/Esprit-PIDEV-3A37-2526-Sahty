@@ -1139,6 +1139,19 @@
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.maxAlternatives = 1;
+                let didStart = false;
+                let fallbackTimer = null;
+                const cancelFallback = () => {
+                    if (fallbackTimer) {
+                        clearTimeout(fallbackTimer);
+                        fallbackTimer = null;
+                    }
+                };
+
+                recognition.addEventListener('start', () => {
+                    didStart = true;
+                    cancelFallback();
+                });
 
                 recognition.addEventListener('result', (event) => {
                     let recognized = '';
@@ -1151,6 +1164,7 @@
                 });
 
                 recognition.addEventListener('error', (event) => {
+                    cancelFallback();
                     const current = states.get(button);
                     if (event.error === 'aborted' && current && current.manualStop) {
                         return;
@@ -1168,6 +1182,7 @@
                 });
 
                 recognition.addEventListener('end', () => {
+                    cancelFallback();
                     resetButton();
                     states.delete(button);
                 });
@@ -1175,6 +1190,22 @@
                 try {
                     states.set(button, { recognition, listening: true, manualStop: false });
                     recognition.start();
+                    fallbackTimer = window.setTimeout(() => {
+                        if (!didStart) {
+                            try {
+                                recognition.abort();
+                            } catch (e) {
+                                // ignore
+                            }
+                            states.delete(button);
+                            resetButton();
+                            if (window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                                startApiDictation(button, targetField);
+                            } else {
+                                alert('La dictee navigateur ne demarre pas et aucun micro n est disponible.');
+                            }
+                        }
+                    }, 1500);
                     setVoiceState(button, 'listening');
                     button.disabled = false;
                 } catch (e) {

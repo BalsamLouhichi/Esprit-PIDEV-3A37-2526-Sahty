@@ -4,11 +4,22 @@ namespace App\Service;
 
 class EvenementResourcePlanningService
 {
+    /**
+     * @param array<string, int> $stockSnapshot
+     */
     public function __construct(
         private readonly array $stockSnapshot = []
     ) {
     }
 
+    /**
+     * @return array{
+     *     meta: array{participants_estimes: int, type: string, mode: string},
+     *     risk: array{level: string, message: string},
+     *     resources: list<array{ressource: string, required: int, available: int, shortage: int, status: string}>,
+     *     actions: list<string>
+     * }
+     */
     public function buildPlan(string $type, string $mode, ?int $placesMax): array
     {
         $participants = max(1, (int) ($placesMax ?? 30));
@@ -67,6 +78,9 @@ class EvenementResourcePlanningService
         ];
     }
 
+    /**
+     * @return array<string, int>
+     */
     private function estimateRequirements(string $type, string $mode, int $participants): array
     {
         $type = mb_strtolower(trim($type));
@@ -140,4 +154,3 @@ class EvenementResourcePlanningService
         };
     }
 }
-

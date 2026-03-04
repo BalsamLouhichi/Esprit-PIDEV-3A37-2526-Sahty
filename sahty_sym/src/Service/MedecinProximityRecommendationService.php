@@ -35,7 +35,7 @@ class MedecinProximityRecommendationService
         $candidates = [];
 
         foreach ($medecins as $medecin) {
-            if (!$medecin instanceof Medecin || !$medecin->isEstActif()) {
+            if (!$medecin->isEstActif()) {
                 continue;
             }
 
@@ -54,8 +54,8 @@ class MedecinProximityRecommendationService
 
         $addressQueries = [];
         foreach ($candidates as $item) {
-            foreach (($item['queries'] ?? []) as $query) {
-                if (is_string($query) && $query !== '') {
+            foreach ($item['queries'] as $query) {
+                if ($query !== '') {
                     $addressQueries[] = $query;
                 }
             }
@@ -67,7 +67,7 @@ class MedecinProximityRecommendationService
             /** @var Medecin $medecin */
             $medecin = $item['medecin'];
             $coords = null;
-            foreach (($item['queries'] ?? []) as $query) {
+            foreach ($item['queries'] as $query) {
                 $coords = $coordsByAddress[$query] ?? null;
                 if ($coords !== null) {
                     break;
@@ -215,7 +215,7 @@ class MedecinProximityRecommendationService
             $queries[] = sprintf('%s, Tunisia', $ville);
         }
 
-        return array_values(array_unique(array_filter($queries)));
+        return array_values(array_unique($queries));
     }
 
     private function haversineDistanceKm(

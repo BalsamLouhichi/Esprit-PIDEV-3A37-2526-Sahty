@@ -572,7 +572,7 @@
                 {# Hero Banner #}
                 <div class="hero-section">
                     <h1 class="hero-title">Nos Laboratoires</h1>
-                    <p class="hero-text">Des installations de diagnostic de pointe pour des résultats précis et rapides</p>
+                    <p class="hero-text">Des installations de diagnostic de pointe pour des rÃ©sultats prÃ©cis et rapides</p>
                     <div class="hero-buttons">
                         <a href="#laboratories" class="btn-hero-primary">
                             <i class="fas fa-flask me-2"></i>
@@ -589,7 +589,7 @@
                 <div class="features-section">
                     <div class="section-title">
                         <h5>Pourquoi Nous Choisir</h5>
-                        <h2>Solutions de Diagnostic Avancées</h2>
+                        <h2>Solutions de Diagnostic AvancÃ©es</h2>
                     </div>
 
                     <div class="feature-grid">
@@ -597,22 +597,22 @@
                             <div class="feature-icon">
                                 <i class="fa fa-flask"></i>
                             </div>
-                            <h4>Équipement de Pointe</h4>
-                            <p>Nous utilisons les derniers équipements médicaux pour des diagnostics précis et des résultats fiables.</p>
+                            <h4>Ã‰quipement de Pointe</h4>
+                            <p>Nous utilisons les derniers Ã©quipements mÃ©dicaux pour des diagnostics prÃ©cis et des rÃ©sultats fiables.</p>
                         </div>
                         <div class="feature-box">
                             <div class="feature-icon">
                                 <i class="fa fa-user-md"></i>
                             </div>
                             <h4>Pathologistes Experts</h4>
-                            <p>Notre équipe de pathologistes certifiés assure la précision de chaque analyse.</p>
+                            <p>Notre Ã©quipe de pathologistes certifiÃ©s assure la prÃ©cision de chaque analyse.</p>
                         </div>
                         <div class="feature-box">
                             <div class="feature-icon">
                                 <i class="fa fa-bolt"></i>
                             </div>
-                            <h4>Résultats Rapides</h4>
-                            <p>Obtenez vos résultats rapidement via notre portail en ligne ou application mobile.</p>
+                            <h4>RÃ©sultats Rapides</h4>
+                            <p>Obtenez vos rÃ©sultats rapidement via notre portail en ligne ou application mobile.</p>
                         </div>
                     </div>
                 </div>
@@ -621,8 +621,8 @@
                 <div class="labs-section" id="laboratories">
                     <div class="section-title">
                         <h5>Nos Laboratoires</h5>
-                        <h2>Trouvez un Laboratoire Près de Chez Vous</h2>
-                        <p>Nous avons plusieurs laboratoires à travers la ville pour votre commodité.</p>
+                        <h2>Trouvez un Laboratoire PrÃ¨s de Chez Vous</h2>
+                        <p>Nous avons plusieurs laboratoires Ã  travers la ville pour votre commoditÃ©.</p>
                     </div>
 
                     {% if patient_ville %}
@@ -658,7 +658,7 @@
                             <div class="lab-grid">
                                 {% for laboratoire in recommended_laboratoires %}
                                     <div class="labo-card">
-                                        <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=200&fit=crop&auto=format" alt="Laboratoire mÃ©dical" class="labo-img">
+                                        <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=200&fit=crop&auto=format" alt="Laboratoire mÃƒÂ©dical" class="labo-img">
                                         <div class="labo-icon">
                                             <i class="fa fa-flask"></i>
                                         </div>
@@ -671,7 +671,7 @@
                                             <div class="labo-footer">
                                                 <a href="{{ path('app_labo_show', {'id': laboratoire.id}) }}" class="btn-view">
                                                     <i class="fas fa-eye"></i>
-                                                    Voir détails
+                                                    Voir dÃ©tails
                                                 </a>
                                             </div>
                                         </div>
@@ -761,7 +761,7 @@
                             <div class="lab-grid">
                                 {% for laboratoire in laboratoires %}
                                     <div class="labo-card">
-                                        <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=200&fit=crop&auto=format" alt="Laboratoire médical" class="labo-img">
+                                        <img src="https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=400&h=200&fit=crop&auto=format" alt="Laboratoire mÃ©dical" class="labo-img">
                                         <div class="labo-icon">
                                             <i class="fa fa-flask"></i>
                                         </div>
@@ -779,7 +779,7 @@
                                                 </h6>
                                                 <ul>
                                                     <li><i class="fas fa-check-circle"></i> Analyses sanguines</li>
-                                                    <li><i class="fas fa-check-circle"></i> Imagerie médicale</li>
+                                                    <li><i class="fas fa-check-circle"></i> Imagerie mÃ©dicale</li>
                                                     <li><i class="fas fa-check-circle"></i> Pathologie</li>
                                                 </ul>
                                             </div>
@@ -792,7 +792,7 @@
                                             <div class="labo-footer">
                                                 <a href="{{ path('app_labo_show', {'id': laboratoire.id}) }}" class="btn-view">
                                                     <i class="fas fa-eye"></i>
-                                                    Voir détails
+                                                    Voir dÃ©tails
                                                 </a>
                                                 <a href="{{ path('app_labo_show', {'id': laboratoire.id}) }}" class="btn-appointment">
                                                     <i class="fas fa-calendar-check"></i>
@@ -806,11 +806,11 @@
                         {% else %}
                             <div class="empty-state">
                                 <i class="fas fa-flask"></i>
-                                <h4>Aucun laboratoire trouvé</h4>
+                                <h4>Aucun laboratoire trouvÃ©</h4>
                                 <p>Essayez de modifier vos filtres de recherche</p>
                                 <a href="{{ path('app_labo_index') }}" class="btn-reset">
                                     <i class="fas fa-redo-alt me-2"></i>
-                                    Réinitialiser les filtres
+                                    RÃ©initialiser les filtres
                                 </a>
                             </div>
                         {% endif %}
@@ -883,7 +883,7 @@
                 .catch(() => {
                     const cardsContainer = document.getElementById('lab-cards');
                     if (cardsContainer) {
-                        cardsContainer.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h4>Erreur de chargement</h4><p>Veuillez réessayer plus tard</p></div></div>';
+                        cardsContainer.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h4>Erreur de chargement</h4><p>Veuillez rÃ©essayer plus tard</p></div></div>';
                     }
                 });
             };

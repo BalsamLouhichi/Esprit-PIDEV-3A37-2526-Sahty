@@ -35,7 +35,7 @@ class PaymentController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if ($request->isMethod('POST') && !$this->isCsrfTokenValid('checkout' . $evenement->getId(), $request->request->get('_token'))) {
+        if ($request->isMethod('POST') && !$this->isCsrfTokenValid('checkout' . $evenement->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('danger', 'Requete invalide. Merci de reessayer.');
             return $this->redirectToRoute('evenements_client_event_view', ['id' => $evenement->getId()]);
         }
@@ -127,7 +127,7 @@ class PaymentController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('checkout_simule' . $evenement->getId(), (string) $request->request->get('_token'))) {
+            if (!$this->isCsrfTokenValid('checkout_simule' . $evenement->getId(), (string) (string) $request->request->get('_token'))) {
                 $this->addFlash('danger', 'Requete de paiement invalide.');
                 return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
             }
@@ -307,3 +307,7 @@ class PaymentController extends AbstractController
         return ['can_subscribe' => true, 'message' => ''];
     }
 }
+
+
+
+

@@ -104,7 +104,7 @@ class LaboratoireController extends AbstractController
                 $laboratoire->setResponsable($user);
             }
             
-            // Associer le laboratoire à chaque LaboratoireTypeAnalyse
+            // Associer le laboratoire Ã  chaque LaboratoireTypeAnalyse
             foreach ($laboratoire->getLaboratoireTypeAnalyses() as $typeAnalyse) {
                 $typeAnalyse->setLaboratoire($laboratoire);
             }
@@ -112,7 +112,7 @@ class LaboratoireController extends AbstractController
             $em->persist($laboratoire);
             $em->flush();
 
-            $this->addFlash('success', 'Laboratoire ajouté avec succès ✅');
+            $this->addFlash('success', 'Laboratoire ajoutÃ© avec succÃ¨s âœ…');
             if ($user instanceof ResponsableLaboratoire) {
                 return $this->redirectToRoute('app_responsable_labo_demandes');
             }
@@ -128,10 +128,10 @@ class LaboratoireController extends AbstractController
     #[Route('/{id}', name: 'app_labo_show', methods: ['GET'])]
     public function show(Laboratoire $laboratoire, MedecinRepository $medecinRepository): Response
     {
-        // Récupérer tous les médecins depuis la base de données
+        // RÃ©cupÃ©rer tous les mÃ©decins depuis la base de donnÃ©es
         $medecins = $medecinRepository->findAll();
         
-        // Debug: vérifiez ce qui est récupéré
+        // Debug: vÃ©rifiez ce qui est rÃ©cupÃ©rÃ©
         // dump($medecins);
         
         // Optionnel: trier par nom complet
@@ -139,7 +139,7 @@ class LaboratoireController extends AbstractController
             return strcmp($a->getNomComplet() ?? '', $b->getNomComplet() ?? '');
         });
 
-        // Grouper les analyses par catégorie
+        // Grouper les analyses par catÃ©gorie
         $analysesParCategorie = [];
         $analysesDetailsParCategorie = [];
 
@@ -150,7 +150,7 @@ class LaboratoireController extends AbstractController
 
             $cat = $type->getCategorie() ?? 'Autres';
 
-            // Stocker les informations complètes
+            // Stocker les informations complÃ¨tes
             $analysesDetailsParCategorie[$cat][] = [
                 'type_analyse' => $type,
                 'disponible' => $lta->isDisponible(),
@@ -159,18 +159,18 @@ class LaboratoireController extends AbstractController
                 'conditions' => $lta->getConditions()
             ];
             
-            // Pour compatibilité avec l'ancien code
+            // Pour compatibilitÃ© avec l'ancien code
             $analysesParCategorie[$cat][] = $type;
         }
 
-        // Trier les catégories
+        // Trier les catÃ©gories
         ksort($analysesParCategorie);
         ksort($analysesDetailsParCategorie);
         return $this->render('laboratoire/labo-details.html.twig', [
             'laboratoire' => $laboratoire,
             'analysesParCategorie' => $analysesParCategorie,
             'analysesDetailsParCategorie' => $analysesDetailsParCategorie,
-            'medecins' => $medecins, // Passer les médecins au template
+            'medecins' => $medecins, // Passer les mÃ©decins au template
         ]);
     }
 
@@ -185,14 +185,14 @@ class LaboratoireController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Associer le laboratoire à chaque LaboratoireTypeAnalyse
+            // Associer le laboratoire Ã  chaque LaboratoireTypeAnalyse
             foreach ($laboratoire->getLaboratoireTypeAnalyses() as $typeAnalyse) {
                 $typeAnalyse->setLaboratoire($laboratoire);
             }
             
             $em->flush();
 
-            $this->addFlash('success', 'Laboratoire modifié avec succès ✅');
+            $this->addFlash('success', 'Laboratoire modifiÃ© avec succÃ¨s âœ…');
             return $this->redirectToRoute('app_labo_show', ['id' => $laboratoire->getId()]);
         }
 
@@ -206,12 +206,12 @@ class LaboratoireController extends AbstractController
     #[Route('/{id}/delete', name: 'app_labo_delete', methods: ['POST'])]
     public function delete(Laboratoire $laboratoire, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete_labo_' . $laboratoire->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete_labo_' . $laboratoire->getId(), (string) $request->request->get('_token'))) {
             $em->remove($laboratoire);
             $em->flush();
-            $this->addFlash('success', 'Laboratoire supprimé ✅');
+            $this->addFlash('success', 'Laboratoire supprimÃ© âœ…');
         } else {
-            $this->addFlash('danger', 'Token CSRF invalide ❌');
+            $this->addFlash('danger', 'Token CSRF invalide âŒ');
         }
 
         return $this->redirectToRoute('app_labo_index');
@@ -229,7 +229,7 @@ class LaboratoireController extends AbstractController
     }
 
     /**
-     * API pour récupérer les médecins (optionnel, pour AJAX)
+     * API pour rÃ©cupÃ©rer les mÃ©decins (optionnel, pour AJAX)
      */
     #[Route('/api/medecins', name: 'app_api_medecins', methods: ['GET'])]
     public function getMedecinsApi(MedecinRepository $medecinRepository): Response
@@ -253,7 +253,7 @@ class LaboratoireController extends AbstractController
     }
 
     /**
-     * Test pour vérifier la récupération des médecins
+     * Test pour vÃ©rifier la rÃ©cupÃ©ration des mÃ©decins
      */
     #[Route('/test/medecins', name: 'app_labo_test_medecins', methods: ['GET'])]
     public function testMedecins(MedecinRepository $medecinRepository): Response
@@ -266,3 +266,6 @@ class LaboratoireController extends AbstractController
         ]);
     }
 }
+
+
+

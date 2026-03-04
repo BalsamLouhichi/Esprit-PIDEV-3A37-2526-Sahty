@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use App\Entity\Evenement;
-use App\Entity\InscriptionEvenement;
 use App\Repository\EvenementRepository;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -17,6 +16,9 @@ class EvenementSeriesInsightsAIService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function analyzeSeriesForEvent(Evenement $referenceEvent): array
     {
         $seriesBase = $this->extractSeriesBase((string) $referenceEvent->getTitre());
@@ -35,10 +37,6 @@ class EvenementSeriesInsightsAIService
             $participantIds = [];
 
             foreach ($event->getInscriptions() as $inscription) {
-                if (!$inscription instanceof InscriptionEvenement) {
-                    continue;
-                }
-
                 $user = $inscription->getUtilisateur();
                 if ($user === null || $user->getId() === null) {
                     continue;
@@ -96,12 +94,10 @@ class EvenementSeriesInsightsAIService
 
         $syntheseText = $fallbackSynthesis;
         if (is_array($aiSynthesis)) {
-            $msg = trim((string) ($aiSynthesis['message'] ?? ''));
+            $msg = trim((string) $aiSynthesis['message']);
             if ($msg !== '') {
                 $syntheseText = $msg;
             }
-        } elseif (is_string($aiSynthesis) && trim($aiSynthesis) !== '') {
-            $syntheseText = trim($aiSynthesis);
         }
 
         return [
@@ -123,6 +119,14 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param list<array<string, mixed>> $editions
+     * @param array<string, mixed> $growth
+     * @param array<string, mixed> $knowledge
+     * @param array<string, mixed> $audienceEvolution
+     * @param array<string, mixed> $loyalty
+     * @return array{niveau: string, message: string}|null
+     */
     private function buildExternalAiSeriesSynthesis(
         Evenement $referenceEvent,
         array $editions,
@@ -209,6 +213,9 @@ class EvenementSeriesInsightsAIService
         return trim($currentTitle).' - Edition 2';
     }
 
+    /**
+     * @return list<Evenement>
+     */
     private function findSeriesEvents(Evenement $referenceEvent, string $seriesBase): array
     {
         $sameTypeEvents = $this->evenementRepository->findBy(
@@ -309,6 +316,9 @@ class EvenementSeriesInsightsAIService
         return max(1, min(5, $score));
     }
 
+    /**
+     * @param list<string> $participantRoles
+     */
     private function scoreAudienceSpecialization(array $participantRoles, Evenement $event): int
     {
         $score = 1;
@@ -332,6 +342,9 @@ class EvenementSeriesInsightsAIService
         return max(1, min(5, $score));
     }
 
+    /**
+     * @return array<string, string>
+     */
     private function buildEditionDna(int $topicScore, int $audienceScore, Evenement $event): array
     {
         $description = mb_strtolower((string) $event->getDescription());
@@ -358,6 +371,10 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param list<int> $participantHistory
+     * @return array{tendance: string, pourcentage: int|float, resume: string}
+     */
     private function buildGrowthStats(array $participantHistory): array
     {
         if (count($participantHistory) < 2) {
@@ -368,7 +385,7 @@ class EvenementSeriesInsightsAIService
             ];
         }
 
-        $first = (int) ($participantHistory[0] ?? 0);
+        $first = (int) $participantHistory[0];
         $last = (int) ($participantHistory[count($participantHistory) - 1] ?? 0);
         $percentage = $first > 0 ? (($last - $first) / $first) * 100 : 0;
 
@@ -391,6 +408,10 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param list<int> $topicScores
+     * @return array{niveau: string, message: string}
+     */
     private function buildKnowledgeProgression(array $topicScores): array
     {
         if (count($topicScores) < 2) {
@@ -431,6 +452,10 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param list<int> $audienceScores
+     * @return array{niveau: string, message: string}
+     */
     private function buildAudienceEvolution(array $audienceScores): array
     {
         if (count($audienceScores) < 2) {
@@ -463,6 +488,9 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param list<int> $topicScores
+     */
     private function buildTopicSummary(array $topicScores): string
     {
         if (count($topicScores) < 2) {
@@ -483,6 +511,9 @@ class EvenementSeriesInsightsAIService
         return 'Le niveau thematique reste globalement stable dans la serie.';
     }
 
+    /**
+     * @param list<int> $topicScores
+     */
     private function mapTopicTrendLabel(array $topicScores): string
     {
         if (count($topicScores) < 2) {
@@ -501,6 +532,12 @@ class EvenementSeriesInsightsAIService
         return 'Stabilite';
     }
 
+    /**
+     * @param list<int> $allParticipantIds
+     * @param list<float|int> $retentionRates
+     * @param list<Evenement> $seriesEvents
+     * @return array{retention_moyenne: int|float, dropoff_moyen: int|float, participants_recurrents: int, message: string}
+     */
     private function buildLoyaltyMetrics(array $allParticipantIds, array $retentionRates, array $seriesEvents): array
     {
         $editionCount = count($seriesEvents);
@@ -543,6 +580,12 @@ class EvenementSeriesInsightsAIService
         ];
     }
 
+    /**
+     * @param array<string, mixed> $growth
+     * @param array<string, mixed> $knowledge
+     * @param array<string, mixed> $audienceEvolution
+     * @param array<string, mixed> $loyalty
+     */
     private function buildSeriesSynthesis(array $growth, array $knowledge, array $audienceEvolution, array $loyalty): string
     {
         $parts = [];

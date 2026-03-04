@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$phpunit = dirname(__DIR__) . '/vendor/bin/phpunit';
+
+if (!is_file($phpunit)) {
+    fwrite(STDERR, "PHPUnit introuvable: $phpunit" . PHP_EOL);
+    exit(1);
+}
+
+require $phpunit;
+

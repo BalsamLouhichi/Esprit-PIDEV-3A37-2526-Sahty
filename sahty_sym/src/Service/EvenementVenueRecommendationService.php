@@ -8,12 +8,41 @@ class EvenementVenueRecommendationService
 {
     private const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
     private const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+    private const LOCAL_CITY_COORDS = [
+        'tunis' => ['lat' => 36.8065, 'lon' => 10.1815, 'display_name' => 'Tunis, Tunisie'],
+        'ariana' => ['lat' => 36.8625, 'lon' => 10.1956, 'display_name' => 'Ariana, Tunisie'],
+        'ben arous' => ['lat' => 36.7531, 'lon' => 10.2189, 'display_name' => 'Ben Arous, Tunisie'],
+        'la manouba' => ['lat' => 36.81, 'lon' => 10.095, 'display_name' => 'La Manouba, Tunisie'],
+        'nabeul' => ['lat' => 36.4561, 'lon' => 10.7376, 'display_name' => 'Nabeul, Tunisie'],
+        'sousse' => ['lat' => 35.8256, 'lon' => 10.6411, 'display_name' => 'Sousse, Tunisie'],
+        'sfax' => ['lat' => 34.7406, 'lon' => 10.7603, 'display_name' => 'Sfax, Tunisie'],
+        'monastir' => ['lat' => 35.7643, 'lon' => 10.8113, 'display_name' => 'Monastir, Tunisie'],
+        'mahdia' => ['lat' => 35.5047, 'lon' => 11.0622, 'display_name' => 'Mahdia, Tunisie'],
+        'bizerte' => ['lat' => 37.2744, 'lon' => 9.8739, 'display_name' => 'Bizerte, Tunisie'],
+        'beja' => ['lat' => 36.7333, 'lon' => 9.1833, 'display_name' => 'Beja, Tunisie'],
+        'jendouba' => ['lat' => 36.5011, 'lon' => 8.7802, 'display_name' => 'Jendouba, Tunisie'],
+        'kairouan' => ['lat' => 35.6781, 'lon' => 10.0963, 'display_name' => 'Kairouan, Tunisie'],
+        'gabes' => ['lat' => 33.8815, 'lon' => 10.0982, 'display_name' => 'Gabes, Tunisie'],
+        'medenine' => ['lat' => 33.3549, 'lon' => 10.5055, 'display_name' => 'Medenine, Tunisie'],
+        'gafsa' => ['lat' => 34.425, 'lon' => 8.7842, 'display_name' => 'Gafsa, Tunisie'],
+        'tozeur' => ['lat' => 33.9197, 'lon' => 8.1335, 'display_name' => 'Tozeur, Tunisie'],
+        'kasserine' => ['lat' => 35.1676, 'lon' => 8.8365, 'display_name' => 'Kasserine, Tunisie'],
+        'sidi bouzid' => ['lat' => 35.0382, 'lon' => 9.4858, 'display_name' => 'Sidi Bouzid, Tunisie'],
+        'kef' => ['lat' => 36.1826, 'lon' => 8.7148, 'display_name' => 'Le Kef, Tunisie'],
+        'zaghouan' => ['lat' => 36.4029, 'lon' => 10.1429, 'display_name' => 'Zaghouan, Tunisie'],
+        'siliana' => ['lat' => 36.0844, 'lon' => 9.3708, 'display_name' => 'Siliana, Tunisie'],
+        'tataouine' => ['lat' => 32.93, 'lon' => 10.45, 'display_name' => 'Tataouine, Tunisie'],
+    ];
 
     public function __construct(
         private readonly HttpClientInterface $httpClient
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
     public function recommend(string $city, string $eventType, ?int $capacity = null, array $context = []): array
     {
         $city = trim($city);
@@ -92,12 +121,32 @@ class EvenementVenueRecommendationService
         ];
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function geocodeCity(string $city): ?array
+    {
+        $queries = $this->buildGeocodingQueries($city);
+
+        foreach ($queries as $query) {
+            $result = $this->queryNominatim($query);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        return $this->fallbackLocalCity($city);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function queryNominatim(string $query): ?array
     {
         try {
             $response = $this->httpClient->request('GET', self::NOMINATIM_URL, [
                 'query' => [
-                    'q' => $city,
+                    'q' => $query,
                     'format' => 'jsonv2',
                     'limit' => 1,
                     'addressdetails' => 1,
@@ -109,7 +158,7 @@ class EvenementVenueRecommendationService
             ]);
 
             $results = $response->toArray(false);
-            if (!is_array($results) || count($results) === 0) {
+            if (count($results) === 0) {
                 return null;
             }
 
@@ -124,6 +173,74 @@ class EvenementVenueRecommendationService
         }
     }
 
+    /**
+     * @return string[]
+     */
+    private function buildGeocodingQueries(string $city): array
+    {
+        $base = trim($city);
+        $ascii = $this->normalizeText($base);
+        $queries = [$base];
+
+        if ($ascii !== '' && strcasecmp($ascii, $base) !== 0) {
+            $queries[] = $ascii;
+        }
+
+        $queries[] = $base . ', Tunisie';
+        if ($ascii !== '') {
+            $queries[] = $ascii . ', Tunisie';
+        }
+        $queries[] = $base . ', Tunisia';
+        if ($ascii !== '') {
+            $queries[] = $ascii . ', Tunisia';
+        }
+
+        return array_values(array_unique(array_filter($queries, static fn (string $v): bool => trim($v) !== '')));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fallbackLocalCity(string $city): ?array
+    {
+        $normalized = $this->normalizeText($city);
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (isset(self::LOCAL_CITY_COORDS[$normalized])) {
+            return self::LOCAL_CITY_COORDS[$normalized];
+        }
+
+        foreach (self::LOCAL_CITY_COORDS as $name => $coords) {
+            if (str_contains($name, $normalized) || str_contains($normalized, $name)) {
+                return $coords;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeText(string $value): string
+    {
+        $value = trim(mb_strtolower($value));
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace(
+            ['à', 'á', 'â', 'ã', 'ä', 'å', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ñ', 'ò', 'ó', 'ô', 'õ', 'ö', 'ù', 'ú', 'û', 'ü', 'ý', 'ÿ', '’', '\''],
+            ['a', 'a', 'a', 'a', 'a', 'a', 'c', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i', 'n', 'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'y', 'y', ' ', ' '],
+            $value
+        );
+
+        $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+        return trim($value);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function fetchNearbyPlaces(float $lat, float $lon, string $eventType, bool $broadSearch = false): array
     {
         $radius = $broadSearch ? 12000 : 7000;
@@ -147,12 +264,26 @@ class EvenementVenueRecommendationService
 
             $payload = $response->toArray(false);
             $elements = $payload['elements'] ?? [];
-            return is_array($elements) ? $elements : [];
+            if (!is_array($elements)) {
+                return [];
+            }
+
+            $normalized = [];
+            foreach ($elements as $element) {
+                if (is_array($element)) {
+                    $normalized[] = $element;
+                }
+            }
+
+            return $normalized;
         } catch (\Throwable) {
             return [];
         }
     }
 
+    /**
+     * @return list<string>
+     */
     private function mapTypeToAmenities(string $eventType): array
     {
         $type = mb_strtolower(trim($eventType));
@@ -166,6 +297,9 @@ class EvenementVenueRecommendationService
         };
     }
 
+    /**
+     * @return list<string>
+     */
     private function mapFallbackAmenities(string $eventType): array
     {
         $base = $this->mapTypeToAmenities($eventType);
@@ -184,6 +318,10 @@ class EvenementVenueRecommendationService
         return array_values(array_unique(array_merge($base, $fallback)));
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function scorePlace(array $tags, string $eventType, ?int $capacity, array $context): int
     {
         $score = 50;
@@ -261,6 +399,9 @@ class EvenementVenueRecommendationService
         return max(1, min(100, $score));
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     */
     private function detectCategory(array $tags): string
     {
         $amenity = (string) ($tags['amenity'] ?? '');
@@ -276,6 +417,9 @@ class EvenementVenueRecommendationService
         return 'lieu';
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     */
     private function buildAddress(array $tags): string
     {
         $parts = [];
@@ -293,6 +437,10 @@ class EvenementVenueRecommendationService
         return count($parts) > 0 ? implode(', ', $parts) : 'Adresse non disponible';
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @return array{telephone: string, email: string, site: string}
+     */
     private function extractContacts(array $tags): array
     {
         return [
@@ -302,6 +450,10 @@ class EvenementVenueRecommendationService
         ];
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function buildReason(array $tags, string $eventType, ?int $capacity, array $context): string
     {
         $reasons = [];
@@ -330,6 +482,10 @@ class EvenementVenueRecommendationService
         return implode(' | ', $reasons);
     }
 
+    /**
+     * @param array<string, mixed> $tags
+     * @param array<string, mixed> $context
+     */
     private function buildSimilarityHint(array $tags, string $eventType, array $context): string
     {
         $name = mb_strtolower((string) ($tags['name'] ?? ''));

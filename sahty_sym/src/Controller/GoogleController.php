@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -52,21 +51,15 @@ class GoogleController extends AbstractController
             $request->getSession()->start();
         }
 
-        $redirectUri = (string) (
-            $_ENV['OAUTH_GOOGLE_REDIRECT_URI']
-            ?? getenv('OAUTH_GOOGLE_REDIRECT_URI')
-            ?: $this->generateUrl(
-            'connect_google_check',
-            [],
-            UrlGeneratorInterface::ABSOLUTE_URL
-            )
-        );
+        $redirectOptions = [];
+        $configuredRedirect = trim((string) ($_ENV['OAUTH_GOOGLE_REDIRECT_URI'] ?? getenv('OAUTH_GOOGLE_REDIRECT_URI') ?? ''));
+        if ($configuredRedirect !== '') {
+            $redirectOptions['redirect_uri'] = $configuredRedirect;
+        }
 
         return $clientRegistry->getClient('google')->redirect([
             'profile', 'email'
-        ], [
-            'redirect_uri' => $redirectUri,
-        ]);
+        ], $redirectOptions);
     }
 
     /**

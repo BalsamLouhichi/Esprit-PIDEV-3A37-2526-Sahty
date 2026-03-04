@@ -202,7 +202,7 @@ class DemandeAnalyseController extends AbstractController
         }
         $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
         $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
-        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw, $resultatAnalyse->getAnomalies());
         if ($metricGlossary === []) {
             $metricGlossary = $this->refreshMetricGlossaryFromFastApi($demandeAnalyse, $resultatAnalyse, $raw);
         }
@@ -253,7 +253,7 @@ class DemandeAnalyseController extends AbstractController
             return [];
         }
 
-        $fullPdfPath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+        $fullPdfPath = (string) $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
         if (!is_file($fullPdfPath)) {
             return [];
         }
@@ -265,7 +265,7 @@ class DemandeAnalyseController extends AbstractController
         }
 
         $retryAnalysis = is_array($payload['analysis'] ?? null) ? $payload['analysis'] : [];
-        $retryGlossary = $this->resolveMetricGlossary($retryAnalysis, $payload);
+        $retryGlossary = $this->resolveMetricGlossary($retryAnalysis, $payload, $resultatAnalyse->getAnomalies());
         if ($retryGlossary === []) {
             return [];
         }
@@ -950,7 +950,7 @@ class DemandeAnalyseController extends AbstractController
      * @param array<string,mixed> $raw
      * @return array<string,string>
      */
-    private function resolveMetricGlossary(array $analysis, array $raw): array
+    private function resolveMetricGlossary(array $analysis, array $raw, mixed $storedAnomalies = null): array
     {
         $sources = [
             $raw['metric_glossary'] ?? null,
@@ -1008,6 +1008,9 @@ class DemandeAnalyseController extends AbstractController
                 if ($description === '') {
                     continue;
                 }
+                if ($this->isRuleBasedGlossaryDescription($description)) {
+                    continue;
+                }
 
                 if (mb_strlen($description, 'UTF-8') > 260) {
                     $description = rtrim(mb_substr($description, 0, 257, 'UTF-8')) . '...';
@@ -1019,8 +1022,8 @@ class DemandeAnalyseController extends AbstractController
             }
         }
 
-        $metricNames = $this->extractMetricNamesForGlossary($analysis, $raw);
-        $missingMetricNames = [];
+        $metricNames = $this->extractMetricNamesForGlossary($analysis, $raw, $storedAnomalies);
+        $metricsToEnrich = [];
         foreach ($metricNames as $metricName) {
             $normalizedMetric = $this->normalizeMetricGlossaryKey($metricName);
             if ($normalizedMetric === '') {
@@ -1031,23 +1034,28 @@ class DemandeAnalyseController extends AbstractController
             }
 
             $canonicalName = $normalizedToCanonical[$normalizedMetric];
-            if (!isset($glossary[$canonicalName])) {
-                $missingMetricNames[] = $canonicalName;
+            $currentDescription = $glossary[$canonicalName] ?? null;
+            if (!is_string($currentDescription) || $currentDescription === '' || $this->isRuleBasedGlossaryDescription($currentDescription)) {
+                $metricsToEnrich[] = $canonicalName;
             }
         }
 
-        if ($missingMetricNames === []) {
+        $metricsToEnrich = array_values(array_unique($metricsToEnrich));
+        if ($metricsToEnrich === []) {
             return $glossary;
         }
 
-        $generatedDescriptions = $this->fastApiLabAiClient->generateMetricGlossary($missingMetricNames);
-        foreach ($missingMetricNames as $canonicalName) {
+        $generatedDescriptions = $this->fastApiLabAiClient->generateMetricGlossary($metricsToEnrich);
+        foreach ($metricsToEnrich as $canonicalName) {
             if (!isset($generatedDescriptions[$canonicalName])) {
                 continue;
             }
 
             $description = $this->localizeAiText((string) $generatedDescriptions[$canonicalName]);
             if ($description === '') {
+                continue;
+            }
+            if ($this->isRuleBasedGlossaryDescription($description)) {
                 continue;
             }
 
@@ -1059,6 +1067,29 @@ class DemandeAnalyseController extends AbstractController
         }
 
         return $glossary;
+    }
+
+    private function isRuleBasedGlossaryDescription(string $description): bool
+    {
+        $normalized = $this->normalizeForRuleBasedDetection($description);
+        if ($normalized === '') {
+            return false;
+        }
+
+        return str_contains($normalized, 'statut')
+            || str_contains($normalized, 'severite')
+            || str_contains($normalized, 'severity')
+            || str_contains($normalized, 'note')
+            || str_contains($normalized, 'flag=');
+    }
+
+    private function normalizeForRuleBasedDetection(string $value): string
+    {
+        $translit = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        $normalized = $translit !== false ? $translit : $value;
+        $normalized = strtolower(trim($normalized));
+
+        return preg_replace('/\s+/u', ' ', $normalized) ?? $normalized;
     }
 
     private function normalizeMetricGlossaryKey(string $value): string
@@ -1075,9 +1106,10 @@ class DemandeAnalyseController extends AbstractController
      * @param array<string,mixed> $raw
      * @return array<int,string>
      */
-    private function extractMetricNamesForGlossary(array $analysis, array $raw): array
+    private function extractMetricNamesForGlossary(array $analysis, array $raw, mixed $storedAnomalies = null): array
     {
         $sources = [
+            $storedAnomalies,
             $analysis['anomalies'] ?? null,
             $analysis['abnormal_values'] ?? null,
             $raw['anomalies'] ?? null,
@@ -1216,7 +1248,7 @@ class DemandeAnalyseController extends AbstractController
         // Si c'est une requête POST (formulaire simple)
         if ($request->isMethod('POST')) {
             // Vérifier le token CSRF
-            $submittedToken = $request->request->get('_token');
+            $submittedToken = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('demande_analyse_new', $submittedToken)) {
                 $this->addFlash('error', 'Token CSRF invalide.');
                 return $this->redirectToRoute('app_labo_show', ['id' => $laboratoireId]);
@@ -1371,7 +1403,7 @@ class DemandeAnalyseController extends AbstractController
 
         $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
         $llmInterpretation = is_array($raw['llm_interpretation'] ?? null) ? $raw['llm_interpretation'] : [];
-        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw, $resultatAnalyse->getAnomalies());
         if ($metricGlossary !== [] && !is_array($raw['metric_glossary'] ?? null)) {
             $this->persistMetricGlossaryCache($resultatAnalyse, $raw, $metricGlossary);
             $raw['metric_glossary'] = $metricGlossary;
@@ -1490,7 +1522,7 @@ class DemandeAnalyseController extends AbstractController
         }
         
 
-        if ($this->isCsrfTokenValid('delete'.$demandeAnalyse->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$demandeAnalyse->getId(), (string) $request->request->get('_token'))) {
             try {
                 $entityManager->remove($demandeAnalyse);
                 $entityManager->flush();
@@ -1530,7 +1562,7 @@ class DemandeAnalyseController extends AbstractController
             }
         }
 
-        if ($this->isCsrfTokenValid('changer-statut'.$demandeAnalyse->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('changer-statut'.$demandeAnalyse->getId(), (string) $request->request->get('_token'))) {
             $statutsValides = ['en_attente', 'envoye'];
 
             if (!in_array($statut, $statutsValides, true)) {
@@ -1690,5 +1722,10 @@ class DemandeAnalyseController extends AbstractController
     }
 
 }
+
+
+
+
+
 
 

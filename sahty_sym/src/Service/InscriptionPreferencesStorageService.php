@@ -10,10 +10,14 @@ class InscriptionPreferencesStorageService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        $projectDir = (string) $parameterBag->get('kernel.project_dir');
+        $projectDirValue = $parameterBag->get('kernel.project_dir');
+        $projectDir = is_string($projectDirValue) ? $projectDirValue : '';
         $this->storagePath = $projectDir . '/var/inscription_preferences.json';
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function saveForInscription(int $inscriptionId, array $payload): void
     {
         $all = $this->readAll();
@@ -28,12 +32,18 @@ class InscriptionPreferencesStorageService
         $this->writeAll($all);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getForInscription(int $inscriptionId): array
     {
         $all = $this->readAll();
         return $all[(string) $inscriptionId] ?? [];
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getForEvent(int $eventId): array
     {
         $all = $this->readAll();
@@ -48,6 +58,9 @@ class InscriptionPreferencesStorageService
         return $result;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     private function readAll(): array
     {
         if (!is_file($this->storagePath)) {
@@ -63,6 +76,9 @@ class InscriptionPreferencesStorageService
         return is_array($decoded) ? $decoded : [];
     }
 
+    /**
+     * @param array<int|string, array<string, mixed>> $payload
+     */
     private function writeAll(array $payload): void
     {
         $dir = dirname($this->storagePath);

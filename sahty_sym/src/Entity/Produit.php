@@ -24,7 +24,7 @@ class Produit
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
+    #[ORM\Column(type: 'float')]
     private ?float $prix = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
@@ -54,6 +54,9 @@ class Produit
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
 
+    /**
+     * @var Collection<int, Parapharmacie>
+     */
     #[ORM\ManyToMany(targetEntity: Parapharmacie::class, inversedBy: 'produits')]
     private Collection $parapharmacies;
 

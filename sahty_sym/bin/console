@@ -12,6 +12,8 @@ if (!is_file(dirname(__DIR__).'/vendor/autoload_runtime.php')) {
     throw new LogicException('Symfony Runtime is missing. Try running "composer require symfony/runtime".');
 }
 
+date_default_timezone_set('Africa/Lagos');
+
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
 return function (array $context) {

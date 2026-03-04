@@ -19,7 +19,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Trouver les commandes par parapharmacie
      */
-    public function findByParapharmacie($parapharmacieId)
+    public function findByParapharmacie(int $parapharmacieId): array
     {
         return $this->createQueryBuilder('c')
             ->join('c.parapharmacie', 'p')
@@ -33,7 +33,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Trouver les commandes par produit
      */
-    public function findByProduit($produitId)
+    public function findByProduit(int $produitId): array
     {
         return $this->createQueryBuilder('c')
             ->join('c.produit', 'p')
@@ -47,7 +47,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Trouver les commandes par statut
      */
-    public function findByStatut($statut)
+    public function findByStatut(string $statut): array
     {
         return $this->createQueryBuilder('c')
             ->where('c.statut = :statut')
@@ -60,7 +60,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Statistiques des commandes
      */
-    public function getStats()
+    public function getStats(): array
     {
         return $this->createQueryBuilder('c')
             ->select([
@@ -77,7 +77,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Commandes récentes (7 derniers jours)
      */
-    public function findRecentOrders($limit = 10)
+    public function findRecentOrders(int $limit = 10): array
     {
         $date = new \DateTime('-7 days');
 
@@ -93,7 +93,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Commandes par email
      */
-    public function findByEmail($email)
+    public function findByEmail(string $email): array
     {
         return $this->createQueryBuilder('c')
             ->where('c.email = :email')
@@ -106,7 +106,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Trouver les commandes par parapharmacie et statut
      */
-    public function findByParapharmacieAndStatut($parapharmacieId, $statut)
+    public function findByParapharmacieAndStatut(int $parapharmacieId, string $statut): array
     {
         return $this->createQueryBuilder('c')
             ->join('c.parapharmacie', 'p')
@@ -122,7 +122,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Commandes récentes par parapharmacie
      */
-    public function findRecentByParapharmacie($parapharmacieId, $limit = 10)
+    public function findRecentByParapharmacie(int $parapharmacieId, int $limit = 10): array
     {
         return $this->createQueryBuilder('c')
             ->join('c.parapharmacie', 'p')
@@ -137,7 +137,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Statistiques par parapharmacie
      */
-    public function getStatsByParapharmacie($parapharmacieId)
+    public function getStatsByParapharmacie(int $parapharmacieId): array
     {
         return $this->createQueryBuilder('c')
             ->select([
@@ -157,7 +157,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Statistiques mensuelles par parapharmacie (version SQL native)
      */
-    public function getMonthlyStatsByParapharmacie($parapharmacieId)
+    public function getMonthlyStatsByParapharmacie(int $parapharmacieId): array
     {
         $conn = $this->getEntityManager()->getConnection();
         
@@ -186,7 +186,7 @@ class CommandeRepository extends ServiceEntityRepository
     /**
      * Statistiques par statut pour une parapharmacie
      */
-    public function getStatsByStatutAndParapharmacie($parapharmacieId)
+    public function getStatsByStatutAndParapharmacie(int $parapharmacieId): array
     {
         return $this->createQueryBuilder('c')
             ->select(['c.statut', 'COUNT(c.id) as nb_commandes'])

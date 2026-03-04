@@ -28,6 +28,7 @@ class ResultatAnalyse
     #[ORM\Column(name: 'ai_status', length: 20)]
     private string $aiStatus = self::AI_STATUS_PENDING;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $anomalies = null;
 
@@ -43,6 +44,7 @@ class ResultatAnalyse
     #[ORM\Column(name: 'modele_version', length: 100, nullable: true)]
     private ?string $modeleVersion = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(name: 'ai_raw_response', type: 'json', nullable: true)]
     private ?array $aiRawResponse = null;
 
@@ -54,6 +56,12 @@ class ResultatAnalyse
 
     #[ORM\Column(name: 'updated_at', type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(name: 'created_by', length: 180, nullable: true)]
+    private ?string $createdBy = null;
+
+    #[ORM\Column(name: 'updated_by', length: 180, nullable: true)]
+    private ?string $updatedBy = null;
 
     public function __construct()
     {
@@ -102,11 +110,17 @@ class ResultatAnalyse
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getAnomalies(): ?array
     {
         return $this->anomalies;
     }
 
+    /**
+     * @param array<string, mixed>|null $anomalies
+     */
     public function setAnomalies(?array $anomalies): self
     {
         $this->anomalies = $anomalies;
@@ -157,11 +171,17 @@ class ResultatAnalyse
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getAiRawResponse(): ?array
     {
         return $this->aiRawResponse;
     }
 
+    /**
+     * @param array<string, mixed>|null $aiRawResponse
+     */
     public function setAiRawResponse(?array $aiRawResponse): self
     {
         $this->aiRawResponse = $aiRawResponse;
@@ -192,6 +212,28 @@ class ResultatAnalyse
     public function touch(): self
     {
         $this->updatedAt = new \DateTimeImmutable();
+        return $this;
+    }
+
+    public function getCreatedBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?string $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+        return $this;
+    }
+
+    public function getUpdatedBy(): ?string
+    {
+        return $this->updatedBy;
+    }
+
+    public function setUpdatedBy(?string $updatedBy): self
+    {
+        $this->updatedBy = $updatedBy;
         return $this;
     }
 }

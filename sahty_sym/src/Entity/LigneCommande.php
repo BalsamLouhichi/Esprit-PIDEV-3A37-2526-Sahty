@@ -95,8 +95,10 @@ class LigneCommande
 
     public function calculerSousTotal(): self
     {
-        if ($this->prixUnitaire && $this->quantite) {
-            $this->sousTotal = bcmul($this->prixUnitaire, (string)$this->quantite, 2);
+        if ($this->prixUnitaire !== null && $this->quantite !== null && is_numeric($this->prixUnitaire)) {
+            /** @var numeric-string $prixUnitaire */
+            $prixUnitaire = $this->prixUnitaire;
+            $this->sousTotal = bcmul($prixUnitaire, (string) $this->quantite, 2);
         }
         return $this;
     }

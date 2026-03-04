@@ -1,6 +1,6 @@
 param(
     [int]$Port = 8090,
-    [string]$Model = "llama3:latest",
+    [string]$Model = "qwen2.5:0.5b",
     [string]$OcrEngine = "tesseract",
     [switch]$SkipInstall
 )
@@ -31,8 +31,8 @@ $env:OLLAMA_MODE = "glossary_only"
 $env:OLLAMA_TIMEOUT_SECONDS = "120"
 $env:OLLAMA_NUM_PREDICT = "220"
 $env:OLLAMA_GLOSSARY_NUM_PREDICT = "260"
-$env:OLLAMA_NUM_CTX = "4096"
+$env:OLLAMA_NUM_CTX = "1024"
 $env:OLLAMA_TEMPERATURE = "0.1"
 
 Write-Host "Starting FastAPI on http://127.0.0.1:$Port" -ForegroundColor Green
-uvicorn app.main:app --host 127.0.0.1 --port $Port --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port $Port --reload

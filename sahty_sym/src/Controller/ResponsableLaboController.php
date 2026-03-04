@@ -137,7 +137,7 @@ class ResponsableLaboController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $statusBeforeUpdate = (string) $demandeAnalyse->getStatut();
-            $submittedToken = $request->request->get('_token');
+            $submittedToken = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('resp-labo-update' . $demandeAnalyse->getId(), $submittedToken)) {
                 $this->addFlash('error', 'Token CSRF invalide.');
                 return $this->redirectToRoute('app_responsable_labo_demande_edit', ['id' => $demandeAnalyse->getId()]);
@@ -165,7 +165,7 @@ class ResponsableLaboController extends AbstractController
                 $safeFilename = $slugger->slug($originalFilename);
                 $newFilename = $safeFilename . '-' . uniqid() . '.pdf';
 
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                $uploadDir = $this->getProjectDir() . '/public/uploads/resultats';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
@@ -252,7 +252,7 @@ class ResponsableLaboController extends AbstractController
             throw new AccessDeniedException('Acces non autorise a cette demande.');
         }
 
-        $submittedToken = (string) ($request->request->get('_token') ?: $request->headers->get('X-CSRF-TOKEN', ''));
+        $submittedToken = (string) ((string) $request->request->get('_token') ?: $request->headers->get('X-CSRF-TOKEN', ''));
         if (!$this->isCsrfTokenValid('resp-labo-update' . $demandeAnalyse->getId(), $submittedToken)) {
             return $this->json([
                 'ok' => false,
@@ -288,7 +288,7 @@ class ResponsableLaboController extends AbstractController
             ]);
         }
 
-        $fullFilePath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+        $fullFilePath = $this->getProjectDir() . '/public/' . ltrim($resultatPdf, '/');
         if (!is_file($fullFilePath)) {
             return $this->json([
                 'ok' => false,
@@ -356,7 +356,7 @@ class ResponsableLaboController extends AbstractController
         $patientName = $demandeAnalyse->getPatient()?->getNomComplet() ?: 'Patient';
         $laboratoireName = $demandeAnalyse->getLaboratoire()?->getNom() ?: 'Laboratoire';
         $typeBilan = $demandeAnalyse->getTypeBilan() ?: 'Non precise';
-        $dateDemande = $demandeAnalyse->getDateDemande()?->format('d/m/Y H:i') ?: '-';
+        $dateDemande = $demandeAnalyse->getDateDemande()->format('d/m/Y H:i');
         $mesDemandesUrl = $this->generateUrl('app_demande_analyse_mes_demandes', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $safePatientName = htmlspecialchars($patientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -425,7 +425,7 @@ HTML;
         }
 
         $pdfPublicPath = (string) $demandeAnalyse->getResultatPdf();
-        $pdfAbsolutePath = $this->getParameter('kernel.project_dir') . '/public/' . $pdfPublicPath;
+        $pdfAbsolutePath = $this->getProjectDir() . '/public/' . $pdfPublicPath;
         $hasPdfAttachment = is_file($pdfAbsolutePath);
         $pdfAttachmentName = basename($pdfPublicPath) ?: 'resultat-analyse.pdf';
 
@@ -433,7 +433,7 @@ HTML;
         $patientName = $demandeAnalyse->getPatient()?->getNomComplet() ?: 'Patient';
         $laboratoireName = $demandeAnalyse->getLaboratoire()?->getNom() ?: 'Laboratoire';
         $typeBilan = $demandeAnalyse->getTypeBilan() ?: 'Non precise';
-        $dateDemande = $demandeAnalyse->getDateDemande()?->format('d/m/Y H:i') ?: '-';
+        $dateDemande = $demandeAnalyse->getDateDemande()->format('d/m/Y H:i');
         $resultatUrl = $this->generateUrl('app_demande_analyse_mes_demandes', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $safeDoctorName = htmlspecialchars($doctorName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -487,7 +487,12 @@ HTML;
             }
         }
 
-        $textBody .= "\n--- Anomalies ---\n" . $this->formatAnomaliesText($anomalies) . "\n\n"
+        $topAnomalies = $this->formatTopAnomalies($anomalies);
+        $textBody .= "\n--- Anomalies ---\n" . $this->formatAnomaliesText($anomalies) . "\n";
+        if ($topAnomalies !== '') {
+            $textBody .= "\nTop anomalies:\n" . $topAnomalies . "\n";
+        }
+        $textBody .= "\n"
             . ($hasPdfAttachment ? "Le PDF resultat est joint a ce message.\n" : "PDF resultat introuvable en piece jointe.\n")
             . "Lien plateforme patient : " . $resultatUrl . "\n\n"
             . "Cordialement,\n"
@@ -724,7 +729,7 @@ HTML;
     }
 
     /**
-     * @param array<int,mixed>|null $anomalies
+     * @param array<array-key,mixed>|null $anomalies
      */
     private function formatTopAnomalies(?array $anomalies): string
     {
@@ -802,7 +807,7 @@ HTML;
     }
 
     /**
-     * @param array<int,mixed> $anomalies
+     * @param array<array-key,mixed> $anomalies
      */
     private function buildAnomalyTableRowsHtml(array $anomalies): string
     {
@@ -841,7 +846,7 @@ HTML;
     }
 
     /**
-     * @param array<int,mixed> $anomalies
+     * @param array<array-key,mixed> $anomalies
      */
     private function formatAnomaliesText(array $anomalies): string
     {
@@ -889,6 +894,9 @@ HTML;
         return 'Le PDF resultat n\'a pas pu etre joint automatiquement.';
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     private function buildDemandesViewData(
         Request $request,
         DemandeAnalyseRepository $demandeAnalyseRepository,
@@ -1056,4 +1064,19 @@ HTML;
         ];
     }
 
+    private function getProjectDir(): string
+    {
+        $projectDir = $this->getParameter('kernel.project_dir');
+        if (!is_string($projectDir)) {
+            throw new \RuntimeException('kernel.project_dir must be a string.');
+        }
+
+        return $projectDir;
+    }
+
 }
+
+
+
+
+

@@ -59,9 +59,18 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav mx-auto py-0">
                     <!-- Accueil (commun) -->
-                    <a href="{{ path('app_home') }}" class="nav-item nav-link {{ app.current_route == 'app_home' ? 'active' : '' }}">
+                    <a href="{{ path('app_home') }}" class="nav-item nav-link nav-main-btn {{ app.current_route == 'app_home' ? 'active' : '' }}">
                         <i class="fa fa-home me-1"></i>Accueil
                     </a>
+                    
+                    {% if not compact %}
+                        <a href="{{ path('app_quiz_front_list') }}" class="nav-item nav-link nav-main-btn {{ app.current_route starts with 'app_quiz_front' ? 'active' : '' }}">
+                            <i class="fa fa-question-circle me-1"></i>Quiz
+                        </a>
+                        <a href="{{ path('app_recommandation_front_list') }}" class="nav-item nav-link nav-main-btn {{ app.current_route starts with 'app_recommandation_front' ? 'active' : '' }}">
+                            <i class="fa fa-lightbulb me-1"></i>Recommandations
+                        </a>
+                    {% endif %}
                    
                    
                     <!-- MENU ADMIN - GESTION ADMIN COMPLÈTE -->
@@ -324,6 +333,28 @@
     transition: all 0.3s ease;
     border-radius: 50px;
     font-size: 0.95rem;
+}
+
+.navbar-nav .nav-link.nav-main-btn {
+    background: rgba(29, 93, 155, 0.08);
+    border: 1px solid rgba(29, 93, 155, 0.18);
+    box-shadow: 0 8px 18px rgba(29, 93, 155, 0.12);
+    padding: 0.72rem 1.35rem !important;
+    font-weight: 700;
+}
+
+.navbar-nav .nav-link.nav-main-btn:hover {
+    background: linear-gradient(135deg, rgba(29, 93, 155, 0.16) 0%, rgba(117, 194, 246, 0.2) 100%);
+    border-color: rgba(29, 93, 155, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(29, 93, 155, 0.18);
+}
+
+.navbar-nav .nav-link.nav-main-btn.active {
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-color: transparent;
+    box-shadow: 0 12px 26px rgba(29, 93, 155, 0.32);
 }
 
 .navbar-nav .nav-link:hover {

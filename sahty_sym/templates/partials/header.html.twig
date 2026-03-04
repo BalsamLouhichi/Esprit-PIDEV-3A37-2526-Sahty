@@ -64,9 +64,24 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav mx-auto py-0">
                     <!-- Accueil (commun) -->
-                    <a href="{{ path('app_home') }}" class="nav-item nav-link {{ app.current_route == 'app_home' ? 'active' : '' }}">
+                    <a href="{{ path('app_home') }}" class="nav-item nav-link nav-main-btn {{ app.current_route == 'app_home' ? 'active' : '' }}">
                         <i class="fa fa-home me-1"></i>Accueil
                     </a>
+                    {% if not compact %}
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle nav-main-btn {{ (app.current_route starts with 'app_quiz_front' or app.current_route starts with 'app_recommandation_front') ? 'active' : '' }}" data-bs-toggle="dropdown">
+                                <i class="fa fa-clipboard-list me-1"></i>Quiz & Recommandations
+                            </a>
+                            <div class="dropdown-menu m-0">
+                                <a href="{{ path('app_quiz_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-question-circle me-2"></i>Quiz
+                                </a>
+                                <a href="{{ path('app_recommandation_front_list') }}" class="dropdown-item">
+                                    <i class="fa fa-lightbulb me-2"></i>Recommandations
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
                    
                     
                     <!-- MENU ADMIN - GESTION ADMIN COMPLÈTE -->
@@ -328,11 +343,27 @@
 
 .navbar-nav .nav-link {
     font-weight: 600;
-    padding: 0.52rem 0.95rem !important;
+    padding: 0.4rem 0.78rem !important;
     color: #2c3e50;
     transition: all 0.3s ease;
     border-radius: 50px;
-    font-size: 0.9rem;
+    font-size: 0.84rem;
+}
+
+.navbar-nav .nav-link.nav-main-btn {
+    padding: 0.44rem 0.92rem !important;
+    font-weight: 700;
+}
+
+.sahty-header .btn {
+    padding: 0.4rem 0.86rem;
+    font-size: 0.84rem;
+    border-radius: 50px;
+}
+
+.sahty-header .nav-link.dropdown-toggle.d-flex {
+    padding: 0.4rem 0.78rem !important;
+    font-size: 0.84rem;
 }
 
 .navbar-nav .nav-link:hover {

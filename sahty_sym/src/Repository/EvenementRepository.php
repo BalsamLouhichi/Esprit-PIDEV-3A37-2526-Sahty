@@ -38,6 +38,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
+    /** @return Evenement[] */
     public function getEvenements(): array
     {
         return $this->createQueryBuilder('e')
@@ -53,6 +54,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
+    /** @return Evenement[] */
     public function getEvenementByStatut(string $statut): array
     {
         return $this->createQueryBuilder('e')
@@ -64,6 +66,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
+    /** @return Evenement[] */
     public function getEvenementByType(string $type): array
     {
         return $this->createQueryBuilder('e')
@@ -75,6 +78,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
+    /** @return Evenement[] */
     public function rechercherEvenement(string $terme): array
     {
         return $this->createQueryBuilder('e')
@@ -86,6 +90,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
+    /** @return array<int, mixed> */
     public function getParticipants(Evenement $evenement): array
     {
         return $this->createQueryBuilder('e')
@@ -98,6 +103,7 @@ class EvenementRepository extends ServiceEntityRepository
             ->getResult();
     }
     
+    /** @return Evenement[] */
     public function getEvenementsTries(string $tri = 'dateDebut', string $ordre = 'ASC', ?string $statut = null): array
 {
     $qb = $this->createQueryBuilder('e');
@@ -115,6 +121,7 @@ class EvenementRepository extends ServiceEntityRepository
 
 
     
+    /** @return Evenement[] */
     public function getEvenementsParStatut(string $statut, string $tri = 'dateDebut', string $ordre = 'ASC'): array
     {
         return $this->getEvenementsTries($tri, $ordre, $statut);
@@ -123,7 +130,7 @@ class EvenementRepository extends ServiceEntityRepository
    
     public function getNombreParticipants(Evenement $evenement): int
     {
-        return $this->createQueryBuilder('e')
+        return (int) $this->createQueryBuilder('e')
             ->select('COUNT(i.id)')
             ->leftJoin('e.inscriptions', 'i')
             ->andWhere('e.id = :id')
@@ -144,6 +151,7 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
    
+    /** @return Evenement[] */
     public function getEvenementsAvecStats(?string $statut = null, string $tri = 'dateDebut', string $ordre = 'ASC'): array
     {
         $evenements = $this->getEvenementsTries($tri, $ordre, $statut);
@@ -157,6 +165,7 @@ class EvenementRepository extends ServiceEntityRepository
         return $evenements;
     }
   
+    /** @return array<int, mixed> */
     public function getStatutsDisponibles(): array
     {
         return $this->createQueryBuilder('e')
@@ -166,6 +175,7 @@ class EvenementRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+   /** @return Evenement[] */
    public function findByFilters(?string $type = null, ?string $statut = null, ?string $recherche = null): array
 {
     $qb = $this->createQueryBuilder('e');
@@ -190,7 +200,8 @@ class EvenementRepository extends ServiceEntityRepository
               ->getResult();
 }
 
-public function findVisibleEventsForClient($user = null): array {
+/** @return Evenement[] */
+public function findVisibleEventsForClient(?object $user = null): array {
     $qb = $this->createQueryBuilder('e')
         ->orderBy('e.dateDebut', 'ASC');
 
@@ -205,6 +216,7 @@ public function findVisibleEventsForClient($user = null): array {
         if (method_exists($user, 'getGroupes')) {
             $userGroups = $user->getGroupes();
         }
+        $userId = method_exists($user, 'getId') ? $user->getId() : null;
         
         // If userGroups is empty (either no method or empty collection), 
         // we need to handle it differently
@@ -217,7 +229,7 @@ public function findVisibleEventsForClient($user = null): array {
                        'e.createur = :userId'            // Their own events
                    )
                )
-               ->setParameter('userId', $user->getId());
+               ->setParameter('userId', $userId);
         } else {
             // User has groups, show public events, group events, and their own events
             $qb->leftJoin('e.groupeCibles', 'g')
@@ -229,7 +241,7 @@ public function findVisibleEventsForClient($user = null): array {
                    )
                )
                ->setParameter('userGroups', $userGroups)
-               ->setParameter('userId', $user->getId());
+               ->setParameter('userId', $userId);
         }
     } else {
         // If not logged in, only show public events
@@ -239,6 +251,7 @@ public function findVisibleEventsForClient($user = null): array {
     return $qb->getQuery()->getResult();
 }
 
+/** @return Evenement[] */
 public function findAllPendingEvents(): array
 {
     return $this->createQueryBuilder('e')
@@ -249,6 +262,7 @@ public function findAllPendingEvents(): array
         ->getResult();
 }
 
+/** @return Evenement[] */
 public function findByStatutDemande(string $statutDemande, ?string $type = null, ?string $recherche = null): array
 {
     $qb = $this->createQueryBuilder('e')
@@ -270,6 +284,7 @@ public function findByStatutDemande(string $statutDemande, ?string $type = null,
 }
 
 
+/** @return Evenement[] */
 public function findUserEvents(int $userId, \DateTime $start, \DateTime $end): array
     {
         return $this->createQueryBuilder('e')
@@ -285,6 +300,7 @@ public function findUserEvents(int $userId, \DateTime $start, \DateTime $end): a
             ->getResult();
     }
 
+    /** @return Evenement[] */
     public function findEventsByType(string $type, \DateTime $start, \DateTime $end): array
     {
         return $this->createQueryBuilder('e')
@@ -297,6 +313,11 @@ public function findUserEvents(int $userId, \DateTime $start, \DateTime $end): a
             ->getResult();
     }
 
+/** 
+ * @param array<int, string> $categories
+ * @param array<int, string> $keywords
+ * @return Evenement[]
+ */
 public function findRecommendedEvents(array $categories, array $keywords, \DateTime $start, \DateTime $end): array
     {
         $qb = $this->createQueryBuilder('e')
@@ -323,6 +344,7 @@ public function findRecommendedEvents(array $categories, array $keywords, \DateT
                   ->getResult();
     }
 
+    /** @return Evenement[] */
     public function findSchedulingConflicts(Evenement $evenement, ?int $excludeEventId = null): array
     {
         if (!$evenement->getDateDebut() || !$evenement->getDateFin()) {

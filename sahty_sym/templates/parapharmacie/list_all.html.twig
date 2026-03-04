@@ -949,10 +949,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function(){
-            // Initialiser le compteur de produits
             const totalProducts = {{ produits|length }};
-            $('#resultsCount').text(`${totalProducts} produit${totalProducts !== 1 ? 's' : ''} trouvÃ©${totalProducts !== 1 ? 's' : ''}`);
-
+            const productsContainer = document.getElementById('productsContainer');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            const resultsInfo = document.getElementById('searchResultsInfo');
+            const productSearchInput = document.getElementById('productSearch');
+            const searchEndpoint = "{{ path('app_parapharmacie_produits_search') }}";
+            const productDetailsUrlTemplate = "{{ path('app_produit_details', {'id': '__ID__'}) }}";
+            const addToCartUrlTemplate = "{{ path('app_panier_ajouter', {'id': '__ID__'}) }}";
+            const imageBasePath = "{{ asset('uploads/images/produits/') }}";
+            const fallbackImage = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+            let searchDebounceTimer = null;
+            let searchAbortController = null;
+            let searchRequestId = 0;
             const cartBadge = document.getElementById('cartCountBadge');
             const cartNotification = document.getElementById('cartNotification');
             let notificationTimeout = null;
@@ -974,9 +983,10 @@
                 }, 1800);
             }
 
-            // Ajout au panier en AJAX avec notification
-            document.querySelectorAll('.js-add-to-cart').forEach((form) => {
-                form.addEventListener('submit', async (e) => {
+            function bindAddToCartForms(scope = document) {
+                scope.querySelectorAll('.js-add-to-cart:not([data-ajax-bound="1"])').forEach((form) => {
+                    form.dataset.ajaxBound = '1';
+                    form.addEventListener('submit', async (e) => {
                     e.preventDefault();
 
                     const submitBtn = form.querySelector('button[type="submit"]');
@@ -1023,72 +1033,172 @@
                         }
                     }
                 });
-            });
-             
-            // Animation des produits
-            $('.product-item').each(function(index) {
-                $(this).css('animation-delay', (index * 0.1) + 's');
-            });
-            
-            // Fonction de recherche
-            function searchProducts() {
-                const searchTerm = $('#productSearch').val().toLowerCase().trim();
-                let visibleCount = 0;
-                
-                $('.product-item').each(function() {
-                    const productName = $(this).data('name').toLowerCase();
-                    const productBrand = $(this).data('brand').toLowerCase();
-                    const productTags = $(this).data('tags').toLowerCase();
-                    const productDescription = $(this).data('description').toLowerCase();
-                    
-                    if (searchTerm === '' || 
-                        productName.includes(searchTerm) || 
-                        productBrand.includes(searchTerm) || 
-                        productTags.includes(searchTerm) || 
-                        productDescription.includes(searchTerm)) {
-                        $(this).removeClass('hidden').show();
-                        visibleCount++;
-                        $(this).find('.product-card').removeClass('highlight');
-                        if (searchTerm !== '') {
-                            $(this).find('.product-card').addClass('highlight');
-                        }
-                    } else {
-                        $(this).addClass('hidden').hide();
-                    }
                 });
-                
-                // Mettre Ã  jour le compteur de rÃ©sultats
-                $('#resultsCount').text(`${visibleCount} produit${visibleCount !== 1 ? 's' : ''} trouvÃ©${visibleCount !== 1 ? 's' : ''}`);
-                
-                // Afficher/masquer le message "aucun rÃ©sultat"
-                if (visibleCount === 0 && searchTerm !== '') {
-                    $('#noResultsMessage').show();
-                } else {
-                    $('#noResultsMessage').hide();
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function updateResultsInfo(count, searchTerm) {
+                if (!resultsInfo) {
+                    return;
+                }
+
+                if (!searchTerm) {
+                    resultsInfo.textContent = `${count} produit${count > 1 ? 's' : ''} disponible${count > 1 ? 's' : ''}`;
+                    return;
+                }
+
+                resultsInfo.textContent = `${count} resultat${count > 1 ? 's' : ''} pour "${searchTerm}"`;
+            }
+
+            function renderProducts(products, searchTerm) {
+                if (!productsContainer || !noResultsMessage) {
+                    return;
+                }
+
+                if (!Array.isArray(products) || products.length === 0) {
+                    productsContainer.innerHTML = '';
+                    noResultsMessage.style.display = 'block';
+                    return;
+                }
+
+                noResultsMessage.style.display = 'none';
+                productsContainer.innerHTML = products.map((product, index) => {
+                    const name = escapeHtml(product.nom || 'Produit');
+                    const marque = escapeHtml(product.marque || '');
+                    const categorie = escapeHtml(product.categorie || '');
+                    const type = escapeHtml(product.type || '');
+                    const fullDescription = escapeHtml(product.description || '');
+                    const shortDescription = fullDescription.length > 80 ? `${fullDescription.slice(0, 80)}...` : fullDescription;
+                    const image = product.image ? `${imageBasePath}${product.image}` : fallbackImage;
+                    const productId = String(product.id || '');
+                    const detailsUrl = productDetailsUrlTemplate.replace('__ID__', productId);
+                    const addToCartUrl = addToCartUrlTemplate.replace('__ID__', productId);
+                    const parapharmacieId = product.parapharmacieId ? String(product.parapharmacieId) : '';
+                    const addDisabled = parapharmacieId === '';
+
+                    return `
+                        <div class="col-lg-3 col-md-6 product-item" style="--item-index: ${index % 8}; opacity: 1;">
+                            <div class="product-card ${searchTerm ? 'highlight' : ''}">
+                                <div class="product-image">
+                                    <img src="${escapeHtml(image)}" alt="${name}">
+                                </div>
+                                <div class="product-content">
+                                    ${marque ? `<div class="product-brand">${marque}</div>` : ''}
+                                    <div class="product-title">${name}</div>
+                                    ${categorie ? `
+                                        <div class="product-tags">
+                                            <span class="product-tag">${categorie.toUpperCase()}</span>
+                                            ${type ? `<span class="product-tag">${type.toUpperCase()}</span>` : ''}
+                                        </div>
+                                    ` : ''}
+                                    <div class="product-short-description">${shortDescription}</div>
+                                    <div class="product-full-description">${fullDescription}</div>
+                                    <div class="product-actions">
+                                        <a href="${escapeHtml(detailsUrl)}" class="btn-description">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>Description</span>
+                                        </a>
+                                        <form method="post"
+                                              action="${escapeHtml(addToCartUrl)}"
+                                              class="js-add-to-cart"
+                                              data-product-name="${name}"
+                                              style="flex: 1;">
+                                            <input type="hidden" name="quantite" value="1">
+                                            ${parapharmacieId ? `<input type="hidden" name="pharmacie" value="${escapeHtml(parapharmacieId)}">` : ''}
+                                            <button type="submit" class="btn-add-to-cart w-100" title="Ajouter au panier" ${addDisabled ? 'disabled' : ''}>
+                                                <i class="fas fa-cart-plus"></i>
+                                                <span>${addDisabled ? 'Indisponible' : 'Ajouter'}</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                bindAddToCartForms(productsContainer);
+            }
+
+            async function performAjaxSearch() {
+                const searchTerm = (productSearchInput?.value || '').trim();
+                const currentRequestId = ++searchRequestId;
+
+                if (resultsInfo) {
+                    resultsInfo.textContent = 'Recherche en cours...';
+                }
+
+                if (searchAbortController) {
+                    searchAbortController.abort();
+                }
+                searchAbortController = new AbortController();
+
+                try {
+                    const response = await fetch(`${searchEndpoint}?q=${encodeURIComponent(searchTerm)}`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        signal: searchAbortController.signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Erreur HTTP');
+                    }
+
+                    const data = await response.json();
+                    if (currentRequestId !== searchRequestId) {
+                        return;
+                    }
+
+                    const products = Array.isArray(data.products) ? data.products : [];
+                    renderProducts(products, searchTerm);
+                    updateResultsInfo(products.length, searchTerm);
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+
+                    renderProducts([], searchTerm);
+                    if (resultsInfo) {
+                        resultsInfo.textContent = 'Erreur lors de la recherche.';
+                    }
                 }
             }
-            
-            // Recherche en temps rÃ©el
+
+            bindAddToCartForms();
+            updateResultsInfo(totalProducts, '');
+
             $('#productSearch').on('input', function() {
-                searchProducts();
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    performAjaxSearch();
+                }, 250);
             });
-            
-            // Recherche au clic sur le bouton
-            $('#searchButton').click(function() {
-                searchProducts();
+
+            $('#searchButton').on('click', function() {
+                performAjaxSearch();
             });
-            
-            // Recherche avec la touche EntrÃ©e
-            $('#productSearch').keypress(function(e) {
+
+            $('#productSearch').on('keypress', function(e) {
                 if (e.which === 13) {
-                    searchProducts();
+                    e.preventDefault();
+                    performAjaxSearch();
                 }
             });
-            
-            // Effacer la recherche au double-clic
+
             $('#productSearch').on('dblclick', function() {
                 $(this).val('');
-                searchProducts();
+                performAjaxSearch();
             });
             
             // Scroll horizontal des parapharmacies

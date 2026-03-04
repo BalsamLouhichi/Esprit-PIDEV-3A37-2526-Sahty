@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
@@ -42,6 +43,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     protected ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Ignore]
     protected ?string $password = null;
 
     #[ORM\Column(length: 30)]
@@ -100,9 +102,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         };
     }
 
+    #[Ignore]
     public function getPassword(): string
     {
-        return $this->password;
+        return $this->password ?? '';
     }
 
     public function getSalt(): ?string
@@ -118,7 +121,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getEmail(): ?string { return $this->email; }
     public function setEmail(string $email): self { $this->email = $email; return $this; }
 
-    public function setPassword(string $password): self { $this->password = $password; return $this; }
+    public function setPassword(#[\SensitiveParameter] string $password): self { $this->password = $password; return $this; }
 
     public function getRole(): ?string { return $this->role; }
     public function setRole(string $role): self
@@ -187,3 +190,4 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->getRoleSymfony() === $roleSymfony;
     }
 }
+

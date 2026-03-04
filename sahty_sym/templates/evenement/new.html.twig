@@ -745,33 +745,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const modeValue = (modeEl?.value || '').trim();
         const placesValue = parseInt((placesInput?.value || '').trim(), 10);
 
-        const buildLocalFallbackPlan = () => {
-            const base = Math.max(10, Number.isFinite(placesValue) ? placesValue : 20);
-            return {
-                risk: {
-                    level: base <= 30 ? 'faible' : (base <= 80 ? 'moyen' : 'eleve'),
-                    message: 'Plan local genere automatiquement (mode secours).'
-                },
-                resources: [
-                    { ressource: 'Chaises', required: base, available: Math.max(base, 100), shortage: 0, status: 'ok' },
-                    { ressource: 'Tables', required: Math.ceil(base / 4), available: Math.max(Math.ceil(base / 4), 20), shortage: 0, status: 'ok' },
-                    { ressource: 'Accueil', required: Math.max(1, Math.ceil(base / 25)), available: 4, shortage: 0, status: 'attention' }
-                ],
-                actions: [
-                    'Verifier la salle et la capacite reelle.',
-                    'Confirmer les ressources 24h avant l evenement.',
-                    'Prevoir une marge de 10% sur les places.'
-                ]
-            };
-        };
+        if (typeValue === '' || modeValue === '' || !Number.isFinite(placesValue) || placesValue <= 0) {
+            resourceRiskChip.className = 'resource-chip bg-light text-muted border';
+            resourceRiskChip.textContent = 'En attente de donnees';
+            resourcePlanBody.innerHTML = 'Renseignez le type, le mode et une capacité valide pour lancer l’analyse.';
+            return;
+        }
 
-        const renderPlan = (plan) => {
+        const url = new URL('{{ path('evenements_api_plan_ressources') }}', window.location.origin);
+        url.searchParams.set('type', typeValue);
+        url.searchParams.set('mode', modeValue);
+        url.searchParams.set('places', String(placesValue));
+        url.searchParams.set('strict', '1');
+
+        try {
+            const response = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+            const data = await response.json();
+            if (data.ready === false) {
+                resourceRiskChip.className = 'resource-chip bg-light text-muted border';
+                resourceRiskChip.textContent = 'En attente de donnees';
+                resourcePlanBody.innerHTML = data.message || 'Complétez les informations pour lancer le plan.';
+                return;
+            }
+
+            const plan = data.plan || null;
+            if (!plan) {
+                resourcePlanBody.innerHTML = '<div class="text-danger">Plan indisponible.</div>';
+                return;
+            }
+
             const riskLevel = plan.risk?.level || 'moyen';
             const riskClass = riskLevel === 'faible'
                 ? 'bg-success text-white'
                 : (riskLevel === 'moyen' ? 'bg-warning text-dark' : 'bg-danger text-white');
             resourceRiskChip.className = `resource-chip ${riskClass}`;
-            resourceRiskChip.textContent = `Risque ${String(riskLevel).toUpperCase()}`;
+            resourceRiskChip.textContent = `Risque ${riskLevel.toUpperCase()}`;
 
             const rows = (plan.resources || []).slice(0, 6).map((item) => {
                 const status = item.status === 'ok'
@@ -799,37 +807,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div><strong>Actions avant validation:</strong></div>
                 <ul class="mb-0">${actions}</ul>
             `;
-        };
-
-        if (typeValue === '' || modeValue === '' || !Number.isFinite(placesValue) || placesValue <= 0) {
-            resourceRiskChip.className = 'resource-chip bg-light text-muted border';
-            resourceRiskChip.textContent = 'En attente de donnees';
-            resourcePlanBody.innerHTML = 'Renseignez le type, le mode et une capacité valide pour lancer l’analyse.';
-            return;
-        }
-
-        const url = new URL('{{ path('evenements_api_plan_ressources') }}', window.location.origin);
-        url.searchParams.set('type', typeValue);
-        url.searchParams.set('mode', modeValue);
-        url.searchParams.set('places', String(placesValue));
-        url.searchParams.set('strict', '1');
-
-        try {
-            const response = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
-            const data = await response.json();
-            if (data.ready === false) {
-                resourceRiskChip.className = 'resource-chip bg-light text-muted border';
-                resourceRiskChip.textContent = 'En attente de donnees';
-                resourcePlanBody.innerHTML = data.message || 'Complétez les informations pour lancer le plan.';
-                return;
-            }
-
-            const plan = data.plan || buildLocalFallbackPlan();
-            renderPlan(plan);
         } catch (e) {
-            resourceRiskChip.className = 'resource-chip bg-warning text-dark border';
-            resourceRiskChip.textContent = 'Mode secours';
-            renderPlan(buildLocalFallbackPlan());
+            resourcePlanBody.innerHTML = '<div class="text-danger">Impossible de calculer le plan pour le moment.</div>';
         }
     }
 
@@ -1028,7 +1007,6 @@ function deselectAllGroups() {
 </script>
 </body>
 </html>
-
 
 
 

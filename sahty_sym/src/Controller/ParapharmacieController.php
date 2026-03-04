@@ -7,6 +7,8 @@ use App\Entity\Parapharmacie;
 use App\Repository\ParapharmacieRepository;
 use App\Repository\ProduitRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -46,6 +48,48 @@ final class ParapharmacieController extends AbstractController
         return $this->render('parapharmacie/list_all.html.twig', [
             'parapharmacies' => $parapharmacies,
             'produits' => $uniqueProduits,
+        ]);
+    }
+
+    #[Route('/parapharmacies-produits/search', name: 'app_parapharmacie_produits_search', methods: ['GET'])]
+    public function searchProductsAjax(Request $request, ProduitRepository $produitRepository): JsonResponse
+    {
+        $searchTerm = trim((string) $request->query->get('q', ''));
+        $products = $searchTerm === '' ? $produitRepository->findAll() : $produitRepository->search($searchTerm);
+
+        $seenNames = [];
+        $payload = [];
+
+        foreach ($products as $produit) {
+            if (!$produit instanceof Produit) {
+                continue;
+            }
+
+            $normalizedName = mb_strtolower(trim((string) $produit->getNom()), 'UTF-8');
+            if ($normalizedName === '' || isset($seenNames[$normalizedName])) {
+                continue;
+            }
+
+            $seenNames[$normalizedName] = true;
+            $firstParapharmacie = $produit->getParapharmacies()->first();
+            $description = (string) ($produit->getDescription() ?? '');
+
+            $payload[] = [
+                'id' => $produit->getId(),
+                'nom' => (string) $produit->getNom(),
+                'marque' => (string) ($produit->getMarque() ?? ''),
+                'categorie' => (string) ($produit->getCategorie() ?? ''),
+                'type' => '',
+                'description' => $description,
+                'image' => (string) ($produit->getImage() ?? ''),
+                'parapharmacieId' => $firstParapharmacie instanceof Parapharmacie ? $firstParapharmacie->getId() : null,
+            ];
+        }
+
+        return $this->json([
+            'success' => true,
+            'count' => count($payload),
+            'products' => $payload,
         ]);
     }
 

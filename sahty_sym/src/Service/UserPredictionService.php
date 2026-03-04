@@ -10,6 +10,9 @@ use Doctrine\ORM\EntityManagerInterface;
 class UserPredictionService
 {
     private EntityManagerInterface $em;
+    /**
+     * @var array<string, int|float>
+     */
     private array $config;
 
     /**
@@ -66,7 +69,7 @@ class UserPredictionService
 
             $lastDemand = $lastDemandDates[$userId] ?? null;
             $lastAppointment = $lastAppointmentDates[$userId] ?? null;
-            $lastActivity = $this->maxDate($createdAt, $lastDemand, $lastAppointment);
+            $lastActivity = $this->maxDate($createdAt, $lastDemand, $lastAppointment) ?? $createdAt;
 
             $daysSinceLast = $this->diffDays($lastActivity, $now);
             $demands30d = $demandCounts[$userId] ?? 0;
@@ -81,7 +84,7 @@ class UserPredictionService
             $results[] = [
                 'user_id' => $userId,
                 'role' => (string) ($patient['role'] ?? 'patient'),
-                'last_activity' => $lastActivity ? $lastActivity->format('Y-m-d H:i') : null,
+                'last_activity' => $lastActivity->format('Y-m-d H:i'),
                 'activity_30d' => $demands30d + $appointments30d,
                 'demands_30d' => $demands30d,
                 'appointments_30d' => $appointments30d,

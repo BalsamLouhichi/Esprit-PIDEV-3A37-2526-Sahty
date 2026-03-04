@@ -29,21 +29,21 @@ class EvenementType extends AbstractType
 
         $builder
             ->add('titre', TextType::class, [
-                'label' => 'Titre de l\'Ã©vÃ©nement',
+                'label' => 'Titre de l\'ÃƒÂ©vÃƒÂ©nement',
                 'attr' => ['placeholder' => 'Ex: Webinaire sur la nutrition'],
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Description dÃ©taillÃ©e',
+                'label' => 'Description dÃƒÂ©taillÃƒÂ©e',
                 'required' => false,
                 'attr' => ['rows' => 5],
             ])
             ->add('type', ChoiceType::class, [
-                'label' => 'Type d\'Ã©vÃ©nement',
+                'label' => 'Type d\'ÃƒÂ©vÃƒÂ©nement',
                 'choices' => [
                     'Webinaire' => 'webinaire',
                     'Atelier' => 'atelier',
-                    'DÃ©pistage' => 'depistage',
-                    'ConfÃ©rence' => 'conference',
+                    'DÃƒÂ©pistage' => 'depistage',
+                    'ConfÃƒÂ©rence' => 'conference',
                     'Groupe de parole' => 'groupe_parole',
                     'Formation' => 'formation',
                 ],
@@ -53,7 +53,7 @@ class EvenementType extends AbstractType
                 'label' => 'Mode de participation',
                 'choices' => [
                     'En ligne' => 'en_ligne',
-                    'PrÃ©sentiel' => 'presentiel',
+                    'PrÃƒÂ©sentiel' => 'presentiel',
                     'Hybride' => 'hybride',
                 ],
             ])
@@ -91,7 +91,7 @@ class EvenementType extends AbstractType
                 'attr' => ['min' => 1, 'step' => 1],
             ])
             ->add('dateDebut', DateTimeType::class, [
-                'label' => 'Date de dÃ©but',
+                'label' => 'Date de dÃƒÂ©but',
                 'widget' => 'single_text',
                 'html5' => true,
                 'required' => true,
@@ -111,7 +111,7 @@ class EvenementType extends AbstractType
             ->add('lieu', TextType::class, [
                 'label' => 'Lieu / Lien',
                 'required' => false,
-                'help' => 'Adresse physique ou lien de rÃ©union',
+                'help' => 'Adresse physique ou lien de rÃƒÂ©union',
             ])
             ->add('placesMax', IntegerType::class, [
                 'label' => 'Nombre de places maximum',
@@ -159,21 +159,21 @@ class EvenementType extends AbstractType
         // If it IS a client request, we skip this entirely so the form doesn't touch the status.
         if (!$isDemande) {
             $statutChoices = [
-                'PlanifiÃ©' => 'planifie',
+                'PlanifiÃƒÂ©' => 'planifie',
                 'En cours' => 'en_cours',
-                'TerminÃ©' => 'termine',
-                'AnnulÃ©' => 'annule',
+                'TerminÃƒÂ©' => 'termine',
+                'AnnulÃƒÂ©' => 'annule',
             ];
 
             if ($isAdmin) {
                 $statutChoices = array_merge($statutChoices, [
                     'En attente d\'approbation' => 'en_attente_approbation',
-                    'ApprouvÃ©' => 'approuve',
+                    'ApprouvÃƒÂ©' => 'approuve',
                 ]);
             }
 
             $builder->add('statut', ChoiceType::class, [
-                'label' => 'Statut de l\'Ã©vÃ©nement',
+                'label' => 'Statut de l\'ÃƒÂ©vÃƒÂ©nement',
                 'choices' => $statutChoices,
                 'required' => true, 
             ]);

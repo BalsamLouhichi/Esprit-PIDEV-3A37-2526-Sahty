@@ -25,6 +25,9 @@ class GroupeCible
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $critereOptionnel = null;
 
+    /**
+     * @var Collection<int, Evenement>
+     */
     #[ORM\ManyToMany(targetEntity: Evenement::class, mappedBy: 'groupeCibles')]
     private Collection $evenements;
 
@@ -33,10 +36,13 @@ class GroupeCible
         $this->evenements = new ArrayCollection();
     }
 
+    /**
+     * @return Collection<int, Evenement>
+     */
     public function getEvenements(): Collection
-{
-    return $this->evenements;
-}
+    {
+        return $this->evenements;
+    }
 
     public function getId(): ?int
     {

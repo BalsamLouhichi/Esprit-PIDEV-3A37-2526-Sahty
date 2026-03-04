@@ -79,6 +79,9 @@ class PatientResultQaService
         );
     }
 
+    /**
+     * @param array<int, string> $recommendations
+     */
     private function buildMonitoringAnswer(string $summary, string $riskSentence, array $recommendations): string
     {
         $lines = [
@@ -112,6 +115,9 @@ class PatientResultQaService
         return trim($riskSentence . ' ' . $timing . ' Ne retardez pas la consultation si les symptomes s aggravent.');
     }
 
+    /**
+     * @param array<int, string> $recommendations
+     */
     private function buildGenericAnswer(string $summary, string $riskSentence, array $recommendations): string
     {
         $message = sprintf('%s %s', $summary, $riskSentence);
@@ -348,9 +354,9 @@ class PatientResultQaService
             return null;
         }
 
-        $high = (int) ($matches[2] ?? 0);
-        $low = (int) ($matches[3] ?? 0);
-        $unknown = (int) ($matches[4] ?? 0);
+        $high = (int) $matches[2];
+        $low = (int) $matches[3];
+        $unknown = (int) $matches[4];
         $outOfRange = $high + $low;
 
         if ($outOfRange <= 0) {
@@ -374,6 +380,9 @@ class PatientResultQaService
         return $message;
     }
 
+    /**
+     * @param array<int, string> $needles
+     */
     private function containsAny(string $text, array $needles): bool
     {
         foreach ($needles as $needle) {

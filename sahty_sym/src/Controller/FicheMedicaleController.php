@@ -32,12 +32,18 @@ class FicheMedicaleController extends AbstractController
         Request $request,
         FicheMedicaleRepository $ficheMedicaleRepository,
         PatientRepository $patientRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        DictationTranscriptionService $dictationTranscriptionService
     ): Response
     {
         $user = $this->getUser();
         $isPatient = $this->isGranted('ROLE_PATIENT');
         $isMedecin = $this->isGranted('ROLE_MEDECIN');
+
+        $dictationStatus = $dictationTranscriptionService->getConfigurationStatus();
+        if (!($dictationStatus['ok'] ?? false)) {
+            $this->addFlash('warning', 'Dictée vocale indisponible: ' . (string) ($dictationStatus['error'] ?? 'Configuration invalide.'));
+        }
         
         // Mode par défaut : LISTE
         $mode = 'list';
@@ -211,7 +217,7 @@ class FicheMedicaleController extends AbstractController
             $ficheId = $request->request->get('delete_id');
             $fiche = $ficheMedicaleRepository->find($ficheId);
             
-            if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, $request->request->get('_token'))) {
+            if ($fiche && $this->isCsrfTokenValid('delete'.$ficheId, (string) $request->request->get('_token'))) {
                 // ✅ Vérifier les permissions de suppression
                 if ($isPatient && $fiche->getPatient()->getId() !== $user->getId()) {
                     $this->addFlash('error', '❌ Vous ne pouvez supprimer que vos propres fiches');
@@ -652,3 +658,7 @@ public function searchAjax(
         ]);
     }
 }
+
+
+
+

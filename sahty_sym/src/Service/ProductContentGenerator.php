@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ProductContentGenerator
@@ -12,6 +11,10 @@ class ProductContentGenerator
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @return array{description: string, benefits: array<int, string>, usageTips: array<int, string>, seoKeywords: array<int, string>}
+     */
     public function generate(array $data): array
     {
         $nom = trim((string) ($data['nom'] ?? ''));
@@ -71,11 +74,15 @@ class ProductContentGenerator
             }
 
             return $this->normalize($decoded, $nom, $categorie, $marque);
-        } catch (TransportExceptionInterface|\Throwable) {
+        } catch (\Throwable) {
             return $this->fallbackContent($nom, $categorie, $marque);
         }
     }
 
+    /**
+     * @param array<string, mixed> $decoded
+     * @return array{description: string, benefits: array<int, string>, usageTips: array<int, string>, seoKeywords: array<int, string>}
+     */
     private function normalize(array $decoded, string $nom, string $categorie, string $marque): array
     {
         $description = trim((string) ($decoded['description'] ?? ''));
@@ -97,6 +104,9 @@ class ProductContentGenerator
         return $this->applyCategoryFeedback($content, $categorie, $nom, $marque);
     }
 
+    /**
+     * @return array<int, string>
+     */
     private function normalizeList(mixed $value): array
     {
         if (!is_array($value)) {
@@ -114,6 +124,9 @@ class ProductContentGenerator
         return array_values(array_unique($items));
     }
 
+    /**
+     * @return array{description: string, benefits: array<int, string>, usageTips: array<int, string>, seoKeywords: array<int, string>}
+     */
     private function fallbackContent(string $nom, string $categorie, string $marque): array
     {
         $brandPrefix = $marque !== '' ? $marque . ' - ' : '';
@@ -162,23 +175,23 @@ class ProductContentGenerator
             return $content;
         }
 
-        $description = trim((string) ($content['description'] ?? ''));
+        $description = trim((string) $content['description']);
         if ($description !== '' && !str_contains(mb_strtolower($description, 'UTF-8'), mb_strtolower($feedback['descriptionHint'], 'UTF-8'))) {
             $description .= ' ' . $feedback['descriptionHint'];
         }
 
         $benefits = array_slice(array_values(array_unique(array_merge(
-            $this->normalizeList($content['benefits'] ?? []),
+            $this->normalizeList($content['benefits']),
             $feedback['benefits']
         ))), 0, 3);
 
         $usageTips = array_slice(array_values(array_unique(array_merge(
-            $this->normalizeList($content['usageTips'] ?? []),
+            $this->normalizeList($content['usageTips']),
             $feedback['usageTips']
         ))), 0, 3);
 
         $seoKeywords = array_slice(array_values(array_unique(array_merge(
-            $this->normalizeList($content['seoKeywords'] ?? []),
+            $this->normalizeList($content['seoKeywords']),
             [
                 $nom,
                 $marque !== '' ? $marque : 'parapharmacie',

@@ -21,7 +21,12 @@ final class MeetingSchedulerService
         $provider = strtolower(trim($this->provider));
 
         if (in_array($provider, ['google_meet', 'google'], true)) {
-            return $this->googleMeetApiService->createMeetingLink($rendezVous);
+            try {
+                return $this->googleMeetApiService->createMeetingLink($rendezVous);
+            } catch (\Throwable) {
+                // Fallback to Jitsi if Google token/config is invalid or temporarily unavailable.
+                return $this->meetingLinkGenerator->generate($this->buildSeed($rendezVous));
+            }
         }
 
         return $this->meetingLinkGenerator->generate($this->buildSeed($rendezVous));

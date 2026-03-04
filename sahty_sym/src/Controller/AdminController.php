@@ -13,6 +13,9 @@ use App\Entity\Laboratoire;
 use App\Entity\TypeAnalyse;
 use App\Entity\DemandeAnalyse;
 use App\Entity\LaboratoireTypeAnalyse;
+use App\Entity\Quiz;
+use App\Entity\Recommandation;
+use App\Entity\QuizAttempt;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use App\Repository\UtilisateurRepository;
 use App\Repository\RendezVousRepository;
@@ -25,6 +28,9 @@ use App\Repository\DemandeAnalyseRepository;
 use App\Repository\ParapharmacieRepository;
 use App\Repository\ProduitRepository;
 use App\Repository\CommandeRepository;
+use App\Repository\QuizRepository;
+use App\Repository\QuizAttemptRepository;
+use App\Repository\RecommandationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,7 +63,10 @@ class AdminController extends AbstractController
         DemandeAnalyseRepository $demandeRepo,
         ParapharmacieRepository $parapharmacieRepo,
         ProduitRepository $produitRepo,
-        CommandeRepository $commandeRepo
+        CommandeRepository $commandeRepo,
+        QuizRepository $quizRepo,
+        QuizAttemptRepository $attemptRepo,
+        RecommandationRepository $recoRepo
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
@@ -75,7 +84,7 @@ class AdminController extends AbstractController
         $totalInactive = $this->userRepo->count(['estActif' => false]);
         $totalActive = $totalUsers - $totalInactive;
 
-        // AJOUT: Statistiques pour la sidebar
+        // Statistiques pour la sidebar
         $totalRendezVous = $rdvRepo->count([]);
         $totalEvenements = $this->em->createQueryBuilder()
             ->select('COUNT(e.id)')
@@ -85,16 +94,78 @@ class AdminController extends AbstractController
         
         $totalFichesMedicales = $ficheRepo->count([]);
 
+        // ========== STATISTIQUES QUIZ ==========
+        $totalQuizzes = $quizRepo->count([]);
+        $totalQuestions = $quizRepo->createQueryBuilder('q')
+            ->select('SUM(SIZE(q.questions))')
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0;
+        
+        // Participants aux quiz
+        $quizParticipants = $attemptRepo->createQueryBuilder('a')
+            ->select('COUNT(DISTINCT a.user)')
+            ->where('a.user IS NOT NULL')
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0;
+        
+        // Taux de rÃƒÂ©ussite moyen
+        $completedAttempts = $attemptRepo->findBy(['status' => 'completed']);
+        $totalScore = 0;
+        $totalMaxScore = 0;
+        foreach ($completedAttempts as $attempt) {
+            $totalScore += $attempt->getScore() ?? 0;
+            $totalMaxScore += ($attempt->getTotalQuestions() ?? 0) * 5;
+        }
+        $quizSuccessRate = $totalMaxScore > 0 ? round(($totalScore / $totalMaxScore) * 100) : 0;
+        
+        // Quiz rÃƒÂ©cents
+        $recentQuizzes = $quizRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        
+        // DerniÃƒÂ¨re mise ÃƒÂ  jour quiz
+        $lastQuiz = $quizRepo->findOneBy([], ['updatedAt' => 'DESC']);
+        $lastQuizUpdate = $lastQuiz && $lastQuiz->getUpdatedAt() ? 
+            $lastQuiz->getUpdatedAt()->format('d/m/Y') : 
+            ($lastQuiz ? $lastQuiz->getCreatedAt()->format('d/m/Y') : 'Ã¢â‚¬â€');
+        
+        // Moyenne questions par quiz
+        $quizAvgQuestions = $totalQuizzes > 0 ? round($totalQuestions / $totalQuizzes, 1) : 0;
+
+        // ========== STATISTIQUES RECOMMANDATIONS ==========
+        $totalRecommandations = $recoRepo->count([]);
+        
+        $recommandationsBySeverity = [
+            'low' => $recoRepo->count(['severity' => 'low']),
+            'medium' => $recoRepo->count(['severity' => 'medium']),
+            'high' => $recoRepo->count(['severity' => 'high']),
+        ];
+        
+        $recommandationsWithVideo = $recoRepo->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.video_url IS NOT NULL')
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0;
+        
+        // Recommandations rÃƒÂ©centes
+        $recentRecommandations = $recoRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        
+        // DerniÃƒÂ¨re mise ÃƒÂ  jour recommandation
+        $lastReco = $recoRepo->findOneBy([], ['createdAt' => 'DESC']);
+        $lastRecoUpdate = $lastReco ? $lastReco->getCreatedAt()->format('d/m/Y') : 'Ã¢â‚¬â€';
+        
+        // Recommandations approuvÃƒÂ©es (low + medium)
+        $recommandationsApprouvees = $recommandationsBySeverity['low'] + $recommandationsBySeverity['medium'];
+        $recommandationsEnAttente = 0; // Ãƒâ‚¬ implÃƒÂ©menter si systÃƒÂ¨me d'approbation
+
         // Statistiques des demandes d'analyse
         $demandesEnAttente = $demandeRepo->count(['statut' => 'en_attente']);
         $demandesEnCours = $demandeRepo->count(['statut' => 'en_cours']);
         $demandesTerminees = $demandeRepo->count(['statut' => 'termine']);
         $commandesEnAttente = $commandeRepo->count(['statut' => 'en_attente']);
         
-        // Laboratoires récents
+        // Laboratoires rÃƒÂ©cents
         $recentLaboratoires = $laboratoireRepo->findBy([], ['cree_le' => 'DESC'], 5);
         
-        // Demandes d'analyse récentes
+        // Demandes d'analyse rÃƒÂ©centes
         $recentDemandes = $demandeRepo->findBy([], ['date_demande' => 'DESC'], 5);
 
         // Pourcentages de distribution
@@ -103,13 +174,13 @@ class AdminController extends AbstractController
         $staffPercent = $totalUsers > 0 ? round((($totalResponsableLabo + $totalResponsablePara) / $totalUsers) * 100) : 0;
         $adminPercent = max(0, 100 - ($doctorsPercent + $patientsPercent + $staffPercent));
 
-        // Utilisateurs récents
+        // Utilisateurs rÃƒÂ©cents
         $recentUsers = $this->userRepo->findBy([], ['creeLe' => 'DESC'], 5);
 
-        // Rendez-vous récents
+        // Rendez-vous rÃƒÂ©cents
         $recentAppointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC'], 10);
 
-        // Fiches médicales récentes
+        // Fiches mÃƒÂ©dicales rÃƒÂ©centes
         $recentMedicalRecords = $ficheRepo->findBy([], ['creeLe' => 'DESC'], 10);
 
         // Comptages pour chaque utilisateur
@@ -125,27 +196,27 @@ class AdminController extends AbstractController
             }
         }
 
-        // Données pour les graphiques
-        $months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
-                   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        // DonnÃƒÂ©es pour les graphiques
+        $months = ['Janvier', 'FÃƒÂ©vrier', 'Mars', 'Avril', 'Mai', 'Juin', 
+                   'Juillet', 'AoÃƒÂ»t', 'Septembre', 'Octobre', 'Novembre', 'DÃƒÂ©cembre'];
         
-        // Données réelles
+        // DonnÃƒÂ©es rÃƒÂ©elles
         $appointmentsData = $this->getMonthlyAppointmentsData($rdvRepo);
         $topMedecins = $this->getTopMedecins($rdvRepo, $medecinRepo);
         $topPatients = $this->getTopPatients($rdvRepo, $patientRepo);
         
-        // Données IMC
+        // DonnÃƒÂ©es IMC
         $imcStats = $this->getImcStatistics($ficheRepo);
         
         // Statistiques des rendez-vous par statut
         $statusStats = [
-            'Confirmé' => $rdvRepo->count(['statut' => 'Confirmé']),
+            'ConfirmÃƒÂ©' => $rdvRepo->count(['statut' => 'ConfirmÃƒÂ©']),
             'En attente' => $rdvRepo->count(['statut' => 'En attente']),
-            'Annulé' => $rdvRepo->count(['statut' => 'Annulé']),
-            'Terminé' => $rdvRepo->count(['statut' => 'Terminé']),
+            'AnnulÃƒÂ©' => $rdvRepo->count(['statut' => 'AnnulÃƒÂ©']),
+            'TerminÃƒÂ©' => $rdvRepo->count(['statut' => 'TerminÃƒÂ©']),
         ];
 
-        // Statistiques des fiches médicales
+        // Statistiques des fiches mÃƒÂ©dicales
         $ficheStatusStats = [
             'Actif' => $ficheRepo->count(['statut' => 'actif']),
             'Inactif' => $ficheRepo->count(['statut' => 'inactif']),
@@ -183,7 +254,7 @@ class AdminController extends AbstractController
                 'analyses_en_cours' => $demandesEnCours,
                 'analyses_terminees' => $demandesTerminees,
                 'commandes_en_attente' => $commandesEnAttente,
-                'demandes_evenements' => 0, // À ajouter si nécessaire
+                'demandes_evenements' => 0, // Ãƒâ‚¬ ajouter si nÃƒÂ©cessaire
             ],
             'charts' => [
                 'months' => $months,
@@ -222,6 +293,665 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // ==================== ROUTES POUR LES QUIZZES ====================
+
+    #[Route('/quizzes', name: 'quiz_index')]
+    public function quizIndex(Request $request, QuizRepository $quizRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        // ParamÃƒÂ¨tres de filtrage et tri
+        $search = $request->query->get('search');
+        $sort = $request->query->get('sort', 'recent');
+        $minQuestions = $request->query->getInt('min_questions', 0);
+        $page = $request->query->getInt('page', 1);
+        $limit = 10;
+        
+        // Construction de la requÃƒÂªte
+        $qb = $quizRepo->createQueryBuilder('q')
+            ->leftJoin('q.questions', 'quest')
+            ->groupBy('q.id');
+        
+        // Recherche
+        if ($search) {
+            $qb->andWhere('q.name LIKE :search OR q.description LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+        
+        // Filtre minimum de questions
+        if ($minQuestions > 0) {
+            $qb->having('COUNT(quest.id) >= :minQuestions')
+               ->setParameter('minQuestions', $minQuestions);
+        }
+        
+        // Tri
+        switch ($sort) {
+            case 'oldest':
+                $qb->orderBy('q.createdAt', 'ASC');
+                break;
+            case 'name_asc':
+                $qb->orderBy('q.name', 'ASC');
+                break;
+            case 'name_desc':
+                $qb->orderBy('q.name', 'DESC');
+                break;
+            case 'questions_asc':
+                $qb->orderBy('COUNT(quest.id)', 'ASC');
+                break;
+            case 'questions_desc':
+                $qb->orderBy('COUNT(quest.id)', 'DESC');
+                break;
+            default: // recent
+                $qb->orderBy('q.createdAt', 'DESC');
+        }
+        
+        // Pagination
+        $totalQuizzes = count($qb->getQuery()->getResult());
+        $totalPages = ceil($totalQuizzes / $limit);
+        
+        $quizzes = $qb->setFirstResult(($page - 1) * $limit)
+                      ->setMaxResults($limit)
+                      ->getQuery()
+                      ->getResult();
+        
+        // Statistiques pour la sidebar
+        $totalQuestions = $quizRepo->createQueryBuilder('q')
+            ->select('SUM(SIZE(q.questions))')
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0;
+        
+        $totalRecommandations = $this->em->createQueryBuilder()
+            ->select('COUNT(r.id)')
+            ->from('App\Entity\Recommandation', 'r')
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return $this->render('admin/quiz/index.html.twig', [
+            'quizzes' => $quizzes,
+            'total_quizzes' => $totalQuizzes,
+            'total_questions' => $totalQuestions,
+            'total_recommandations' => $totalRecommandations,
+            'active_search' => $search,
+            'active_sort' => $sort,
+            'active_min_questions' => $minQuestions,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+        ]);
+    }
+
+    #[Route('/quiz/stats', name: 'quiz_stats')]
+    public function quizStats(QuizRepository $quizRepo, QuizAttemptRepository $attemptRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $quizzes = $quizRepo->findAll();
+        $totalAttempts = $attemptRepo->count([]);
+        
+        $stats = [
+            'total_quizzes' => count($quizzes),
+            'total_questions' => 0,
+            'total_attempts' => $totalAttempts,
+            'completed_attempts' => $attemptRepo->count(['status' => 'completed']),
+            'in_progress_attempts' => $attemptRepo->count(['status' => 'in_progress']),
+            'avg_score' => 0,
+            'avg_completion_rate' => 0,
+            'quizzes_with_questions' => 0,
+            'quizzes_without_questions' => 0,
+            'quizzes_with_attempts' => 0,
+            'quizzes_without_attempts' => 0,
+            'most_popular_quiz' => null,
+            'most_questions_quiz' => null,
+            'recent_quizzes' => [],
+            'questions_distribution' => [
+                '0-5' => 0,
+                '6-10' => 0,
+                '11-15' => 0,
+                '16+' => 0,
+            ],
+            'attempts_by_month' => [],
+            'success_rate_by_quiz' => [],
+            'category_distribution' => [],
+        ];
+        
+        $maxQuestions = 0;
+        $maxAttempts = 0;
+        $totalScore = 0;
+        $totalCompleted = 0;
+        $categoryCounts = [];
+        
+        // RÃƒÂ©cupÃƒÂ©rer les tentatives par mois
+        $attemptsByMonth = $attemptRepo->createQueryBuilder('a')
+            ->select('MONTH(a.completedAt) as month, YEAR(a.completedAt) as year, COUNT(a.id) as count')
+            ->where('a.completedAt IS NOT NULL')
+            ->groupBy('year, month')
+            ->orderBy('year', 'DESC')
+            ->addOrderBy('month', 'DESC')
+            ->setMaxResults(12)
+            ->getQuery()
+            ->getResult();
+        
+        foreach ($attemptsByMonth as $item) {
+            $monthName = date('F', mktime(0, 0, 0, $item['month'], 1));
+            $stats['attempts_by_month'][] = [
+                'month' => $monthName . ' ' . $item['year'],
+                'count' => $item['count']
+            ];
+        }
+        
+        foreach ($quizzes as $quiz) {
+            $nbQuestions = $quiz->getQuestions()->count();
+            $nbAttempts = $attemptRepo->count(['quiz' => $quiz]);
+            $completedAttempts = $attemptRepo->count(['quiz' => $quiz, 'status' => 'completed']);
+            
+            $stats['total_questions'] += $nbQuestions;
+            
+            if ($nbQuestions > 0) {
+                $stats['quizzes_with_questions']++;
+                if ($nbQuestions > $maxQuestions) {
+                    $maxQuestions = $nbQuestions;
+                    $stats['most_questions_quiz'] = $quiz;
+                }
+            } else {
+                $stats['quizzes_without_questions']++;
+            }
+            
+            if ($nbAttempts > 0) {
+                $stats['quizzes_with_attempts']++;
+                if ($nbAttempts > $maxAttempts) {
+                    $maxAttempts = $nbAttempts;
+                    $stats['most_popular_quiz'] = $quiz;
+                }
+                
+                if ($completedAttempts > 0) {
+                    $attempts = $attemptRepo->findBy(['quiz' => $quiz, 'status' => 'completed']);
+                    $quizTotalScore = 0;
+                    foreach ($attempts as $attempt) {
+                        $quizTotalScore += $attempt->getScore() ?? 0;
+                    }
+                    $avgQuizScore = $quizTotalScore / $completedAttempts;
+                    $maxPossibleScore = $nbQuestions * 5;
+                    $successRate = $maxPossibleScore > 0 ? round(($avgQuizScore / $maxPossibleScore) * 100, 1) : 0;
+                    
+                    $stats['success_rate_by_quiz'][] = [
+                        'name' => $quiz->getName(),
+                        'rate' => $successRate,
+                        'attempts' => $completedAttempts
+                    ];
+                }
+            } else {
+                $stats['quizzes_without_attempts']++;
+            }
+            
+            if ($nbQuestions <= 5) {
+                $stats['questions_distribution']['0-5']++;
+            } elseif ($nbQuestions <= 10) {
+                $stats['questions_distribution']['6-10']++;
+            } elseif ($nbQuestions <= 15) {
+                $stats['questions_distribution']['11-15']++;
+            } else {
+                $stats['questions_distribution']['16+']++;
+            }
+            
+            foreach ($quiz->getQuestions() as $question) {
+                $category = $question->getCategory() ?? 'non catÃƒÂ©gorisÃƒÂ©';
+                if (!isset($categoryCounts[$category])) {
+                    $categoryCounts[$category] = 0;
+                }
+                $categoryCounts[$category]++;
+            }
+        }
+        
+        $completedAttempts = $attemptRepo->findBy(['status' => 'completed']);
+        foreach ($completedAttempts as $attempt) {
+            $totalScore += $attempt->getScore() ?? 0;
+            $totalCompleted++;
+        }
+        
+        if ($totalCompleted > 0) {
+            $stats['avg_score'] = round($totalScore / $totalCompleted, 1);
+            
+            $totalQuestions = 0;
+            $totalAnswered = 0;
+            foreach ($completedAttempts as $attempt) {
+                $totalQuestions += $attempt->getTotalQuestions() ?? 0;
+                $totalAnswered += $attempt->getAnsweredCount() ?? 0;
+            }
+            $stats['avg_completion_rate'] = $totalQuestions > 0 ? round(($totalAnswered / $totalQuestions) * 100, 1) : 0;
+        }
+        
+        arsort($categoryCounts);
+        $stats['category_distribution'] = array_slice($categoryCounts, 0, 10);
+        
+        usort($stats['success_rate_by_quiz'], fn($a, $b) => $b['rate'] <=> $a['rate']);
+        $stats['success_rate_by_quiz'] = array_slice($stats['success_rate_by_quiz'], 0, 5);
+        
+        $stats['recent_quizzes'] = $quizRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        
+        return $this->render('admin/quiz/stats.html.twig', [
+            'stats' => $stats
+        ]);
+    }
+
+    #[Route('/quiz/attempts', name: 'quiz_attempts')]
+    public function quizAttempts(Request $request, QuizAttemptRepository $attemptRepo, QuizRepository $quizRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+        $status = $request->query->get('status');
+        $quizId = $request->query->getInt('quiz_id', 0);
+        $userId = $request->query->getInt('user_id', 0);
+        $search = $request->query->get('search');
+        
+        $qb = $attemptRepo->createQueryBuilder('a')
+            ->leftJoin('a.quiz', 'q')
+            ->leftJoin('a.user', 'u')
+            ->addSelect('q', 'u')
+            ->orderBy('a.createdAt', 'DESC');
+        
+        if ($status) {
+            $qb->andWhere('a.status = :status')->setParameter('status', $status);
+        }
+        
+        if ($quizId > 0) {
+            $qb->andWhere('a.quiz = :quizId')->setParameter('quizId', $quizId);
+        }
+        
+        if ($userId > 0) {
+            $qb->andWhere('a.user = :userId')->setParameter('userId', $userId);
+        }
+        
+        if ($search) {
+            $qb->andWhere('u.prenom LIKE :search OR u.nom LIKE :search OR q.name LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+        
+        $total = count($qb->getQuery()->getResult());
+        $totalPages = ceil($total / $limit);
+        
+        $attempts = $qb->setFirstResult(($page - 1) * $limit)
+                       ->setMaxResults($limit)
+                       ->getQuery()
+                       ->getResult();
+        
+        $quizOptions = $quizRepo->findBy([], ['name' => 'ASC']);
+        
+        return $this->render('admin/quiz/attempts.html.twig', [
+            'attempts' => $attempts,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_attempts' => $total,
+            'active_status' => $status,
+            'active_quiz_id' => $quizId,
+            'active_user_id' => $userId,
+            'active_search' => $search,
+            'quiz_options' => $quizOptions,
+        ]);
+    }
+
+    #[Route('/quiz/attempt/{id}', name: 'quiz_attempt_view')]
+    public function quizAttemptView(int $id, QuizAttemptRepository $attemptRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $attempt = $attemptRepo->find($id);
+        if (!$attempt) {
+            throw $this->createNotFoundException('Tentative non trouvÃƒÂ©e');
+        }
+        
+        $answers = json_decode($attempt->getAnswersJson() ?? '{}', true);
+        $detectedProblems = json_decode($attempt->getDetectedCategoriesJson() ?? '[]', true);
+        
+        $answersDetail = [];
+        $quiz = $attempt->getQuiz();
+        if ($quiz) {
+            foreach ($quiz->getQuestions() as $question) {
+                $questionId = (string) $question->getId();
+                $answersDetail[] = [
+                    'question' => $question,
+                    'answer' => $answers[$questionId] ?? null,
+                    'is_problem' => isset($answers[$questionId]) && $this->isProblemAnswer($question->getType(), $answers[$questionId]),
+                ];
+            }
+        }
+        
+        return $this->render('admin/quiz/attempt_view.html.twig', [
+            'attempt' => $attempt,
+            'answers_detail' => $answersDetail,
+            'detected_problems' => $detectedProblems,
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES RECOMMANDATIONS ====================
+
+    #[Route('/recommandations', name: 'recommandation_index')]
+    public function recommandationIndex(Request $request, RecommandationRepository $recoRepo, QuizRepository $quizRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        // ParamÃƒÂ¨tres de filtrage et tri
+        $search = $request->query->get('search');
+        $severity = $request->query->get('severity');
+        $quizId = $request->query->getInt('quiz_id', 0);
+        $type = $request->query->get('type');
+        $sort = $request->query->get('sort', 'recent');
+        $page = $request->query->getInt('page', 1);
+        $limit = 10;
+        
+        // Construction de la requÃƒÂªte
+        $qb = $recoRepo->createQueryBuilder('r')
+            ->leftJoin('r.quiz', 'q')
+            ->addSelect('q');
+        
+        // Recherche
+        if ($search) {
+            $qb->andWhere('r.name LIKE :search OR r.title LIKE :search OR r.description LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+        
+        // Filtre par sÃƒÂ©vÃƒÂ©ritÃƒÂ©
+        if ($severity) {
+            $qb->andWhere('r.severity = :severity')
+               ->setParameter('severity', $severity);
+        }
+        
+        // Filtre par quiz
+        if ($quizId) {
+            $qb->andWhere('r.quiz = :quizId')
+               ->setParameter('quizId', $quizId);
+        }
+        
+        // Filtre par type de problÃƒÂ¨me
+        if ($type) {
+            $qb->andWhere('r.type_probleme LIKE :type')
+               ->setParameter('type', '%' . $type . '%');
+        }
+        
+        // Tri
+        switch ($sort) {
+            case 'name_asc':
+                $qb->orderBy('r.name', 'ASC');
+                break;
+            case 'name_desc':
+                $qb->orderBy('r.name', 'DESC');
+                break;
+            case 'score_asc':
+                $qb->orderBy('r.min_score', 'ASC');
+                break;
+            case 'score_desc':
+                $qb->orderBy('r.max_score', 'DESC');
+                break;
+            case 'severity':
+                $qb->orderBy('r.severity', 'DESC');
+                break;
+            default: // recent
+                $qb->orderBy('r.createdAt', 'DESC');
+        }
+        
+        // Pagination
+        $totalRecommandations = count($qb->getQuery()->getResult());
+        $totalPages = ceil($totalRecommandations / $limit);
+        
+        $recommandations = $qb->setFirstResult(($page - 1) * $limit)
+                              ->setMaxResults($limit)
+                              ->getQuery()
+                              ->getResult();
+        
+        // RÃƒÂ©cupÃƒÂ©rer tous les quizzes pour le filtre
+        $quizOptions = $quizRepo->findBy([], ['name' => 'ASC']);
+        
+        // Statistiques pour la sidebar
+        $highSeverityCount = $recoRepo->count(['severity' => 'high']);
+        $mediumSeverityCount = $recoRepo->count(['severity' => 'medium']);
+        $lowSeverityCount = $recoRepo->count(['severity' => 'low']);
+        
+        $manualVideoCount = $recoRepo->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.video_url IS NOT NULL')
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return $this->render('admin/recommandation/index.html.twig', [
+            'recommandations' => $recommandations,
+            'total_recommandations' => $totalRecommandations,
+            'high_severity_count' => $highSeverityCount,
+            'medium_severity_count' => $mediumSeverityCount,
+            'low_severity_count' => $lowSeverityCount,
+            'manual_video_count' => $manualVideoCount,
+            'quiz_options' => $quizOptions,
+            'active_search' => $search,
+            'active_severity' => $severity,
+            'active_quiz_id' => $quizId,
+            'active_type' => $type,
+            'active_sort' => $sort,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+        ]);
+    }
+
+    #[Route('/recommandations/stats', name: 'recommandation_stats')]
+    public function recommandationStats(RecommandationRepository $recoRepo, QuizRepository $quizRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $recommandations = $recoRepo->findAll();
+        $quizzes = $quizRepo->findAll();
+        
+        $stats = [
+            'total_recommandations' => count($recommandations),
+            'total_quizzes' => count($quizzes),
+            'by_severity' => [
+                'low' => 0,
+                'medium' => 0,
+                'high' => 0,
+            ],
+            'by_video' => [
+                'with_video' => 0,
+                'without_video' => 0,
+            ],
+            'by_quiz' => [],
+            'top_quizzes' => [],
+            'avg_per_quiz' => 0,
+            'score_ranges' => [
+                '0-25' => 0,
+                '26-50' => 0,
+                '51-75' => 0,
+                '76-100' => 0,
+            ],
+            'recent_recommandations' => [],
+            'most_common_types' => [],
+            'type_distribution' => [],
+            'severity_percentage' => [],
+        ];
+        
+        $typeCounts = [];
+        $quizCounts = [];
+        
+        foreach ($recommandations as $reco) {
+            $stats['by_severity'][$reco->getSeverity()]++;
+            
+            if ($reco->getVideoUrl()) {
+                $stats['by_video']['with_video']++;
+            } else {
+                $stats['by_video']['without_video']++;
+            }
+            
+            $quiz = $reco->getQuiz();
+            if ($quiz) {
+                $quizId = $quiz->getId();
+                if (!isset($quizCounts[$quizId])) {
+                    $quizCounts[$quizId] = [
+                        'id' => $quizId,
+                        'name' => $quiz->getName(),
+                        'count' => 0,
+                        'questions_count' => $quiz->getQuestions()->count()
+                    ];
+                }
+                $quizCounts[$quizId]['count']++;
+            }
+            
+            $type = $reco->getTypeProbleme();
+            if ($type) {
+                if (!isset($typeCounts[$type])) {
+                    $typeCounts[$type] = 0;
+                }
+                $typeCounts[$type]++;
+            }
+            
+            $minScore = $reco->getMinScore();
+            $maxScore = $reco->getMaxScore();
+            $avgScore = ($minScore + $maxScore) / 2;
+            
+            if ($avgScore <= 25) {
+                $stats['score_ranges']['0-25']++;
+            } elseif ($avgScore <= 50) {
+                $stats['score_ranges']['26-50']++;
+            } elseif ($avgScore <= 75) {
+                $stats['score_ranges']['51-75']++;
+            } else {
+                $stats['score_ranges']['76-100']++;
+            }
+        }
+        
+        if ($stats['total_quizzes'] > 0) {
+            $stats['avg_per_quiz'] = round($stats['total_recommandations'] / $stats['total_quizzes'], 1);
+        }
+        
+        foreach ($stats['by_severity'] as $severity => $count) {
+            $stats['severity_percentage'][$severity] = $stats['total_recommandations'] > 0 
+                ? round(($count / $stats['total_recommandations']) * 100, 1) 
+                : 0;
+        }
+        
+        usort($quizCounts, fn($a, $b) => $b['count'] <=> $a['count']);
+        $stats['top_quizzes'] = array_slice($quizCounts, 0, 5);
+        
+        arsort($typeCounts);
+        $stats['most_common_types'] = array_slice($typeCounts, 0, 5);
+        
+        foreach ($typeCounts as $type => $count) {
+            $stats['type_distribution'][] = [
+                'type' => $type,
+                'count' => $count
+            ];
+        }
+        
+        $stats['recent_recommandations'] = $recoRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        
+        foreach ($quizzes as $quiz) {
+            $stats['by_quiz'][] = [
+                'id' => $quiz->getId(),
+                'name' => $quiz->getName(),
+                'count' => $quiz->getRecommandations()->count(),
+                'questions_count' => $quiz->getQuestions()->count(),
+                'ratio' => $quiz->getQuestions()->count() > 0 
+                    ? round($quiz->getRecommandations()->count() / $quiz->getQuestions()->count(), 2)
+                    : 0
+            ];
+        }
+        
+        return $this->render('admin/recommandation/stats.html.twig', [
+            'stats' => $stats
+        ]);
+    }
+
+    #[Route('/recommandations/export', name: 'recommandation_export')]
+    public function exportRecommandations(RecommandationRepository $recoRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $recommandations = $recoRepo->findAll();
+        
+        $csv = "ID,Titre,Nom,Quiz,SÃƒÂ©vÃƒÂ©ritÃƒÂ©,Score Min,Score Max,Type ProblÃƒÂ¨me,CatÃƒÂ©gories Cibles,URL VidÃƒÂ©o,Date CrÃƒÂ©ation\n";
+        
+        foreach ($recommandations as $reco) {
+            $quizName = $reco->getQuiz() ? $reco->getQuiz()->getName() : 'N/A';
+            $csv .= sprintf(
+                "%d,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s\n",
+                $reco->getId(),
+                $reco->getTitle() ?? '',
+                $reco->getName() ?? '',
+                $quizName,
+                $reco->getSeverity(),
+                $reco->getMinScore(),
+                $reco->getMaxScore(),
+                $reco->getTypeProbleme() ?? '',
+                $reco->getTargetCategories() ?? '',
+                $reco->getVideoUrl() ?? '',
+                $reco->getCreatedAt() ? $reco->getCreatedAt()->format('Y-m-d') : ''
+            );
+        }
+        
+        $response = new Response($csv);
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="recommandations_export_' . date('Y-m-d') . '.csv"');
+        
+        return $response;
+    }
+
+    #[Route('/recommandations/check-coverage', name: 'recommandation_check_coverage')]
+    public function checkRecommandationCoverage(RecommandationRepository $recoRepo, QuizRepository $quizRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $quizzes = $quizRepo->findAll();
+        $coverage = [];
+        
+        foreach ($quizzes as $quiz) {
+            $recommandations = $quiz->getRecommandations();
+            $questions = $quiz->getQuestions();
+            
+            $scoreRanges = [];
+            foreach ($recommandations as $reco) {
+                $scoreRanges[] = [
+                    'min' => $reco->getMinScore(),
+                    'max' => $reco->getMaxScore(),
+                    'title' => $reco->getTitle(),
+                    'severity' => $reco->getSeverity()
+                ];
+            }
+            
+            usort($scoreRanges, fn($a, $b) => $a['min'] <=> $b['min']);
+            
+            $maxPossibleScore = $questions->count() * 5;
+            $gaps = [];
+            $lastMax = -1;
+            
+            foreach ($scoreRanges as $range) {
+                if ($range['min'] > $lastMax + 1) {
+                    $gaps[] = [
+                        'from' => $lastMax + 1,
+                        'to' => $range['min'] - 1
+                    ];
+                }
+                $lastMax = max($lastMax, $range['max']);
+            }
+            
+            if ($lastMax < $maxPossibleScore) {
+                $gaps[] = [
+                    'from' => $lastMax + 1,
+                    'to' => $maxPossibleScore
+                ];
+            }
+            
+            $coverage[] = [
+                'quiz' => $quiz,
+                'total_recommandations' => $recommandations->count(),
+                'score_ranges' => $scoreRanges,
+                'gaps' => $gaps,
+                'max_score' => $maxPossibleScore,
+                'coverage_percentage' => $maxPossibleScore > 0 
+                    ? round((($maxPossibleScore - array_sum(array_map(fn($g) => $g['to'] - $g['from'] + 1, $gaps))) / $maxPossibleScore) * 100, 1)
+                    : 0
+            ];
+        }
+        
+        return $this->render('admin/recommandation/coverage.html.twig', [
+            'coverage' => $coverage
+        ]);
+    }
+
     // ==================== ROUTES POUR LES LABORATOIRES ====================
 
     #[Route('/laboratoires', name: 'laboratoires')]
@@ -229,12 +959,10 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Récupérer les paramètres de filtrage
         $search = $request->query->get('search');
         $ville = $request->query->get('ville');
         $disponible = $request->query->get('disponible');
         
-        // Construire les critères de recherche
         $criteria = [];
         if ($ville) {
             $criteria['ville'] = $ville;
@@ -243,9 +971,7 @@ class AdminController extends AbstractController
             $criteria['disponible'] = (bool)$disponible;
         }
         
-        // Récupérer les laboratoires avec ou sans recherche textuelle
         if ($search) {
-            // Recherche textuelle (nom, ville, adresse)
             $laboratoires = $laboratoireRepo->createQueryBuilder('l')
                 ->where('l.nom LIKE :search')
                 ->orWhere('l.ville LIKE :search')
@@ -255,11 +981,9 @@ class AdminController extends AbstractController
                 ->getQuery()
                 ->getResult();
         } else {
-            // Filtrage simple
             $laboratoires = $laboratoireRepo->findBy($criteria, ['nom' => 'ASC']);
         }
         
-        // Récupérer la liste unique des villes pour le filtre
         $villes = $laboratoireRepo->createQueryBuilder('l')
             ->select('DISTINCT l.ville')
             ->where('l.ville IS NOT NULL')
@@ -282,7 +1006,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_laboratoire_new');
@@ -302,7 +1026,6 @@ class AdminController extends AbstractController
             $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
             $laboratoire->setDisponible($data->get('disponible') ? true : false);
             
-            // Gestion du responsable
             $responsableId = $data->get('responsable_id');
             if ($responsableId) {
                 $responsable = $this->userRepo->find($responsableId);
@@ -314,11 +1037,10 @@ class AdminController extends AbstractController
             $this->em->persist($laboratoire);
             $this->em->flush();
 
-            $this->addFlash('success', 'Laboratoire créé avec succès.');
+            $this->addFlash('success', 'Laboratoire crÃƒÂ©ÃƒÂ© avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $laboratoire->getId()]);
         }
 
-        // Récupérer les responsables disponibles
         $responsables = $this->userRepo->findBy(['role' => 'responsable_labo', 'estActif' => true]);
 
         return $this->render('admin/laboratoires/form.html.twig', [
@@ -334,10 +1056,9 @@ class AdminController extends AbstractController
         
         $laboratoire = $laboratoireRepo->find($id);
         if (!$laboratoire) {
-            throw $this->createNotFoundException('Laboratoire non trouvé');
+            throw $this->createNotFoundException('Laboratoire non trouvÃƒÂ©');
         }
 
-        // Récupérer les demandes d'analyse pour ce laboratoire
         $demandes = $demandeRepo->findBy(['laboratoire' => $laboratoire], ['date_demande' => 'DESC'], 10);
 
         return $this->render('admin/laboratoires/view.html.twig', [
@@ -353,11 +1074,11 @@ class AdminController extends AbstractController
         
         $laboratoire = $laboratoireRepo->find($id);
         if (!$laboratoire) {
-            throw $this->createNotFoundException('Laboratoire non trouvé');
+            throw $this->createNotFoundException('Laboratoire non trouvÃƒÂ©');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('laboratoire_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_laboratoire_edit', ['id' => $id]);
@@ -376,7 +1097,6 @@ class AdminController extends AbstractController
             $laboratoire->setLongitude($data->get('longitude') ? (float)$data->get('longitude') : null);
             $laboratoire->setDisponible($data->get('disponible') ? true : false);
             
-            // Gestion du responsable
             $responsableId = $data->get('responsable_id');
             if ($responsableId) {
                 $responsable = $this->userRepo->find($responsableId);
@@ -389,11 +1109,10 @@ class AdminController extends AbstractController
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Laboratoire mis à jour avec succès.');
+            $this->addFlash('success', 'Laboratoire mis ÃƒÂ  jour avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
-        // Récupérer les responsables disponibles
         $responsables = $this->userRepo->findBy(['role' => 'responsable_labo', 'estActif' => true]);
 
         return $this->render('admin/laboratoires/form.html.twig', [
@@ -409,26 +1128,25 @@ class AdminController extends AbstractController
         
         $laboratoire = $laboratoireRepo->find($id);
         if (!$laboratoire) {
-            $this->addFlash('danger', 'Laboratoire non trouvé.');
+            $this->addFlash('danger', 'Laboratoire non trouvÃƒÂ©.');
             return $this->redirectToRoute('admin_laboratoires');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('delete-laboratoire' . $laboratoire->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
-        // Vérifier s'il y a des demandes d'analyse associées
         if ($laboratoire->getDemandeAnalyses()->count() > 0) {
-            $this->addFlash('danger', 'Impossible de supprimer ce laboratoire car il a des demandes d\'analyse associées.');
+            $this->addFlash('danger', 'Impossible de supprimer ce laboratoire car il a des demandes d\'analyse associÃƒÂ©es.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
         }
 
         $this->em->remove($laboratoire);
         $this->em->flush();
 
-        $this->addFlash('success', 'Laboratoire supprimé avec succès.');
+        $this->addFlash('success', 'Laboratoire supprimÃƒÂ© avec succÃƒÂ¨s.');
         return $this->redirectToRoute('admin_laboratoires');
     }
 
@@ -439,11 +1157,11 @@ class AdminController extends AbstractController
         
         $laboratoire = $laboratoireRepo->find($id);
         if (!$laboratoire) {
-            $this->addFlash('danger', 'Laboratoire non trouvé.');
+            $this->addFlash('danger', 'Laboratoire non trouvÃƒÂ©.');
             return $this->redirectToRoute('admin_laboratoires');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('toggle-laboratoire' . $laboratoire->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
@@ -453,7 +1171,7 @@ class AdminController extends AbstractController
         $this->em->flush();
 
         $status = $laboratoire->isDisponible() ? 'disponible' : 'indisponible';
-        $this->addFlash('success', "Laboratoire marqué comme $status.");
+        $this->addFlash('success', "Laboratoire marquÃƒÂ© comme $status.");
         return $this->redirectToRoute('admin_laboratoire_view', ['id' => $id]);
     }
 
@@ -476,31 +1194,26 @@ class AdminController extends AbstractController
         ];
 
         foreach ($laboratoires as $labo) {
-            // Disponibilité
             if ($labo->isDisponible()) {
                 $stats['disponibles']++;
             } else {
                 $stats['indisponibles']++;
             }
 
-            // Responsable
             if ($labo->getResponsable()) {
                 $stats['avec_responsable']++;
             } else {
                 $stats['sans_responsable']++;
             }
 
-            // Demandes
             $nbDemandes = $labo->getDemandeAnalyses()->count();
             $stats['total_demandes'] += $nbDemandes;
             
-            // Pour le graphique des demandes par laboratoire
             $stats['demandes_par_labo'][] = [
                 'nom' => $labo->getNom(),
                 'count' => $nbDemandes
             ];
 
-            // Pour le top laboratoires (avec toutes les infos)
             if ($nbDemandes > 0) {
                 $responsable = $labo->getResponsable();
                 $stats['top_laboratoires'][] = [
@@ -516,7 +1229,6 @@ class AdminController extends AbstractController
             }
         }
 
-        // Trier les top laboratoires par nombre de demandes décroissant
         usort($stats['top_laboratoires'], fn($a, $b) => $b['count'] <=> $a['count']);
         $stats['top_laboratoires'] = array_slice($stats['top_laboratoires'], 0, 5);
 
@@ -545,7 +1257,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_type_analyse_new');
@@ -562,7 +1274,7 @@ class AdminController extends AbstractController
             $this->em->persist($type);
             $this->em->flush();
 
-            $this->addFlash('success', 'Type d\'analyse créé avec succès.');
+            $this->addFlash('success', 'Type d\'analyse crÃƒÂ©ÃƒÂ© avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
@@ -578,11 +1290,11 @@ class AdminController extends AbstractController
         
         $type = $typeRepo->find($id);
         if (!$type) {
-            throw $this->createNotFoundException('Type d\'analyse non trouvé');
+            throw $this->createNotFoundException('Type d\'analyse non trouvÃƒÂ©');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('type_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_type_analyse_edit', ['id' => $id]);
@@ -597,7 +1309,7 @@ class AdminController extends AbstractController
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Type d\'analyse mis à jour avec succès.');
+            $this->addFlash('success', 'Type d\'analyse mis ÃƒÂ  jour avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
@@ -613,26 +1325,25 @@ class AdminController extends AbstractController
         
         $type = $typeRepo->find($id);
         if (!$type) {
-            $this->addFlash('danger', 'Type d\'analyse non trouvé.');
+            $this->addFlash('danger', 'Type d\'analyse non trouvÃƒÂ©.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('delete-type-analyse' . $type->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
-        // Vérifier s'il est utilisé par des laboratoires
         if ($type->getLaboratoireTypeAnalyses()->count() > 0) {
-            $this->addFlash('danger', 'Ce type d\'analyse est utilisé par des laboratoires et ne peut pas être supprimé.');
+            $this->addFlash('danger', 'Ce type d\'analyse est utilisÃƒÂ© par des laboratoires et ne peut pas ÃƒÂªtre supprimÃƒÂ©.');
             return $this->redirectToRoute('admin_type_analyse_list');
         }
 
         $this->em->remove($type);
         $this->em->flush();
 
-        $this->addFlash('success', 'Type d\'analyse supprimé avec succès.');
+        $this->addFlash('success', 'Type d\'analyse supprimÃƒÂ© avec succÃƒÂ¨s.');
         return $this->redirectToRoute('admin_type_analyse_list');
     }
     
@@ -641,10 +1352,8 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Récupérer tous les types d'analyse
         $types = $typeRepo->findAll();
         
-        // Statistiques globales
         $stats = [
             'total' => count($types),
             'actifs' => 0,
@@ -666,21 +1375,18 @@ class AdminController extends AbstractController
         $totalAssociations = 0;
         
         foreach ($types as $type) {
-            // Compter les actifs/inactifs
             if ($type->isActif()) {
                 $stats['actifs']++;
             } else {
                 $stats['inactifs']++;
             }
             
-            // Compter par catégorie
-            $categorie = $type->getCategorie() ?: 'Sans catégorie';
+            $categorie = $type->getCategorie() ?: 'Sans catÃƒÂ©gorie';
             if (!isset($categoriesCount[$categorie])) {
                 $categoriesCount[$categorie] = 0;
             }
             $categoriesCount[$categorie]++;
             
-            // Compter les associations avec laboratoires
             $nbLabos = $type->getLaboratoireTypeAnalyses()->count();
             $totalAssociations += $nbLabos;
             
@@ -699,14 +1405,11 @@ class AdminController extends AbstractController
             }
         }
         
-        // Calcul de la moyenne
         $stats['moyenne_par_type'] = $stats['total'] > 0 ? round($totalAssociations / $stats['total'], 1) : 0;
         
-        // Trier les types par popularité
         usort($typesCount, fn($a, $b) => $b['count'] <=> $a['count']);
         $stats['top_types'] = array_slice($typesCount, 0, 5);
         
-        // Préparer les données pour les catégories
         $stats['par_categorie'] = [];
         foreach ($categoriesCount as $categorie => $count) {
             $stats['par_categorie'][] = [
@@ -716,7 +1419,6 @@ class AdminController extends AbstractController
         }
         $stats['nb_categories'] = count($categoriesCount);
         
-        // Préparer les données pour les graphiques
         $stats['repartition_actifs'] = [
             ['statut' => 'Actifs', 'count' => $stats['actifs']],
             ['statut' => 'Inactifs', 'count' => $stats['inactifs']]
@@ -760,7 +1462,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_demande_analyse_new');
@@ -770,14 +1472,12 @@ class AdminController extends AbstractController
             
             $demande = new DemandeAnalyse();
             
-            // Patient
             $patientId = $data->get('patient_id');
             if ($patientId) {
                 $patient = $patientRepo->find($patientId);
                 $demande->setPatient($patient);
             }
             
-            // Laboratoire
             $laboratoireId = $data->get('laboratoire_id');
             if ($laboratoireId) {
                 $laboratoire = $laboratoireRepo->find($laboratoireId);
@@ -789,29 +1489,25 @@ class AdminController extends AbstractController
             $demande->setPriorite($data->get('priorite') ?? 'Normale');
             $demande->setNotes($data->get('notes'));
             
-            // Analyses (sous forme de tableau)
             $analyses = $data->get('analyses', []);
             $demande->setAnalyses($analyses);
             
-            // Programme le
             if ($data->get('programme_le')) {
                 try {
                     $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
                 } catch (\Exception $e) {}
             }
             
-            // Envoyé le
             if ($data->get('envoye_le')) {
                 try {
                     $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
                 } catch (\Exception $e) {}
             }
 
-            // Upload du résultat PDF
             /** @var UploadedFile $pdfFile */
             $pdfFile = $request->files->get('resultat_pdf');
             if ($pdfFile instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 }
@@ -823,11 +1519,10 @@ class AdminController extends AbstractController
             $this->em->persist($demande);
             $this->em->flush();
 
-            $this->addFlash('success', 'Demande d\'analyse créée avec succès.');
+            $this->addFlash('success', 'Demande d\'analyse crÃƒÂ©ÃƒÂ©e avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $demande->getId()]);
         }
 
-        // Récupérer les laboratoires et patients pour les listes déroulantes
         $laboratoires = $laboratoireRepo->findBy(['disponible' => true], ['nom' => 'ASC']);
         $patients = $patientRepo->findBy([], ['nom' => 'ASC', 'prenom' => 'ASC']);
 
@@ -845,7 +1540,7 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+            throw $this->createNotFoundException('Demande d\'analyse non trouvÃƒÂ©e');
         }
 
         return $this->render('admin/demande_analyse/view.html.twig', [
@@ -860,11 +1555,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            throw $this->createNotFoundException('Demande d\'analyse non trouvée');
+            throw $this->createNotFoundException('Demande d\'analyse non trouvÃƒÂ©e');
         }
 
         if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
+            $token = (string) (string) $request->request->get('_token');
             if (!$this->isCsrfTokenValid('demande_analyse_form', $token)) {
                 $this->addFlash('danger', 'Jeton CSRF invalide.');
                 return $this->redirectToRoute('admin_demande_analyse_edit', ['id' => $id]);
@@ -872,14 +1567,12 @@ class AdminController extends AbstractController
 
             $data = $request->request;
             
-            // Patient
             $patientId = $data->get('patient_id');
             if ($patientId) {
                 $patient = $patientRepo->find($patientId);
                 $demande->setPatient($patient);
             }
             
-            // Laboratoire
             $laboratoireId = $data->get('laboratoire_id');
             if ($laboratoireId) {
                 $laboratoire = $laboratoireRepo->find($laboratoireId);
@@ -891,11 +1584,9 @@ class AdminController extends AbstractController
             $demande->setPriorite($data->get('priorite'));
             $demande->setNotes($data->get('notes'));
             
-            // Analyses (sous forme de tableau)
             $analyses = $data->get('analyses', []);
             $demande->setAnalyses($analyses);
             
-            // Programme le
             if ($data->get('programme_le')) {
                 try {
                     $demande->setProgrammeLe(new \DateTime($data->get('programme_le')));
@@ -904,7 +1595,6 @@ class AdminController extends AbstractController
                 $demande->setProgrammeLe(null);
             }
             
-            // Envoyé le
             if ($data->get('envoye_le')) {
                 try {
                     $demande->setEnvoyeLe(new \DateTime($data->get('envoye_le')));
@@ -913,11 +1603,10 @@ class AdminController extends AbstractController
                 $demande->setEnvoyeLe(null);
             }
 
-            // Upload du résultat PDF
             /** @var UploadedFile $pdfFile */
             $pdfFile = $request->files->get('resultat_pdf');
             if ($pdfFile instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+                $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
                 if (!is_dir($uploadsDir)) {
                     @mkdir($uploadsDir, 0777, true);
                 }
@@ -928,11 +1617,10 @@ class AdminController extends AbstractController
 
             $this->em->flush();
 
-            $this->addFlash('success', 'Demande d\'analyse mise à jour avec succès.');
+            $this->addFlash('success', 'Demande d\'analyse mise ÃƒÂ  jour avec succÃƒÂ¨s.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
         }
 
-        // Récupérer les laboratoires et patients pour les listes déroulantes
         $laboratoires = $laboratoireRepo->findBy([], ['nom' => 'ASC']);
         $patients = $patientRepo->findBy([], ['nom' => 'ASC', 'prenom' => 'ASC']);
 
@@ -950,11 +1638,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃƒÂ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('delete-demande-analyse' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -963,7 +1651,7 @@ class AdminController extends AbstractController
         $this->em->remove($demande);
         $this->em->flush();
 
-        $this->addFlash('success', 'Demande d\'analyse supprimée avec succès.');
+        $this->addFlash('success', 'Demande d\'analyse supprimÃƒÂ©e avec succÃƒÂ¨s.');
         return $this->redirectToRoute('admin_demande_analyse_list');
     }
 
@@ -974,11 +1662,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃƒÂ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('update-demande-statut' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -987,7 +1675,6 @@ class AdminController extends AbstractController
         $newStatut = $request->request->get('statut');
         $demande->setStatut($newStatut);
         
-        // Mettre à jour les dates en fonction du statut
         if ($newStatut === 'en_cours') {
             $demande->setProgrammeLe(new \DateTime());
         } elseif ($newStatut === 'termine') {
@@ -996,7 +1683,7 @@ class AdminController extends AbstractController
 
         $this->em->flush();
 
-        $this->addFlash('success', 'Statut de la demande mis à jour avec succès.');
+        $this->addFlash('success', 'Statut de la demande mis ÃƒÂ  jour avec succÃƒÂ¨s.');
         return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
     }
 
@@ -1007,11 +1694,11 @@ class AdminController extends AbstractController
         
         $demande = $demandeRepo->find($id);
         if (!$demande) {
-            $this->addFlash('danger', 'Demande d\'analyse non trouvée.');
+            $this->addFlash('danger', 'Demande d\'analyse non trouvÃƒÂ©e.');
             return $this->redirectToRoute('admin_demande_analyse_list');
         }
 
-        $token = $request->request->get('_token');
+        $token = (string) (string) $request->request->get('_token');
         if (!$this->isCsrfTokenValid('upload-resultat' . $demande->getId(), $token)) {
             $this->addFlash('danger', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -1020,14 +1707,13 @@ class AdminController extends AbstractController
         /** @var UploadedFile $pdfFile */
         $pdfFile = $request->files->get('resultat_pdf');
         if ($pdfFile instanceof UploadedFile) {
-            $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
+            $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/resultats';
             if (!is_dir($uploadsDir)) {
                 @mkdir($uploadsDir, 0777, true);
             }
             $filename = uniqid('resultat_') . '.' . $pdfFile->guessExtension();
             $pdfFile->move($uploadsDir, $filename);
             
-            // Supprimer l'ancien fichier s'il existe
             $oldFile = $demande->getResultatPdf();
             if ($oldFile && file_exists($uploadsDir . '/' . $oldFile)) {
                 unlink($uploadsDir . '/' . $oldFile);
@@ -1039,9 +1725,9 @@ class AdminController extends AbstractController
             
             $this->em->flush();
             
-            $this->addFlash('success', 'Résultat uploadé avec succès.');
+            $this->addFlash('success', 'RÃƒÂ©sultat uploadÃƒÂ© avec succÃƒÂ¨s.');
         } else {
-            $this->addFlash('danger', 'Veuillez sélectionner un fichier PDF.');
+            $this->addFlash('danger', 'Veuillez sÃƒÂ©lectionner un fichier PDF.');
         }
 
         return $this->redirectToRoute('admin_demande_analyse_view', ['id' => $id]);
@@ -1052,10 +1738,8 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Récupérer toutes les demandes
         $demandes = $demandeRepo->findAll();
         
-        // Statistiques globales
         $stats = [
             'total' => count($demandes),
             'en_attente' => 0,
@@ -1073,14 +1757,12 @@ class AdminController extends AbstractController
             'delai_moyen_traitement' => 0,
         ];
         
-        // Tableaux pour les calculs
         $patientsCount = [];
         $laboratoiresCount = [];
         $totalDelai = 0;
         $nbTermines = 0;
         
         foreach ($demandes as $demande) {
-            // Compter par statut
             switch ($demande->getStatut()) {
                 case 'en_attente':
                     $stats['en_attente']++;
@@ -1090,7 +1772,6 @@ class AdminController extends AbstractController
                     break;
                 case 'termine':
                     $stats['termine']++;
-                    // Calcul du délai de traitement
                     if ($demande->getDateDemande() && $demande->getEnvoyeLe()) {
                         $delai = $demande->getDateDemande()->diff($demande->getEnvoyeLe())->days;
                         $totalDelai += $delai;
@@ -1102,7 +1783,6 @@ class AdminController extends AbstractController
                     break;
             }
             
-            // Compter par priorité
             switch ($demande->getPriorite()) {
                 case 'Haute':
                     $stats['priorite_haute']++;
@@ -1115,14 +1795,12 @@ class AdminController extends AbstractController
                     break;
             }
             
-            // Compter par mois
             $mois = $demande->getDateDemande()->format('m/Y');
             if (!isset($stats['demandes_par_mois'][$mois])) {
                 $stats['demandes_par_mois'][$mois] = 0;
             }
             $stats['demandes_par_mois'][$mois]++;
             
-            // Compter par laboratoire
             $laboratoire = $demande->getLaboratoire();
             if ($laboratoire) {
                 $labId = $laboratoire->getId();
@@ -1135,7 +1813,6 @@ class AdminController extends AbstractController
                 $laboratoiresCount[$labId]['count']++;
             }
             
-            // Compter par patient
             $patient = $demande->getPatient();
             if ($patient) {
                 $patientId = $patient->getId();
@@ -1151,32 +1828,24 @@ class AdminController extends AbstractController
             }
         }
         
-        // Calcul du délai moyen de traitement
         $stats['delai_moyen_traitement'] = $nbTermines > 0 ? round($totalDelai / $nbTermines, 1) : 0;
-        
-        // Compter les patients uniques
         $stats['total_patients'] = count($patientsCount);
         
-        // Formater les demandes par mois pour le graphique
         $stats['demandes_par_mois'] = array_map(function($mois, $count) {
             return ['mois' => $mois, 'count' => $count];
         }, array_keys($stats['demandes_par_mois']), array_values($stats['demandes_par_mois']));
         
-        // Trier par mois (ordre chronologique)
         usort($stats['demandes_par_mois'], function($a, $b) {
             return strtotime('01/' . $a['mois']) <=> strtotime('01/' . $b['mois']);
         });
         
-        // Formater les demandes par laboratoire
         $stats['demandes_par_laboratoire'] = array_values($laboratoiresCount);
         usort($stats['demandes_par_laboratoire'], fn($a, $b) => $b['count'] <=> $a['count']);
         
-        // Top patients
         $stats['top_patients'] = array_values($patientsCount);
         usort($stats['top_patients'], fn($a, $b) => $b['count'] <=> $a['count']);
         $stats['top_patients'] = array_slice($stats['top_patients'], 0, 5);
         
-        // Calcul des pourcentages
         if ($stats['total'] > 0) {
             $stats['pourcentage_attente'] = round($stats['en_attente'] / $stats['total'] * 100, 1);
             $stats['pourcentage_cours'] = round($stats['en_cours'] / $stats['total'] * 100, 1);
@@ -1194,18 +1863,16 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // ==================== STATISTIQUES DES FICHES MÉDICALES ====================
+    // ==================== STATISTIQUES DES FICHES MÃƒâ€°DICALES ====================
 
     #[Route('/statistiques/fiches-medicales', name: 'medical_records_stats')]
     public function medicalRecordsStats(Request $request, FicheMedicaleRepository $ficheRepo, PatientRepository $patientRepo): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        // Récupération de toutes les fiches médicales
         $fiches = $ficheRepo->findAll();
         $totalFiches = count($fiches);
 
-        // Statistiques de base
         $stats = [
             'total' => $totalFiches,
             'actives' => 0,
@@ -1234,19 +1901,16 @@ class AdminController extends AbstractController
             'pourcentage_obesite' => 0,
         ];
 
-        // Comptage des patients pour le top
         $patientCounts = [];
         $totalImc = 0;
 
         foreach ($fiches as $fiche) {
-            // Statut
             if ($fiche->getStatut() === 'actif') {
                 $stats['actives']++;
             } else {
                 $stats['inactives']++;
             }
 
-            // IMC
             $imc = $fiche->getImc();
             if ($imc) {
                 $stats['avec_imc']++;
@@ -1254,7 +1918,6 @@ class AdminController extends AbstractController
                 $stats['imc_min'] = min($stats['imc_min'], $imc);
                 $stats['imc_max'] = max($stats['imc_max'], $imc);
 
-                // Catégorie IMC
                 if ($imc < 18.5) {
                     $stats['imc_maigreur']++;
                 } elseif ($imc < 25) {
@@ -1268,21 +1931,18 @@ class AdminController extends AbstractController
                 $stats['sans_imc']++;
             }
 
-            // Traitement
             if ($fiche->getTraitementPrescrit()) {
                 $stats['avec_traitement']++;
             } else {
                 $stats['sans_traitement']++;
             }
 
-            // Diagnostic
             if ($fiche->getDiagnostic()) {
                 $stats['avec_diagnostic']++;
             } else {
                 $stats['sans_diagnostic']++;
             }
 
-            // Comptage par patient
             $patient = $fiche->getPatient();
             if ($patient) {
                 $patientId = $patient->getId();
@@ -1297,7 +1957,6 @@ class AdminController extends AbstractController
                 $patientCounts[$patientId]['count']++;
             }
 
-            // Créations par mois
             $dateCreation = $fiche->getCreeLe();
             if ($dateCreation) {
                 $mois = $dateCreation->format('m/Y');
@@ -1308,23 +1967,19 @@ class AdminController extends AbstractController
             }
         }
 
-        // Calcul de l'IMC moyen
         if ($stats['avec_imc'] > 0) {
             $stats['imc_moyen'] = round($totalImc / $stats['avec_imc'], 1);
         }
 
-        // Réinitialiser imc_min si aucune fiche avec IMC
         if ($stats['avec_imc'] == 0) {
             $stats['imc_min'] = 0;
         }
 
-        // Top patients
         usort($patientCounts, function($a, $b) {
             return $b['count'] <=> $a['count'];
         });
         $stats['top_patients'] = array_slice($patientCounts, 0, 5);
 
-        // Formatage des créations par mois
         $creationsParMois = [];
         foreach ($stats['creations_par_mois'] as $mois => $count) {
             $creationsParMois[] = [
@@ -1334,7 +1989,6 @@ class AdminController extends AbstractController
         }
         $stats['creations_par_mois'] = $creationsParMois;
 
-        // Calcul des pourcentages
         if ($totalFiches > 0) {
             $stats['pourcentage_actives'] = round($stats['actives'] / $totalFiches * 100, 1);
             $stats['pourcentage_inactives'] = round($stats['inactives'] / $totalFiches * 100, 1);
@@ -1361,61 +2015,48 @@ class AdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        // Récupération de la période
         $period = $request->query->get('period', 'month');
         $startDate = $request->query->get('start_date');
         $endDate = $request->query->get('end_date');
 
-        // Calcul des dates selon la période
         $dateRanges = $this->getDateRangeForPeriod($period, $startDate, $endDate);
         
-        // Récupération des rendez-vous pour la période
         $appointments = $rdvRepo->findByDateRange($dateRanges['start'], $dateRanges['end']);
         
-        // Rendez-vous d'aujourd'hui
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
         $tomorrow = (clone $today)->modify('+1 day');
         $todayAppointments = $rdvRepo->findByDateRange($today, $tomorrow);
 
-        // Rendez-vous de la semaine
         $weekStart = $this->getWeekStart();
         $weekEnd = $this->getWeekEnd();
         $weekAppointments = $rdvRepo->findByDateRange($weekStart, $weekEnd);
 
-        // Rendez-vous du mois
         $monthStart = $this->getMonthStart();
         $monthEnd = $this->getMonthEnd();
         $monthAppointments = $rdvRepo->findByDateRange($monthStart, $monthEnd);
 
-        // Statistiques simples
         $stats = [
-            // Totaux
             'total' => count($appointments),
             'total_global' => $rdvRepo->count([]),
             
-            // Par statut
-            'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+            'confirmes' => $this->countByStatus($appointments, 'ConfirmÃƒÂ©'),
             'en_attente' => $this->countByStatus($appointments, 'En attente'),
-            'annules' => $this->countByStatus($appointments, 'Annulé'),
-            'termines' => $this->countByStatus($appointments, 'Terminé'),
+            'annules' => $this->countByStatus($appointments, 'AnnulÃƒÂ©'),
+            'termines' => $this->countByStatus($appointments, 'TerminÃƒÂ©'),
             
-            // Périodes
             'aujourdhui' => count($todayAppointments),
             'restants_aujourdhui' => $this->countRemainingToday($todayAppointments),
             'semaine' => count($weekAppointments),
             'mois' => count($monthAppointments),
             
-            // Pourcentages (seront calculés après)
             'pourcentage_confirmes' => 0,
             'pourcentage_attente' => 0,
             'pourcentage_termines' => 0,
             'taux_annulation' => 0,
             
-            // Médecins
             'top_medecins' => $this->getTopMedecinsSimple($appointments),
             
-            // Répartitions
             'creneaux_horaires' => $this->getHourlyDistribution($appointments),
             'lundi' => 0,
             'mardi' => 0,
@@ -1427,18 +2068,15 @@ class AdminController extends AbstractController
             'max_jour' => 1,
             'max_creneau' => 1,
             
-            // Délais
             'delai_moyen' => $this->calculateAverageDelay($appointments),
             'delai_min' => $this->calculateMinDelay($appointments),
             'delai_max' => $this->calculateMaxDelay($appointments),
             
-            // Taux
             'taux_presence' => $this->calculatePresenceRate($appointments),
             'taux_absence' => 0,
             'taux_occupation' => $this->calculateOccupationRate($appointments),
             'evolution_total' => 0,
             
-            // Divers
             'duree_moyenne' => 30,
             'periode_actuelle' => $this->getPeriodLabel($period),
             'moyenne_journaliere' => $this->calculateDailyAverage($appointments, $dateRanges),
@@ -1447,14 +2085,12 @@ class AdminController extends AbstractController
             'evolution_data' => $this->generateEvolutionData($appointments, $dateRanges),
         ];
 
-        // Remplir les statistiques par jour
         $dailyDist = $this->getDailyDistribution($appointments);
         foreach ($dailyDist as $jour => $count) {
             $stats[strtolower($jour)] = $count;
         }
         $stats['max_jour'] = !empty($dailyDist) ? max($dailyDist) : 1;
 
-        // Remplir les créneaux horaires
         $hourlyDist = $this->getHourlyDistribution($appointments);
         $creneaux = [];
         foreach ($hourlyDist as $heure => $count) {
@@ -1463,7 +2099,6 @@ class AdminController extends AbstractController
         $stats['creneaux_horaires'] = $creneaux;
         $stats['max_creneau'] = !empty($hourlyDist) ? max($hourlyDist) : 1;
 
-        // Calcul des pourcentages
         if ($stats['total'] > 0) {
             $stats['pourcentage_confirmes'] = round($stats['confirmes'] / $stats['total'] * 100, 1);
             $stats['pourcentage_attente'] = round($stats['en_attente'] / $stats['total'] * 100, 1);
@@ -1471,7 +2106,6 @@ class AdminController extends AbstractController
             $stats['taux_annulation'] = round($stats['annules'] / $stats['total'] * 100, 1);
         }
 
-        // Calcul du taux d'absence
         $stats['taux_absence'] = 100 - $stats['taux_presence'];
 
         return $this->render('admin/statistics/appointments_stats.html.twig', [
@@ -1498,10 +2132,10 @@ class AdminController extends AbstractController
         return $this->json([
             'total' => count($appointments),
             'by_status' => [
-                'confirmes' => $this->countByStatus($appointments, 'Confirmé'),
+                'confirmes' => $this->countByStatus($appointments, 'ConfirmÃƒÂ©'),
                 'en_attente' => $this->countByStatus($appointments, 'En attente'),
-                'annules' => $this->countByStatus($appointments, 'Annulé'),
-                'termines' => $this->countByStatus($appointments, 'Terminé'),
+                'annules' => $this->countByStatus($appointments, 'AnnulÃƒÂ©'),
+                'termines' => $this->countByStatus($appointments, 'TerminÃƒÂ©'),
             ],
             'evolution' => [
                 'labels' => $this->generateEvolutionLabels($dateRanges),
@@ -1510,7 +2144,640 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // ==================== MÉTHODES UTILITAIRES POUR STATISTIQUES ====================
+    // ==================== ROUTES POUR LES RENDEZ-VOUS ====================
+
+    #[Route('/users/{id}/appointments', name: 'user_appointments', requirements: ['id' => '\d+'])]
+    public function userAppointments(int $id, RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $user = $this->userRepo->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvÃƒÂ©');
+        }
+
+        if ($user instanceof Patient) {
+            $appointments = $rdvRepo->findBy(['patient' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+        } elseif ($user instanceof Medecin) {
+            $appointments = $rdvRepo->findBy(['medecin' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+        } else {
+            $appointments = [];
+        }
+
+        return $this->render('admin/user_appointments.html.twig', [
+            'user' => $user,
+            'appointments' => $appointments,
+        ]);
+    }
+
+    #[Route('/appointments/all', name: 'all_appointments')]
+    public function allAppointments(RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
+
+        return $this->render('admin/all_appointments.html.twig', [
+            'appointments' => $appointments,
+        ]);
+    }
+
+    #[Route('/appointments/{id}/update-status', name: 'update_appointment_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function updateAppointmentStatus(Request $request, int $id, RendezVousRepository $rdvRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointment = $rdvRepo->find($id);
+        if (!$appointment) {
+            $this->addFlash('error', 'Rendez-vous non trouvÃƒÂ©');
+            return $this->redirectToRoute('admin_all_appointments');
+        }
+
+        $token = (string) (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('update-appointment-status' . $appointment->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
+        }
+
+        $newStatus = $request->request->get('status');
+        $appointment->setStatut($newStatus);
+        
+        if ($newStatus === 'confirmÃƒÂ©') {
+            $appointment->setDateValidation(new \DateTime());
+        }
+
+        $this->em->flush();
+
+        $this->addFlash('success', 'Statut du rendez-vous mis ÃƒÂ  jour avec succÃƒÂ¨s');
+        return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
+    }
+
+    // ==================== ROUTES POUR LES FICHES MÃƒâ€°DICALES ====================
+
+    #[Route('/medical-records/all', name: 'all_medical_records')]
+    public function allMedicalRecords(FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $records = $ficheRepo->findBy([], ['creeLe' => 'DESC']);
+
+        return $this->render('admin/all_medical_records.html.twig', [
+            'records' => $records,
+        ]);
+    }
+
+    #[Route('/medical-records/{id}', name: 'view_medical_record', requirements: ['id' => '\d+'])]
+    public function viewMedicalRecord(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche mÃƒÂ©dicale non trouvÃƒÂ©e');
+        }
+
+        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
+            $record->calculerImc();
+        }
+
+        return $this->render('admin/view_medical_record.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    #[Route('/medical-records/{id}/edit', name: 'edit_medical_record', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function editMedicalRecord(Request $request, int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche mÃƒÂ©dicale non trouvÃƒÂ©e');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = (string) (string) $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('edit-medical-record' . $record->getId(), $token)) {
+                $this->addFlash('error', 'Jeton CSRF invalide');
+                return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            
+            $record->setTaille($data->get('taille'));
+            $record->setPoids($data->get('poids'));
+            $record->setAntecedents($data->get('antecedents'));
+            $record->setAllergies($data->get('allergies'));
+            $record->setTraitementEnCours($data->get('traitement_en_cours'));
+            $record->setDiagnostic($data->get('diagnostic'));
+            $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+            $record->setObservations($data->get('observations'));
+            
+            $record->calculerImc();
+
+            $this->em->flush();
+
+            $this->addFlash('success', 'Fiche mÃƒÂ©dicale mise ÃƒÂ  jour avec succÃƒÂ¨s');
+            return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
+        }
+
+        return $this->render('admin/edit_medical_record.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    #[Route('/patients/{patientId}/add-medical-record', name: 'add_medical_record', methods: ['POST'], requirements: ['patientId' => '\d+'])]
+    public function addMedicalRecord(Request $request, int $patientId): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patient = $this->userRepo->find($patientId);
+        if (!$patient || !$patient instanceof Patient) {
+            $this->addFlash('error', 'Patient non trouvÃƒÂ©');
+            return $this->redirectToRoute('admin_index');
+        }
+
+        $token = (string) (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('add-medical-record' . $patient->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_index');
+        }
+
+        $data = $request->request;
+        
+        $record = new FicheMedicale();
+        $record->setPatient($patient);
+        $record->setTaille($data->get('taille'));
+        $record->setPoids($data->get('poids'));
+        $record->setAntecedents($data->get('antecedents'));
+        $record->setAllergies($data->get('allergies'));
+        $record->setTraitementEnCours($data->get('traitement_en_cours'));
+        $record->setDiagnostic($data->get('diagnostic'));
+        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+        $record->setObservations($data->get('observations'));
+        $record->setStatut('actif');
+        
+        $record->calculerImc();
+
+        $this->em->persist($record);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Fiche mÃƒÂ©dicale ajoutÃƒÂ©e avec succÃƒÂ¨s');
+        return $this->redirectToRoute('admin_patient_medical_records', ['id' => $patientId]);
+    }
+
+    #[Route('/appointments/{appointmentId}/add-medical-record', name: 'add_medical_record_from_appointment', methods: ['POST'], requirements: ['appointmentId' => '\d+'])]
+    public function addMedicalRecordFromAppointment(
+        Request $request, 
+        int $appointmentId,
+        RendezVousRepository $rdvRepo
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $appointment = $rdvRepo->find($appointmentId);
+        if (!$appointment) {
+            $this->addFlash('error', 'Rendez-vous non trouvÃƒÂ©');
+            return $this->redirectToRoute('admin_all_appointments');
+        }
+
+        $token = (string) (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('add-medical-record-appointment' . $appointment->getId(), $token)) {
+            $this->addFlash('error', 'Jeton CSRF invalide');
+            return $this->redirectToRoute('admin_view_appointment', ['id' => $appointmentId]);
+        }
+
+        if ($appointment->getFicheMedicale()) {
+            $this->addFlash('warning', 'Ce rendez-vous a dÃƒÂ©jÃƒÂ  une fiche mÃƒÂ©dicale');
+            return $this->redirectToRoute('admin_view_medical_record', ['id' => $appointment->getFicheMedicale()->getId()]);
+        }
+
+        $data = $request->request;
+        
+        $record = new FicheMedicale();
+        $record->setPatient($appointment->getPatient());
+        $record->setRendezVous($appointment);
+        $record->setTaille($data->get('taille'));
+        $record->setPoids($data->get('poids'));
+        $record->setDiagnostic($data->get('diagnostic'));
+        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
+        $record->setObservations($data->get('observations'));
+        $record->setStatut('actif');
+        
+        $record->calculerImc();
+
+        $appointment->setFicheMedicale($record);
+
+        $this->em->persist($record);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Fiche mÃƒÂ©dicale crÃƒÂ©ÃƒÂ©e et liÃƒÂ©e au rendez-vous avec succÃƒÂ¨s');
+        return $this->redirectToRoute('admin_view_medical_record', ['id' => $record->getId()]);
+    }
+
+    #[Route('/medical-records/{id}/export-pdf', name: 'export_medical_record_pdf', requirements: ['id' => '\d+'])]
+    public function exportMedicalRecordPdf(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $record = $ficheRepo->find($id);
+        if (!$record) {
+            throw $this->createNotFoundException('Fiche mÃƒÂ©dicale non trouvÃƒÂ©e');
+        }
+
+        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
+            $record->calculerImc();
+        }
+
+        return $this->render('admin/medical_record_pdf.html.twig', [
+            'record' => $record,
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES PATIENTS ====================
+
+    #[Route('/patients/{id}/medical-records', name: 'patient_medical_records', requirements: ['id' => '\d+'])]
+    public function patientMedicalRecords(int $id, FicheMedicaleRepository $ficheRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patient = $this->userRepo->find($id);
+        if (!$patient || !$patient instanceof Patient) {
+            throw $this->createNotFoundException('Patient non trouvÃƒÂ©');
+        }
+
+        $records = $ficheRepo->findBy(['patient' => $patient], ['creeLe' => 'DESC']);
+
+        return $this->render('admin/patient_medical_records.html.twig', [
+            'patient' => $patient,
+            'records' => $records,
+        ]);
+    }
+
+    #[Route('/patients', name: 'patients')]
+    public function patients(PatientRepository $patientRepo): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $patients = $patientRepo->findAll();
+
+        return $this->render('admin/patients.html.twig', [
+            'patients' => $patients,
+        ]);
+    }
+
+    // ==================== ROUTES POUR LES UTILISATEURS ====================
+
+    #[Route('/users', name: 'users')]
+    public function users(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $role = $request->query->get('role');
+        $search = $request->query->get('search');
+        
+        if ($search || $role) {
+            $utilisateurs = $this->userRepo->search($search, $role);
+        } else {
+            $utilisateurs = $this->userRepo->findAll();
+        }
+
+        return $this->render('admin/users.html.twig', [
+            'utilisateurs' => $utilisateurs,
+            'selectedRole' => $role,
+            'searchQuery' => $search
+        ]);
+    }
+
+    #[Route('/users/search', name: 'users_search_ajax', methods: ['GET'])]
+    public function searchAjax(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $role = $request->query->get('role');
+        $search = $request->query->get('search');
+        
+        if ($search || $role) {
+            $utilisateurs = $this->userRepo->search($search, $role);
+        } else {
+            $utilisateurs = $this->userRepo->findAll();
+        }
+        
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('admin/_user_table_rows.html.twig', [
+                'utilisateurs' => $utilisateurs
+            ]);
+        }
+        
+        return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/new', name: 'user_new')]
+    public function new(Request $request, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        if ($request->isMethod('POST')) {
+            $token = (string) (string) $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('user_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_user_new');
+            }
+
+            $data = $request->request;
+
+            $role = $data->get('role');
+            switch ($role) {
+                case 'medecin':
+                    $user = new Medecin();
+                    break;
+                case 'patient':
+                    $user = new Patient();
+                    break;
+                case 'responsable_labo':
+                    $user = new ResponsableLaboratoire();
+                    break;
+                case 'responsable_para':
+                    $user = new ResponsableParapharmacie();
+                    break;
+                default:
+                    $user = new Utilisateur();
+            }
+
+            $user->setNom($data->get('nom'));
+            $user->setPrenom($data->get('prenom'));
+            $user->setEmail($data->get('email'));
+            $user->setRole($role ?: $user->getRole());
+
+            if ($tel = $data->get('telephone')) {
+                $user->setTelephone($tel);
+            }
+            if ($dn = $data->get('dateNaissance')) {
+                try {
+                    $user->setDateNaissance(new \DateTime($dn));
+                } catch (\Exception $e) {
+                }
+            }
+            $user->setEstActif($data->get('estActif') ? true : false);
+
+            $plain = $data->get('password');
+            if ($plain) {
+                $hashed = $passwordHasher->hashPassword($user, $plain);
+                $user->setPassword($hashed);
+            }
+
+            /** @var UploadedFile $photo */
+            $photo = $request->files->get('photoUpload');
+            if ($photo instanceof UploadedFile) {
+                $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                }
+                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
+                $photo->move($uploadsDir, $filename);
+                $user->setPhotoProfil('/uploads/profiles/' . $filename);
+            } elseif ($data->get('photoProfil')) {
+                $user->setPhotoProfil($data->get('photoProfil'));
+            }
+
+            if ($user instanceof Medecin) {
+                $user->setSpecialite($data->get('specialite'));
+                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
+                $user->setGrade($data->get('grade'));
+                $user->setAdresseCabinet($data->get('adresseCabinet'));
+                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
+                $user->setNomEtablissement($data->get('nomEtablissement'));
+                $user->setNumeroUrgence($data->get('numeroUrgence'));
+                $user->setDisponibilite($data->get('disponibilite'));
+
+                $doc = $request->files->get('documentPdf');
+                if ($doc instanceof UploadedFile) {
+                    $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    if (!is_dir($uploadsDir)) {
+                        @mkdir($uploadsDir, 0777, true);
+                    } 
+                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
+                    $doc->move($uploadsDir, $docName);
+                    $user->setDocumentPdf('/uploads/docs/' . $docName);
+                }
+            }
+
+            if ($user instanceof Patient) {
+                $user->setGroupeSanguin($this->toNullableString($data->get('groupeSanguin')));
+                $user->setContactUrgence($this->toNullableString($data->get('contactUrgence')));
+                $user->setSexe($this->toNullableString($data->get('sexe')));
+            }
+
+            if ($user instanceof ResponsableLaboratoire) {
+                $laboratoireId = $data->get('laboratoire_id');
+                if ($laboratoireId) {
+                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
+                    $user->setLaboratoire($laboratoire);
+                }
+            }
+
+            if ($user instanceof ResponsableParapharmacie) {
+                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
+            }
+
+            $this->em->persist($user);
+            $this->em->flush();
+
+            $this->addFlash('success', 'Utilisateur crÃƒÂ©ÃƒÂ©.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
+
+        return $this->render('admin/user_form.html.twig', [
+            'user' => null,
+            'laboratoires' => $laboratoires,
+        ]);
+    }
+
+    #[Route('/users/{id}/edit', name: 'user_edit', requirements: ['id' => '\d+'])]
+    public function edit(Request $request, int $id, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $user = $this->userRepo->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur introuvable');
+        }
+
+        if ($request->isMethod('POST')) {
+            $token = (string) (string) $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('user_form', $token)) {
+                $this->addFlash('danger', 'Jeton CSRF invalide.');
+                return $this->redirectToRoute('admin_user_edit', ['id' => $id]);
+            }
+
+            $data = $request->request;
+            $user->setNom($data->get('nom'));
+            $user->setPrenom($data->get('prenom'));
+            $user->setEmail($data->get('email'));
+            $user->setRole($data->get('role'));
+
+            if ($tel = $data->get('telephone')) {
+                $user->setTelephone($tel);
+            } else {
+                $user->setTelephone(null);
+            }
+
+            if ($dn = $data->get('dateNaissance')) {
+                try {
+                    $user->setDateNaissance(new \DateTime($dn));
+                } catch (\Exception $e) {
+                }
+            } else {
+                $user->setDateNaissance(null);
+            }
+
+            $user->setEstActif($data->get('estActif') ? true : false);
+
+            $plain = $data->get('password');
+            if ($plain) {
+                $user->setPassword($passwordHasher->hashPassword($user, $plain));
+            }
+
+            /** @var UploadedFile $photo */
+            $photo = $request->files->get('photoUpload');
+            if ($photo instanceof UploadedFile) {
+                $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0777, true);
+                } 
+                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
+                $photo->move($uploadsDir, $filename);
+                $user->setPhotoProfil('/uploads/profiles/' . $filename);
+            } elseif ($data->get('photoProfil')) {
+                $user->setPhotoProfil($data->get('photoProfil'));
+            }
+
+            if ($user instanceof Medecin) {
+                $user->setSpecialite($data->get('specialite'));
+                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
+                $user->setGrade($data->get('grade'));
+                $user->setAdresseCabinet($data->get('adresseCabinet'));
+                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
+                $user->setNomEtablissement($data->get('nomEtablissement'));
+                $user->setNumeroUrgence($data->get('numeroUrgence'));
+                $user->setDisponibilite($data->get('disponibilite'));
+
+                $doc = $request->files->get('documentPdf');
+                if ($doc instanceof UploadedFile) {
+                    $uploadsDir = (string) $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
+                    if (!is_dir($uploadsDir)) {
+                        @mkdir($uploadsDir, 0777, true);
+                    } 
+                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
+                    $doc->move($uploadsDir, $docName);
+                    $user->setDocumentPdf('/uploads/docs/' . $docName);
+                }
+            }
+
+            if ($user instanceof Patient) {
+                $user->setGroupeSanguin($this->toNullableString($data->get('groupeSanguin')));
+                $user->setContactUrgence($this->toNullableString($data->get('contactUrgence')));
+                $user->setSexe($this->toNullableString($data->get('sexe')));
+            }
+
+            if ($user instanceof ResponsableLaboratoire) {
+                $laboratoireId = $data->get('laboratoire_id');
+                if ($laboratoireId) {
+                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
+                    $user->setLaboratoire($laboratoire);
+                } else {
+                    $user->setLaboratoire(null);
+                }
+            }
+
+            if ($user instanceof ResponsableParapharmacie) {
+                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
+            }
+
+            $this->em->flush();
+            $this->addFlash('success', 'Utilisateur mis ÃƒÂ  jour.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
+
+        return $this->render('admin/user_form.html.twig', [
+            'user' => $user,
+            'laboratoires' => $laboratoires,
+        ]);
+    }
+
+    #[Route('/users/{id}/delete', name: 'user_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(Request $request, int $id): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $user = $this->userRepo->find($id);
+        if (!$user) {
+            $this->addFlash('danger', 'Utilisateur introuvable.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        if ($user === $this->getUser()) {
+            $this->addFlash('danger', 'Vous ne pouvez pas supprimer votre propre compte.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $token = (string) (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete-user' . $user->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $this->em->remove($user);
+        $this->em->flush();
+
+        $this->addFlash('success', 'Utilisateur supprimÃƒÂ©.');
+        return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/toggle-status', name: 'user_toggle_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleStatus(Request $request, int $id): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $user = $this->userRepo->find($id);
+        if (!$user) {
+            $this->addFlash('danger', 'Utilisateur introuvable.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        if ($user === $this->getUser()) {
+            $this->addFlash('danger', 'Vous ne pouvez pas dÃƒÂ©sactiver votre propre compte.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $token = (string) (string) $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('toggle-user' . $user->getId(), $token)) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        $user->setEstActif(!$user->isEstActif());
+        $this->em->flush();
+
+        $status = $user->isEstActif() ? 'activÃƒÂ©' : 'dÃƒÂ©sactivÃƒÂ©';
+        $this->addFlash('success', "Utilisateur $status.");
+        return $this->redirectToRoute('admin_users');
+    }
+
+    // ==================== MÃƒâ€°THODES UTILITAIRES ====================
+
+    private function isProblemAnswer(string $type, int $answer): bool
+    {
+        return match ($type) {
+            'likert_0_4' => $answer >= 3,
+            'likert_1_5' => $answer >= 4,
+            'yes_no' => $answer === 1,
+            default => false,
+        };
+    }
 
     private function getDateRangeForPeriod(string $period, ?string $startDate = null, ?string $endDate = null): array
     {
@@ -1607,9 +2874,9 @@ class AdminController extends AbstractController
             case 'today': return 'Aujourd\'hui';
             case 'week': return 'Cette semaine';
             case 'month': return 'Ce mois';
-            case 'year': return 'Cette année';
-            case 'custom': return 'Période personnalisée';
-            default: return 'Cette période';
+            case 'year': return 'Cette annÃƒÂ©e';
+            case 'custom': return 'PÃƒÂ©riode personnalisÃƒÂ©e';
+            default: return 'Cette pÃƒÂ©riode';
         }
     }
 
@@ -1620,10 +2887,10 @@ class AdminController extends AbstractController
 
         foreach ($appointments as $appointment) {
             $statut = $appointment->getStatut();
-            if ($statut === 'Confirmé' || $statut === 'Terminé') {
+            if ($statut === 'ConfirmÃƒÂ©' || $statut === 'TerminÃƒÂ©') {
                 $present++;
                 $total++;
-            } elseif ($statut === 'Annulé') {
+            } elseif ($statut === 'AnnulÃƒÂ©') {
                 $total++;
             }
         }
@@ -1680,7 +2947,7 @@ class AdminController extends AbstractController
     {
         if (empty($appointments)) return 0;
         $totalMinutes = count($appointments) * 30;
-        $capaciteMax = 480 * 30; // 8h par jour * 30 jours
+        $capaciteMax = 480 * 30;
         return $capaciteMax > 0 ? min(100, round(($totalMinutes / $capaciteMax) * 100)) : 0;
     }
 
@@ -1748,7 +3015,7 @@ class AdminController extends AbstractController
                         'id' => $medecin->getId(),
                         'nom' => $medecin->getNom(),
                         'prenom' => $medecin->getPrenom(),
-                        'specialite' => $medecin->getSpecialite() ?? 'Généraliste',
+                        'specialite' => $medecin->getSpecialite() ?? 'GÃƒÂ©nÃƒÂ©raliste',
                         'count' => 0
                     ];
                 }
@@ -1776,13 +3043,13 @@ class AdminController extends AbstractController
 
     private function getImcStatistics(FicheMedicaleRepository $ficheRepo): array
     {
-        $stats = ['Maigreur' => 0, 'Normal' => 0, 'Surpoids' => 0, 'Obésité' => 0];
+        $stats = ['Maigreur' => 0, 'Normal' => 0, 'Surpoids' => 0, 'ObÃƒÂ©sitÃƒÂ©' => 0];
         foreach ($ficheRepo->findAll() as $fiche) {
             if ($imc = $fiche->getImc()) {
                 if ($imc < 18.5) $stats['Maigreur']++;
                 elseif ($imc < 25) $stats['Normal']++;
                 elseif ($imc < 30) $stats['Surpoids']++;
-                else $stats['Obésité']++;
+                else $stats['ObÃƒÂ©sitÃƒÂ©']++;
             }
         }
         return $stats;
@@ -1903,649 +3170,19 @@ class AdminController extends AbstractController
         return array_values($data);
     }
 
-    // ==================== ROUTES POUR LES RENDEZ-VOUS ====================
-
-    #[Route('/users/{id}/appointments', name: 'user_appointments', requirements: ['id' => '\d+'])]
-    public function userAppointments(int $id, RendezVousRepository $rdvRepo): Response
+    private function toNullableString(mixed $value): ?string
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $user = $this->userRepo->find($id);
-        if (!$user) {
-            throw $this->createNotFoundException('Utilisateur non trouvé');
+        if (!is_scalar($value) && $value !== null) {
+            return null;
         }
 
-        if ($user instanceof Patient) {
-            $appointments = $rdvRepo->findBy(['patient' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
-        } elseif ($user instanceof Medecin) {
-            $appointments = $rdvRepo->findBy(['medecin' => $user], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
-        } else {
-            $appointments = [];
-        }
-
-        return $this->render('admin/user_appointments.html.twig', [
-            'user' => $user,
-            'appointments' => $appointments,
-        ]);
-    }
-
-    #[Route('/appointments/all', name: 'all_appointments')]
-    public function allAppointments(RendezVousRepository $rdvRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $appointments = $rdvRepo->findBy([], ['dateRdv' => 'DESC', 'heureRdv' => 'DESC']);
-
-        return $this->render('admin/all_appointments.html.twig', [
-            'appointments' => $appointments,
-        ]);
-    }
-
-    #[Route('/appointments/{id}/update-status', name: 'update_appointment_status', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function updateAppointmentStatus(Request $request, int $id, RendezVousRepository $rdvRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $appointment = $rdvRepo->find($id);
-        if (!$appointment) {
-            $this->addFlash('error', 'Rendez-vous non trouvé');
-            return $this->redirectToRoute('admin_all_appointments');
-        }
-
-        $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('update-appointment-status' . $appointment->getId(), $token)) {
-            $this->addFlash('error', 'Jeton CSRF invalide');
-            return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
-        }
-
-        $newStatus = $request->request->get('status');
-        $appointment->setStatut($newStatus);
-        
-        if ($newStatus === 'confirmé') {
-            $appointment->setDateValidation(new \DateTime());
-        }
-
-        $this->em->flush();
-
-        $this->addFlash('success', 'Statut du rendez-vous mis à jour avec succès');
-        return $this->redirectToRoute('admin_view_appointment', ['id' => $id]);
-    }
-
-    // ==================== ROUTES POUR LES FICHES MÉDICALES ====================
-
-    #[Route('/medical-records/all', name: 'all_medical_records')]
-    public function allMedicalRecords(FicheMedicaleRepository $ficheRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $records = $ficheRepo->findBy([], ['creeLe' => 'DESC']);
-
-        return $this->render('admin/all_medical_records.html.twig', [
-            'records' => $records,
-        ]);
-    }
-
-    #[Route('/medical-records/{id}', name: 'view_medical_record', requirements: ['id' => '\d+'])]
-    public function viewMedicalRecord(int $id, FicheMedicaleRepository $ficheRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $record = $ficheRepo->find($id);
-        if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
-        }
-
-        // Recalculer l'IMC si nécessaire
-        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
-            $record->calculerImc();
-        }
-
-        return $this->render('admin/view_medical_record.html.twig', [
-            'record' => $record,
-        ]);
-    }
-
-    #[Route('/medical-records/{id}/edit', name: 'edit_medical_record', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function editMedicalRecord(Request $request, int $id, FicheMedicaleRepository $ficheRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $record = $ficheRepo->find($id);
-        if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
-        }
-
-        if ($request->isMethod('POST')) {
-            $token = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('edit-medical-record' . $record->getId(), $token)) {
-                $this->addFlash('error', 'Jeton CSRF invalide');
-                return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
-            }
-
-            $data = $request->request;
-            
-            $record->setTaille($data->get('taille'));
-            $record->setPoids($data->get('poids'));
-            $record->setAntecedents($data->get('antecedents'));
-            $record->setAllergies($data->get('allergies'));
-            $record->setTraitementEnCours($data->get('traitement_en_cours'));
-            $record->setDiagnostic($data->get('diagnostic'));
-            $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-            $record->setObservations($data->get('observations'));
-            
-            // Recalculer l'IMC
-            $record->calculerImc();
-
-            $this->em->flush();
-
-            $this->addFlash('success', 'Fiche médicale mise à jour avec succès');
-            return $this->redirectToRoute('admin_view_medical_record', ['id' => $id]);
-        }
-
-        return $this->render('admin/edit_medical_record.html.twig', [
-            'record' => $record,
-        ]);
-    }
-
-    #[Route('/patients/{patientId}/add-medical-record', name: 'add_medical_record', methods: ['POST'], requirements: ['patientId' => '\d+'])]
-    public function addMedicalRecord(Request $request, int $patientId): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $patient = $this->userRepo->find($patientId);
-        if (!$patient || !$patient instanceof Patient) {
-            $this->addFlash('error', 'Patient non trouvé');
-            return $this->redirectToRoute('admin_index');
-        }
-
-        $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('add-medical-record' . $patient->getId(), $token)) {
-            $this->addFlash('error', 'Jeton CSRF invalide');
-            return $this->redirectToRoute('admin_index');
-        }
-
-        $data = $request->request;
-        
-        $record = new FicheMedicale();
-        $record->setPatient($patient);
-        $record->setTaille($data->get('taille'));
-        $record->setPoids($data->get('poids'));
-        $record->setAntecedents($data->get('antecedents'));
-        $record->setAllergies($data->get('allergies'));
-        $record->setTraitementEnCours($data->get('traitement_en_cours'));
-        $record->setDiagnostic($data->get('diagnostic'));
-        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-        $record->setObservations($data->get('observations'));
-        $record->setStatut('actif');
-        
-        // Calculer l'IMC
-        $record->calculerImc();
-
-        $this->em->persist($record);
-        $this->em->flush();
-
-        $this->addFlash('success', 'Fiche médicale ajoutée avec succès');
-        return $this->redirectToRoute('admin_patient_medical_records', ['id' => $patientId]);
-    }
-
-    #[Route('/appointments/{appointmentId}/add-medical-record', name: 'add_medical_record_from_appointment', methods: ['POST'], requirements: ['appointmentId' => '\d+'])]
-    public function addMedicalRecordFromAppointment(
-        Request $request, 
-        int $appointmentId,
-        RendezVousRepository $rdvRepo
-    ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $appointment = $rdvRepo->find($appointmentId);
-        if (!$appointment) {
-            $this->addFlash('error', 'Rendez-vous non trouvé');
-            return $this->redirectToRoute('admin_all_appointments');
-        }
-
-        $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('add-medical-record-appointment' . $appointment->getId(), $token)) {
-            $this->addFlash('error', 'Jeton CSRF invalide');
-            return $this->redirectToRoute('admin_view_appointment', ['id' => $appointmentId]);
-        }
-
-        // Vérifier si une fiche existe déjà
-        if ($appointment->getFicheMedicale()) {
-            $this->addFlash('warning', 'Ce rendez-vous a déjà une fiche médicale');
-            return $this->redirectToRoute('admin_view_medical_record', ['id' => $appointment->getFicheMedicale()->getId()]);
-        }
-
-        $data = $request->request;
-        
-        $record = new FicheMedicale();
-        $record->setPatient($appointment->getPatient());
-        $record->setRendezVous($appointment);
-        $record->setTaille($data->get('taille'));
-        $record->setPoids($data->get('poids'));
-        $record->setDiagnostic($data->get('diagnostic'));
-        $record->setTraitementPrescrit($data->get('traitement_prescrit'));
-        $record->setObservations($data->get('observations'));
-        $record->setStatut('actif');
-        
-        // Calculer l'IMC
-        $record->calculerImc();
-
-        // Lier la fiche au rendez-vous
-        $appointment->setFicheMedicale($record);
-
-        $this->em->persist($record);
-        $this->em->flush();
-
-        $this->addFlash('success', 'Fiche médicale créée et liée au rendez-vous avec succès');
-        return $this->redirectToRoute('admin_view_medical_record', ['id' => $record->getId()]);
-    }
-
-    #[Route('/medical-records/{id}/export-pdf', name: 'export_medical_record_pdf', requirements: ['id' => '\d+'])]
-    public function exportMedicalRecordPdf(int $id, FicheMedicaleRepository $ficheRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $record = $ficheRepo->find($id);
-        if (!$record) {
-            throw $this->createNotFoundException('Fiche médicale non trouvée');
-        }
-
-        // Recalculer l'IMC si nécessaire
-        if (!$record->getImc() && $record->getTaille() && $record->getPoids()) {
-            $record->calculerImc();
-        }
-
-        return $this->render('admin/medical_record_pdf.html.twig', [
-            'record' => $record,
-        ]);
-    }
-
-    // ==================== ROUTES POUR LES PATIENTS ====================
-
-    #[Route('/patients/{id}/medical-records', name: 'patient_medical_records', requirements: ['id' => '\d+'])]
-    public function patientMedicalRecords(int $id, FicheMedicaleRepository $ficheRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $patient = $this->userRepo->find($id);
-        if (!$patient || !$patient instanceof Patient) {
-            throw $this->createNotFoundException('Patient non trouvé');
-        }
-
-        $records = $ficheRepo->findBy(['patient' => $patient], ['creeLe' => 'DESC']);
-
-        return $this->render('admin/patient_medical_records.html.twig', [
-            'patient' => $patient,
-            'records' => $records,
-        ]);
-    }
-
-    #[Route('/patients', name: 'patients')]
-    public function patients(PatientRepository $patientRepo): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $patients = $patientRepo->findAll();
-
-        return $this->render('admin/patients.html.twig', [
-            'patients' => $patients,
-        ]);
-    }
-
-    // ==================== ROUTES POUR LES UTILISATEURS ====================
-
-    #[Route('/users', name: 'users')]
-    public function users(Request $request): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        $role = $request->query->get('role');
-        $search = $request->query->get('search');
-        
-        // Utilise la méthode de recherche
-        if ($search || $role) {
-            $utilisateurs = $this->userRepo->search($search, $role);
-        } else {
-            $utilisateurs = $this->userRepo->findAll();
-        }
-
-        return $this->render('admin/users.html.twig', [
-            'utilisateurs' => $utilisateurs,
-            'selectedRole' => $role,
-            'searchQuery' => $search
-        ]);
-    }
-
-    #[Route('/users/search', name: 'users_search_ajax', methods: ['GET'])]
-    public function searchAjax(Request $request): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $role = $request->query->get('role');
-        $search = $request->query->get('search');
-        
-        // Utilise la méthode de recherche
-        if ($search || $role) {
-            $utilisateurs = $this->userRepo->search($search, $role);
-        } else {
-            $utilisateurs = $this->userRepo->findAll();
-        }
-        
-        // Si c'est une requête AJAX, retourne seulement le tableau HTML
-        if ($request->isXmlHttpRequest()) {
-            return $this->render('admin/_user_table_rows.html.twig', [
-                'utilisateurs' => $utilisateurs
-            ]);
-        }
-        
-        // Sinon, redirige vers la page principale
-        return $this->redirectToRoute('admin_users');
-    }
-
-    #[Route('/users/new', name: 'user_new')]
-    public function new(Request $request, UserPasswordHasherInterface $passwordHasher): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        if ($request->isMethod('POST')) {
-            // Validate CSRF token
-            $token = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('user_form', $token)) {
-                $this->addFlash('danger', 'Jeton CSRF invalide.');
-                return $this->redirectToRoute('admin_user_new');
-            }
-
-            $data = $request->request;
-
-            // Instantiate correct subclass based on role
-            $role = $data->get('role');
-            switch ($role) {
-                case 'medecin':
-                    $user = new Medecin();
-                    break;
-                case 'patient':
-                    $user = new Patient();
-                    break;
-                case 'responsable_labo':
-                    $user = new ResponsableLaboratoire();
-                    break;
-                case 'responsable_para':
-                    $user = new ResponsableParapharmacie();
-                    break;
-                default:
-                    $user = new Utilisateur();
-            }
-
-            $user->setNom($data->get('nom'));
-            $user->setPrenom($data->get('prenom'));
-            $user->setEmail($data->get('email'));
-            $user->setRole($role ?: $user->getRole());
-
-            // basic extra fields
-            if ($tel = $data->get('telephone')) {
-                $user->setTelephone($tel);
-            }
-            if ($dn = $data->get('dateNaissance')) {
-                try {
-                    $user->setDateNaissance(new \DateTime($dn));
-                } catch (\Exception $e) {
-                }
-            }
-            $user->setEstActif($data->get('estActif') ? true : false);
-
-            // password
-            $plain = $data->get('password');
-            if ($plain) {
-                $hashed = $passwordHasher->hashPassword($user, $plain);
-                $user->setPassword($hashed);
-            }
-
-            // file uploads
-            /** @var UploadedFile $photo */
-            $photo = $request->files->get('photoUpload');
-            if ($photo instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
-                if (!is_dir($uploadsDir)) {
-                    @mkdir($uploadsDir, 0777, true);
-                }
-                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
-                $photo->move($uploadsDir, $filename);
-                $user->setPhotoProfil('/uploads/profiles/' . $filename);
-            } elseif ($data->get('photoProfil')) {
-                $user->setPhotoProfil($data->get('photoProfil'));
-            }
-
-            // role-specific fields
-            if ($user instanceof Medecin) {
-                $user->setSpecialite($data->get('specialite'));
-                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
-                $user->setGrade($data->get('grade'));
-                $user->setAdresseCabinet($data->get('adresseCabinet'));
-                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
-                $user->setNomEtablissement($data->get('nomEtablissement'));
-                $user->setNumeroUrgence($data->get('numeroUrgence'));
-                $user->setDisponibilite($data->get('disponibilite'));
-
-                $doc = $request->files->get('documentPdf');
-                if ($doc instanceof UploadedFile) {
-                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
-                    if (!is_dir($uploadsDir)) {
-                        @mkdir($uploadsDir, 0777, true);
-                    } 
-                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
-                    $doc->move($uploadsDir, $docName);
-                    $user->setDocumentPdf('/uploads/docs/' . $docName);
-                }
-            }
-
-            if ($user instanceof Patient) {
-                $user->setGroupeSanguin($data->get('groupeSanguin'));
-                $user->setContactUrgence($data->get('contactUrgence'));
-                $user->setSexe($data->get('sexe'));
-            }
-
-            if ($user instanceof ResponsableLaboratoire) {
-                $laboratoireId = $data->get('laboratoire_id');
-                if ($laboratoireId) {
-                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
-                    $user->setLaboratoire($laboratoire);
-                }
-            }
-
-            if ($user instanceof ResponsableParapharmacie) {
-                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
-            }
-
-            $this->em->persist($user);
-            $this->em->flush();
-
-            $this->addFlash('success', 'Utilisateur créé.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        // Récupérer les laboratoires pour le formulaire
-        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
-
-        return $this->render('admin/user_form.html.twig', [
-            'user' => null,
-            'laboratoires' => $laboratoires,
-        ]);
-    }
-
-    #[Route('/users/{id}/edit', name: 'user_edit', requirements: ['id' => '\d+'])]
-    public function edit(Request $request, int $id, UserPasswordHasherInterface $passwordHasher): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        $user = $this->userRepo->find($id);
-        if (!$user) {
-            throw $this->createNotFoundException('Utilisateur introuvable');
-        }
-
-        if ($request->isMethod('POST')) {
-            // Validate CSRF token
-            $token = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('user_form', $token)) {
-                $this->addFlash('danger', 'Jeton CSRF invalide.');
-                return $this->redirectToRoute('admin_user_edit', ['id' => $id]);
-            }
-
-            $data = $request->request;
-            $user->setNom($data->get('nom'));
-            $user->setPrenom($data->get('prenom'));
-            $user->setEmail($data->get('email'));
-            $user->setRole($data->get('role'));
-
-            if ($tel = $data->get('telephone')) {
-                $user->setTelephone($tel);
-            } else {
-                $user->setTelephone(null);
-            }
-
-            if ($dn = $data->get('dateNaissance')) {
-                try {
-                    $user->setDateNaissance(new \DateTime($dn));
-                } catch (\Exception $e) {
-                }
-            } else {
-                $user->setDateNaissance(null);
-            }
-
-            $user->setEstActif($data->get('estActif') ? true : false);
-
-            $plain = $data->get('password');
-            if ($plain) {
-                $user->setPassword($passwordHasher->hashPassword($user, $plain));
-            }
-
-            // file uploads
-            /** @var UploadedFile $photo */
-            $photo = $request->files->get('photoUpload');
-            if ($photo instanceof UploadedFile) {
-                $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
-                if (!is_dir($uploadsDir)) {
-                    @mkdir($uploadsDir, 0777, true);
-                } 
-                $filename = uniqid('profile_') . '.' . $photo->guessExtension();
-                $photo->move($uploadsDir, $filename);
-                $user->setPhotoProfil('/uploads/profiles/' . $filename);
-            } elseif ($data->get('photoProfil')) {
-                $user->setPhotoProfil($data->get('photoProfil'));
-            }
-
-            // role-specific fields
-            if ($user instanceof Medecin) {
-                $user->setSpecialite($data->get('specialite'));
-                $user->setAnneeExperience($data->get('anneeExperience') ? (int)$data->get('anneeExperience') : null);
-                $user->setGrade($data->get('grade'));
-                $user->setAdresseCabinet($data->get('adresseCabinet'));
-                $user->setTelephoneCabinet($data->get('telephoneCabinet'));
-                $user->setNomEtablissement($data->get('nomEtablissement'));
-                $user->setNumeroUrgence($data->get('numeroUrgence'));
-                $user->setDisponibilite($data->get('disponibilite'));
-
-                $doc = $request->files->get('documentPdf');
-                if ($doc instanceof UploadedFile) {
-                    $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/docs';
-                    if (!is_dir($uploadsDir)) {
-                        @mkdir($uploadsDir, 0777, true);
-                    } 
-                    $docName = uniqid('doc_') . '.' . $doc->guessExtension();
-                    $doc->move($uploadsDir, $docName);
-                    $user->setDocumentPdf('/uploads/docs/' . $docName);
-                }
-            }
-
-            if ($user instanceof Patient) {
-                $user->setGroupeSanguin($data->get('groupeSanguin'));
-                $user->setContactUrgence($data->get('contactUrgence'));
-                $user->setSexe($data->get('sexe'));
-            }
-
-            if ($user instanceof ResponsableLaboratoire) {
-                $laboratoireId = $data->get('laboratoire_id');
-                if ($laboratoireId) {
-                    $laboratoire = $this->em->getRepository(Laboratoire::class)->find($laboratoireId);
-                    $user->setLaboratoire($laboratoire);
-                } else {
-                    $user->setLaboratoire(null);
-                }
-            }
-
-            if ($user instanceof ResponsableParapharmacie) {
-                $user->setParapharmacieId($data->get('parapharmacieId') ? (int)$data->get('parapharmacieId') : null);
-            }
-
-            $this->em->flush();
-            $this->addFlash('success', 'Utilisateur mis à jour.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        // Récupérer les laboratoires pour le formulaire
-        $laboratoires = $this->em->getRepository(Laboratoire::class)->findBy(['disponible' => true], ['nom' => 'ASC']);
-
-        return $this->render('admin/user_form.html.twig', [
-            'user' => $user,
-            'laboratoires' => $laboratoires,
-        ]);
-    }
-
-    #[Route('/users/{id}/delete', name: 'user_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(Request $request, int $id): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        $user = $this->userRepo->find($id);
-        if (!$user) {
-            $this->addFlash('danger', 'Utilisateur introuvable.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        if ($user === $this->getUser()) {
-            $this->addFlash('danger', 'Vous ne pouvez pas supprimer votre propre compte.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('delete-user' . $user->getId(), $token)) {
-            $this->addFlash('danger', 'Jeton CSRF invalide.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        $this->em->remove($user);
-        $this->em->flush();
-
-        $this->addFlash('success', 'Utilisateur supprimé.');
-        return $this->redirectToRoute('admin_users');
-    }
-
-    #[Route('/users/{id}/toggle-status', name: 'user_toggle_status', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function toggleStatus(Request $request, int $id): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        $user = $this->userRepo->find($id);
-        if (!$user) {
-            $this->addFlash('danger', 'Utilisateur introuvable.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        if ($user === $this->getUser()) {
-            $this->addFlash('danger', 'Vous ne pouvez pas désactiver votre propre compte.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        $token = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('toggle-user' . $user->getId(), $token)) {
-            $this->addFlash('danger', 'Jeton CSRF invalide.');
-            return $this->redirectToRoute('admin_users');
-        }
-
-        // Toggle the status
-        $user->setEstActif(!$user->isEstActif());
-        $this->em->flush();
-
-        $status = $user->isEstActif() ? 'activé' : 'désactivé';
-        $this->addFlash('success', "Utilisateur $status.");
-        return $this->redirectToRoute('admin_users');
+        $normalized = trim((string) ($value ?? ''));
+        return $normalized === '' ? null : $normalized;
     }
 }
+
+
+
+
+
+
