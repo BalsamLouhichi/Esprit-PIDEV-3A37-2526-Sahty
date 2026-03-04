@@ -2,6 +2,7 @@
 
 ## Overview
 Sahty est une plateforme de sante qui centralise le parcours patient et les operations medicales (rendez-vous, analyses, resultats, suivi), avec une integration de services IA pour enrichir l'analyse et la recommandation.
+Ce projet a ete realise dans le cadre du programme PIDEV (3A) a **Esprit School of Engineering** pour l'annee academique 2025-2026.
 
 ## Features
 - Gestion des utilisateurs (patients, medecins, laboratoires, administration)
@@ -36,7 +37,8 @@ Sahty est une plateforme de sante qui centralise le parcours patient et les oper
 - Equipe projet Sahty
 
 ## Academic Context
-Projet realise dans un cadre academique pour la conception et le developpement d'une plateforme de sante intelligente combinant architecture web moderne et composants IA.
+Developed at **Esprit School of Engineering - Tunisia**
+PIDEV - 3A | 2025-2026
 
 ## Getting Started
 ```bash
