@@ -93,7 +93,8 @@ class RecommandationService
         $minScore = $reco->getMinScore();
         $maxScore = $reco->getMaxScore();
 
-        if ($minScore === null || $maxScore === null) {
+        // Legacy/default entity state: 0/0 means "no score constraint configured yet".
+        if ($minScore === 0 && $maxScore === 0) {
             return true;
         }
 

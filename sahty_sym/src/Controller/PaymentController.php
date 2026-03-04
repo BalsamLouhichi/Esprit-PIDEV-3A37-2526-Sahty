@@ -214,10 +214,10 @@ class PaymentController extends AbstractController
         $inscription = new InscriptionEvenement();
         $inscription->setEvenement($evenement);
         $inscription->setUtilisateur($user);
-        $inscription->setDateInscription(new \DateTime());
+        $inscription->setDateInscription(new \DateTimeImmutable());
         $inscription->setStatut('confirme');
         $inscription->setPresent(false);
-        $inscription->setCreeLe(new \DateTime());
+        $inscription->setCreeLe(new \DateTimeImmutable());
 
         $eventGroups = $evenement->getGroupeCibles();
         $userGroups = method_exists($user, 'getGroupes')

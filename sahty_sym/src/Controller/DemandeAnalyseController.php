@@ -12,6 +12,7 @@ use App\Entity\ResponsableLaboratoire;
 use App\Form\DemandeAnalyseType;
 use App\Integration\FastApiLabAiClient;
 use App\Repository\DemandeAnalyseRepository;
+use App\Service\DemandeAnalyseNotificationService;
 use App\Service\PatientResultQaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,16 +30,19 @@ class DemandeAnalyseController extends AbstractController
     private Security $security;
     private EntityManagerInterface $entityManager;
     private FastApiLabAiClient $fastApiLabAiClient;
+    private DemandeAnalyseNotificationService $demandeAnalyseNotificationService;
 
     public function __construct(
         Security $security,
         EntityManagerInterface $entityManager,
-        FastApiLabAiClient $fastApiLabAiClient
+        FastApiLabAiClient $fastApiLabAiClient,
+        DemandeAnalyseNotificationService $demandeAnalyseNotificationService
     )
     {
         $this->security = $security;
         $this->entityManager = $entityManager;
         $this->fastApiLabAiClient = $fastApiLabAiClient;
+        $this->demandeAnalyseNotificationService = $demandeAnalyseNotificationService;
     }
 
     /**
@@ -360,6 +364,67 @@ class DemandeAnalyseController extends AbstractController
             'disclaimer' => $qa['disclaimer'],
             'safety_notice' => $qa['safety_notice'],
             'suggested_questions' => $qa['suggested_questions'],
+        ]);
+    }
+
+    #[Route('/{id}/ia-glossary/refresh', name: 'app_demande_analyse_ia_glossary_refresh', methods: ['POST'])]
+    public function iaGlossaryRefresh(DemandeAnalyse $demandeAnalyse): JsonResponse
+    {
+        if (!$this->isTestMode()) {
+            $this->checkAccess($demandeAnalyse);
+        }
+
+        if (!$demandeAnalyse->getResultatPdf()) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Le resultat PDF n est pas encore disponible.',
+            ], 404);
+        }
+
+        $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
+        if (!$resultatAnalyse) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Aucune interpretation IA n est disponible pour cette demande.',
+            ], 404);
+        }
+
+        if ($resultatAnalyse->getAiStatus() !== ResultatAnalyse::AI_STATUS_DONE) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'L analyse IA est encore en attente.',
+                'ai_status' => $resultatAnalyse->getAiStatus(),
+            ], 409);
+        }
+
+        $raw = $resultatAnalyse->getAiRawResponse();
+        if (!is_array($raw)) {
+            $raw = [];
+        }
+        $analysis = is_array($raw['analysis'] ?? null) ? $raw['analysis'] : [];
+
+        $metricGlossary = $this->resolveMetricGlossary($analysis, $raw);
+        $refreshedFromPdf = false;
+        if ($metricGlossary === []) {
+            $metricGlossary = $this->refreshMetricGlossaryFromFastApi($demandeAnalyse, $resultatAnalyse, $raw);
+            $refreshedFromPdf = $metricGlossary !== [];
+        }
+
+        if ($metricGlossary === []) {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Impossible de generer le glossaire IA pour le moment.',
+            ], 422);
+        }
+
+        if (!$refreshedFromPdf) {
+            $this->persistMetricGlossaryCache($resultatAnalyse, $raw, $metricGlossary);
+        }
+
+        return $this->json([
+            'ok' => true,
+            'metric_glossary' => $metricGlossary,
+            'message' => 'Glossaire IA mis a jour.',
         ]);
     }
 
@@ -1289,6 +1354,7 @@ class DemandeAnalyseController extends AbstractController
             
             $entityManager->persist($demandeAnalyse);
             $entityManager->flush();
+            $this->demandeAnalyseNotificationService->notifyCreation($demandeAnalyse);
 
             $this->addFlash('success', 'Votre demande d\'analyse a été créée avec succès.');
 
@@ -1667,6 +1733,8 @@ class DemandeAnalyseController extends AbstractController
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Demande d\'analyse créée avec succès.');
+
+                $this->demandeAnalyseNotificationService->notifyCreation($demandeAnalyse);
 
                 // Redirection
                 if ($user instanceof Patient || $isTestMode) {

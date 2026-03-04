@@ -4,10 +4,16 @@
 namespace App\Service;
 
 use App\Entity\Evenement;
+use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
+use LogicException;
 
 class EvenementManager
 {
+    public function __construct(private ?EntityManagerInterface $entityManager = null)
+    {
+    }
+
     public function validate(Evenement $evenement): bool
     {
         $this->validateDates($evenement);
@@ -16,6 +22,83 @@ class EvenementManager
         $this->validateTitre($evenement);
 
         return true;
+    }
+
+    public function isOpenForSubscription(Evenement $evenement, ?\DateTimeInterface $now = null): bool
+    {
+        $now = $now ?? new \DateTimeImmutable();
+        $statut = (string) $evenement->getStatut();
+
+        if (!in_array($statut, ['planifie', 'confirme'], true)) {
+            return false;
+        }
+
+        return $evenement->getDateDebut() > $now;
+    }
+
+    public function calculateRemainingPlaces(Evenement $evenement, int $currentInscriptions): ?int
+    {
+        $placesMax = $evenement->getPlacesMax();
+
+        if ($placesMax === null) {
+            return null;
+        }
+
+        return max(0, $placesMax - max(0, $currentInscriptions));
+    }
+
+    public function canRegister(
+        Evenement $evenement,
+        bool $isOwner,
+        bool $alreadyRegistered,
+        int $currentInscriptions,
+        ?\DateTimeInterface $now = null
+    ): bool {
+        if ($isOwner || $alreadyRegistered) {
+            return false;
+        }
+
+        if (!$this->isOpenForSubscription($evenement, $now)) {
+            return false;
+        }
+
+        $remaining = $this->calculateRemainingPlaces($evenement, $currentInscriptions);
+
+        return $remaining === null || $remaining > 0;
+    }
+
+    public function create(Evenement $evenement): Evenement
+    {
+        $this->validate($evenement);
+        $em = $this->requireEntityManager();
+        $em->persist($evenement);
+        $em->flush();
+
+        return $evenement;
+    }
+
+    public function findById(int $id): ?Evenement
+    {
+        $result = $this->requireEntityManager()
+            ->getRepository(Evenement::class)
+            ->find($id);
+
+        return $result instanceof Evenement ? $result : null;
+    }
+
+    public function update(Evenement $evenement): Evenement
+    {
+        $this->validate($evenement);
+        $this->requireEntityManager()->flush();
+
+        return $evenement;
+    }
+
+    public function delete(Evenement $evenement): void
+    {
+        $em = $this->requireEntityManager();
+        $em->remove($evenement);
+        $em->flush();
     }
 
     private function validateDates(Evenement $evenement): void
@@ -85,5 +168,14 @@ private function validateTitre(Evenement $evenement): void
     if (mb_strlen($titre) > 200) {
         throw new InvalidArgumentException('Le titre ne peut pas depasser 200 caracteres.');
     }
+}
+
+private function requireEntityManager(): EntityManagerInterface
+{
+    if ($this->entityManager === null) {
+        throw new LogicException('EntityManager indisponible pour operation CRUD.');
+    }
+
+    return $this->entityManager;
 }
 }

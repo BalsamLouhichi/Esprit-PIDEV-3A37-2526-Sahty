@@ -51,7 +51,7 @@ private ?\DateTimeInterface $dateFin = null;
     #[ORM\Column(nullable: true)]
     private ?int $placesMax = null;
 
-    #[Assert\Choice(choices: ['brouillon', 'planifie', 'confirme', 'en_cours', 'termine', 'annule'])]
+    #[Assert\Choice(choices: ['brouillon', 'en_attente_approbation', 'approuve', 'planifie', 'confirme', 'en_cours', 'termine', 'annule', 'refuse'])]
     #[ORM\Column(length: 50)]
     private string $statut = 'brouillon';
 

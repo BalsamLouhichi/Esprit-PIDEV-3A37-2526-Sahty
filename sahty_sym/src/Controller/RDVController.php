@@ -93,7 +93,7 @@ class RDVController extends AbstractController
             }
 
             $rdv->setStatut('en attente');
-            $rdv->setCreeLe(new \DateTime());
+            $rdv->setCreeLe(new \DateTimeImmutable());
 
             $em->persist($rdv);
             $em->flush();

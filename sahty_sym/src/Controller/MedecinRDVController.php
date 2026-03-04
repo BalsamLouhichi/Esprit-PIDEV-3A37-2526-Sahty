@@ -108,7 +108,7 @@ class MedecinRDVController extends AbstractController
 
         // Confirmer
         $rdv->setStatut("Confirm\u{00E9}");
-        $rdv->setDateValidation(new \DateTime());
+        $rdv->setDateValidation(new \DateTimeImmutable());
         if ($rdv->getTypeConsultation() === 'en_ligne') {
             try {
                 $meeting = $meetingSchedulerService->createForRendezVous($rdv);

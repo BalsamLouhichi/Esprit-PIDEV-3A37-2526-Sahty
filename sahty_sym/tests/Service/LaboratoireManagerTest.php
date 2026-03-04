@@ -113,6 +113,46 @@ class LaboratoireManagerTest extends TestCase
         $this->manager->validate($laboratoire);
     }
 
+    // Fonctionnalite: isEstActif doit etre un alias fiable de disponible.
+    public function testIsEstActifReflectsDisponibiliteFlag(): void
+    {
+        $laboratoire = $this->buildValidLaboratoire();
+
+        $laboratoire->setDisponible(true);
+        $this->assertTrue($laboratoire->isEstActif());
+
+        $laboratoire->setDisponible(false);
+        $this->assertFalse($laboratoire->isEstActif());
+    }
+
+    // Fonctionnalite: l'adresse complete doit concatener adresse + ville.
+    public function testGetAdresseCompleteReturnsFormattedAddress(): void
+    {
+        $laboratoire = $this->buildValidLaboratoire();
+
+        $this->assertSame('12 Rue de la Sante, Tunis', $laboratoire->getAdresseComplete());
+    }
+
+    // Fonctionnalite: __toString doit retourner le nom du laboratoire.
+    public function testToStringReturnsLaboratoireName(): void
+    {
+        $laboratoire = $this->buildValidLaboratoire();
+
+        $this->assertSame('BioLab', (string) $laboratoire);
+    }
+
+    // Fonctionnalite service: la validation ne doit pas alterer l'etat metier du laboratoire.
+    public function testValidateDoesNotMutateBusinessState(): void
+    {
+        $laboratoire = $this->buildValidLaboratoire();
+        $laboratoire->setDisponible(false);
+        $beforeCreeLe = $laboratoire->getCreeLe();
+
+        $this->assertTrue($this->manager->validate($laboratoire));
+        $this->assertFalse($laboratoire->isDisponible());
+        $this->assertSame($beforeCreeLe, $laboratoire->getCreeLe());
+    }
+
     private function buildValidLaboratoire(): Laboratoire
     {
         $laboratoire = new Laboratoire();
@@ -127,3 +167,4 @@ class LaboratoireManagerTest extends TestCase
         return $laboratoire;
     }
 }
+

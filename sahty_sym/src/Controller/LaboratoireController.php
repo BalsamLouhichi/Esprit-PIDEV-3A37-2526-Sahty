@@ -98,7 +98,7 @@ class LaboratoireController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Set the current date/time
-            $laboratoire->setCreeLe(new \DateTime());
+            $laboratoire->setCreeLe(new \DateTimeImmutable());
 
             $user = $this->getUser();
             if ($user instanceof ResponsableLaboratoire) {

@@ -500,7 +500,7 @@ class EvenementController extends AbstractController
 
 
 
-            $evenement->setCreeLe(new \DateTime());
+            $evenement->setCreeLe(new \DateTimeImmutable());
             $evenement->setCreateur($user);
             $this->attachPlanningDecisionMetadata($evenement, $request);
             $em->persist($evenement);
@@ -782,7 +782,7 @@ class EvenementController extends AbstractController
 
 
 
-            $evenement->setModifieLe(new \DateTime());
+            $evenement->setModifieLe(new \DateTimeImmutable());
 
             
 
@@ -1784,13 +1784,13 @@ class EvenementController extends AbstractController
 
         $inscription->setUtilisateur($user);
 
-        $inscription->setDateInscription(new \DateTime());
+        $inscription->setDateInscription(new \DateTimeImmutable());
 
         $inscription->setStatut('confirme');
 
         $inscription->setPresent(false);
 
-        $inscription->setCreeLe(new \DateTime());
+        $inscription->setCreeLe(new \DateTimeImmutable());
 
 
 
@@ -2850,7 +2850,7 @@ class EvenementController extends AbstractController
 
         $evenement->setStatutDemande('en_attente_approbation');
 
-        $evenement->setCreeLe(new \DateTime());
+        $evenement->setCreeLe(new \DateTimeImmutable());
 
         $evenement->setCreateur($user);
 
@@ -3181,7 +3181,7 @@ class EvenementController extends AbstractController
 
         $evenement->setStatut('planifie');
 
-        $evenement->setModifieLe(new \DateTime());
+        $evenement->setModifieLe(new \DateTimeImmutable());
 
 
 
@@ -3227,7 +3227,7 @@ class EvenementController extends AbstractController
 
         $evenement->setStatut('annule');
 
-        $evenement->setModifieLe(new \DateTime());
+        $evenement->setModifieLe(new \DateTimeImmutable());
 
 
 

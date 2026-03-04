@@ -12,7 +12,7 @@ class UtilisateurTest extends TestCase
         $user = new Utilisateur();
 
         $this->assertTrue($user->isEstActif());
-        $this->assertInstanceOf(\DateTime::class, $user->getCreeLe());
+        $this->assertInstanceOf(\DateTimeImmutable::class, $user->getCreeLe());
         $this->assertSame('ROLE_USER', $user->getRoleSymfony());
         $this->assertSame(['ROLE_USER'], $user->getRoles());
     }

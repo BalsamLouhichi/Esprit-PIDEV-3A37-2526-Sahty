@@ -47,7 +47,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     protected string $password;
 
     #[ORM\Column(length: 30)]
-    protected string $role;
+    protected string $role = '';
 
     #[ORM\Column(length: 100)]
     protected string $nom;

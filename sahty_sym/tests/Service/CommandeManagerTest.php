@@ -73,6 +73,20 @@ class CommandeManagerTest extends TestCase
         $this->assertSame($commande, $manager->find(10));
     }
 
+    public function testFindReturnsNullWhenNotFound(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $repo->expects($this->once())
+            ->method('find')
+            ->with(9999)
+            ->willReturn(null);
+
+        $this->assertNull($manager->find(9999));
+    }
+
     public function testFindAllDelegatesToRepository(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -104,6 +118,34 @@ class CommandeManagerTest extends TestCase
         $this->assertSame($commandes, $manager->findByStatut('en_attente'));
     }
 
+    public function testFindByStatutReturnsEmptyArray(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $repo->expects($this->once())
+            ->method('findByStatut')
+            ->with('inconnu')
+            ->willReturn([]);
+
+        $this->assertSame([], $manager->findByStatut('inconnu'));
+    }
+
+    public function testFindByStatutWithEmptyStringDelegatesToRepository(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $repo->expects($this->once())
+            ->method('findByStatut')
+            ->with('')
+            ->willReturn([]);
+
+        $this->assertSame([], $manager->findByStatut(''));
+    }
+
     public function testFindByParapharmacieDelegatesToRepository(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -118,5 +160,57 @@ class CommandeManagerTest extends TestCase
             ->willReturn($commandes);
 
         $this->assertSame($commandes, $manager->findByParapharmacie(3));
+    }
+
+    public function testFindByParapharmacieReturnsEmptyArray(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $repo->expects($this->once())
+            ->method('findByParapharmacie')
+            ->with(404)
+            ->willReturn([]);
+
+        $this->assertSame([], $manager->findByParapharmacie(404));
+    }
+
+    public function testFindByParapharmacieWithZeroDelegatesToRepository(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $repo->expects($this->once())
+            ->method('findByParapharmacie')
+            ->with(0)
+            ->willReturn([]);
+
+        $this->assertSame([], $manager->findByParapharmacie(0));
+    }
+
+    public function testFindByParapharmacieThrowsTypeErrorForNull(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $this->expectException(\TypeError::class);
+        /** @var mixed $invalidParapharmacieId */
+        $invalidParapharmacieId = null;
+        $manager->findByParapharmacie($invalidParapharmacieId);
+    }
+
+    public function testFindByStatutThrowsTypeErrorForNull(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $repo = $this->createMock(CommandeRepository::class);
+        $manager = new CommandeManager($em, $repo);
+
+        $this->expectException(\TypeError::class);
+        /** @var mixed $invalidStatut */
+        $invalidStatut = null;
+        $manager->findByStatut($invalidStatut);
     }
 }
