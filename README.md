@@ -1,76 +1,72 @@
 # Sahty
 
-## Analyse Du Projet
+## Overview
+Sahty est une plateforme de sante qui centralise le parcours patient et les operations medicales (rendez-vous, analyses, resultats, suivi), avec une integration de services IA pour enrichir l'analyse et la recommandation.
 
-### Vue D'Ensemble
-Sahty est une plateforme sante construite principalement avec Symfony (`sahty_sym`) et enrichie par des services IA.
-Le projet couvre plusieurs domaines metier: gestion des utilisateurs, rendez-vous, analyses medicales, laboratoire, parapharmacie, quiz/recommandations, paiements et administration.
+## Features
+- Gestion des utilisateurs (patients, medecins, laboratoires, administration)
+- Gestion des demandes d'analyses et des resultats
+- Prise de rendez-vous et suivi du parcours patient
+- Modules e-commerce/parapharmacie (produits, panier, commande, paiement)
+- Quiz et recommandations
+- Integrations IA (analyse de bilan, recherche semantique)
 
-### Objectifs Fonctionnels
-- Centraliser le parcours patient (inscription, profil, rendez-vous, analyses).
-- Permettre aux medecins/laboratoires de gerer les demandes d'analyses et les resultats.
-- Fournir une couche de recommandation via quiz et services IA.
-- Integrer des usages e-commerce/parapharmacie (produits, panier, commande, paiement).
+## Tech Stack
 
-### Architecture Technique
-- Backend principal: Symfony 6.4 + Doctrine ORM + Twig.
-- Donnees: MySQL via migrations Doctrine.
-- IA/ML: services Python/FastAPI connectes via endpoint (recherche semantique, services d'analyse).
-- Asynchrone: Symfony Messenger (`messenger_messages`) pour les traitements deferes.
-- Qualite: PHPUnit pour les tests unitaires, PHPStan pour l'analyse statique.
+### Frontend
+- Twig (Symfony)
+- HTML/CSS/JavaScript
 
-### Structure Metier (Haut Niveau)
-- `src/Entity`: modeles metier (Utilisateur, Patient, Medecin, DemandeAnalyse, ResultatAnalyse, Produit, etc.).
-- `src/Controller`: endpoints web et backoffice.
-- `src/Service`: logique applicative/metier (managers, IA, reporting, notifications).
-- `src/DataFixtures`: jeu de donnees initiales pour dev/tests.
-- `migrations`: evolution de schema de base de donnees.
+### Backend
+- Symfony 6.4 (PHP)
+- Doctrine ORM
+- MySQL
+- Symfony Messenger
+- Python/FastAPI (services IA)
+- PHPUnit, PHPStan
 
-### Points Forts
-- Couverture fonctionnelle riche et multi-domaines.
-- Separation claire Entity/Service/Controller.
-- Presence de tests unitaires sur des services critiques.
-- Integration progressive de l'IA avec fallback pour la robustesse.
+## Architecture
+- `sahty_sym/src/Entity` : modeles metier
+- `sahty_sym/src/Controller` : endpoints web/backoffice
+- `sahty_sym/src/Service` : logique applicative et metier
+- `sahty_sym/migrations` : evolution du schema de base de donnees
+- `sahty_sym/ai/semantic_search_service` : service de recherche semantique
 
-### Risques Techniques Identifies
-- Historique de migrations volumineux et parfois redondant (risque de conflits sur DB vierge).
-- Heterogeneite de typage dans certains controllers (normalisation des donnees HTTP a renforcer).
-- Dette technique sur certaines zones legacy necessitant un nettoyage progressif.
+## Contributors
+- Equipe projet Sahty
 
-### Recommandations De Stabilisation
-1. Imposer une convention stricte pour les nouvelles migrations (une seule source de verite schema).
-2. Renforcer la validation/normalisation des entrees HTTP avant hydration des entites.
-3. Ajouter des tests unitaires autour des services metier sensibles (analyse, paiement, rdv).
-4. Traiter progressivement les erreurs PHPStan du baseline pour reduire la dette.
+## Academic Context
+Projet realise dans un cadre academique pour la conception et le developpement d'une plateforme de sante intelligente combinant architecture web moderne et composants IA.
 
-
-## Semantic Search Integration (Python + Symfony)
-
-Starter disponible dans:
-
-- `sahty_sym/ai/semantic_search_service`
-
-Symfony appelle l'API Python sur `FASTAPI_SEMANTIC_ENDPOINT` pendant la recherche produits (`/recherche-produits`) avec fallback automatique vers le modèle local PHP si l'API est indisponible.
-`
-
-## Extraction Et Analyse De Bilan
-
-Ce module permet de traiter un bilan medical PDF de bout en bout:
-- Reception du fichier PDF depuis le workflow `DemandeAnalyse`.
-- Extraction des donnees utiles (valeurs, unites, intervalles, metadonnees).
-- Analyse par service IA pour detection d'anomalies et niveau de risque.
-- Generation d'un resume interpretable pour affichage applicatif.
-- Enregistrement du resultat dans `ResultatAnalyse` avec statut de traitement.
-
-### Commandes Utiles
+## Getting Started
 ```bash
-# Lancer les tests unitaires
+# 1) Se placer dans le projet Symfony
 cd sahty_sym
-vendor/bin/phpunit
 
-# Analyse statique
-vendor/bin/phpstan analyse src/Controller
+# 2) Installer les dependances PHP
+composer install
 
-# Charger les fixtures (dev)
+# 3) Configurer la base de donnees dans .env
+# DATABASE_URL="mysql://user:password@127.0.0.1:3306/sahty"
+
+# 4) Appliquer les migrations
+php bin/console doctrine:migrations:migrate
+
+# 5) Charger les fixtures (optionnel)
 php bin/console doctrine:fixtures:load --no-interaction
-``
+
+# 6) Lancer le serveur Symfony (terminal 1)
+symfony server:start
+
+# 7) Lancer le service IA FastAPI (terminal 2)
+cd ai/semantic_search_service
+pip install -r requirements.txt
+uvicorn app:app --host 127.0.0.1 --port 8001 --reload
+
+# Tests
+cd ../../
+vendor/bin/phpunit
+```
+
+## Acknowledgments
+Merci a notre encadrante, et aux membres de l'equipe.
