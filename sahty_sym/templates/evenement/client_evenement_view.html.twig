@@ -176,6 +176,8 @@
             margin-bottom: 30px;
         }
 
+        {% include 'evenement/_selected_speakers_display_styles.html.twig' %}
+
         /* Info Grid */
         .info-grid {
             display: grid;
@@ -539,8 +541,15 @@
                         <div class="event-card-body">
                             <h2 class="section-title">À propos de l'événement</h2>
                             <div class="description-text">
-                                {{ evenement.description|nl2br }}
+                                {{ (display_description ?: evenement.description)|nl2br }}
                             </div>
+
+                            {% if event_speakers|default([])|length > 0 %}
+                            <div class="mt-4">
+                                <h3 class="section-title">Speakers</h3>
+                                {% include 'evenement/_selected_speakers_display.html.twig' with {speakers: event_speakers} %}
+                            </div>
+                            {% endif %}
                             
                             <!-- Stats Cards -->
                             <div class="stats-container">

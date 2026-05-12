@@ -14,6 +14,20 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  */
 class UtilisateurRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
+    /**
+     * Valid Doctrine discriminator values for the joined inheritance tree.
+     *
+     * Keeping this list centralized lets admin listings ignore corrupted rows
+     * that have an empty/null discriminator in the base table.
+     */
+    private const VALID_DISCRIMINATORS = [
+        'admin',
+        'medecin',
+        'patient',
+        'responsable_labo',
+        'responsable_para',
+    ];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Utilisateur::class);
@@ -48,6 +62,49 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
     }
 
     /**
+     * Returns only rows that have a valid inheritance discriminator.
+     *
+     * This protects admin screens from hydration errors when the database
+     * contains legacy/corrupted rows in `utilisateur` with an empty `discr`.
+     *
+     * @return int[]
+     */
+    private function findValidUserIds(?string $query = null, ?string $role = null): array
+    {
+        $qb = $this->getEntityManager()->getConnection()->createQueryBuilder();
+        $qb
+            ->select('u.id')
+            ->from('utilisateur', 'u')
+            ->where('u.discr IS NOT NULL')
+            ->andWhere("TRIM(u.discr) <> ''")
+            ->andWhere('u.discr IN (:discriminators)')
+            ->setParameter('discriminators', self::VALID_DISCRIMINATORS, \Doctrine\DBAL\ArrayParameterType::STRING)
+            ->orderBy('u.cree_le', 'DESC');
+
+        if ($query !== null && $query !== '') {
+            $qb
+                ->andWhere('(LOWER(u.nom) LIKE :query OR LOWER(u.prenom) LIKE :query OR LOWER(u.email) LIKE :query)')
+                ->setParameter('query', '%' . mb_strtolower(trim($query)) . '%');
+        }
+
+        if ($role !== null && $role !== '') {
+            $qb
+                ->andWhere('u.role = :role')
+                ->setParameter('role', $role);
+        }
+
+        return array_map('intval', $qb->executeQuery()->fetchFirstColumn());
+    }
+
+    /**
+     * @return Utilisateur[]
+     */
+    public function findAllSafe(): array
+    {
+        return $this->search();
+    }
+
+    /**
      * Recherche avancée d'utilisateurs avec filtres
      */
    /**
@@ -55,23 +112,18 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
      */
     public function search(?string $query = null, ?string $role = null): array
     {
-        $qb = $this->createQueryBuilder('u');
-        
-        if ($query) {
-            $qb->where('LOWER(u.nom) LIKE LOWER(:query) 
-                        OR LOWER(u.prenom) LIKE LOWER(:query) 
-                        OR LOWER(u.email) LIKE LOWER(:query)')
-               ->setParameter('query', '%' . $query . '%');
+        $ids = $this->findValidUserIds($query, $role);
+
+        if ($ids === []) {
+            return [];
         }
-        
-        if ($role) {
-            $qb->andWhere('u.role = :role')
-               ->setParameter('role', $role);
-        }
-        
-        return $qb->orderBy('u.creeLe', 'DESC')
-                  ->getQuery()
-                  ->getResult();
+
+        return $this->createQueryBuilder('u')
+            ->where('u.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->orderBy('u.creeLe', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     /**

@@ -1,18 +1,24 @@
-# Doctrine Doctor - Runtime Analysis for Doctrine ORM
-# Full documentation: https://github.com/ahmed-bhs/doctrine-doctor/blob/main/docs/CONFIGURATION.md
+when@dev:
+    doctrine_doctor:
+        enabled: true
+        analyzers:
+            blameable_trait:
+                enabled: false
+            missing_embeddable_opportunity:
+                enabled: false
+            naming_convention:
+                enabled: false
 
-doctrine_doctor:
-    # Enable Doctrine Doctor (automatically enabled in dev/test environments)
-    enabled: true
-    analyzers:
-        # Advisory architecture suggestions (info-level) disabled to reduce noise.
-        # Keep performance/security/integrity warnings enabled.
-        blameable_trait:
-            enabled: false
-        missing_embeddable_opportunity:
-            enabled: false
-        naming_convention:
-            enabled: false
+when@test:
+    doctrine_doctor:
+        enabled: true
+        analyzers:
+            blameable_trait:
+                enabled: false
+            missing_embeddable_opportunity:
+                enabled: false
+            naming_convention:
+                enabled: false
 
 #    # Web Profiler integration
 #    profiler:

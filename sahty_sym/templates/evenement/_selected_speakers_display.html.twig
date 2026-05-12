@@ -1,0 +1,21 @@
+{% if speakers|default([])|length > 0 %}
+<div class="selected-speakers-grid">
+    {% for speaker in speakers %}
+        {% set nameParts = (speaker.name|default('Speaker'))|split(' ') %}
+        {% set firstInitial = nameParts|length > 0 ? nameParts|first|slice(0, 1)|upper : '?' %}
+        {% set lastInitial = nameParts|length > 1 ? nameParts|last|slice(0, 1)|upper : '' %}
+        {% set isPlatform = (speaker.source|default('')|lower) starts with 'platform' %}
+        <div class="selected-speaker-card">
+            <div class="selected-speaker-avatar {% if isPlatform %}is-platform{% endif %}">{{ firstInitial }}{{ lastInitial }}</div>
+            <div class="selected-speaker-content">
+                <div class="selected-speaker-name">{{ speaker.name }}</div>
+                <div class="selected-speaker-speciality">{{ speaker.specialite ?: 'Specialite non precisee' }}</div>
+                <div class="selected-speaker-meta">
+                    {% if speaker.ville %}<span>{{ speaker.ville }}</span>{% endif %}
+                    {% if speaker.source %}<span>{{ speaker.source }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}

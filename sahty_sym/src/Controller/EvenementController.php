@@ -31,6 +31,7 @@ use App\Service\EvenementResourcePlanningService;
 use App\Service\EvenementSeriesInsightsAIService;
 use App\Service\EvenementVenueRecommendationService;
 use App\Service\EvenementPlanningModelService;
+use App\Service\EvenementSpeakerService;
 use App\Service\InscriptionPreferencesStorageService;
 use App\Service\EventRegistrationEmailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -52,6 +53,7 @@ class EvenementController extends AbstractController
     private EvenementVenueRecommendationService $evenementVenueRecommendationService;
     private EvenementResourcePlanningService $evenementResourcePlanningService;
     private EvenementExperienceDesignService $evenementExperienceDesignService;
+    private EvenementSpeakerService $evenementSpeakerService;
     private InscriptionPreferencesStorageService $inscriptionPreferencesStorageService;
     private EvenementPlanningModelService $evenementPlanningModelService;
 
@@ -62,6 +64,7 @@ class EvenementController extends AbstractController
         EvenementVenueRecommendationService $evenementVenueRecommendationService,
         EvenementResourcePlanningService $evenementResourcePlanningService,
         EvenementExperienceDesignService $evenementExperienceDesignService,
+        EvenementSpeakerService $evenementSpeakerService,
         InscriptionPreferencesStorageService $inscriptionPreferencesStorageService,
         EvenementPlanningModelService $evenementPlanningModelService
     )
@@ -78,6 +81,8 @@ class EvenementController extends AbstractController
         $this->evenementResourcePlanningService = $evenementResourcePlanningService;
 
         $this->evenementExperienceDesignService = $evenementExperienceDesignService;
+
+        $this->evenementSpeakerService = $evenementSpeakerService;
 
         $this->inscriptionPreferencesStorageService = $inscriptionPreferencesStorageService;
 
@@ -325,11 +330,21 @@ class EvenementController extends AbstractController
 
 
 
+        $speakerRecommendations = $this->evenementSpeakerService->recommendSpeakers($evenement);
+        $selectedSpeakerKeys = $this->evenementSpeakerService->extractSelectedKeysFromPlanning(
+            $evenement->getPlanningRecommande(),
+            $evenement
+        );
+
         $form = $this->createForm(EvenementType::class, $evenement, [
 
             'user_role' => ($user->getRoles()[0] ?? 'ROLE_USER'),
 
             'is_admin' => $this->isGranted('ROLE_ADMIN'),
+
+            'speaker_choices' => $speakerRecommendations,
+
+            'selected_speaker_keys' => $selectedSpeakerKeys,
 
             'series_candidates' => $this->buildSeriesCandidateChoices(),
 
@@ -338,6 +353,14 @@ class EvenementController extends AbstractController
         
 
         $form->handleRequest($request);
+
+        if ($request->isMethod('POST')) {
+            $selectedSpeakerKeys = array_slice(
+                array_values(array_filter(array_map('strval', $request->request->all('speaker_keys') ?? []))),
+                0,
+                2
+            );
+        }
 
 
 
@@ -348,6 +371,7 @@ class EvenementController extends AbstractController
             $evenement->setCreateur($user);
 
             $this->applySurfaceEditionSelection($form, $evenement);
+            $this->attachSelectedSpeakers($evenement, $form, $request);
 
             
 
@@ -493,6 +517,8 @@ class EvenementController extends AbstractController
                     'form' => $form->createView(),
 
                     'is_patient' => $this->isGranted('ROLE_PATIENT'),
+                    'speaker_recommendations' => $speakerRecommendations,
+                    'selected_speaker_keys' => $selectedSpeakerKeys,
 
                 ]);
 
@@ -503,6 +529,7 @@ class EvenementController extends AbstractController
             $evenement->setCreeLe(new \DateTimeImmutable());
             $evenement->setCreateur($user);
             $this->attachPlanningDecisionMetadata($evenement, $request);
+            $this->attachSelectedSpeakers($evenement, $form, $request);
             $em->persist($evenement);
 
             $em->flush();
@@ -540,6 +567,8 @@ class EvenementController extends AbstractController
             'form' => $form->createView(),
 
             'is_patient' => $this->isGranted('ROLE_PATIENT'),
+            'speaker_recommendations' => $speakerRecommendations,
+            'selected_speaker_keys' => $selectedSpeakerKeys,
 
         ]);
 
@@ -590,12 +619,22 @@ class EvenementController extends AbstractController
 
 
 
+        $speakerRecommendations = $this->evenementSpeakerService->recommendSpeakers($evenement);
+        $selectedSpeakerKeys = $this->evenementSpeakerService->extractSelectedKeysFromPlanning(
+            $evenement->getPlanningRecommande(),
+            $evenement
+        );
+
         $form = $this->createForm(EvenementType::class, $evenement, [
 
             'user_role' => ($user instanceof Utilisateur ? ($user->getRoles()[0] ?? 'ROLE_USER') : 'ROLE_USER'),
 
             'is_admin' => $isAdmin,
             'is_demande' => !$isAdmin,
+
+            'speaker_choices' => $speakerRecommendations,
+
+            'selected_speaker_keys' => $selectedSpeakerKeys,
 
             'is_edit' => true,
 
@@ -609,6 +648,14 @@ class EvenementController extends AbstractController
 
         $form->handleRequest($request);
 
+        if ($request->isMethod('POST')) {
+            $selectedSpeakerKeys = array_slice(
+                array_values(array_filter(array_map('strval', $request->request->all('speaker_keys') ?? []))),
+                0,
+                2
+            );
+        }
+
 
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -617,6 +664,7 @@ class EvenementController extends AbstractController
 
             $this->applySurfaceEditionSelection($form, $evenement);
             $this->attachPlanningDecisionMetadata($evenement, $request);
+            $this->attachSelectedSpeakers($evenement, $form, $request);
 
             
 
@@ -775,6 +823,8 @@ class EvenementController extends AbstractController
                     'form' => $form->createView(),
 
                     'is_admin' => $isAdmin,
+                    'speaker_recommendations' => $speakerRecommendations,
+                    'selected_speaker_keys' => $selectedSpeakerKeys,
 
                 ]);
 
@@ -827,6 +877,8 @@ class EvenementController extends AbstractController
             'form' => $form->createView(),
 
             'is_admin' => $isAdmin,
+            'speaker_recommendations' => $speakerRecommendations,
+            'selected_speaker_keys' => $selectedSpeakerKeys,
 
         ]);
 
@@ -1029,6 +1081,7 @@ class EvenementController extends AbstractController
 
             'participants' => $participants,
             'display_description' => $this->buildEvenementDisplayDescription($evenement),
+            'event_speakers' => $this->evenementSpeakerService->parseSpeakersFromPlanning($evenement->getPlanningRecommande()),
 
             'series_insights' => $this->evenementSeriesInsightsAIService->analyzeSeriesForEvent($evenement),
 
@@ -1418,6 +1471,7 @@ class EvenementController extends AbstractController
 
             'participants' => $participants,
             'display_description' => $this->buildEvenementDisplayDescription($evenement),
+            'event_speakers' => $this->evenementSpeakerService->parseSpeakersFromPlanning($evenement->getPlanningRecommande()),
 
             'is_admin' => $isAdmin,
 
@@ -2854,7 +2908,11 @@ class EvenementController extends AbstractController
 
         $evenement->setCreateur($user);
 
-
+        $speakerRecommendations = $this->evenementSpeakerService->recommendSpeakers($evenement);
+        $selectedSpeakerKeys = $this->evenementSpeakerService->extractSelectedKeysFromPlanning(
+            $evenement->getPlanningRecommande(),
+            $evenement
+        );
 
         $form = $this->createForm(EvenementType::class, $evenement, [
 
@@ -2863,6 +2921,10 @@ class EvenementController extends AbstractController
             'is_admin' => false,
 
             'is_demande' => true,
+
+            'speaker_choices' => $speakerRecommendations,
+
+            'selected_speaker_keys' => $selectedSpeakerKeys,
 
             'series_candidates' => $this->buildSeriesCandidateChoices(),
 
@@ -2963,6 +3025,43 @@ class EvenementController extends AbstractController
             'experience_pack' => $this->evenementExperienceDesignService->buildExperiencePack($evenement),
             'display_description' => $this->buildEvenementDisplayDescription($evenement),
         ]);
+    }
+
+    private function attachSelectedSpeakers(Evenement $evenement, FormInterface $form, Request $request): void
+    {
+        $speakerKeys = [];
+        if ($form->has('speakerKeys')) {
+            $speakerData = $form->get('speakerKeys')->getData();
+            if (is_array($speakerData)) {
+                foreach ($speakerData as $speaker) {
+                    if (is_array($speaker) && isset($speaker['key'])) {
+                        $speakerKeys[] = (string) $speaker['key'];
+                    } elseif (is_string($speaker)) {
+                        $speakerKeys[] = $speaker;
+                    }
+                }
+            }
+        }
+
+        if ($speakerKeys === []) {
+            $payload = $request->request->all((string) $form->getName());
+            $rawSpeakerKeys = $payload['speakerKeys'] ?? [];
+            if (is_array($rawSpeakerKeys)) {
+                $speakerKeys = array_slice(
+                    array_values(array_filter(array_map('strval', $rawSpeakerKeys))),
+                    0,
+                    2
+                );
+            }
+        }
+
+        $selectedSpeakers = $this->evenementSpeakerService->resolveSelectedSpeakers($speakerKeys, $evenement);
+        $evenement->setPlanningRecommande(
+            $this->evenementSpeakerService->injectSpeakersIntoPlanning(
+                $evenement->getPlanningRecommande(),
+                $selectedSpeakers
+            )
+        );
     }
 
     private function attachPlanningDecisionMetadata(Evenement $evenement, Request $request): void
@@ -3161,7 +3260,9 @@ class EvenementController extends AbstractController
 
         Evenement $evenement,
 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+
+        EventRegistrationEmailService $eventRegistrationEmailService
 
     ): Response {
 
@@ -3186,6 +3287,8 @@ class EvenementController extends AbstractController
 
 
         $em->flush();
+
+        $eventRegistrationEmailService->sendApprovalToCreator($evenement);
 
 
 

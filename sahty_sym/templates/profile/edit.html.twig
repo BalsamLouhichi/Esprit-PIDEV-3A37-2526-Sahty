@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -534,7 +534,8 @@
                                 <div class="avatar-wrapper">
                                     <div class="avatar-container">
                                         {% if user.photoProfil %}
-                                            <img src="{{ asset(user.photoProfil) }}" class="profile-avatar" alt="Photo de profil">
+                                            {% set photoPath = user.photoProfil starts with 'uploads/' or user.photoProfil starts with '/uploads/' ? user.photoProfil : 'uploads/profiles/' ~ user.photoProfil %}
+                                            <img src="{{ asset(photoPath) }}" class="profile-avatar" alt="Photo de profil">
                                         {% else %}
                                             <div class="profile-avatar-icon">
                                                 <i class="fas fa-user"></i>

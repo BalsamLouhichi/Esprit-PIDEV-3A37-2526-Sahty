@@ -5,16 +5,28 @@ import statistics
 import unicodedata
 from dataclasses import dataclass, field
 
-import fitz
 import pytesseract
 from PIL import Image, ImageFilter, ImageOps
 from pytesseract import Output, TesseractNotFoundError
+
+try:
+    import fitz  # type: ignore
+except ImportError:  # pragma: no cover - depends on local optional dependency
+    fitz = None
 
 from .schemas import ExtractedTest, StructuredExtraction
 
 
 class LayoutParserError(Exception):
     pass
+
+
+def _require_pymupdf() -> None:
+    if fitz is None:
+        raise LayoutParserError(
+            "PyMuPDF is not installed. Install it with 'pip install PyMuPDF' or "
+            "'pip install -r requirements.txt' to analyze PDF files."
+        )
 
 
 @dataclass
@@ -83,6 +95,8 @@ def _is_pdf(file_bytes: bytes, filename: str) -> bool:
 def detect_pdf_textual(file_bytes: bytes, min_words: int = 40, min_alpha_ratio: float = 0.3) -> bool:
     if not file_bytes.startswith(b"%PDF"):
         return False
+    if fitz is None:
+        return False
     try:
         with fitz.open(stream=file_bytes, filetype="pdf") as doc:
             total = 0
@@ -102,6 +116,7 @@ def detect_pdf_textual(file_bytes: bytes, min_words: int = 40, min_alpha_ratio: 
 
 
 def _extract_native_pdf_tokens(file_bytes: bytes) -> tuple[list[Token], int, float]:
+    _require_pymupdf()
     tokens: list[Token] = []
     page_count = 0
     max_width = 0.0
@@ -129,6 +144,7 @@ def _get_pdf_scale() -> float:
 
 
 def _pdf_to_images(file_bytes: bytes) -> list[Image.Image]:
+    _require_pymupdf()
     images: list[Image.Image] = []
     scale = _get_pdf_scale()
     with fitz.open(stream=file_bytes, filetype="pdf") as doc:

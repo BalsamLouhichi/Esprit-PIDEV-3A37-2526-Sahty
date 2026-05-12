@@ -13,11 +13,14 @@ use App\Form\DemandeAnalyseType;
 use App\Integration\FastApiLabAiClient;
 use App\Repository\DemandeAnalyseRepository;
 use App\Service\DemandeAnalyseNotificationService;
+use App\Service\OllamaDefinitionService;
 use App\Service\PatientResultQaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Security;
@@ -252,12 +255,7 @@ class DemandeAnalyseController extends AbstractController
         ResultatAnalyse $resultatAnalyse,
         array $raw
     ): array {
-        $resultatPdf = trim((string) ($demandeAnalyse->getResultatPdf() ?? ''));
-        if ($resultatPdf === '') {
-            return [];
-        }
-
-        $fullPdfPath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+        $fullPdfPath = $this->resolveDemandePdfAbsolutePath($demandeAnalyse);
         if (!is_file($fullPdfPath)) {
             return [];
         }
@@ -426,6 +424,52 @@ class DemandeAnalyseController extends AbstractController
             'metric_glossary' => $metricGlossary,
             'message' => 'Glossaire IA mis a jour.',
         ]);
+    }
+
+    #[Route('/{id}/ia-definition', name: 'app_demande_analyse_ia_definition', methods: ['GET'])]
+    public function iaDefinition(
+        Request $request,
+        DemandeAnalyse $demandeAnalyse,
+        OllamaDefinitionService $ollamaDefinitionService
+    ): JsonResponse {
+        if (!$this->isTestMode()) {
+            $this->checkAccess($demandeAnalyse);
+        }
+
+        $metric = trim((string) $request->query->get('metric', ''));
+        if ($metric === '') {
+            return $this->json([
+                'ok' => false,
+                'message' => 'Le parametre est obligatoire.',
+            ], 400);
+        }
+
+        return $this->json([
+            'ok' => true,
+            'metric' => $metric,
+            'definition' => $ollamaDefinitionService->getDefinition($metric),
+        ]);
+    }
+
+    #[Route('/{id}/pdf', name: 'app_demande_analyse_pdf', methods: ['GET'])]
+    public function pdf(DemandeAnalyse $demandeAnalyse): Response
+    {
+        if (!$this->isTestMode()) {
+            $this->checkAccess($demandeAnalyse);
+        }
+
+        $pdfPath = $this->resolveDemandePdfAbsolutePath($demandeAnalyse);
+        if ($pdfPath === null) {
+            throw $this->createNotFoundException('Le fichier PDF du resultat est introuvable.');
+        }
+
+        $response = new BinaryFileResponse($pdfPath);
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            basename($pdfPath) ?: ('resultat-' . $demandeAnalyse->getId() . '.pdf')
+        );
+
+        return $response;
     }
 
     /**
@@ -1651,6 +1695,28 @@ class DemandeAnalyseController extends AbstractController
     /**
      * Créer une nouvelle demande d'analyse
      */
+    private function resolveDemandePdfAbsolutePath(DemandeAnalyse $demandeAnalyse): ?string
+    {
+        $resultatPdf = trim((string) ($demandeAnalyse->getResultatPdf() ?? ''));
+        if ($resultatPdf === '') {
+            return null;
+        }
+
+        if ($this->isAbsoluteFilesystemPath($resultatPdf)) {
+            return is_file($resultatPdf) ? $resultatPdf : null;
+        }
+
+        $fullPdfPath = $this->getParameter('kernel.project_dir') . '/public/' . ltrim($resultatPdf, '/');
+
+        return is_file($fullPdfPath) ? $fullPdfPath : null;
+    }
+
+    private function isAbsoluteFilesystemPath(string $path): bool
+    {
+        return preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) === 1
+            || str_starts_with($path, '\\\\');
+    }
+
     #[Route('/new', name: 'app_demande_analyse_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -1755,5 +1821,3 @@ class DemandeAnalyseController extends AbstractController
     }
 
 }
-
-

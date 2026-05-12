@@ -100,6 +100,8 @@
 {% set has_result = demande_analyse.resultatPdf is not null %}
 {% set ia_interpretation_url = path('app_demande_analyse_ia_interpretation', {'id': demande_analyse.id}) %}
 {% set ia_qa_url = path('app_demande_analyse_ia_qa', {'id': demande_analyse.id}) %}
+{% set ia_definition_url = path('app_demande_analyse_ia_definition', {'id': demande_analyse.id}) %}
+{% set pdf_url = path('app_demande_analyse_pdf', {'id': demande_analyse.id}) %}
 
 {% include 'partials/header.html.twig' with { header_compact: false } %}
 
@@ -113,7 +115,7 @@
             <div class="d-flex gap-2">
                 <a class="btn btn-light btn-sm" href="{{ path('app_demande_analyse_mes_demandes') }}"><i class="bi bi-arrow-left me-1"></i>Retour</a>
                 {% if has_result %}
-                    <a class="btn btn-pdf-strong" href="{{ asset(demande_analyse.resultatPdf) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill me-1"></i>Ouvrir Resultat PDF</a>
+                    <a class="btn btn-pdf-strong" href="{{ pdf_url }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill me-1"></i>Ouvrir Resultat PDF</a>
                 {% elseif demande_analyse.resultatPdf is null %}
                     <a class="btn btn-outline-light btn-sm" href="{{ path('app_demande_analyse_edit', {'id': demande_analyse.id}) }}"><i class="bi bi-pencil-square me-1"></i>Modifier</a>
                 {% endif %}
@@ -206,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const iaInitialPayload = {{ ia_initial_payload is defined and ia_initial_payload ? ia_initial_payload|json_encode|raw : 'null' }};
     const iaInterpretationUrl = '{{ ia_interpretation_url }}';
     const iaQaUrl = '{{ ia_qa_url }}';
+    const iaDefinitionUrl = '{{ ia_definition_url }}';
     const iaStatus = document.getElementById('iaStatus');
     const iaRisk = document.getElementById('iaRisk');
     const iaModel = document.getElementById('iaModel');
@@ -221,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatSend = document.getElementById('chatSend');
     const openChatFromCard = document.getElementById('openChatFromCard');
     let iaMetricGlossary = {};
+    const metricDefinitionCache = {};
 
     const appendMsg = (role, text) => {
         if (!chatLog) return;
@@ -288,6 +292,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return '';
+    };
+
+    const fetchMetricDefinition = async (metricName, fallbackDescription, detailNode) => {
+        const cleanMetric = String(metricName || '').trim();
+        if (!cleanMetric || !iaDefinitionUrl) return;
+
+        if (metricDefinitionCache[cleanMetric]) {
+            if (detailNode) detailNode.textContent = metricDefinitionCache[cleanMetric];
+            return;
+        }
+
+        if (detailNode) detailNode.textContent = 'Chargement de la definition Ollama...';
+
+        try {
+            const url = iaDefinitionUrl + '?metric=' + encodeURIComponent(cleanMetric);
+            const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const payload = await response.json();
+            if (!response.ok || payload.ok === false || !payload.definition) {
+                throw new Error(payload.message || 'Definition indisponible');
+            }
+
+            metricDefinitionCache[cleanMetric] = String(payload.definition).trim();
+            if (detailNode) detailNode.textContent = metricDefinitionCache[cleanMetric];
+        } catch (error) {
+            const fallback = fallbackDescription || 'Definition indisponible pour ce parametre.';
+            metricDefinitionCache[cleanMetric] = fallback;
+            if (detailNode) detailNode.textContent = fallback;
+        }
     };
 
     const renderRec = (list) => {
@@ -376,6 +408,11 @@ document.addEventListener('DOMContentLoaded', function() {
             detail.textContent = description;
             help.appendChild(summary);
             help.appendChild(detail);
+            help.addEventListener('toggle', () => {
+                if (!help.open) return;
+                const metricName = String(line.metric_name || '').trim() || labelName;
+                fetchMetricDefinition(metricName, description, detail);
+            });
             li.appendChild(help);
 
             if (line.is_critical) {

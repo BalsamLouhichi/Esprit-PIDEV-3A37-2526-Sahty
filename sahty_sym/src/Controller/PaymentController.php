@@ -87,6 +87,18 @@ class PaymentController extends AbstractController
 
             return $this->redirect($session['url']);
         } catch (\Throwable $e) {
+            $message = mb_strtolower($e->getMessage());
+            $isNetworkFailure = str_contains($message, 'api.stripe.com')
+                || str_contains($message, 'failed to open stream')
+                || str_contains($message, 'aucune connexion')
+                || str_contains($message, 'connection refused')
+                || str_contains($message, 'timed out');
+
+            if ($isNetworkFailure) {
+                $this->addFlash('warning', 'Stripe est indisponible sur cette machine pour le moment. Bascule vers le paiement simule.');
+                return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
+            }
+
             if ($this->getParameter('kernel.environment') !== 'prod') {
                 return $this->redirectToRoute('payment_event_checkout_simulated', ['id' => $evenement->getId()]);
             }

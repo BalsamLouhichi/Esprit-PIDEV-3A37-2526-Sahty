@@ -268,14 +268,19 @@
                 <div class="d-flex align-items-center ms-lg-3 mt-3 mt-lg-0">
                     {% if app.user %}
                         <div class="nav-item dropdown">
+                            {% set avatarSource = app.user.prenom ? app.user.prenom : (app.user.email|split('@')[0]|default('US')) %}
+                            {% set avatarText = avatarSource[:2]|upper %}
+                            {% set photoPath = null %}
+                            {% if app.user.photoProfil %}
+                                {% set photoPath = app.user.photoProfil starts with 'uploads/' or app.user.photoProfil starts with '/uploads/' ? app.user.photoProfil : 'uploads/profiles/' ~ app.user.photoProfil %}
+                            {% endif %}
                             <a href="#" class="nav-link dropdown-toggle d-flex align-items-center gap-2 px-3 py-2" data-bs-toggle="dropdown" style="border-radius: 50px; background: rgba(29, 93, 155, 0.05); border: 1px solid rgba(29, 93, 155, 0.1);">
-                                {% if app.user.photoProfil %}
-                                    <img src="{{ asset(app.user.photoProfil) }}" alt="Profil" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
-                                {% else %}
-                                    <span class="d-inline-flex align-items-center justify-content-center" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border: 2px solid white; box-shadow: 0 2px 10px rgba(29,93,155,0.2);">
-                                        <i class="fa fa-user" style="font-size: 1rem;"></i>
-                                    </span>
-                                {% endif %}
+                                <span class="d-inline-flex align-items-center justify-content-center position-relative overflow-hidden" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border: 2px solid white; box-shadow: 0 2px 10px rgba(29,93,155,0.2); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em;">
+                                    <span>{{ avatarText }}</span>
+                                    {% if photoPath %}
+                                        <img src="{{ asset(photoPath) }}" alt="Profil" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.remove()">
+                                    {% endif %}
+                                </span>
                                 <span class="fw-semibold" style="color: var(--primary); font-size: 0.95rem;">{{ app.user.prenom }} {{ app.user.nom|slice(0, 1) }}.</span>
                                 <i class="fa fa-chevron-down" style="font-size: 0.8rem; color: var(--primary); opacity: 0.7;"></i>
                             </a>

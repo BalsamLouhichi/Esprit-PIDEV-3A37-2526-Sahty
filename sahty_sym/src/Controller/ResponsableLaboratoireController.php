@@ -135,6 +135,8 @@ class ResponsableLaboratoireController extends AbstractController
             throw new AccessDeniedException('Acces non autorise a cette demande.');
         }
 
+        $shouldFlushStatusSync = $this->syncStatutWithResultatPdf($demandeAnalyse);
+
         if ($request->isMethod('POST')) {
             $submittedToken = $request->request->get('_token');
             if (!$this->isCsrfTokenValid('resp-labo-update' . $demandeAnalyse->getId(), $submittedToken)) {
@@ -183,7 +185,7 @@ class ResponsableLaboratoireController extends AbstractController
                 }
             }
 
-            $demandeAnalyse->setStatut($demandeAnalyse->getResultatPdf() ? 'envoye' : 'en_attente');
+            $this->syncStatutWithResultatPdf($demandeAnalyse);
 
             $entityManager->flush();
 
@@ -202,6 +204,10 @@ class ResponsableLaboratoireController extends AbstractController
             }
 
             return $this->redirectToRoute('app_responsable_labo_demande_edit', $redirectParams);
+        }
+
+        if ($shouldFlushStatusSync) {
+            $entityManager->flush();
         }
 
         $resultatAnalyse = $demandeAnalyse->getResultatAnalyse();
@@ -337,6 +343,18 @@ class ResponsableLaboratoireController extends AbstractController
         $resultatAnalyse->setAnalyseLe(null);
         $resultatAnalyse->touch();
         $demandeAnalyse->setResultatAnalyse($resultatAnalyse);
+    }
+
+    private function syncStatutWithResultatPdf(DemandeAnalyse $demandeAnalyse): bool
+    {
+        $expectedStatus = $demandeAnalyse->getResultatPdf() ? 'envoye' : 'en_attente';
+        if ($demandeAnalyse->getStatut() === $expectedStatus) {
+            return false;
+        }
+
+        $demandeAnalyse->setStatut($expectedStatus);
+
+        return true;
     }
 
     private function sendResultEmail(

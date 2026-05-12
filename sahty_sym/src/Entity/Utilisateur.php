@@ -98,6 +98,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
             self::ROLE_SIMPLE_PATIENT => self::ROLE_PATIENT,
             self::ROLE_SIMPLE_RESPONSABLE_LABO => self::ROLE_RESPONSABLE_LABO,
             self::ROLE_SIMPLE_RESPONSABLE_PARA => self::ROLE_RESPONSABLE_PARA,
+            'ADMINISTRATEUR' => self::ROLE_ADMIN,
+            'MEDECIN' => self::ROLE_MEDECIN,
+            'PATIENT' => self::ROLE_PATIENT,
+            'RESPONSABLE_LABORATOIRE' => self::ROLE_RESPONSABLE_LABO,
+            'RESPONSABLE_PARAPHARMACIE' => self::ROLE_RESPONSABLE_PARA,
             default => 'ROLE_USER',
         };
     }

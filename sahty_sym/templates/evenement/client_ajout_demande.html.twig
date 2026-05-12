@@ -400,6 +400,8 @@
 
         }
 
+        {% include 'evenement/_speaker_recommendations_styles.html.twig' %}
+
 
 
         @media (max-width: 768px) {
@@ -1430,6 +1432,10 @@
                     </div>
 
                 </div> <!-- Fin row g-4 -->
+
+                {% if form.speakerKeys is defined %}
+                {% include 'evenement/_speaker_recommendations.html.twig' with {speakerFields: form.speakerKeys} %}
+                {% endif %}
 
 
 

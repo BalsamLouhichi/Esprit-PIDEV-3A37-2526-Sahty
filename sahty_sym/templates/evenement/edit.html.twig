@@ -152,6 +152,8 @@
             font-size: 0.85rem;
             color: #334155;
         }
+
+        {% include 'evenement/_speaker_recommendations_styles.html.twig' %}
     </style>
 </head>
 
@@ -455,6 +457,10 @@
     </div>
 </div>
                 </div>
+
+                {% if is_admin and form.speakerKeys is defined %}
+                {% include 'evenement/_speaker_recommendations.html.twig' with {speakerFields: form.speakerKeys} %}
+                {% endif %}
 
                 <div class="mt-5 d-flex justify-content-end">
                     <a href="{{ path('evenements_evenement_list') }}" class="btn btn-secondary me-2 px-4">Annuler</a>

@@ -1020,7 +1020,15 @@ class AdminController extends AbstractController
         ]);
     }
     
-    #[Route('/laboratoire/new', name: 'laboratoire_new')]
+    #[Route('/laboratoire/new', name: 'laboratoire_new_legacy', priority: 100)]
+    public function laboratoireNewLegacy(): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        return $this->redirectToRoute('admin_laboratoire_new');
+    }
+
+    #[Route('/laboratoires/new', name: 'laboratoire_new')]
     public function laboratoireNew(Request $request): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -2458,7 +2466,7 @@ class AdminController extends AbstractController
         if ($search || $role) {
             $utilisateurs = $this->userRepo->search($search, $role);
         } else {
-            $utilisateurs = $this->userRepo->findAll();
+            $utilisateurs = $this->userRepo->findAllSafe();
         }
 
         return $this->render('admin/users.html.twig', [
@@ -2479,7 +2487,7 @@ class AdminController extends AbstractController
         if ($search || $role) {
             $utilisateurs = $this->userRepo->search($search, $role);
         } else {
-            $utilisateurs = $this->userRepo->findAll();
+            $utilisateurs = $this->userRepo->findAllSafe();
         }
         
         if ($request->isXmlHttpRequest()) {

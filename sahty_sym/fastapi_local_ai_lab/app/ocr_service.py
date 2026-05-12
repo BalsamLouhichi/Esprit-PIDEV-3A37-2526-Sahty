@@ -2,10 +2,14 @@ import io
 import os
 from dataclasses import dataclass
 
-import fitz
 import pytesseract
 from PIL import Image
 from pytesseract import TesseractNotFoundError
+
+try:
+    import fitz  # type: ignore
+except ImportError:  # pragma: no cover - depends on local optional dependency
+    fitz = None
 
 
 @dataclass
@@ -17,6 +21,14 @@ class OCRExtraction:
 
 class OCRServiceError(Exception):
     pass
+
+
+def _require_pymupdf() -> None:
+    if fitz is None:
+        raise OCRServiceError(
+            "PyMuPDF is not installed. Install it with 'pip install PyMuPDF' or "
+            "'pip install -r requirements.txt' to process PDF files."
+        )
 
 
 _PADDLE_OCR_CACHE: dict[str, object] = {}
@@ -81,6 +93,7 @@ def _extract_from_image(image: Image.Image, engine: str, lang: str) -> str:
 
 
 def _pdf_to_images(file_bytes: bytes) -> list[Image.Image]:
+    _require_pymupdf()
     images: list[Image.Image] = []
     try:
         scale = float(os.getenv("OCR_PDF_SCALE", "2.0"))

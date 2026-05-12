@@ -16,23 +16,16 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\MollieApiClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Mime\Email;
 
 final class ProduitController extends AbstractController
 {
-    public function __construct(
-        #[Autowire('%env(string:MOLLIE_API_KEY)%')]
-        private readonly string $mollieApiKey,
-        #[Autowire('%env(default::MOLLIE_WEBHOOK_URL)%')]
-        private readonly ?string $mollieWebhookUrl = null
-    ) {
-    }
-
     /**
      * Afficher les dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©tails d'un produit
      */
@@ -88,7 +81,8 @@ final class ProduitController extends AbstractController
         Produit $produit,
         Request $request,
         EntityManagerInterface $entityManager,
-        SessionInterface $session
+        SessionInterface $session,
+        MailerInterface $mailer
     ): Response
     {
         // RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cupÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rer les parapharmacies qui ont ce produit
@@ -190,13 +184,21 @@ final class ProduitController extends AbstractController
             $entityManager->persist($commande);
             $entityManager->flush();
 
-            if (empty($this->mollieApiKey)) {
+            $emailSent = $this->notifierClientCommande($commande, $mailer);
+            $session->set($this->getCommandeEmailStatusSessionKey($commande), $emailSent);
+            if (!$emailSent) {
+                $this->addFlash('warning', 'La commande a ete creee, mais l email de confirmation n a pas pu etre envoye.');
+            }
+
+            $mollieApiKey = $this->getMollieApiKey();
+
+            if ($mollieApiKey === '') {
                 $this->addFlash('error', 'Cle API Mollie manquante. Configurez MOLLIE_API_KEY dans votre .env.');
                 return $this->redirectToRoute('app_commander_confirmation', ['id' => $commande->getId()]);
             }
 
             $mollie = new MollieApiClient();
-            $mollie->setApiKey($this->mollieApiKey);
+            $mollie->setApiKey($mollieApiKey);
 
             try {
                 $payment = $mollie->payments->create([
@@ -208,7 +210,7 @@ final class ProduitController extends AbstractController
                     'redirectUrl' => $this->generateUrl('app_commander_confirmation', [
                         'id' => $commande->getId(),
                     ], UrlGeneratorInterface::ABSOLUTE_URL),
-                    'webhookUrl' => $this->mollieWebhookUrl ?: $this->generateUrl('app_mollie_webhook', [], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'webhookUrl' => $this->getMollieWebhookUrl() ?: $this->generateUrl('app_mollie_webhook', [], UrlGeneratorInterface::ABSOLUTE_URL),
                     'metadata' => [
                         'commande_id' => $commande->getId(),
                         'commande_numero' => $commande->getNumero(),
@@ -245,9 +247,11 @@ final class ProduitController extends AbstractController
     {
         $paymentId = $request->query->get('payment_id');
 
-        if ($paymentId && !empty($this->mollieApiKey) && preg_match('/^tr_/', (string) $paymentId) === 1) {
+        $mollieApiKey = $this->getMollieApiKey();
+
+        if ($paymentId && $mollieApiKey !== '' && preg_match('/^tr_/', (string) $paymentId) === 1) {
             $mollie = new MollieApiClient();
-            $mollie->setApiKey($this->mollieApiKey);
+            $mollie->setApiKey($mollieApiKey);
 
             try {
                 $payment = $mollie->payments->get($paymentId);
@@ -269,9 +273,15 @@ final class ProduitController extends AbstractController
             }
         }
 
+        $emailSent = (bool) $request->getSession()->get(
+            $this->getCommandeEmailStatusSessionKey($commande),
+            false
+        );
+
         return $this->render('commande/confirmation.html.twig', [
             'commande' => $commande,
-            'produit' => $commande->getProduit()
+            'produit' => $commande->getProduit(),
+            'email_sent' => $emailSent,
         ]);
     }
 
@@ -282,12 +292,14 @@ final class ProduitController extends AbstractController
         CommandeRepository $commandeRepository
     ): Response {
         $paymentId = $request->request->get('id');
-        if (!$paymentId || empty($this->mollieApiKey)) {
+        $mollieApiKey = $this->getMollieApiKey();
+
+        if (!$paymentId || $mollieApiKey === '') {
             return new Response('', Response::HTTP_OK);
         }
 
         $mollie = new MollieApiClient();
-        $mollie->setApiKey($this->mollieApiKey);
+        $mollie->setApiKey($mollieApiKey);
 
         try {
             $payment = $mollie->payments->get($paymentId);
@@ -316,6 +328,49 @@ final class ProduitController extends AbstractController
         }
 
         return new Response('', Response::HTTP_OK);
+    }
+
+    private function getMollieApiKey(): string
+    {
+        $value = $_ENV['MOLLIE_API_KEY'] ?? $_SERVER['MOLLIE_API_KEY'] ?? '';
+
+        return is_string($value) ? $value : '';
+    }
+
+    private function getMollieWebhookUrl(): ?string
+    {
+        $value = $_ENV['MOLLIE_WEBHOOK_URL'] ?? $_SERVER['MOLLIE_WEBHOOK_URL'] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    private function notifierClientCommande(Commande $commande, MailerInterface $mailer): bool
+    {
+        try {
+            $html = $this->renderView('emailss/confirmation_commande_client.html.twig', [
+                'nomClient' => $commande->getNomClient(),
+                'commandes' => [$commande],
+                'totalGeneral' => (float) $commande->getPrixTotal(),
+                'date' => $commande->getDateCreation(),
+            ]);
+
+            $email = (new Email())
+                ->from($_ENV['APP_MAILER_FROM'] ?? $_SERVER['APP_MAILER_FROM'] ?? 'commandes@sahty.com')
+                ->to($commande->getEmail())
+                ->subject('Confirmation de votre commande ' . $commande->getNumero())
+                ->html($html);
+
+            $mailer->send($email);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function getCommandeEmailStatusSessionKey(Commande $commande): string
+    {
+        return 'commande_email_sent_' . $commande->getId();
     }
 
     /**

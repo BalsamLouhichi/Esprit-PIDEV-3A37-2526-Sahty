@@ -114,7 +114,7 @@ class LaboratoireRepository extends ServiceEntityRepository
     ): array
     {
         $queryBuilder = $this->createQueryBuilder('l')
-            ->select('partial l.{id,nom,ville,adresse,description,disponible}')
+            ->select('partial l.{id,nom,ville,adresse,description,disponible,latitude,longitude}')
             ->orderBy('l.nom', 'ASC');
 
         if ($name) {
@@ -199,7 +199,7 @@ class LaboratoireRepository extends ServiceEntityRepository
     public function findRecommendedForVille(string $ville, int $limit = 6): array
     {
         $query = $this->createQueryBuilder('l')
-            ->select('partial l.{id,nom,ville,adresse,description,disponible}')
+            ->select('partial l.{id,nom,ville,adresse,description,disponible,latitude,longitude}')
             ->andWhere('l.disponible = :disponible')
             ->setParameter('disponible', true)
             ->addOrderBy('CASE WHEN LOWER(l.ville) = LOWER(:ville) THEN 0 ELSE 1 END', 'ASC')
@@ -212,6 +212,67 @@ class LaboratoireRepository extends ServiceEntityRepository
         $query->setHint(Query::HINT_FORCE_PARTIAL_LOAD, true);
 
         return $query->getResult();
+    }
+
+    /**
+     * @return array<int, array{laboratoire: Laboratoire, distance_km: float}>
+     */
+    public function findNearestRecommended(
+        float $latitude,
+        float $longitude,
+        int $limit = 3,
+        ?string $typeBilan = null
+    ): array {
+        $queryBuilder = $this->createQueryBuilder('l')
+            ->select('partial l.{id,nom,ville,adresse,description,disponible,latitude,longitude}')
+            ->andWhere('l.disponible = :disponible')
+            ->andWhere('l.latitude IS NOT NULL')
+            ->andWhere('l.longitude IS NOT NULL')
+            ->setParameter('disponible', true);
+
+        if ($typeBilan) {
+            $queryBuilder
+                ->andWhere(
+                    'EXISTS (
+                        SELECT 1
+                        FROM App\Entity\LaboratoireTypeAnalyse lta_filter
+                        JOIN lta_filter.typeAnalyse ta_filter
+                        WHERE lta_filter.laboratoire = l
+                          AND ta_filter.nom = :typeBilan
+                    )'
+                )
+                ->setParameter('typeBilan', $typeBilan);
+        }
+
+        $query = $queryBuilder->getQuery();
+        $query->setHint(Query::HINT_FORCE_PARTIAL_LOAD, true);
+
+        $recommendations = [];
+        foreach ($query->getResult() as $lab) {
+            if (!$lab instanceof Laboratoire || $lab->getLatitude() === null || $lab->getLongitude() === null) {
+                continue;
+            }
+
+            $recommendations[] = [
+                'laboratoire' => $lab,
+                'distance_km' => round(
+                    $this->haversineDistanceKm(
+                        $latitude,
+                        $longitude,
+                        (float) $lab->getLatitude(),
+                        (float) $lab->getLongitude()
+                    ),
+                    1
+                ),
+            ];
+        }
+
+        usort(
+            $recommendations,
+            static fn (array $a, array $b): int => $a['distance_km'] <=> $b['distance_km']
+        );
+
+        return array_slice($recommendations, 0, max(1, $limit));
     }
 
     /**
@@ -253,5 +314,18 @@ class LaboratoireRepository extends ServiceEntityRepository
             ->setMaxResults(20)
             ->getQuery()
             ->getResult();
+    }
+
+    private function haversineDistanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadiusKm = 6371.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        $c = 2 * atan2(sqrt($a), sqrt(max(0.0, 1.0 - $a)));
+
+        return $earthRadiusKm * $c;
     }
 }

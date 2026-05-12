@@ -7,4 +7,4 @@ framework:
         
         # Options par défaut
         envelope:
-            sender: 'maramouerghi1234@gmail.com'
+            sender: '%env(APP_MAILER_FROM)%'

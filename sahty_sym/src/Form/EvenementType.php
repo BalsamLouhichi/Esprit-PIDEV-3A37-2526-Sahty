@@ -24,6 +24,8 @@ class EvenementType extends AbstractType
         $isAdmin = $options['is_admin'] ?? false;
         $userRole = $options['user_role'] ?? null;
         $isDemande = $options['is_demande'] ?? false;
+        $speakerChoices = $options['speaker_choices'] ?? [];
+        $selectedSpeakerKeys = $options['selected_speaker_keys'] ?? [];
         $aiSuggestedDate = $options['ai_suggested_date'] ?? null;
         $aiSuggestedLieu = $options['ai_suggested_lieu'] ?? null;
         $aiSuggestedParticipants = $options['ai_suggested_participants'] ?? null;
@@ -31,6 +33,10 @@ class EvenementType extends AbstractType
         $seriesIsEdition = (bool) ($options['series_is_edition'] ?? false);
         $seriesSourceEventId = $options['series_source_event_id'] ?? null;
         $seriesEditionNumber = $options['series_edition_number'] ?? null;
+        $selectedSpeakerChoices = array_values(array_filter(
+            $speakerChoices,
+            static fn (array $speaker): bool => in_array((string) ($speaker['key'] ?? ''), $selectedSpeakerKeys, true)
+        ));
 
         $builder
             ->add('titre', TextType::class, [
@@ -190,6 +196,46 @@ class EvenementType extends AbstractType
                 'required' => true,
             ]);
         }
+
+        if ($isAdmin || $isDemande) {
+            $builder->add('speakerKeys', ChoiceType::class, [
+                'label' => false,
+                'mapped' => false,
+                'required' => false,
+                'expanded' => true,
+                'multiple' => true,
+                'choices' => $speakerChoices,
+                'data' => $selectedSpeakerChoices,
+                'choice_label' => static function ($speaker): string {
+                    if (!is_array($speaker)) {
+                        return (string) $speaker;
+                    }
+
+                    return (string) ($speaker['name'] ?? '');
+                },
+                'choice_value' => static function ($speaker): string {
+                    if (!is_array($speaker)) {
+                        return (string) $speaker;
+                    }
+
+                    return (string) ($speaker['key'] ?? '');
+                },
+                'choice_attr' => static function ($speaker): array {
+                    if (!is_array($speaker)) {
+                        return ['class' => 'speaker-checkbox'];
+                    }
+
+                    return [
+                        'class' => 'speaker-checkbox',
+                        'data-specialite' => (string) ($speaker['specialite'] ?? ''),
+                        'data-ville' => (string) ($speaker['ville'] ?? ''),
+                        'data-source' => (string) ($speaker['source'] ?? ''),
+                        'data-details' => (string) ($speaker['details'] ?? ''),
+                        'data-url' => (string) ($speaker['url'] ?? ''),
+                    ];
+                },
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -200,6 +246,8 @@ class EvenementType extends AbstractType
             'is_admin' => false,
             'is_demande' => false,
             'user_role' => null,
+            'speaker_choices' => [],
+            'selected_speaker_keys' => [],
             'series_candidates' => [],
             'series_is_edition' => false,
             'series_source_event_id' => null,
@@ -210,6 +258,8 @@ class EvenementType extends AbstractType
         $resolver->setAllowedTypes('is_admin', 'bool');
         $resolver->setAllowedTypes('is_demande', 'bool');
         $resolver->setAllowedTypes('user_role', ['null', 'string']);
+        $resolver->setAllowedTypes('speaker_choices', 'array');
+        $resolver->setAllowedTypes('selected_speaker_keys', 'array');
         $resolver->setAllowedTypes('series_candidates', 'array');
         $resolver->setAllowedTypes('series_is_edition', 'bool');
         $resolver->setAllowedTypes('series_source_event_id', ['null', 'int', 'string']);

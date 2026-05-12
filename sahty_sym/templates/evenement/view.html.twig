@@ -125,6 +125,8 @@
             font-size: 1rem;
         }
 
+        {% include 'evenement/_selected_speakers_display_styles.html.twig' %}
+
         .stats-card {
             background: white;
             border-radius: 10px;
@@ -821,6 +823,13 @@
                     {{ (display_description ?: 'Aucune description fournie pour cet événement.')|nl2br }}
                 </div>
             </div>
+
+            {% if event_speakers|default([])|length > 0 %}
+            <div class="event-card mt-4">
+                <h5 class="section-title"><i class="fas fa-microphone-alt"></i> Speakers</h5>
+                {% include 'evenement/_selected_speakers_display.html.twig' with {speakers: event_speakers} %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar with Actions -->

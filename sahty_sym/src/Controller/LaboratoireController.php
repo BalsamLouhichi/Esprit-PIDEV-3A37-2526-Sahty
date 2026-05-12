@@ -26,6 +26,10 @@ class LaboratoireController extends AbstractController
         $ville = trim((string) $request->query->get('ville', ''));
         $typeBilan = trim((string) $request->query->get('type_bilan', ''));
         $currentVille = trim((string) $request->query->get('current_ville', ''));
+        $currentLat = $request->query->get('current_lat');
+        $currentLon = $request->query->get('current_lon');
+        $currentLat = is_numeric($currentLat) ? (float) $currentLat : null;
+        $currentLon = is_numeric($currentLon) ? (float) $currentLon : null;
 
         $laboratoires = $laboratoireRepository->findWithPublicFilters(
             $name !== '' ? $name : null,
@@ -50,8 +54,15 @@ class LaboratoireController extends AbstractController
             }
         }
 
-        if ($patientVille) {
-            $recommendedLaboratoires = $laboratoireRepository->findRecommendedForVille($patientVille, 6);
+        if ($currentLat !== null && $currentLon !== null) {
+            $recommendedLaboratoires = $laboratoireRepository->findNearestRecommended(
+                $currentLat,
+                $currentLon,
+                3,
+                $typeBilan !== '' ? $typeBilan : null
+            );
+        } elseif ($patientVille) {
+            $recommendedLaboratoires = $laboratoireRepository->findRecommendedForVille($patientVille, 3);
         }
 
         return $this->render('laboratoire/labo.html.twig', [
@@ -63,6 +74,8 @@ class LaboratoireController extends AbstractController
             'filter_type_bilans' => $typeBilans,
             'patient_ville' => $patientVille,
             'current_ville' => $currentVille,
+            'current_lat' => $currentLat,
+            'current_lon' => $currentLon,
             'location_active' => $locationActive,
             'recommended_laboratoires' => $recommendedLaboratoires,
         ]);

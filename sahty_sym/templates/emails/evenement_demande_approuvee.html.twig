@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Demande d'evenement approuvee</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f7fb;padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5eef9;">
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#1d4ed8,#60a5fa);padding:28px 32px;color:#ffffff;">
+                            <h1 style="margin:0;font-size:26px;line-height:1.2;">Votre demande a ete approuvee</h1>
+                            <p style="margin:10px 0 0;font-size:14px;opacity:0.95;">L'evenement est maintenant valide et visible selon son statut.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:28px 32px;">
+                            <p style="margin:0 0 16px;font-size:15px;">
+                                Bonjour {{ utilisateur.prenom ?? utilisateur.nom ?? 'utilisateur' }},
+                            </p>
+                            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">
+                                Votre demande pour l'evenement <strong>{{ evenement.titre }}</strong> a ete approuvee par l'administration.
+                            </p>
+
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#f8fbff;border:1px solid #dbeafe;border-radius:12px;overflow:hidden;">
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:600;border-bottom:1px solid #e5eef9;">Titre</td>
+                                    <td style="padding:12px 14px;font-size:14px;border-bottom:1px solid #e5eef9;">{{ evenement.titre }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:600;border-bottom:1px solid #e5eef9;">Date debut</td>
+                                    <td style="padding:12px 14px;font-size:14px;border-bottom:1px solid #e5eef9;">{{ evenement.dateDebut ? evenement.dateDebut|date('d/m/Y H:i') : '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:600;border-bottom:1px solid #e5eef9;">Mode</td>
+                                    <td style="padding:12px 14px;font-size:14px;border-bottom:1px solid #e5eef9;">{{ evenement.mode|title }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:600;">Statut</td>
+                                    <td style="padding:12px 14px;font-size:14px;">{{ evenement.statut|replace({'_':' '})|title }}</td>
+                                </tr>
+                            </table>
+
+                            <div style="margin-top:24px;">
+                                <a href="{{ eventUrl }}" style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:700;">
+                                    Voir mon evenement
+                                </a>
+                            </div>
+
+                            {% if is_simulated_mail %}
+                                <p style="margin:20px 0 0;font-size:12px;color:#64748b;">
+                                    Mode simulation mail actif: le transport d'email est configure en local.
+                                </p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

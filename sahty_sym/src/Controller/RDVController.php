@@ -538,25 +538,36 @@ class RDVController extends AbstractController
 
         $medecinsActifs = $medecinRepository->findBy(['estActif' => true]);
 
-        $recommendations = $recommendationService->recommendNearest(
-            $medecinsActifs,
-            (float) $location['latitude'],
-            (float) $location['longitude'],
-            $limit,
-            $maxKm
-        );
-
-        $usedDistanceFallback = false;
-        $fallbackMaxKm = null;
-        if ($recommendations === []) {
-            $fallbackMaxKm = max(60.0, $maxKm * 2);
+        try {
             $recommendations = $recommendationService->recommendNearest(
                 $medecinsActifs,
                 (float) $location['latitude'],
                 (float) $location['longitude'],
                 $limit,
-                $fallbackMaxKm
+                $maxKm
             );
+        } catch (\Throwable) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Recommandation temporairement indisponible. Verifiez les adresses cabinet.',
+            ], 200);
+        }
+
+        $usedDistanceFallback = false;
+        $fallbackMaxKm = null;
+        if ($recommendations === []) {
+            $fallbackMaxKm = max(60.0, $maxKm * 2);
+            try {
+                $recommendations = $recommendationService->recommendNearest(
+                    $medecinsActifs,
+                    (float) $location['latitude'],
+                    (float) $location['longitude'],
+                    $limit,
+                    $fallbackMaxKm
+                );
+            } catch (\Throwable) {
+                $recommendations = [];
+            }
             $usedDistanceFallback = true;
         }
 

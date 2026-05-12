@@ -95,8 +95,11 @@ private ?Utilisateur $createur = null;
     private Collection $groupeCibles;
 
 
-#[ORM\Column(type: 'string', length: 50, nullable: true)]
-private ?string $statutDemande = null;
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $statutDemande = null;
+
+    #[ORM\Column(name: 'planning_recommande', type: Types::TEXT, nullable: true)]
+    private ?string $planningRecommande = null;
 
 public function getStatutDemande(): ?string
 {
@@ -106,6 +109,18 @@ public function getStatutDemande(): ?string
 public function setStatutDemande(?string $statutDemande): self
 {
     $this->statutDemande = $statutDemande;
+
+    return $this;
+}
+
+public function getPlanningRecommande(): ?string
+{
+    return $this->planningRecommande;
+}
+
+public function setPlanningRecommande(?string $planningRecommande): self
+{
+    $this->planningRecommande = $planningRecommande;
 
     return $this;
 }

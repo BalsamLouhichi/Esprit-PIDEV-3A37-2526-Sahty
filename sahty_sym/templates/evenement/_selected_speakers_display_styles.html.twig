@@ -1,0 +1,73 @@
+.selected-speakers-grid {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.selected-speaker-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1rem;
+    border: 1px solid #e3edf8;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.selected-speaker-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    flex: 0 0 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #f06292 0%, #c2185b 100%);
+    box-shadow: 0 10px 24px rgba(194, 24, 91, 0.2);
+}
+
+.selected-speaker-avatar.is-platform {
+    background: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%);
+    box-shadow: 0 10px 24px rgba(29, 78, 216, 0.18);
+}
+
+.selected-speaker-content {
+    min-width: 0;
+}
+
+.selected-speaker-name {
+    font-weight: 700;
+    color: #20364d;
+}
+
+.selected-speaker-speciality {
+    margin-top: 0.12rem;
+    font-weight: 600;
+    color: #356792;
+}
+
+.selected-speaker-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.45rem;
+    font-size: 0.84rem;
+    color: #64748b;
+}
+
+.selected-speaker-meta span {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #486b8d;
+}
+
+@media (max-width: 768px) {
+    .selected-speaker-card {
+        padding: 0.9rem;
+    }
+}

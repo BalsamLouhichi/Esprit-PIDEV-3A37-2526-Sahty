@@ -11,11 +11,52 @@ class EvenementOperationalInsightsService
     private const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
     private const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
     private const FREE_AI_URL = 'https://text.pollinations.ai';
+    /** @var array<string, array{lat: float, lon: float}> */
+    private const TUNISIA_CITY_COORDINATES = [
+        'tunis' => ['lat' => 36.8065, 'lon' => 10.1815],
+        'ariana' => ['lat' => 36.8665, 'lon' => 10.1647],
+        'la soukra' => ['lat' => 36.8776, 'lon' => 10.2516],
+        'raoued' => ['lat' => 36.9341, 'lon' => 10.2851],
+        'kalaa el andalous' => ['lat' => 37.0629, 'lon' => 10.1187],
+        'la marsa' => ['lat' => 36.8782, 'lon' => 10.3247],
+        'carthage' => ['lat' => 36.8529, 'lon' => 10.3230],
+        'ben arous' => ['lat' => 36.7531, 'lon' => 10.2189],
+        'manouba' => ['lat' => 36.8080, 'lon' => 10.0963],
+        'nabeul' => ['lat' => 36.4561, 'lon' => 10.7376],
+        'hammamet' => ['lat' => 36.4000, 'lon' => 10.6167],
+        'bizerte' => ['lat' => 37.2744, 'lon' => 9.8739],
+        'beja' => ['lat' => 36.7256, 'lon' => 9.1817],
+        'jendouba' => ['lat' => 36.5011, 'lon' => 8.7803],
+        'kef' => ['lat' => 36.1742, 'lon' => 8.7049],
+        'siliana' => ['lat' => 36.0849, 'lon' => 9.3708],
+        'zaghouan' => ['lat' => 36.4029, 'lon' => 10.1430],
+        'sousse' => ['lat' => 35.8256, 'lon' => 10.6360],
+        'monastir' => ['lat' => 35.7643, 'lon' => 10.8113],
+        'mahdia' => ['lat' => 35.5047, 'lon' => 11.0622],
+        'kairouan' => ['lat' => 35.6781, 'lon' => 10.0963],
+        'sfax' => ['lat' => 34.7406, 'lon' => 10.7603],
+        'gabes' => ['lat' => 33.8815, 'lon' => 10.0982],
+        'medenine' => ['lat' => 33.3549, 'lon' => 10.5055],
+        'djerba' => ['lat' => 33.8076, 'lon' => 10.8451],
+        'houmt souk' => ['lat' => 33.8758, 'lon' => 10.8575],
+        'zarzis' => ['lat' => 33.5039, 'lon' => 11.1122],
+        'tataouine' => ['lat' => 32.9297, 'lon' => 10.4518],
+        'gafsa' => ['lat' => 34.4250, 'lon' => 8.7842],
+        'tozeur' => ['lat' => 33.9197, 'lon' => 8.1335],
+        'kebili' => ['lat' => 33.7044, 'lon' => 8.9690],
+        'sidi bouzid' => ['lat' => 35.0382, 'lon' => 9.4849],
+        'kasserine' => ['lat' => 35.1676, 'lon' => 8.8365],
+    ];
+
+    private HttpClientInterface $httpClient;
+    private string $mapboxAccessToken;
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly string $mapboxAccessToken = ''
+        HttpClientInterface $httpClient,
+        ?string $mapboxAccessToken = null
     ) {
+        $this->httpClient = $httpClient;
+        $this->mapboxAccessToken = $mapboxAccessToken ?? '';
     }
 
     public function analyze(Evenement $evenement, array $context = []): array
@@ -110,6 +151,11 @@ class EvenementOperationalInsightsService
 
     private function geocodeLocation(string $query): ?array
     {
+        $localMatch = $this->resolveLocalCityCoordinates($query);
+        if ($localMatch !== null) {
+            return $localMatch;
+        }
+
         if ($this->mapboxAccessToken !== '') {
             $mapboxResult = $this->geocodeWithMapbox($query);
             if ($mapboxResult !== null) {
@@ -159,9 +205,10 @@ class EvenementOperationalInsightsService
         try {
             $response = $this->httpClient->request('GET', self::NOMINATIM_URL, [
                 'query' => [
-                    'q' => $query,
+                    'q' => $this->buildLocationSearchQuery($query),
                     'format' => 'jsonv2',
                     'limit' => 1,
+                    'countrycodes' => 'tn',
                 ],
                 'headers' => [
                     // Required by Nominatim usage policy.
@@ -187,6 +234,50 @@ class EvenementOperationalInsightsService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function buildLocationSearchQuery(string $query): string
+    {
+        $clean = trim($query);
+        if ($clean === '') {
+            return '';
+        }
+
+        $normalized = $this->normalizeLocationToken($clean);
+        if (str_contains($normalized, 'tunisie') || str_contains($normalized, 'tunisia')) {
+            return $clean;
+        }
+
+        return $clean . ', Tunisia';
+    }
+
+    /**
+     * @return array{lat: float, lon: float}|null
+     */
+    private function resolveLocalCityCoordinates(string $query): ?array
+    {
+        $normalized = $this->normalizeLocationToken($query);
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::TUNISIA_CITY_COORDINATES[$normalized] ?? null;
+    }
+
+    private function normalizeLocationToken(string $value): string
+    {
+        $normalized = trim(mb_strtolower($value));
+        if ($normalized === '') {
+            return '';
+        }
+
+        $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+        if (is_string($transliterated) && $transliterated !== '') {
+            $normalized = $transliterated;
+        }
+
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $normalized) ?? '';
+        return trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
     }
 
     private function buildWeatherWarningForEventDate(float $lat, float $lon, ?\DateTimeInterface $eventDate): ?string

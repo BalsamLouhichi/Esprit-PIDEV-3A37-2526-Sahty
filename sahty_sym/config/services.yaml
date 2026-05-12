@@ -7,6 +7,11 @@ parameters:
 
     app.ia_evenement.python_default: 'python'
     app.ia_evenement.python: '%env(default:app.ia_evenement.python_default:IA_EVENEMENT_PYTHON_BIN)%'
+    app.ollama.base_url_default: 'http://127.0.0.1:11434'
+    app.ollama.tooltip_model_default: 'gemma3:4b'
+    app.ollama.connect_timeout_default: 4
+    app.ollama.chat_timeout_default: 30
+    app.ollama.tags_timeout_default: 8
 
     event_resource_stock:
         chaises: 150
@@ -32,6 +37,11 @@ parameters:
     app.fastapi_ai.ollama_mode: '%env(default::FASTAPI_AI_OLLAMA_MODE)%'
     app.fastapi_ai.timeout: '%env(int:FASTAPI_AI_TIMEOUT)%'
     app.fastapi_ai.api_key: '%env(default::FASTAPI_AI_API_KEY)%'
+    app.ollama.base_url: '%env(default:app.ollama.base_url_default:OLLAMA_BASE_URL)%'
+    app.ollama.tooltip_model: '%env(default:app.ollama.tooltip_model_default:OLLAMA_TOOLTIP_MODEL)%'
+    app.ollama.connect_timeout: '%env(default:app.ollama.connect_timeout_default:int:OLLAMA_CONNECT_TIMEOUT)%'
+    app.ollama.chat_timeout: '%env(default:app.ollama.chat_timeout_default:int:OLLAMA_CHAT_TIMEOUT)%'
+    app.ollama.tags_timeout: '%env(default:app.ollama.tags_timeout_default:int:OLLAMA_TAGS_TIMEOUT)%'
     app.fastapi_semantic.endpoint: '%env(default::FASTAPI_SEMANTIC_ENDPOINT)%'
     app.fastapi_semantic.timeout: '%env(int:FASTAPI_SEMANTIC_TIMEOUT)%'
     app.fastapi_semantic.api_key: '%env(default::FASTAPI_SEMANTIC_API_KEY)%'
@@ -57,7 +67,7 @@ services:
 
     App\Service\EvenementOperationalInsightsService:
         arguments:
-            $mapboxAccessToken: '%env(string:MAPBOX_ACCESS_TOKEN)%'
+            $mapboxAccessToken: '%env(default::MAPBOX_ACCESS_TOKEN)%'
 
     App\Service\EvenementResourcePlanningService:
         arguments:
@@ -65,8 +75,8 @@ services:
 
     App\Service\StripeCheckoutService:
         arguments:
-            $stripeSecretKey: '%env(string:STRIPE_SECRET_KEY)%'
-            $stripeWebhookSecret: '%env(string:STRIPE_WEBHOOK_SECRET)%'
+            $stripeSecretKey: '%env(default::STRIPE_SECRET_KEY)%'
+            $stripeWebhookSecret: '%env(default::STRIPE_WEBHOOK_SECRET)%'
 
     App\Service\TwilioMessagingService:
         arguments:
@@ -91,6 +101,15 @@ services:
             $ollamaMode: '%app.fastapi_ai.ollama_mode%'
             $timeout: '%app.fastapi_ai.timeout%'
             $apiKey: '%app.fastapi_ai.api_key%'
+
+    App\Service\OllamaDefinitionService:
+        arguments:
+            $cache: '@cache.app'
+            $ollamaBaseUrl: '%app.ollama.base_url%'
+            $preferredModel: '%app.ollama.tooltip_model%'
+            $connectTimeout: '%app.ollama.connect_timeout%'
+            $chatTimeout: '%app.ollama.chat_timeout%'
+            $tagsTimeout: '%app.ollama.tags_timeout%'
 
     App\Controller\AdminController:
         arguments:

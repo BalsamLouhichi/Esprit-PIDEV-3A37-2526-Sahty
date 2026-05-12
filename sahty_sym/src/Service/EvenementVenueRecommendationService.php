@@ -8,6 +8,42 @@ class EvenementVenueRecommendationService
 {
     private const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
     private const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+    /** @var array<string, array{lat: float, lon: float, display_name: string}> */
+    private const TUNISIA_CITY_COORDINATES = [
+        'tunis' => ['lat' => 36.8065, 'lon' => 10.1815, 'display_name' => 'Tunis, Tunisie'],
+        'ariana' => ['lat' => 36.8665, 'lon' => 10.1647, 'display_name' => 'Ariana, Tunisie'],
+        'la soukra' => ['lat' => 36.8776, 'lon' => 10.2516, 'display_name' => 'La Soukra, Tunisie'],
+        'raoued' => ['lat' => 36.9341, 'lon' => 10.2851, 'display_name' => 'Raoued, Tunisie'],
+        'kalaa el andalous' => ['lat' => 37.0629, 'lon' => 10.1187, 'display_name' => 'Kalaa El Andalous, Tunisie'],
+        'la marsa' => ['lat' => 36.8782, 'lon' => 10.3247, 'display_name' => 'La Marsa, Tunisie'],
+        'carthage' => ['lat' => 36.8529, 'lon' => 10.3230, 'display_name' => 'Carthage, Tunisie'],
+        'ben arous' => ['lat' => 36.7531, 'lon' => 10.2189, 'display_name' => 'Ben Arous, Tunisie'],
+        'manouba' => ['lat' => 36.8080, 'lon' => 10.0963, 'display_name' => 'Manouba, Tunisie'],
+        'nabeul' => ['lat' => 36.4561, 'lon' => 10.7376, 'display_name' => 'Nabeul, Tunisie'],
+        'hammamet' => ['lat' => 36.4000, 'lon' => 10.6167, 'display_name' => 'Hammamet, Tunisie'],
+        'bizerte' => ['lat' => 37.2744, 'lon' => 9.8739, 'display_name' => 'Bizerte, Tunisie'],
+        'beja' => ['lat' => 36.7256, 'lon' => 9.1817, 'display_name' => 'Beja, Tunisie'],
+        'jendouba' => ['lat' => 36.5011, 'lon' => 8.7803, 'display_name' => 'Jendouba, Tunisie'],
+        'kef' => ['lat' => 36.1742, 'lon' => 8.7049, 'display_name' => 'Le Kef, Tunisie'],
+        'siliana' => ['lat' => 36.0849, 'lon' => 9.3708, 'display_name' => 'Siliana, Tunisie'],
+        'zaghouan' => ['lat' => 36.4029, 'lon' => 10.1430, 'display_name' => 'Zaghouan, Tunisie'],
+        'sousse' => ['lat' => 35.8256, 'lon' => 10.6360, 'display_name' => 'Sousse, Tunisie'],
+        'monastir' => ['lat' => 35.7643, 'lon' => 10.8113, 'display_name' => 'Monastir, Tunisie'],
+        'mahdia' => ['lat' => 35.5047, 'lon' => 11.0622, 'display_name' => 'Mahdia, Tunisie'],
+        'kairouan' => ['lat' => 35.6781, 'lon' => 10.0963, 'display_name' => 'Kairouan, Tunisie'],
+        'sfax' => ['lat' => 34.7406, 'lon' => 10.7603, 'display_name' => 'Sfax, Tunisie'],
+        'gabes' => ['lat' => 33.8815, 'lon' => 10.0982, 'display_name' => 'Gabes, Tunisie'],
+        'medenine' => ['lat' => 33.3549, 'lon' => 10.5055, 'display_name' => 'Medenine, Tunisie'],
+        'djerba' => ['lat' => 33.8076, 'lon' => 10.8451, 'display_name' => 'Djerba, Tunisie'],
+        'houmt souk' => ['lat' => 33.8758, 'lon' => 10.8575, 'display_name' => 'Houmt Souk, Tunisie'],
+        'zarzis' => ['lat' => 33.5039, 'lon' => 11.1122, 'display_name' => 'Zarzis, Tunisie'],
+        'tataouine' => ['lat' => 32.9297, 'lon' => 10.4518, 'display_name' => 'Tataouine, Tunisie'],
+        'gafsa' => ['lat' => 34.4250, 'lon' => 8.7842, 'display_name' => 'Gafsa, Tunisie'],
+        'tozeur' => ['lat' => 33.9197, 'lon' => 8.1335, 'display_name' => 'Tozeur, Tunisie'],
+        'kebili' => ['lat' => 33.7044, 'lon' => 8.9690, 'display_name' => 'Kebili, Tunisie'],
+        'sidi bouzid' => ['lat' => 35.0382, 'lon' => 9.4849, 'display_name' => 'Sidi Bouzid, Tunisie'],
+        'kasserine' => ['lat' => 35.1676, 'lon' => 8.8365, 'display_name' => 'Kasserine, Tunisie'],
+    ];
 
     public function __construct(
         private readonly HttpClientInterface $httpClient
@@ -94,13 +130,19 @@ class EvenementVenueRecommendationService
 
     private function geocodeCity(string $city): ?array
     {
+        $localMatch = $this->resolveLocalCityCoordinates($city);
+        if ($localMatch !== null) {
+            return $localMatch;
+        }
+
         try {
             $response = $this->httpClient->request('GET', self::NOMINATIM_URL, [
                 'query' => [
-                    'q' => $city,
+                    'q' => $this->buildCitySearchQuery($city),
                     'format' => 'jsonv2',
                     'limit' => 1,
                     'addressdetails' => 1,
+                    'countrycodes' => 'tn',
                 ],
                 'headers' => [
                     'User-Agent' => 'SahtyEventModule/1.0',
@@ -122,6 +164,50 @@ class EvenementVenueRecommendationService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function buildCitySearchQuery(string $city): string
+    {
+        $clean = trim($city);
+        if ($clean === '') {
+            return '';
+        }
+
+        $normalized = $this->normalizeLocationToken($clean);
+        if (str_contains($normalized, 'tunisie') || str_contains($normalized, 'tunisia')) {
+            return $clean;
+        }
+
+        return $clean . ', Tunisia';
+    }
+
+    /**
+     * @return array{lat: float, lon: float, display_name: string}|null
+     */
+    private function resolveLocalCityCoordinates(string $city): ?array
+    {
+        $normalized = $this->normalizeLocationToken($city);
+        if ($normalized === '') {
+            return null;
+        }
+
+        return self::TUNISIA_CITY_COORDINATES[$normalized] ?? null;
+    }
+
+    private function normalizeLocationToken(string $value): string
+    {
+        $normalized = trim(mb_strtolower($value));
+        if ($normalized === '') {
+            return '';
+        }
+
+        $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+        if (is_string($transliterated) && $transliterated !== '') {
+            $normalized = $transliterated;
+        }
+
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $normalized) ?? '';
+        return trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
     }
 
     private function fetchNearbyPlaces(float $lat, float $lon, string $eventType, bool $broadSearch = false): array

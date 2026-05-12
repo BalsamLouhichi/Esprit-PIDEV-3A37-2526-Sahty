@@ -2,9 +2,8 @@ security:
     enable_authenticator_manager: true
 
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
         App\Entity\Utilisateur:
-            algorithm: auto
+            id: App\Security\LegacyCompatiblePasswordHasher
 
     providers:
         app_user_provider:

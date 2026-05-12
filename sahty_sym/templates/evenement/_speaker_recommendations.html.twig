@@ -1,0 +1,114 @@
+<div class="speaker-panel mt-4">
+    <div class="speaker-panel-header">
+        <div class="speaker-panel-copy">
+            <span class="speaker-panel-kicker">Structure suggeree</span>
+            <p class="speaker-panel-intro">
+                Le bloc garde le titre, le type et les speakers selectionnes dans un format plus lisible.
+            </p>
+            <div class="speaker-panel-title-row">
+                <h5 class="speaker-panel-title">Speakers recommandes</h5>
+                <span id="speaker-counter" class="speaker-counter-badge">0 / 2</span>
+            </div>
+            <p class="speaker-panel-help">
+                Choisissez un ou deux speakers depuis la plateforme ou les suggestions externes.
+            </p>
+        </div>
+    </div>
+    <div class="speaker-list-wrapper">
+    <div class="speaker-list">
+        {% for speakerField in speakerFields %}
+            {% set speakerAttr = speakerField.vars.attr %}
+            {% set speakerName = speakerField.vars.label %}
+            {% set nameParts = speakerName|split(' ') %}
+            {% set firstInitial = nameParts|length > 0 ? nameParts|first|slice(0, 1)|upper : '?' %}
+            {% set lastInitial = nameParts|length > 1 ? nameParts|last|slice(0, 1)|upper : '' %}
+            {% set sourceLabel = attribute(speakerAttr, 'data-source') ?: 'Source inconnue' %}
+            {% set isPlatform = sourceLabel|lower starts with 'platform' %}
+            <div class="speaker-card speaker-choice {% if speakerField.vars.checked %}is-selected{% endif %}">
+                {{ form_widget(speakerField, {'attr': speakerAttr|merge({'class': 'speaker-checkbox'})}) }}
+                <label class="speaker-card-body" for="{{ speakerField.vars.id }}">
+                    <span class="speaker-avatar {% if isPlatform %}is-platform{% endif %}">{{ firstInitial }}{{ lastInitial }}</span>
+                    <div class="speaker-content">
+                        <div class="speaker-heading">
+                            <div>
+                                <div class="speaker-name">{{ speakerName }}</div>
+                                <div class="speaker-speciality">{{ attribute(speakerAttr, 'data-specialite') }}</div>
+                            </div>
+                            <span class="speaker-source">{{ sourceLabel }}</span>
+                        </div>
+                        <div class="speaker-meta">
+                            {{ attribute(speakerAttr, 'data-details') ?: 'Profil medical recommande pour cet evenement.' }}
+                            {% if attribute(speakerAttr, 'data-ville') %}
+                                | {{ attribute(speakerAttr, 'data-ville') }}
+                            {% endif %}
+                        </div>
+                        {% if attribute(speakerAttr, 'data-url') %}
+                            <div class="speaker-meta">
+                                <a class="speaker-link" href="{{ attribute(speakerAttr, 'data-url') }}" target="_blank" rel="noopener">Voir source</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+    </div>
+    <div id="speaker-selection-feedback" class="speaker-selection-feedback">
+        <i class="fas fa-info-circle"></i>
+        <span>Aucun speaker selectionne.</span>
+    </div>
+</div>
+<script>
+(() => {
+    const script = document.currentScript;
+    const panel = script ? script.previousElementSibling : null;
+    if (!panel || !panel.classList.contains('speaker-panel')) {
+        return;
+    }
+
+    const speakerCheckboxes = Array.from(panel.querySelectorAll('.speaker-checkbox'));
+    const speakerFeedbackText = panel.querySelector('#speaker-selection-feedback span');
+    const speakerCounter = panel.querySelector('#speaker-counter');
+
+    const syncSpeakerSelectionState = () => {
+        const checked = speakerCheckboxes.filter((input) => input.checked);
+
+        speakerCheckboxes.forEach((input) => {
+            const card = input.closest('.speaker-choice');
+            const isDisabled = !input.checked && checked.length >= 2;
+
+            if (card) {
+                card.classList.toggle('is-selected', input.checked);
+                card.classList.toggle('is-disabled', isDisabled);
+            }
+
+            input.disabled = isDisabled;
+        });
+
+        if (speakerCounter) {
+            speakerCounter.textContent = `${checked.length} / 2`;
+        }
+
+        if (speakerFeedbackText) {
+            if (checked.length === 0) {
+                speakerFeedbackText.textContent = 'Aucun speaker selectionne.';
+            } else if (checked.length >= 2) {
+                speakerFeedbackText.textContent = 'Maximum atteint: 2 speakers seront injectes dans planning_recommande.';
+            } else {
+                speakerFeedbackText.textContent = '1 speaker selectionne. Vous pouvez encore en choisir un.';
+            }
+        }
+    };
+
+    speakerCheckboxes.forEach((input) => {
+        input.addEventListener('change', syncSpeakerSelectionState);
+        input.addEventListener('input', syncSpeakerSelectionState);
+        const cardBody = input.closest('.speaker-choice')?.querySelector('.speaker-card-body');
+        cardBody?.addEventListener('click', () => {
+            window.requestAnimationFrame(syncSpeakerSelectionState);
+        });
+    });
+
+    syncSpeakerSelectionState();
+})();
+</script>
